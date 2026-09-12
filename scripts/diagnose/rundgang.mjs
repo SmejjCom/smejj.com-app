@@ -141,14 +141,25 @@ const SCHADEN_STREUEN = `(async () => {
   return "gestreut";
 })()`;
 
-async function eineRunde(page, url, nummer, selbsttest = false) {
+// Wie lange darf eine Ansicht zum Aufbau brauchen?
+//
+// GEMESSEN 2026-09-12: Auf dem Schreibtisch zeigt der Verlauf beim
+// Direkteinstieg nach 1,8 s Inhalt, im Android-Emulator nach 6,6 s — dort
+// braucht schon das Stylesheet 735 ms statt ~50. Mit der festen Frist von
+// 2,2 s meldete der Rundgang auf dem Telefon in JEDER Runde 1 "Verlauf wirkt
+// leer". Das war die Frist, nicht die App: eine grosszuegige Frist kostet
+// nichts, eine zu knappe den ganzen Befund.
+const WARTEZEIT_SCHREIBTISCH_MS = 2200;
+const WARTEZEIT_GERAET_MS = 7000;
+
+async function eineRunde(page, url, nummer, selbsttest = false, wartenMs = WARTEZEIT_SCHREIBTISCH_MS) {
   const ergebnisse = [];
   for (const [name, pfad] of ANSICHTEN) {
     await page("Page.navigate", { url: `${url.replace(/\/$/, "")}${pfad}` });
     await sleep(700);
     await auswerten(page, ANMELDEN, "anmelden").catch(() => {});
     await auswerten(page, FAENGER_SETZEN, "faenger").catch(() => {});
-    await sleep(2200);
+    await sleep(wartenMs);
     // Auf ein fertiges Dokument warten — sonst misst man den Wechsel, nicht die
     // Ansicht. Bis zu vier Versuche, dann gilt der Stand als er ist.
     for (let i = 0; i < 4; i++) {
@@ -187,7 +198,8 @@ async function main() {
     // werden — sonst misst man wieder 1280 px statt dessen, was der Benutzer
     // in der Hand haelt.
     if (!fern) await page("Emulation.setDeviceMetricsOverride", { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
-    for (let runde = 1; runde <= runden; runde++) alle.push(...(await eineRunde(page, url, runde, selbsttest)));
+    const warten = Number(process.env.RUNDGANG_WARTEN || (fern ? WARTEZEIT_GERAET_MS : WARTEZEIT_SCHREIBTISCH_MS));
+    for (let runde = 1; runde <= runden; runde++) alle.push(...(await eineRunde(page, url, runde, selbsttest, warten)));
   } finally {
     aufraeumen = () => {};
     await verbindung.close();
