@@ -75,3 +75,48 @@ ausliefern müsste. Ohne inhaltlichen Gewinn.
 
 Bis dahin bleibt `check:schutz-echtheit` rot. Das ist ein ehrlicher Befund, kein Defekt:
 die App läuft auf allen geprüften Geräten grün.
+
+
+---
+
+## NACHTRAG: der Abgleich ist vollzogen (12.09., SW v857)
+
+Von **227 ausgelieferten Dateien sind jetzt 224 byte-identisch** mit dem Zweig — vorher 187.
+Verglichen wurde je Datei der **Code ohne Kommentare und ohne Cache-Marken**; erst danach
+wurde entschieden.
+
+**Live war weiter → in den Zweig geholt**
+
+| Datei | warum |
+|---|---|
+| `chat-medien.js`, `chat-store.js` | „Parken statt Blockieren" (09.09.). Live enthält die Zweig-Logik als Teilmenge und erweitert sie — es ging nichts verloren |
+| `browser-pane-maus-plan.js`, `-frei.js` | der `nth`-Fix und die Token-Erneuerung vom 09.09. |
+| `chat-sync.js` | gleiche Logik, ausführlichere Kommentare |
+| `status.html` | die Du-Form; die Sie-Form im Zweig war der alte Stand |
+| 25 weitere | reiner Markenunterschied |
+
+**Der Zweig war weiter → ausgeliefert (SW v857)**
+
+| Datei | warum |
+|---|---|
+| `sw.js` | `mobil-dock.js` und `mobil-ansichten.js` fehlten im Precache, obwohl beide ausgeliefert werden (HTTP 200) — **offline fehlte die mobile Oberfläche** |
+| `spur-start.js` | zeigte kurz „Frei", bevor der echte Plan geladen war |
+| `impressum.html` | nennt den Vertretungsberechtigten (§ 18 Abs. 2 MStV verlangt eine natürliche Person) |
+| `browser-pane-fernwege.js`, `code-flaeche.js` | gleicher Code, die Kommentare erklären die Marken-Falle vom 06.09. |
+
+**Kein Abgleichsfall (3 Dateien):** `chat-bridge.js` ist ein **Bündel**
+(`scripts/deploy/bundle_chat_bridge.mjs`) und wird aus dem Zweig gebaut — die Zweig-
+Auth-Logik steckt nachweislich darin (`cacheSchreiben`, `authCache`, `AUTH_CACHE_OK_MS`).
+Daneben liegt unter `/assets/` ein **Altbestand** von `chat-bridge-bilder.js`, der auf
+`chat-bridge-bilder-extern.js` zeigt — eine Datei, die es im Zweig gar nicht gibt und die
+niemand lädt.
+
+**Die Marken** stehen jetzt auf dem ausgelieferten Stand (`check-markenkette --freeze`).
+Eine Erhöhung wäre sinnlos gewesen: der Browser hat diese Inhalte längst, und `chat-store.js`
+hängt an 28 Dateien — die Kette hätte rund 30 Auslieferungen erzwungen, ohne dass sich ein
+Byte im Verhalten ändert. **Erst die Inhalte, dann die Marken** — in dieser Reihenfolge ist
+es aufgegangen.
+
+**Ergebnis:** `check:schutz-echtheit` ist erstmals wieder grün (48 ausgelieferte Dateien aus
+8 Manifesten stimmen mit smejj.com überein), 17/17 Sperren-Proben, 660 Frontend-Proben,
+Rundgang 19/19 und 152 Responsive-Messpunkte ohne Befund.
