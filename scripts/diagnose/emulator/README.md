@@ -30,3 +30,26 @@ alle vier Ereignisse: pointerdown, touchstart, touchend, click auf `#startSend`.
 Tagen nicht offen war, liefert die App von vorgestern (hier: v851 bzw. v823 vom 08.09.
 gegen live v854). `registration.update()`, kurz warten, `waiting.postMessage({type:"SKIP_WAITING"})`,
 neu laden — erst dann misst man die aktuelle App.
+
+## Den Emulator auf diesem Mac durchhaltefähig starten (12.09.2026, fünf Abstürze gebraucht)
+
+Mit den AVD-Standardwerten (`hw.ramSize = 1536M`, `hw.gpu.enabled = no`) stirbt der
+Emulator nach etwa 20–30 Chrome-Navigationen — mitten im Rundgang, ohne Fehlermeldung in
+der App. **Zwei parallel** gestartete Emulatoren schießen sich sofort gegenseitig ab.
+
+Was hält (ohne die AVD-Konfiguration zu ändern — alles nur Startparameter):
+
+    emulator -avd smejj_pixel -no-snapshot-load -no-audio -no-metrics -no-boot-anim \
+             -memory 3072 -gpu swiftshader_indirect
+
+- `-memory 3072` — Chrome mit 19 Seiten sprengt 1,5 GB
+- `-gpu swiftshader_indirect` — erst damit lief der volle Rundgang durch
+- `-no-metrics` — sonst hängt der Start nach einem Absturz im Dialog *„crashdialog to get consent"*
+- **immer nur EIN Emulator** zur Zeit
+
+Nach einem Absturz aufräumen, sonst startet der nächste nicht (*„multiple emulators with
+the same AVD"*): `pkill -f qemu-system`, `rm ~/.android/avd/<name>.avd/multiinstance.lock`,
+`rm -rf /tmp/android-$USER` (die Crash-Ablage).
+
+Das Tablet-AVD (2560×1600) blieb auch so nicht stabil — die Tablet-Breiten deckt
+`messe_responsive.mjs` am Schreibtisch-Chrome ab (768, 1024, 1280).
