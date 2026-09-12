@@ -90,3 +90,66 @@ Lauscher saß auf einem toten Knoten. Am Dokument gelauscht: alle sieben Ereigni
 — 32 Dateien, Backup unter `backups/start-design-lock/2026-09-12T02-32-58-054Z/`.
 Danach `tests/dateisperren.test.mjs` 17/17 grün, `check:markenkette` OK (121 Module),
 `check:frontend` 657/657 grün.
+
+
+---
+
+## Zweiter kompletter Durchgang — auf v859 (12.09., abends)
+
+**Auftrag:** „mach alles noch einmal von A bis Z auf v858". Während des Laufs hat eine
+**Parallelsitzung v859 ausgeliefert** (*„bekannte App-Routen überleben ein echtes
+Neuladen"*). Gemessen wurde darum gegen das, was tatsächlich live war: **v859**.
+
+### Ergebnis
+
+| Bereich | Messung | Ergebnis |
+|---|---|---|
+| Web | Selbsttest + Rundgang, 2 Runden | **19/19** |
+| Responsive | 8 Breiten × 19 Ansichten | **152/152** |
+| Android-Telefon | Selbsttest + Rundgang, 2 Runden | **19/19** |
+| Android-Telefon | Layout über 10 Routen | kein Überlauf, 0 Ziele unter 44 px |
+| Android quer 863×360 | Hinweisstreifen | **0 verdeckt**, Menüknopf bei y=65 (Fix von v855 hält) |
+| Android | Chat per Fingertipp | Frage gesendet, Antwort da |
+| Android | Deep-Link nach echtem Neuladen | `/code`, `/settings`, `/chat-history` bleiben stehen (Fix aus v859 bestätigt) |
+| Android offline | Flugmodus + Gegenprobe | App steht, beide Handy-Module laden |
+| PWA offline | `pwa-offline.mjs`, Gegenprobe | SW aktiv, 229 Dateien, App geht ohne Netz auf |
+| Precache | auf dem Gerät gezählt | 229 Dateien, **0 doppelt** |
+| Tests | `check:frontend` | **661/661** |
+| Sperren | alle acht + 17 Proben | **grün** |
+
+### Zwei Fehler — in meinem Messwerkzeug, nicht in der App
+
+**1. Die Fänger starben an der Umleitung.** Der Selbsttest am Gerät meldete nur 18 von 19
+Ansichten, und in den übrigen nur den sichtbaren Fehlertext — nie den Konsolenfehler, nie
+die gescheiterte Anfrage. GitHub Pages liefert für App-Routen die 404-Seite, die in die App
+umleitet; der Fänger wurde auf der 404-Seite gesetzt und starb mit ihr. Behoben mit
+`Page.addScriptToEvaluateOnNewDocument`.
+
+**2. Mein Fix drängte den fetch-Fänger nach unten.** Seitdem die Fänger vor dem ersten
+Skript der Seite laufen, legt die App ihre eigenen `fetch`-Wrapper darüber — Anfragen, die
+weiter oben beantwortet werden, erreichen meinen nie. Der Selbsttest meldete **2 statt 3
+Schäden in allen 19 Ansichten**, während der Rundgang darunter „in Ordnung" meldete. Die
+Wrapper werden jetzt bei jedem Durchgang obenauf erneuert.
+
+**Das heißt ehrlich:** Die Android-Rundgänge vom Vormittag waren für Konsolen- und
+Netzfehler teilweise blind. Die heutigen auf v859 sind es nicht — der Selbsttest vor jedem
+Lauf beweist das.
+
+### Was nicht belastbar gemessen ist
+
+- **iOS offline auf v859.** Im Simulator sind **zwei** Webclips vom 07.09. installiert,
+  und `simctl launch com.apple.webapp` trifft nicht eindeutig einen davon — mehrere
+  Aufnahmen zeigten Safari mit seiner Leiste statt der installierten App. Die
+  Offline-Aufnahme zeigt die Safari-Fehlerseite; ob das der Webclip war, lässt sich nicht
+  belegen. **Keine Regression behauptet, keine Gesundheit behauptet.** Online startete der
+  Webclip auf v859 sauber im Vollbild. Die Offline-Fähigkeit des v859-Service-Workers ist
+  am Schreibtisch mit Gegenprobe bewiesen; gestern (v858) lief der iOS-Webclip offline.
+- **Android-Tablet.** Das AVD (2560×1600) stürzte auch mit mehr Speicher und
+  Software-Rendering ab. Die Tablet-Breiten (768, 1024, 1280) sind über die
+  Responsive-Messung abgedeckt.
+
+### Umgebung
+
+Der Emulator hält mit Standardwerten keinen ganzen Rundgang durch (1,5 GB, GPU aus).
+Stabil erst mit `-memory 3072 -gpu swiftshader_indirect -no-metrics`, und nur einer zur
+Zeit — dokumentiert in `scripts/diagnose/emulator/README.md`.
