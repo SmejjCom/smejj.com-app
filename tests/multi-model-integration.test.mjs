@@ -12,7 +12,17 @@ test("chat, coding, streaming and model failure share the registry router", asyn
     const body = JSON.parse(raw || "{}");
     const isKimi = req.url.startsWith("/kimi/");
     state.requests.push({ isKimi, body });
-    if ((isKimi && state.kimiFails) || (!isKimi && state.glmFails)) {
+    // WER AUSFAELLT, STEHT IN DER ANFRAGE — nicht in einem gemeinsamen Schalter.
+    //
+    // Bis 12.09. kippte der Test zwei Schalter (kimiFails/glmFails) zwischen den
+    // Anfragen. Allein lief er gruen, in der vollen Suite fiel er um
+    // ("200 !== 502", 33 s statt 8 s): unter Last kann eine Anfrage die Attrappe
+    // erreichen, bevor der Schalter fuer sie gilt — oder ein Wiederholversuch der
+    // vorigen. Der Inhalt der Nachricht reist dagegen MIT der Anfrage und kann
+    // nicht verrutschen. Gleiche Aussage, keine Zeitabhaengigkeit.
+    const nachricht = JSON.stringify(body.messages || []);
+    const sollFallen = nachricht.includes("Alle aus") || (isKimi && nachricht.includes("Fallback"));
+    if (sollFallen || (isKimi && state.kimiFails) || (!isKimi && state.glmFails)) {
       res.writeHead(503, { "Content-Type": "application/json" });
       return res.end('{"error":"unavailable"}');
     }
