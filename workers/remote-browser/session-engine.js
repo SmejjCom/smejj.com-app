@@ -382,21 +382,7 @@ export function createSessionEngine({
   }
 
   async function open({ url, viewport = {}, profil = "" } = {}) {
-    // VOLL? Dann die AELTESTE verdraengen statt abzulehnen.
-    //
-    // BEFUND 2026-08-20, unmittelbar nach der Verlaengerung der Lebensdauer:
-    // Der Betreiber bekam beim Anmelden kein Passwortfeld. Ursache war nicht
-    // die Anmeldeseite, sondern dieses Limit — /api/browser/session
-    // antwortete 429, der Client fiel auf den Standbild-Worker zurueck, und
-    // in einem Standbild gibt es nichts zu tippen.
-    //
-    // Verursacht hatte es die eigene Verbesserung: solange Sitzungen nach
-    // 90 s starben, raeumten sie sich von selbst weg. Mit 30 Minuten
-    // blockierten zwei vergessene Sitzungen beide Plaetze eine halbe Stunde.
-    // Eine laengere Lebensdauer VERLANGT deshalb eine Verdraengung — sonst
-    // macht sie das System unbenutzbarer statt besser.
-    //
-    // Ein Browser sagt auch nie "zu viele Tabs": er raeumt still auf.
+    // Warum so: README.md, Abschnitt "1. Wenn alle Sitzungsplaetze belegt sind".
     while (sessions.size >= cfg.maxSessions) {
       const aelteste = [...sessions.values()].sort((a, b) => a.createdAt - b.createdAt)[0];
       if (!aelteste) break;
@@ -410,28 +396,7 @@ export function createSessionEngine({
       return fail(400, "Ziel-Host ist blockiert.");
     }
     const playwright = await playwrightLoader();
-    // WARUM NICHT MEHR HEADLESS (recherchiert und gemessen 2026-08-20):
-    // Google blockiert Anmeldungen aus automatisierten Browsern seit Januar
-    // 2021 ausdruecklich — der Betreiber bekam deshalb "kein Passwortfeld".
-    // Headless ist dabei das lauteste Signal, und `navigator.webdriver`
-    // meldet zusaetzlich von selbst "ich bin automatisiert".
-    //
-    // Zwei Gegenmassnahmen, beide billig:
-    //   * headful auf einem VIRTUELLEN Bildschirm (Xvfb liegt im
-    //     Playwright-Image bereit, der Container startet unter xvfb-run) —
-    //     kein Desktop noetig, aber ein echter Fensterbaum.
-    //   * --disable-blink-features=AutomationControlled setzt
-    //     navigator.webdriver auf false, und zwar in der Engine, nicht per
-    //     nachgeschobenem Skript.
-    //
-    // EHRLICHE GRENZE: Das ist keine Tarnkappe. Google arbeitet aktiv
-    // dagegen und wird Anmeldungen weiter erschweren — fuer Google-Dienste
-    // ist OAuth der richtige Weg, nicht das Nachbauen einer Passworteingabe.
-    // Fuer Amazon, Alibaba und die meisten Seiten reicht es.
-    //
-    // --single-process ist BEWUSST WEG: mit echtem Fensterbaum ist er
-    // instabil (Renderer und Browser im selben Prozess), und genau dort
-    // laufen die Seiten, die uns interessieren.
+    // Warum so: README.md, Abschnitt "2. Warum Chromium nicht mehr headless startet".
     const startArgs = [
       "--no-sandbox",
       "--disable-dev-shm-usage",
@@ -454,18 +419,7 @@ export function createSessionEngine({
     const kopflos = !bildschirm;
     const pageOptions = buildPageOptions(viewport);
     const verzeichnis = profilVerzeichnis(profil);
-    // Mit Konto-Profil: dauerhafter Kontext, die Anmeldung ueberlebt die
-    // Sitzung. Ohne: fluechtiges Fenster wie bisher (fail-closed).
-    // NOTAUSGANG: headful braucht einen laufenden X-Server. Ist er nicht da
-    // (falsch gestarteter Container, fremde Umgebung, kuenftiger Umbau),
-    // scheitert der Start mit "launched a headed browser without having a
-    // XServer running" — und der ganze Browser waere TOT.
-    //
-    // Ein Fern-Browser, der gar nicht startet, ist schlimmer als einer, den
-    // Google erkennt. Deshalb wird bei einem Fehlschlag still auf headless
-    // zurueckgefallen: schlechter getarnt, aber benutzbar. Lokal war headful
-    // nicht pruefbar (amd64-Chrome unter Emulation auf einem ARM-Mac), und
-    // ungeprueft deployen heisst hier: den Dienst aufs Spiel setzen.
+    // Warum so: README.md, Abschnitt "3. Mit Konto-Profil oder ohne".
     async function starte(ohneBildschirm) {
       return verzeichnis
         ? playwright.chromium.launchPersistentContext(verzeichnis, { headless: ohneBildschirm, args: startArgs, ...pageOptions })
@@ -518,17 +472,7 @@ export function createSessionEngine({
       page.setDefaultTimeout(cfg.actionTimeoutMs);
       await page.goto(parsed.url.toString(), { waitUntil: "domcontentloaded", timeout: cfg.navTimeoutMs });
       await page.waitForLoadState("networkidle", { timeout: cfg.settleTimeoutMs }).catch(() => {});
-      // EIN STERBENDER BROWSER DARF NICHT DEN DIENST MITNEHMEN.
-      //
-      // Gemessen 2026-08-21: stuerzt Chrome ab (headful war der Ausloeser,
-      // der Fall gilt aber immer), meldet Playwright den Fehler asynchron —
-      // weit ausserhalb jedes try/catch. Der Crash-Guard des Workers macht
-      // daraus pflichtgemaess einen Exit 1, und der GANZE Fern-Browser ist
-      // weg, samt aller anderen Sitzungen. Der Container war danach tot.
-      //
-      // Ein abgestuerzter Browser ist ein normaler Betriebsfall, kein
-      // Programmfehler: wir raeumen die betroffene Sitzung auf und lassen den
-      // Dienst laufen. Die naechste Anfrage baut einfach neu auf.
+      // Warum so: README.md, Abschnitt "4. Wenn der Browser wegbricht".
       browser.on?.("disconnected", () => {
         const tot = sessions.get(sitzungsId);
         if (!tot) return;
@@ -634,19 +578,7 @@ export function createSessionEngine({
           await locator.fill(action.text, { timeout: cfg.aktionTimeoutMs });
           return mitZiel({});
         }
-        // ZWEITER VERSUCH MIT NACHDRUCK — benannt, nicht heimlich.
-        //
-        // Live 10.09. (de.wikipedia.org): Der Suchknopf ist ein
-        // `<button type="submit">`, das Wikipedia absichtlich unsichtbar macht
-        // (OOUI legt ein Symbol darueber). Playwright wartet dann auf
-        // Bedienbarkeit, die nie eintritt — fuenf Schritte hintereinander
-        // "element_nicht_bedienbar", der Auftrag scheiterte an einem Knopf,
-        // den jeder Mensch benutzen kann.
-        //
-        // Erzwungen wird NUR das, was die Maus ohnehin gewaehlt hat: ein
-        // EINDEUTIG aufgeloestes Element (Mehrdeutiges fliegt vorher raus).
-        // Es bleibt bei EINEM Nachdruck, und die Antwort sagt es (erzwungen),
-        // damit im Verlauf steht, was wirklich geschah.
+        // Warum so: README.md, Abschnitt "5. Der erzwungene Klick".
         let erzwungen = false;
         try {
           await locator.click({ timeout: cfg.aktionTimeoutMs });
@@ -665,17 +597,7 @@ export function createSessionEngine({
           try {
             await locator.click({ timeout: cfg.settleTimeoutMs, force: true });
           } catch (zweiter) {
-            // LETZTE STUFE: DER KLICK AUS DER SEITE HERAUS.
-            //
-            // Playwright weigert sich auch mit `force`, wenn das Element gar
-            // keine sichtbare Flaeche hat ("Element is not visible") — genau der
-            // Fall bei Wikipedias Suchknopf, der unter einem Symbol liegt. Live
-            // 11.09. endeten so ZWOELF Schritte eines Laufes, jeder nach zehn
-            // Sekunden Warten. Die Chrome-Bruecke macht seit dem 20.08. das
-            // Naheliegende: sie ruft `element.click()` in der Seite auf. Der
-            // ferne Browser tut das ab jetzt auch — dieselbe Maus, dasselbe
-            // Verhalten. Geklickt wird weiterhin NUR das eine, eindeutig
-            // aufgeloeste Element, das die Maus selbst gewaehlt hat.
+            // Warum so: README.md, Abschnitt "6. Der Klick aus der Seite heraus".
             if (!/not visible|outside of the viewport|Timeout .*exceeded/i.test(String(zweiter?.message || zweiter))) throw zweiter;
             await locator.evaluate((el) => el.click());
           }
