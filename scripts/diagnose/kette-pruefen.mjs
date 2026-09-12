@@ -186,7 +186,13 @@ export function bewerteSicherung(action, ersatz, jetzt) {
   return action === "unbekannt" && !ersatz ? "grau" : "rot";
 }
 
-async function hole(url, timeoutMs = 15000) {
+// FRIST AM GUTEN FALL BEMESSEN (12.09.): 15 s reichten fuer einen KALTSTART
+// nicht. Das Hausmodell auf Zeabur schlaeft bei Nichtgebrauch ein und brauchte
+// gemessen 16,0 s fuer die erste Antwort — danach 1,4 s. Die Kette meldete
+// darum "nicht erreichbar" fuer einen gesunden Dienst. Ein grosszuegiges
+// Zeitfenster kostet im gesunden Fall NICHTS (die Antwort kommt ja), eine zu
+// knappe Frist kostet einen Fehlalarm.
+async function hole(url, timeoutMs = 40000) {
   const abbruch = AbortSignal.timeout(timeoutMs);
   const start = Date.now();
   const antwort = await fetch(url, { signal: abbruch, redirect: "follow" });
