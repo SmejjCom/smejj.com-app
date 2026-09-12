@@ -45,6 +45,13 @@ test("chat, coding, streaming and model failure share the registry router", asyn
       // nicht "flakig", er mass die Umgebung mit. Ohne SMEJJ_*-Erbe misst er nur
       // noch das, was er selbst aufgebaut hat.
       ...Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith("SMEJJ_"))),
+      // UND DIE GEHEIMDATEI DES RECHNERS GAR NICHT ERST LESEN. src/server.js ruft
+      // beim Start loadSecureLocalEnv(), und das fuellt jede fehlende Variable aus
+      // ~/.config/smejj.com/env.local nach — das Wegfiltern oben machte die
+      // Luecke fuer die ECHTEN Schluessel sogar erst frei. Nachgemessen 12.09.:
+      // die volle Suite blieb bei "200 !== 502". Ein Pfad, den es nicht gibt,
+      // laesst loadDotEnv still leer ausgehen (fail-closed, siehe shared/env.js).
+      SMEJJ_LOCAL_ENV_FILE: "/nonexistent/smejj-multi-model-test/env.local",
       PORT: String(appPort),
       SMEJJ_HOST: "127.0.0.1",
       SMEJJ_SERVER_AI_ENABLED: "true",
