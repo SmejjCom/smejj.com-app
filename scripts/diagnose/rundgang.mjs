@@ -194,6 +194,21 @@ async function main() {
     const page = fern ? verbindung.page : await openPage(verbindung);
     await page("Page.enable");
     await page("Runtime.enable");
+    // DIE FAENGER MUESSEN JEDEN DOKUMENTWECHSEL UEBERLEBEN.
+    //
+    // GEMESSEN 2026-09-12 am Android-Geraet: der Selbsttest meldete nur 18 von
+    // 19 Ansichten — und in den uebrigen NUR den sichtbaren Fehlertext, nie den
+    // Konsolenfehler und nie die gescheiterte Anfrage. Der Grund liegt an der
+    // Adresse: GitHub Pages liefert fuer /suche, /code, /projekte … die
+    // 404-Seite, die ihrerseits in die App umleitet. Der Faenger wurde also auf
+    // der 404-Seite gesetzt und starb mit ihr; danach waren console.error und
+    // fetch wieder die originalen. Ein Rundgang, der so misst, meldet
+    // reihenweise "in Ordnung", weil er nichts mehr HOEREN kann.
+    //
+    // addScriptToEvaluateOnNewDocument haengt beides an JEDES neue Dokument —
+    // vor dem ersten Skript der Seite, auch nach jeder Umleitung.
+    await page("Page.addScriptToEvaluateOnNewDocument", { source: ANMELDEN }).catch(() => {});
+    await page("Page.addScriptToEvaluateOnNewDocument", { source: FAENGER_SETZEN }).catch(() => {});
     // Auf einem echten Geraet darf die Schreibtischgroesse NICHT erzwungen
     // werden — sonst misst man wieder 1280 px statt dessen, was der Benutzer
     // in der Hand haelt.
