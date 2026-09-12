@@ -156,3 +156,30 @@ function openSocket(url) {
 export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/**
+ * Dockt an einen BEREITS LAUFENDEN Chrome an, statt einen eigenen zu starten.
+ *
+ * Warum das eine eigene Funktion braucht: Der Chrome im Android-Emulator laesst
+ * sich nicht starten wie der auf dem Schreibtisch — er laeuft schon, und die
+ * Bruecke dorthin ist `adb forward tcp:9222 localabstract:chrome_devtools_remote`.
+ * Damit misst dieselbe Pruefung, die auf dem Schreibtisch laeuft, auch auf dem
+ * Telefon. Der Sinn der Uebung: EINE Pruefregel, zwei Geraete — nicht zwei
+ * Werkzeuge, die auseinanderlaufen (die Lehre "zwei Quellen fuer eine Wahl").
+ *
+ * Angedockt wird an eine BESTEHENDE Seite, nicht per Target.createTarget: das
+ * lehnt Chrome auf Android ab. Die Rueckgabe hat dieselbe Form wie openPage —
+ * eine Funktion (method, params) — damit Aufrufer nichts unterscheiden muessen.
+ */
+export async function openRemotePage(endpunkt = "http://localhost:9222", { urlMuster = /^https?:/ } = {}) {
+  const liste = await fetchJson(`${endpunkt.replace(/\/$/, "")}/json/list`);
+  const seiten = liste.filter((t) => t.type === "page" && urlMuster.test(String(t.url || "")));
+  if (!seiten.length) throw new Error(`Keine offene Seite unter ${endpunkt} — ist der Browser auf dem Geraet offen?`);
+  const seite = seiten[0];
+  const socket = await openSocket(seite.webSocketDebuggerUrl);
+  return {
+    ziel: seite.url,
+    page: (method, params = {}) => socket.send(method, params),
+    close: async () => { socket.close(); }
+  };
+}

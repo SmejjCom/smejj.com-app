@@ -21,7 +21,9 @@
 // Summe.
 //
 // Aufruf: node scripts/diagnose/rundgang.mjs [--url https://smejj.com/] [--runden 2] [--json]
-import { launchChrome, openPage, sleep } from "../testing/cdp-client.mjs";
+//         [--fern http://localhost:9222]  — auf einem laufenden Browser messen
+//         (Android-Emulator: adb forward tcp:9222 localabstract:chrome_devtools_remote)
+import { launchChrome, openPage, openRemotePage, sleep } from "../testing/cdp-client.mjs";
 
 const ANSICHTEN = [
   ["Startseite", "/"], ["Suche", "/search"], ["Websites", "/websites"],
@@ -166,20 +168,29 @@ async function main() {
   const runden = Math.max(1, Number(arg("--runden", "2")) || 2);
   const alsJson = process.argv.includes("--json");
   const selbsttest = process.argv.includes("--selbsttest");
-  const chrome = await launchChrome();
-  let aufraeumen = () => { chrome.close().catch(() => {}); };
+  // --fern: an einen BEREITS LAUFENDEN Browser andocken statt einen eigenen zu
+  // starten. Gebraucht fuer den Android-Emulator (Bruecke: adb forward
+  // tcp:9222 localabstract:chrome_devtools_remote). Damit misst auf dem Telefon
+  // DIESELBE Regel wie auf dem Schreibtisch — kein zweites Werkzeug, das
+  // auseinanderlaufen kann.
+  const fern = arg("--fern", "");
+  const verbindung = fern ? await openRemotePage(fern) : await launchChrome();
+  let aufraeumen = () => { verbindung.close().catch(() => {}); };
   for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { aufraeumen(); process.exit(130); });
 
   const alle = [];
   try {
-    const page = await openPage(chrome);
+    const page = fern ? verbindung.page : await openPage(verbindung);
     await page("Page.enable");
     await page("Runtime.enable");
-    await page("Emulation.setDeviceMetricsOverride", { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+    // Auf einem echten Geraet darf die Schreibtischgroesse NICHT erzwungen
+    // werden — sonst misst man wieder 1280 px statt dessen, was der Benutzer
+    // in der Hand haelt.
+    if (!fern) await page("Emulation.setDeviceMetricsOverride", { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
     for (let runde = 1; runde <= runden; runde++) alle.push(...(await eineRunde(page, url, runde, selbsttest)));
   } finally {
     aufraeumen = () => {};
-    await chrome.close();
+    await verbindung.close();
   }
 
   if (alsJson) { console.log(JSON.stringify(alle, null, 2)); return; }
