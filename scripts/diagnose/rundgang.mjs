@@ -65,29 +65,44 @@ const ANMELDEN = `(() => {
 // Faenger, die VOR dem Betreten der Ansicht stehen muessen — sonst entgeht
 // ihnen genau der Fehler beim Aufbau, auf den es ankommt.
 const FAENGER_SETZEN = `(() => {
-  if (window.__smejjRundgang) { window.__smejjRundgang.fehler.length = 0; window.__smejjRundgang.netz.length = 0; return "zurueckgesetzt"; }
-  const halde = { fehler: [], netz: [] };
+  // WARUM DIE WRAPPER BEI JEDEM AUFRUF NEU GELEGT WERDEN (2026-09-12):
+  // Seit die Faenger per addScriptToEvaluateOnNewDocument schon VOR dem ersten
+  // Skript der Seite laufen, sitzt mein fetch-Wrapper ganz UNTEN in der Kette —
+  // die App legt danach ihre eigenen darueber (chat-bridge-auth, auth-gate …).
+  // Eine Anfrage, die weiter oben abgefangen und beantwortet wird, erreicht
+  // meinen Wrapper dann nie. GEMESSEN: der Selbsttest meldete nur noch 2 von 3
+  // Schaeden — die gescheiterte Anfrage fehlte in ALLEN 19 Ansichten.
+  // Die frueheren Ereignis-Lauscher bleiben (sie sind additiv), die beiden
+  // Wrapper werden jedes Mal obenauf erneuert.
+  const halde = window.__smejjRundgang || { fehler: [], netz: [] };
+  const schonDa = Boolean(window.__smejjRundgang);
   window.__smejjRundgang = halde;
+  halde.fehler.length = 0;
+  halde.netz.length = 0;
+  const legeWrapperAuf = () => {
+    const altConsole = console.error;
+    console.error = (...teile) => { halde.fehler.push(teile.map((t) => String(t)).join(" ").slice(0, 150)); return altConsole.apply(console, teile); };
+    const echtesFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const adresse = String(args[0]?.url || args[0] || "");
+      try {
+        const antwort = await echtesFetch(...args);
+        if (!antwort.ok) halde.netz.push(antwort.status + " " + adresse.slice(0, 90));
+        return antwort;
+      } catch (f) {
+        halde.netz.push("Netzfehler " + adresse.slice(0, 90));
+        throw f;
+      }
+    };
+  };
+  if (schonDa) { legeWrapperAuf(); return "erneuert"; }
   window.addEventListener("error", (e) => {
     halde.fehler.push(String(e.message || e.error || "Fehler").slice(0, 150));
   });
   window.addEventListener("unhandledrejection", (e) => {
     halde.fehler.push("unbehandelt: " + String(e.reason?.message || e.reason || "?").slice(0, 130));
   });
-  const alt = console.error;
-  console.error = (...teile) => { halde.fehler.push(teile.map((t) => String(t)).join(" ").slice(0, 150)); return alt.apply(console, teile); };
-  const echt = window.fetch;
-  window.fetch = async (...args) => {
-    const adresse = String(args[0]?.url || args[0] || "");
-    try {
-      const antwort = await echt(...args);
-      if (!antwort.ok) halde.netz.push(antwort.status + " " + adresse.slice(0, 90));
-      return antwort;
-    } catch (f) {
-      halde.netz.push("Netzfehler " + adresse.slice(0, 90));
-      throw f;
-    }
-  };
+  legeWrapperAuf();
   return "gesetzt";
 })()`;
 
