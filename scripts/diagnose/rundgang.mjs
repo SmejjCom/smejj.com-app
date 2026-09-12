@@ -91,6 +91,13 @@ const FAENGER_SETZEN = `(() => {
 
 const SAMMLE = `(() => {
   const halde = window.__smejjRundgang || { fehler: [], netz: [] };
+  // document.body kann NULL sein, waehrend ein Seitenwechsel laeuft. Bei
+  // /chat-history liefert GitHub Pages die 404-Seite, die ihrerseits in die App
+  // umleitet — genau dann hat die erste Fassung gemessen und meldete
+  // "TypeError: reading 'innerText' of null" plus "Ansicht wirkt leer". Beides
+  // war MEIN Messfehler, nicht die App: in Runde 2 war die Umleitung im
+  // Zwischenspeicher und alles gruen.
+  if (!document.body) return { fehler: [], netz: [], textLaenge: -1, bedienelemente: -1, fehlertexte: [], ansichtId: "", imWechsel: true };
   const aktiv = document.querySelector("section.view.is-active, .premium-view.is-active") || document.body;
   const text = (aktiv.innerText || "").trim();
   const bedienbar = aktiv.querySelectorAll("button, a, input, textarea, select");
@@ -140,6 +147,13 @@ async function eineRunde(page, url, nummer, selbsttest = false) {
     await auswerten(page, ANMELDEN, "anmelden").catch(() => {});
     await auswerten(page, FAENGER_SETZEN, "faenger").catch(() => {});
     await sleep(2200);
+    // Auf ein fertiges Dokument warten — sonst misst man den Wechsel, nicht die
+    // Ansicht. Bis zu vier Versuche, dann gilt der Stand als er ist.
+    for (let i = 0; i < 4; i++) {
+      const fertig = await auswerten(page, '(() => Boolean(document.body) && document.readyState !== "loading")()', "warten").catch(() => false);
+      if (fertig) break;
+      await sleep(600);
+    }
     if (selbsttest) await auswerten(page, SCHADEN_STREUEN, "selbsttest").catch(() => {});
     const stand = await auswerten(page, SAMMLE, `sammeln ${name}`).catch((f) => ({ fehler: [String(f.message).slice(0, 120)], netz: [], textLaenge: 0, bedienelemente: 0, fehlertexte: [] }));
     ergebnisse.push({ runde: nummer, name, pfad, ...stand });
@@ -188,6 +202,9 @@ async function main() {
         zeilen.push(`Runde ${lauf.runde}: Anfrage ${n}`);
       }
       for (const t of lauf.fehlertexte) zeilen.push(`Runde ${lauf.runde}: sichtbarer Fehlertext "${t}"`);
+      // -1 heisst "mitten im Seitenwechsel gemessen" — daraus darf man nichts
+      // schliessen, weder gut noch schlecht.
+      if (lauf.imWechsel) continue;
       if (lauf.textLaenge < 40 && lauf.bedienelemente < 3) zeilen.push(`Runde ${lauf.runde}: Ansicht wirkt leer (${lauf.textLaenge} Zeichen, ${lauf.bedienelemente} Bedienelemente)`);
     }
     const nurErsteRunde = zeilen.length > 0 && zeilen.every((z) => z.startsWith("Runde 1"));
