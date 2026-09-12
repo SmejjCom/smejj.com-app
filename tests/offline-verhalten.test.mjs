@@ -52,3 +52,24 @@ test("Service Worker haelt die Shell offline lieferbar", () => {
   assert.match(sw, /const SHELL = \[/);
   assert.ok(sw.includes('"/"'), "die Startseite selbst muss im Precache liegen");
 });
+
+test("kein Eintrag steht zweimal im Precache", () => {
+  // GEMESSEN 2026-09-12, im Android-Emulator: der Cache smejj-shell-v857 war
+  // LEER — null Dateien, waehrend der alte v855 noch danebenstand. Ursache
+  // waren zwei doppelte Zeilen in SHELL (mobil-dock.js und mobil-ansichten.js
+  // standen an zwei Stellen der Liste, hineingeraten beim Live-Abgleich).
+  //
+  // cache.addAll() lehnt eine Liste mit doppelten Requests komplett ab
+  // (InvalidStateError). Nicht der doppelte Eintrag faellt aus, sondern der
+  // GANZE Precache — die App ist dann offline tot, ohne dass irgendwo ein
+  // Fehler sichtbar wird. Dieselbe Bauart wie die 404-Falle vom 09.09.:
+  // addAll ist alles oder nichts.
+  const liste = sw.slice(sw.indexOf("const SHELL = ["), sw.indexOf("];", sw.indexOf("const SHELL = [")));
+  const pfade = [...liste.matchAll(/"(\/[^"]*)"/g)].map((m) => m[1]);
+  const zaehler = new Map();
+  for (const p of pfade) zaehler.set(p, (zaehler.get(p) || 0) + 1);
+  const doppelt = [...zaehler].filter(([, n]) => n > 1).map(([p, n]) => `${p} (${n}x)`);
+  assert.deepEqual(doppelt, [],
+    `doppelte Precache-Eintraege lassen cache.addAll KOMPLETT scheitern:\n  ${doppelt.join("\n  ")}`);
+  assert.ok(pfade.length > 100, `nur ${pfade.length} Eintraege gefunden — misst der Test die richtige Liste?`);
+});
