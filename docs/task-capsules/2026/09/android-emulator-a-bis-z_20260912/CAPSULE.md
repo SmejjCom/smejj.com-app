@@ -201,3 +201,42 @@ Parallelsitzung am Service Worker (v859). Diese Abwägung gehört dem Betreiber.
 **Ehrliche Korrektur zu gestern:** Der iOS-„Offline-Beweis" vom 12.09. mittags (v858) lief
 vermutlich aus dem HTTP-Netzwerk-Cache des Webclips, nicht aus einem Service Worker — denn
 auch die alten Clips hatten keinen. Nach dem Simulator-Neustart war dieser Cache weg.
+
+
+---
+
+## GELÖST: Die installierte App geht auch vor der Anmeldung offline auf (SW v860/v861)
+
+**Betreiber-Entscheidung:** „Schmaler Offline-Rückfall" — nicht 2 MB für jeden Besucher der
+Werbeseite.
+
+**Umsetzung — ein Service Worker, zwei Größen:**
+- `willkommen.html` lädt `willkommen-offline.js`. Es registriert `/sw.js?eingang=willkommen`,
+  **nur wenn noch kein Service Worker aktiv ist** (wer sich abmeldet, behält seine 2 MB).
+- `sw.js` erkennt den Zusatz und legt dann nur die Landeseite ab: **12 Dateien** unter eigenem
+  Namen `smejj-willkommen-v…`. Ohne Zusatz bleibt alles wie zuvor; der volle Speicher enthält
+  zusätzlich die sechs Landeseiten-Dateien (235 statt 229).
+- Nach der Anmeldung registriert `app.js` den vollen `/sw.js` — eine andere Skript-Adresse,
+  also ein Update. Er übernimmt und räumt den schmalen Speicher weg.
+- Offline liefert der schmale für eine **Navigation** die Landeseite; Bildern und Skripten
+  wird nie eine HTML-Seite untergeschoben.
+- Das rote Offline-Band der App wird **wiederverwendet**. Weil `navigator.onLine` auf iOS
+  `true` bleibt, prüft die Seite mit einer echten Anfrage (`HEAD` — die läuft am Service
+  Worker vorbei) und fragt nach, bis das Netz zurück ist.
+- **v861 dazu:** Die erste Fassung prüfte nur beim Start. Live gemessen erschien das Band
+  nicht, wenn das Netz *während* des Besuchs wegfiel. Jetzt auch bei `visibilitychange` —
+  der typische Fall: App im Hintergrund, U-Bahn, wieder nach vorn.
+
+**Bewiesen:**
+- **Verhaltenstest mit dem echten `sw.js`** in nachgebauter Service-Worker-Umgebung
+  (ablegen, aufräumen, offline ausliefern). Gegenprobe gegen den alten `sw.js`: genau die
+  vier Proben des neuen Verhaltens scheitern, die vier des unveränderten bleiben grün.
+- **Live, Schreibtisch:** neuer Besucher → `sw.js?eingang=willkommen`, 12 Einträge; offline
+  geht die Landeseite auf. Band-Kette: Netz weg → Band erscheint → Netz zurück → Band fährt weg.
+- **Live, iOS-Webclip — der Fall aus dem Befund:** vorher 0 Service Worker, 0 Cache. Nach 75 s
+  online: ein `ServiceWorkers`- und ein `CacheStorage`-Ordner mit `smejj-willkommen-v861`,
+  **66 KB**. Offline mit Gegenprobe (`example.com` scheitert): die installierte App öffnet
+  **im Vollbild die Landeseite mit dem Offline-Band**.
+- **Keine Regression:** App-Rundgang 19/19 in zwei Runden (Selbsttest bestanden); PWA
+  offline für die angemeldete App mit 235 Dateien und Gegenprobe; 678 Frontend-Proben;
+  17/17 Sperren-Proben; Start-Lock gestempelt.
