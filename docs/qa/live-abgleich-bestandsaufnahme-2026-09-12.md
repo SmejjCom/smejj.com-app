@@ -150,3 +150,30 @@ Behoben (229 Einträge, alle eindeutig), ausgeliefert als v858, auf dem Gerät n
 
 Wächter dagegen: `tests/offline-verhalten.test.mjs` — „kein Eintrag steht zweimal im
 Precache", mit Gegenprobe.
+
+
+---
+
+## NACHTRAG 3: offline auch auf iOS bewiesen
+
+Der Android-Beweis gilt nicht für iOS — Safari führt einen eigenen Service-Worker-Speicher
+mit eigenen Grenzen. Deshalb derselbe Nachweis im iPhone-Simulator (iOS 26.5, iPhone 17 Pro).
+
+Der Simulator hat keinen eigenen Netzschalter; er hängt am Netz des Macs. Also: das WLAN des
+Macs für rund zwei Minuten abgeschaltet — mit einem Hintergrundbefehl als Sicherheitsnetz,
+der es nach 180 Sekunden auf jeden Fall wieder einschaltet, falls der Lauf abbricht.
+
+**Gegenprobe zuerst** (sonst ist der ganze Nachweis wertlos): Safari im Simulator auf
+`example.com` → *„Safari kann die Seite nicht öffnen, da dein iPhone nicht mit dem Internet
+verbunden ist."* Das Netz war im Simulator wirklich weg.
+
+**Im selben Zustand** startet die installierte App (`com.apple.webapp`) und zeigt ihre
+vollständige Oberfläche: Logo, Navigation, Überschriften, beide Knöpfe, Eingabefeld.
+
+Ein Unterschied zu Android ist erklärbar und kein Mangel: Dort erschien das rote Band
+„Offline — keine Verbindung", auf iOS nicht. `offline-banner.js` prüft den Startzustand
+durchaus (`navigator.onLine === false`), aber iOS meldet `onLine` weiterhin true, wenn eine
+Schnittstelle aktiv ist — der Kommentar im Code sagt genau das: *onLine ist nur ein Hinweis,
+kein Beweis.* Die App funktioniert offline; nur der Hinweis bleibt dort aus.
+
+Danach WLAN wieder an, Verbindung bestätigt (HTTP 200).
