@@ -114,16 +114,6 @@ button:hover {
   color: #151515;
 }
 
-.
-
-.
-
-.
-
-.
-
-.
-
 .workspace {
   min-width: 0;
   min-height: 100dvh;
@@ -511,8 +501,6 @@ textarea {
   stroke-linejoin: round;
 }
 
-.
-
 .surface,
 .empty-state {
   display: grid;
@@ -707,12 +695,6 @@ body.right-panel-open .workspace {
 .browser-button {
   right: env(safe-area-inset-right);
 }
-
-.
-
-.
-
-.
 
 body.task-indicator-active .split-icon span:last-child {
   position: absolute;
@@ -949,12 +931,6 @@ body.is-resizing-panel .panel-resizer::before {
   transform: translateX(0);
 }
 
-.
-
-.
-
-.
-
 .browser-panel-nav,
 .browser-panel-status {
   display: grid;
@@ -988,10 +964,6 @@ body.is-resizing-panel .panel-resizer::before {
   background: rgba(255, 255, 255, 0.035);
   color: #ffffff;
 }
-
-.
-
-.
 
 .brand {
   padding: 2px 8px 14px;
@@ -1043,12 +1015,6 @@ body.is-resizing-panel .panel-resizer::before {
 .sidebar .nav-button.is-active {
   background: transparent;
 }
-
-.
-
-.
-
-.
 
 .profile-dock {
   align-self: end;
