@@ -34,9 +34,33 @@ const ev = async (a, wo="?") => {
 };
 await page("Page.navigate", { url: "https://smejj.com/" });
 await sleep(5000);
+// BEIDE Schluessel, nicht nur einer (12.09.): Das fruehe Tor in
+// auth-gate-frueh.js prueft das VORHANDENSEIN von smejj.auth.accessToken.v1.
+// Ohne ihn schickt es den Besucher auf die Werbeseite — und die laedt app.js
+// gar nicht, registriert also keinen Service Worker. Das Werkzeug meldete
+// deshalb "Precache leer, SW nicht aktiv" fuer eine kerngesunde App.
 await ev('localStorage.setItem("smejj.session.v1", JSON.stringify({ authenticated: true, mode: "local-only" }))', "anmelden");
+await ev('localStorage.setItem("smejj.auth.accessToken.v1", "qa")', "ausweis");
 await page("Page.navigate", { url: "https://smejj.com/" });
-await sleep(7000);
+await sleep(9000);
+
+// WAS HABE ICH HIER EIGENTLICH VOR MIR? Ohne diese Frage misst man die
+// Werbeseite und haelt das Ergebnis fuer einen Befund ueber die App.
+const seite = await ev('document.querySelector("#startMessage") ? "App" : "Landeseite"', "seite");
+console.log("0. Gemessen wird:", seite);
+if (seite !== "App") {
+  console.log("   ABBRUCH: die App wurde nicht geladen — jede Zahl unten waere eine Aussage ueber die Werbeseite.");
+  await chrome.close().catch(() => {});
+  process.exit(1);
+}
+
+// Der Precache braucht Zeit: 229 Dateien, darunter ein 1,2-MB-Arbeiter.
+// Warten, bis er steht — eine zu knappe Frist meldet "leer" fuer "noch am Fuellen".
+for (let i = 0; i < 24; i += 1) {
+  const voll = await ev('(async () => { const n = await caches.keys(); let z = 0; for (const k of n) z += (await (await caches.open(k)).keys()).length; return z; })()', "warten");
+  if (voll > 0) break;
+  await sleep(5000);
+}
 
 console.log("1. Service Worker");
 console.log("  ", JSON.stringify(await ev(`(async () => {
