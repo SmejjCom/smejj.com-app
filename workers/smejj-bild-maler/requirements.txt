@@ -29,6 +29,14 @@ diffusers==0.38.0
 # Beide per Revert zurueck (0eaafe5f, 06260151). Diese Datei spiegelt den GEBAUTEN Stand; der
 # CVE-Waechter darf hier nicht falsch gruen sein. Naechster Anlauf nur mit Ursachenkette aus dem Abbild.
 transformers==5.5.0
+# 2026-09-12 gemessen (api.osv.dev, Version fuer Version 1.1.1 bis 1.10.1): JEDE Fassung
+# traegt GHSA-4j2p-28q2-5m79 + PYSEC-2026-3804, betroffen ist alles bis 1.14.0 — es gibt
+# KEINE saubere Version. Anheben bringt hier also nichts, das ist kein Versaeumnis.
+# Der Angriffsweg ist bei uns zudem zu: die Luecke sitzt in load_checkpoint_in_model /
+# load_checkpoint_and_dispatch (manipulierte weight_map in fremden sharded checkpoints).
+# server.py ruft beide NIE (0 Treffer), laedt ausschliesslich das feste Modell aus
+# SMEJJ_BILD_MODELL (Standard stabilityai/sd-turbo) und nimmt keine Nutzer-Dateien an.
+# CVSS verlangt ohnehin AV:L + UI:R — ein lokaler Angreifer mit Nutzerinteraktion.
 accelerate==1.1.1
 # 0.8.0 ist PFLICHT fuer diffusers 0.38: der erste Bau mit 0.4.5 scheiterte an
 # ResolutionImpossible, und ein fehlgeschlagener Bau sieht aus, als waere die
