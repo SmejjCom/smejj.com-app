@@ -17,6 +17,12 @@
 //     wertlos. `navigator.onLine` allein beweist gar nichts.
 //
 // Aufruf: node scripts/diagnose/pwa-offline.mjs
+//
+// DIE ZEILE, DIE FEHLTE (12.09.): ohne diesen Import starb das Werkzeug schon
+// in der ersten Zeile ("launchChrome is not defined") — eine Messung, die gar
+// nicht erst laeuft, sieht im Protokoll aus wie eine, die nichts gefunden hat.
+import { launchChrome, openPage, sleep } from "../testing/cdp-client.mjs";
+
 const chrome = await launchChrome();
 process.once("SIGTERM", () => { chrome.close().catch(()=>{}); process.exit(130); });
 const page = await openPage(chrome);
