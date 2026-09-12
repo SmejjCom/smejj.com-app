@@ -101,3 +101,25 @@ test("die Landeseite bindet das Modul wirklich ein", () => {
   assert.match(seite, /<script src="\/assets\/willkommen-offline\.js\?v=\d+" type="module"><\/script>/,
     "ohne Einbindung bleibt alles beim Alten — die Datei allein heilt nichts");
 });
+
+test("wieder nach vorn geholt: das Netz wird erneut geprueft", async () => {
+  // Live gemessen (v860): die Seite pruefte nur beim Start. Fiel das Netz weg,
+  // waehrend sie offen war, erschien das Band auf iOS nie — Safari feuert dort
+  // kein "offline". Der typische Fall: App im Hintergrund, U-Bahn, wieder nach vorn.
+  const win = fensterAttrappe();
+  const lauscher = {};
+  const doc = { visibilityState: "visible", addEventListener: (typ, f) => { lauscher[typ] = f; } };
+  let netz = true;
+  await beobachteNetz({ win, doc, pruefe: async () => netz, takt: 1 });
+  assert.deepEqual(win.ereignisse, [], "beim Start online: nichts");
+  assert.ok(lauscher.visibilitychange, "ohne diesen Lauscher merkt die Seite den Netzverlust nie");
+  netz = false;
+  doc.visibilityState = "visible";
+  await lauscher.visibilitychange();
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(win.ereignisse, ["offline"], "nach vorn geholt und offline: das Band erscheint");
+  // Ein zweites Nach-vorn-Holen startet keine zweite Uhr
+  await lauscher.visibilitychange();
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(win.uhren.length, 1, "genau eine Uhr — sonst stapeln sich Nachfragen");
+});
