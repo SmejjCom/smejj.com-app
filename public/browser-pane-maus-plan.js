@@ -83,7 +83,14 @@ export function selektorAus(step) {
   return {
     strategy: ziel.strategy,
     value: ziel.value,
-    ...(ziel.name !== undefined ? { name: ziel.name } : {})
+    ...(ziel.name !== undefined ? { name: ziel.name } : {}),
+    // "nth" ist die BENANNTE Wahl bei gleichnamigen Treffern (Schema seit
+    // 21.08.). Bis 09.09. fiel es hier weg — live stoppte deshalb ein Lauf an
+    // zwei gleichen Wikipedia-Links, obwohl das Modell haette waehlen koennen.
+    ...(Number.isInteger(ziel.nth) && ziel.nth >= 0 ? { nth: ziel.nth } : {}),
+    // Die Nummer aus der Beobachtung (11.09.): sie zeigt auf GENAU das
+    // gesehene Element und erspart dem Modell das Raten eines Selektors.
+    ...(Number.isInteger(ziel.n) && ziel.n > 0 ? { n: ziel.n } : {})
   };
 }
 
@@ -123,12 +130,18 @@ export function beschreibe(step) {
   const wo = sel?.name || sel?.value || roh.name || roh.value || "";
   switch (s.action) {
     case "navigate": return `Seite öffnen: ${kurz(s.url)}`;
-    case "click": case "openLink": return `Klicken: ${kurz(wo)}`;
-    case "type": case "fill": return `Tippen in ${kurz(wo)}`;
+    // Eine benannte Wahl (nth) steht sichtbar dabei — sonst saehe der Nutzer
+    // zweimal "Klicken: Ada Lovelace" und wuesste nicht, was anders war.
+    case "click": case "openLink": return `Klicken: ${kurz(wo)}${treffer(sel)}`;
+    case "type": case "fill": return `Tippen in ${kurz(wo)}${treffer(sel)}`;
     case "extract": case "assert": return `Lesen: ${kurz(s.name || wo)}`;
     case "scroll": return "Scrollen";
     default: return String(s.action || "Schritt");
   }
+}
+
+function treffer(sel) {
+  return Number.isInteger(sel?.nth) ? ` (Treffer ${sel.nth + 1})` : "";
 }
 
 export function kurz(text) {

@@ -29,7 +29,7 @@
 import {
   listChats, openChat, renameChat, deleteChat, restoreChat, activeChatId, togglePinChat, newChat,
   listProjekte, erstelleProjekt, benenneProjektUm, loescheProjekt, setzeChatProjekt
-} from "/assets/chat-store.js?v=b70";
+} from "/assets/chat-store.js?v=b69";
 // Verlaufs-Text (Titel, Vorschau, Themen, Export), Karten-Bausteine und die
 // Titel-Automatik aus der Bruecke kommen ERST, wenn der Verlauf sichtbar wird
 // (2026-09-03, Web-Vitals: Gewicht > 300 KB — die drei Module wogen 19 KB am Start,
