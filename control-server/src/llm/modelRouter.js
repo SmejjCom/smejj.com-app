@@ -78,7 +78,15 @@ export const PROVIDER_CATALOG = Object.freeze({
   },
   zhipu: {
     baseUrl: "https://open.bigmodel.cn/api/paas/v4",
-    models: { default: "glm-5.2", coding: "glm-5.2", reasoning: "glm-5.2" }
+    // AUSWEICHMODELL SEIT 2026-09-07 (gleicher Grund wie in
+    // src/shared/modelRegistry.js): der Anbieter lehnt glm-5.2 mit
+    // "Insufficient balance or no resource package" ab, das Wochen-/
+    // Monatskontingent laeuft erst am 2026-09-10 17:06 wieder an. Live
+    // gemessen antwortet einzig glm-4.5-flash (200, Freikontingent).
+    // Diese Liste ist der ZWEITE Ort mit demselben Namen — wer nur die
+    // Registry umstellt, haengt hier weiterhin am erschoepften Modell.
+    // Zurueckstellen auf "glm-5.2", sobald das Kontingent zurueck ist.
+    models: { default: "glm-4.5-flash", coding: "glm-4.5-flash", reasoning: "glm-4.5-flash" }
   },
   qwen: {
     baseUrl: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
@@ -392,6 +400,17 @@ function buildHeaders(backend) {
  * Timeout pro Versuch: SMEJJ_LLM_TIMEOUT_MS (Default 45000 ms) bis zum Antwort-Start;
  * das Streaming selbst wird nicht abgebrochen.
  */
+/** Wartezeit aus 429-Kopfzeilen: retry-after (Sekunden) oder "12.097s"/"1m2s". */
+export function retryAfterMsAus(headers) {
+  const lies = (k) => { try { return String(headers?.get?.(k) || ""); } catch { return ""; } };
+  const ra = lies("retry-after").trim();
+  if (/^\d+(\.\d+)?$/.test(ra)) return Math.round(Number(ra) * 1000);
+  const dauer = lies("x-ratelimit-reset-tokens").trim() || lies("x-ratelimit-reset-requests").trim();
+  const m = /^(?:(\d+)m)?(?:(\d+(?:\.\d+)?)s)?$/.exec(dauer);
+  if (!m || (!m[1] && !m[2])) return undefined;
+  return Math.round((Number(m[1] || 0) * 60 + Number(m[2] || 0)) * 1000);
+}
+
 export async function executeWithFallback(chain, messages, {
   fetchImpl = fetch,
   stream = true,
@@ -464,7 +483,11 @@ export async function executeWithFallback(chain, messages, {
         backend: backend.name,
         model: backend.model,
         logicalModelId: backend.logicalModelId || "provider-fallback",
-        error: `http_${response.status}`
+        error: `http_${response.status}`,
+        // Ratenlimit: WANN darf man wieder? Der Anbieter sagt es (retry-after
+        // bzw. x-ratelimit-reset-tokens). Ohne diese Zahl riet der Planer
+        // "15 s" — bei 8.000 Tokens je Minute war das oft zu kurz (E2E 10.09.).
+        ...(response.status === 429 ? { retryAfterMs: retryAfterMsAus(response.headers) } : {})
       });
       markModelRuntimeFailure(backend, `http_${response.status}`);
       // Den Fehlertext des Anbieters ins Laufzeit-Log (gekuerzt, nie den

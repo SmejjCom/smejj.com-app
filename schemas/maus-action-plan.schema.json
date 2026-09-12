@@ -237,6 +237,12 @@
             "$ref": "#/$defs/selectorNoFallback"
           },
           "description": "Alternative Selektoren fuer lokale Retries ohne Modell."
+        },
+        "n": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Nummer des Elements aus der letzten Beobachtung (Feld n). Zeigt auf GENAU das gesehene Element und schlaegt den Selektor."
         }
       }
     },
@@ -275,6 +281,12 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 999
+        },
+        "n": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Nummer des Elements aus der letzten Beobachtung (Feld n). Zeigt auf GENAU das gesehene Element und schlaegt den Selektor."
         }
       }
     },

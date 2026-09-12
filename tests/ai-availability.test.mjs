@@ -1,6 +1,10 @@
 // smejj.com — Tests fuer die Server-AI-Verfuegbarkeit (Health-/Statuslogik).
 // Unit: evaluateAiAvailability (Gate, Budget, Provider-Kette, fail-closed).
 // Integration: echter Serverstart, GET /api/health liefert ai/aiBackend korrekt.
+// 2026-09-08: Die Erwartung lautete bis hierher "zhipu:glm-5.2". Seit 02158dc
+// (05.09.) ist der Zhipu-Standard glm-4.5-flash — bewusst, weil dieses Modell im
+// Freikontingent laeuft und keine neuen Kosten verursacht (modelRegistry.js).
+// Der Test hing dem Code nach und machte den Release rot.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -31,7 +35,7 @@ test("fail-closed: leere Umgebung liefert ai:false ohne Backend", () => {
 test("Zhipu BYOK: ai:true auch ohne klassisches Server-Budget-Gate", () => {
   const result = evaluateAiAvailability(zhipuEnv({ SMEJJ_SERVER_AI_ENABLED: "false" }));
   assert.equal(result.ai, true);
-  assert.equal(result.aiBackend, "zhipu:glm-5.2");
+  assert.equal(result.aiBackend, "zhipu:glm-4.5-flash");
   assert.equal(result.gateEnabled, false);
   assert.equal(result.providerOk, true);
   assert.equal(result.activationMode, "zhipu-byok");
@@ -40,7 +44,7 @@ test("Zhipu BYOK: ai:true auch ohne klassisches Server-Budget-Gate", () => {
 test("Zhipu BYOK: ai:true auch ohne lokales Remaining-Budget", () => {
   const result = evaluateAiAvailability(zhipuEnv({ SMEJJ_SERVER_AI_REMAINING: "0" }));
   assert.equal(result.ai, true);
-  assert.equal(result.aiBackend, "zhipu:glm-5.2");
+  assert.equal(result.aiBackend, "zhipu:glm-4.5-flash");
   assert.equal(result.budgetOk, false);
   assert.equal(result.activationMode, "zhipu-byok");
 });
@@ -63,10 +67,10 @@ test("keine verwendbare Provider-Konfiguration: ai:false trotz Gate und Budget",
   assert.equal(result.providerOk, false);
 });
 
-test("Zhipu korrekt konfiguriert: ai:true mit aiBackend zhipu:glm-5.2", () => {
+test("Zhipu korrekt konfiguriert: ai:true mit aiBackend zhipu:glm-4.5-flash", () => {
   const result = evaluateAiAvailability(zhipuEnv());
   assert.equal(result.ai, true);
-  assert.equal(result.aiBackend, "zhipu:glm-5.2");
+  assert.equal(result.aiBackend, "zhipu:glm-4.5-flash");
   assert.equal(result.gateEnabled, true);
   assert.equal(result.budgetOk, true);
   assert.equal(result.providerOk, true);
@@ -91,7 +95,7 @@ test("Fallback-Reihenfolge bleibt erhalten: Zhipu vor Salad, wenn beide konfigur
     SMEJJ_LLM_SALAD_API_KEY: TEST_KEY
   }));
   assert.equal(result.ai, true);
-  assert.equal(result.aiBackend, "zhipu:glm-5.2");
+  assert.equal(result.aiBackend, "zhipu:glm-4.5-flash");
 });
 
 test("keine Secrets in der Ausgabe: API-Key taucht nirgends auf", () => {
@@ -145,7 +149,7 @@ test("GET /api/health: ai:true + aiBackend bei aktiver Zhipu-Kette", async () =>
     const health = await (await fetch(`${base}/api/health`)).json();
     assert.equal(health.ok, true);
     assert.equal(health.ai, true);
-    assert.equal(health.aiBackend, "zhipu:glm-5.2");
+    assert.equal(health.aiBackend, "zhipu:glm-4.5-flash");
     assert.equal(JSON.stringify(health).includes(TEST_KEY), false);
   });
 });
@@ -155,7 +159,7 @@ test("GET /api/health: Zhipu BYOK bleibt ai:true bei deaktiviertem klassischem G
     const health = await (await fetch(`${base}/api/health`)).json();
     assert.equal(health.ok, true);
     assert.equal(health.ai, true);
-    assert.equal(health.aiBackend, "zhipu:glm-5.2");
+    assert.equal(health.aiBackend, "zhipu:glm-4.5-flash");
   });
 });
 

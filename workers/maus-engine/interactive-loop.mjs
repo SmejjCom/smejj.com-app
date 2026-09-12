@@ -96,21 +96,53 @@ function entpraefixe(strategy, value) {
   if (!m) return null;
   return { strategy: PRAEFIX_STRATEGIEN[m[1].toLowerCase()] || strategy, value: m[2].trim() };
 }
+// jQuery-Schreibweise, die es in CSS nie gab (live 10.09.:
+// ".infobox th:contains('Geburtsdatum')" — zweimal hintereinander, beide Male
+// ohne Treffer). Playwright kennt dasselbe als :has-text().
+function containsZuHasText(wert) {
+  return String(wert).replace(/:contains\(\s*(['"])(.*?)\1\s*\)/gi, (_, __, text) => `:has-text("${text.replace(/"/g, '\\"')}")`);
+}
+
 function normalisiereSelektor(ziel) {
   if (typeof ziel === "string" && ziel.trim()) {
     const praefix = entpraefixe("text", ziel);
     if (praefix) return praefix;
-    const s = ziel.trim();
+    const s = containsZuHasText(ziel.trim());
     // Ein nacktes Wort ist nur dann CSS, wenn es ein HTML-Element ist ("h1",
     // "button") — "Weiter" ist Text auf einem Knopf, kein Element.
     const istElement = /^(h[1-6]|a|p|button|input|form|main|nav|header|footer|section|article|aside|table|thead|tbody|tr|td|th|ul|ol|li|span|div|img|select|option|textarea|label|body|title|summary|details|dialog|iframe)$/.test(s);
-    return (istElement || (/^[#.\[]|^[a-z][a-z0-9-]*[#.\[:>\s]/i.test(s) && !/\s/.test(s)))
+    // EIN LEERZEICHEN MACHT AUS CSS KEINEN TEXT (live 10.09.): Bis hierher
+    // fiel jeder zusammengesetzte Selektor durch — "#searchform button[type=
+    // \"submit\"]" wurde als TEXT gesucht und fand nie etwas
+    // ("selector_ohne_treffer"), zweimal hintereinander, weil das Modell die
+    // Form fuer richtig hielt. Sie WAR richtig; nur die Deutung war falsch.
+    // Entscheidend ist nicht das Leerzeichen, sondern ob CSS-Zeichen drin
+    // stehen: #id, .klasse, [attribut], > oder ein Tag mit einem davon.
+    // "Impressum und Datenschutz" traegt nichts davon und bleibt Text.
+    const cssZeichen = /^[#.[]/.test(s) || /[[\]>]/.test(s) || /^[a-z][a-z0-9-]*[#.[:>]/i.test(s)
+      || /(^|\s)[#.][a-z][\w-]*/i.test(s);
+    return (istElement || cssZeichen)
       ? { strategy: "css", value: s } : { strategy: "text", value: s };
   }
   if (!ziel || typeof ziel !== "object" || Array.isArray(ziel)) return ziel;
   if (typeof ziel.strategy === "string" && typeof ziel.value === "string") {
-    const praefix = entpraefixe(ziel.strategy, ziel.value);
-    return praefix ? { ...ziel, ...praefix } : ziel;
+    // Live 09.09.: xpath-Wert kam als "\"//a[@href='…'][1]\"" — mit
+    // Anfuehrungszeichen IM Wert. Die gehoeren zur JSON-Huelle, nicht zum Selektor.
+    let wert = containsZuHasText(ziel.value.trim());
+    // Live 09.09. (Groq): value = "\"a[href='…']\";nth:0" — die Wahl stand IM
+    // Wert statt als Feld. Herausloesen, sonst ist der Selektor kaputt.
+    const imWert = /^(.*?)\s*[;,]\s*nth\s*[:=]\s*(\d+)\s*$/.exec(wert);
+    const nthAusWert = imWert && ziel.nth === undefined ? Number(imWert[2]) : undefined;
+    if (imWert) wert = imWert[1].trim();
+    const q = /^"(.*)"$/.exec(wert) || /^'(.*)'$/.exec(wert);
+    // Auch eine reine Schreibweisen-Korrektur (:contains -> :has-text) muss
+    // ankommen — sonst faellt sie hier still unter den Tisch.
+    const bereinigt = (q ? q[1] : wert).trim();
+    const ohneHuelle = (q || imWert || bereinigt !== ziel.value)
+      ? { ...ziel, value: bereinigt, ...(nthAusWert !== undefined ? { nth: nthAusWert } : {}) }
+      : ziel;
+    const praefix = entpraefixe(ohneHuelle.strategy, ohneHuelle.value);
+    return praefix ? { ...ohneHuelle, ...praefix } : ohneHuelle;
   }
   if (typeof ziel.selector === "string") { const innen = normalisiereSelektor(ziel.selector); return ziel.name && innen && !innen.name && innen.strategy === "role" ? { ...innen, name: String(ziel.name) } : innen; }
   for (const k of STRATEGIEN) {
@@ -210,6 +242,40 @@ export function repariereEntscheidung(eingabe) {
   }
   d.step = s;
   return { decision: d, repariert };
+}
+
+// MEHRDEUTIG → BENANNT. Live 09.09.: der Browser lehnte zwei gleiche Links ab
+// (selector_mehrdeutig), der Vertrag erklaerte "nth":0, und das schnelle
+// Modell antwortete trotzdem dreimal mit DEMSELBEN Selektor ohne nth (einmal
+// mit note "erster Treffer auswaehlen"). Wenn das Modell nach diesem Hinweis
+// denselben Selektor noch einmal waehlt, IST das seine Wahl des ersten
+// Treffers — sie wird hier benannt (nth 0) und im Feld repariert sichtbar
+// gemacht. Kein stilles .first(): nur nach ausdruecklicher Ablehnung, nur
+// fuer genau den abgelehnten Selektor, und protokolliert.
+const MEHRDEUTIG = /selector_mehrdeutig: \d+ Treffer fuer (\w+)="([^"]+)"/;
+// WELCHER Treffer, wenn das Modell selbst keinen nennt? Gemessen 10.09.
+// (de.wikipedia.org): die Liste lautete `nth 0: ohne Text | nth 1: "Suchen"`,
+// und die blinde Null traf einen unbeschrifteten Symbolknopf — der Lauf lief
+// weiter im Kreis. Ein Knopf OHNE Beschriftung ist selten das Ziel eines
+// Auftrags, der in Worten formuliert ist. Also: der erste Treffer MIT Text,
+// sonst die Null. Die Wahl steht sichtbar im Feld `repariert`.
+export function besterTreffer(meldung) {
+  const treffer = [...String(meldung).matchAll(/nth (\d+): "([^"]*)"/g)];
+  const mitText = treffer.find(([, , text]) => text.trim().length > 0);
+  return mitText ? Number(mitText[1]) : 0;
+}
+export function benenneMehrdeutigeWahl(entscheidung, verlauf = []) {
+  if (!entscheidung?.ok || entscheidung.decision?.decision !== "act") return entscheidung;
+  const s = entscheidung.decision.step || {};
+  const sel = s.target?.selector && typeof s.target.selector === "object" ? s.target.selector
+    : s.target && typeof s.target === "object" && typeof s.target.strategy === "string" ? s.target : null;
+  if (!sel || sel.nth !== undefined) return entscheidung;
+  const letzte = [...verlauf].reverse().find((z) => MEHRDEUTIG.test(String(z)));
+  if (!letzte) return entscheidung;
+  const [, strategy, value] = MEHRDEUTIG.exec(String(letzte));
+  if (sel.strategy !== strategy || sel.value !== value) return entscheidung;
+  sel.nth = besterTreffer(String(letzte));
+  return { ...entscheidung, repariert: [...(entscheidung.repariert || []), `nth_${sel.nth}_nach_mehrdeutig`] };
 }
 
 export function validateLoopDecision(rawAnswer, policyInput) {

@@ -69,7 +69,28 @@ export const MODEL_REGISTRY = Object.freeze({
     runtime: Object.freeze({
       envPrefix: "ZHIPU",
       defaultBaseUrl: "https://api.z.ai/api/paas/v4",
-      defaultModel: "glm-5.2",
+      // AUSWEICHMODELL SEIT 2026-09-07 — der Anbieter lehnt glm-5.2 ab.
+      //
+      // Live gemessen mit dem echten Schluessel gegen api.z.ai:
+      //   glm-5.2       429 "Insufficient balance or no resource package"
+      //   glm-4.6       429 desselben Inhalts
+      //   glm-4.5-air   429 desselben Inhalts
+      //   glm-4.5-flash 200 — antwortet normal ("Paris ist die Hauptstadt von
+      //                 Frankreich.", 31 s, finish_reason "stop")
+      // Ueber die zweite Anbieteradresse kam der Grund im Klartext:
+      // "Weekly/Monthly Limit Exhausted. Your limit will reset at
+      //  2026-09-10 17:06:51".
+      //
+      // Folge im Betrieb: /api/health meldete glm-5-2 als degraded
+      // (runtimeAvailable=false, 48 Fehlschlaege in Folge). Weil KEIN anderes
+      // Modell konfiguriert ist, war die tiefe Spur damit komplett tot —
+      // "Nachdenken", Auto und Codieren antworteten gar nicht mehr.
+      //
+      // glm-4.5-flash laeuft im Freikontingent, verursacht also keine neuen
+      // Kosten. ZURUECKSTELLEN auf "glm-5.2", sobald das Kontingent zurueck
+      // ist (fruehestens 2026-09-10 17:06) oder Guthaben aufgeladen wurde.
+      // Der Anzeigename der Marke bleibt unveraendert.
+      defaultModel: "glm-4.5-flash",
       defaultHeader: "Authorization",
       storageFirstMode: "glm-5.2-storage-first",
       engines: Object.freeze(["openai-compatible", "sglang", "vllm", "ktransformers"]),
@@ -313,7 +334,8 @@ export const MODEL_REGISTRY = Object.freeze({
     // Modell also nicht benutzbar. Die zweite Tuer hat nichts geschuetzt und
     // dafuer einen Handgriff mehr verlangt — am 10.09. stand smejj 1 deshalb
     // vier Tage lang bereit und niemand konnte es waehlen.
-    // Fail-closed bleibt es: der Schluessel entscheidet.
+    // Fail-closed bleibt es: der Schluessel entscheidet. Als NOTAUS wirkt das
+    // Flag weiter (SMEJJ_1_ENABLED=NO).
     enabledByDefault: true,
     featureFlag: "SMEJJ_1_ENABLED",
     fallbackModelId: DEFAULT_MODEL_ID,

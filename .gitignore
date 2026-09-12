@@ -26,6 +26,12 @@ UPLOAD-ZU-IDRIVE/
 
 # Local temporary output
 .DS_Store
+# BEIDE Zeilen sind noetig (Messung 2026-09-08): "node_modules/" deckt nur das
+# VERZEICHNIS ab. Auf 20 von 40 Zweigen lag stattdessen ein gleichnamiger
+# SYMLINK im Repo, der auf den Projektordner selbst zeigte — eine Schleife,
+# die npm lahmlegte und nach jedem Checkout zurueckkam, weil die Regel mit
+# Schraegstrich nicht auf ihn passte.
+node_modules
 node_modules/
 dist/
 coverage/

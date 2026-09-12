@@ -484,3 +484,158 @@ test("die Anleitung nennt JEDE Aktion, die die Pruefung verlangt", async () => {
     "ohne diese Zeile raet das Modell die Scroll-Form — und wird abgelehnt");
   assert.match(prompt, /amountPx/);
 });
+
+// --- Tempo des Planers (Live-Befund 2026-09-09, Betreiber-Chrome) ---------
+// Ein Lauf ueber elf Schritte brauchte 467 s, davon 455 s "Ueberlegen":
+// Groq (8.000 Tokens je Minute) antwortete nach einem grossen Schritt mit
+// 429, GLM-4.5-flash uebernahm mit 47–100 s je Antwort, dreimal 502.
+// Drei Ursachen, drei Tests — plus die Messung in der Antwort.
+function planerAntwort(inhalt, status = 200) {
+  return { ok: status >= 200 && status < 300, status, headers: new Map(), json: async () => ({ choices: [{ message: { content: inhalt } }] }) };
+}
+const ENV_ZWEI = Object.freeze({ SMEJJ_LLM_GROQ_API_KEY: "g", SMEJJ_LLM_ZHIPU_API_KEY: "z" });
+
+test("Planer-Prompt: die Beobachtung wird KOMPAKT — 40 Elemente, 2500 Zeichen, ohne Koordinaten, Nummern bleiben", async () => {
+  const { buildStepPrompt, kompakteBeobachtung, KOMPAKT_MAX_ELEMENTE, KOMPAKT_MAX_ZEICHEN } = await import("../workers/maus-engine/prompt-template.mjs");
+  const elements = Array.from({ length: 60 }, (_, i) => ({ n: i + 1, tag: "a", href: `/wiki/A_${i}`, text: `Verweis ${i} auf einen Artikel`, x: 100 + i, y: 200 + i }));
+  const observation = { url: "https://de.wikipedia.org/wiki/Ada_Lovelace", title: "Ada", textExcerpt: "x".repeat(6000), elements };
+  const k = kompakteBeobachtung(observation);
+  assert.equal(k.elements.length, KOMPAKT_MAX_ELEMENTE);
+  assert.equal(k.elementeGekappt, 60);
+  assert.equal(k.elements[39].n, 40, "die Nummer eines Elements bleibt seine Nummer");
+  assert.ok(!("x" in k.elements[0]) && !("y" in k.elements[0]), "Koordinaten gehen den Planer nichts an");
+  assert.ok(k.textExcerpt.length <= KOMPAKT_MAX_ZEICHEN + 2);
+  assert.equal(observation.elements.length, 60, "das Original bleibt unangetastet — das Panel braucht es fuer den Zeiger");
+  const prompt = buildStepPrompt({ task: "t", capsuleRef: "c", domainAllowlist: ["de.wikipedia.org"], budget: { maxActions: 10 }, files: [], visionAllowed: false, observation, remainingSteps: 5 });
+  // 12.600 statt 12.000 seit dem 11.09.: das vollstaendige Beispiel mit der
+  // Elementnummer kostet rund 400 Zeichen und ist sie wert — es war der
+  // haeufigste Grund fuer geratene Selektoren. Der Anker bleibt der alte Stand
+  // (~18.000): alles darunter ist ein Gewinn, und der Deckel haelt die
+  // Beobachtung weiter kompakt.
+  assert.ok(prompt.length < 12600, `Prompt muss klein bleiben, ist ${prompt.length} Zeichen (vorher ~18.000)`);
+  assert.match(prompt, /Nur die ersten 40 von 60 Bedienelementen/);
+  assert.ok(!prompt.includes('"x":100'), "keine Koordinaten im Prompt");
+});
+
+// GEAENDERT 10.09. nach Messung: frueher schlief der Planer hier 15 s und
+// fragte DASSELBE Glied noch einmal. Das war richtig gedacht (nicht auf das
+// langsame GLM ausweichen), aber unnoetig teuer — Groq zaehlt sein Kontingent
+// je MODELL, also ist das zweite Groq-Modell sofort frei. Der Zweck bleibt:
+// bloss nicht auf das langsame Glied fallen. Nur schneller.
+test("Planer: Ratenlimit des schnellen Glieds -> sofort das zweite Groq-Modell, nicht das langsame und kein Schlaf", async () => {
+  const gefragt = [];
+  let geschlafen = 0;
+  const fetchImpl = async (url) => {
+    gefragt.push(url);
+    if (gefragt.length === 1) return planerAntwort("", 429);
+    return planerAntwort('{"schemaVersion":1,"decision":"done","reason":"r","result":"ok"}');
+  };
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, warteMs: 15000, schlafe: async (ms) => { geschlafen += ms; } });
+  const antwort = await client("prompt");
+  assert.match(antwort, /"done"/);
+  assert.equal(geschlafen, 0, "kein Schlaf, solange ein anderes Modell frei ist");
+  assert.equal(gefragt.length, 2);
+  assert.ok(gefragt.every((u) => /groq/.test(u)), `beide Anfragen an Groq, nicht an GLM: ${gefragt.join(", ")}`);
+});
+
+test("Planer: leere Antwort (nur reasoning) ist ein Fehlversuch — die Kette wird noch einmal gefragt", async () => {
+  let n = 0;
+  const fetchImpl = async () => (++n === 1 ? planerAntwort("") : planerAntwort('{"schemaVersion":1,"decision":"done","reason":"r","result":"ok"}'));
+  const messungen = [];
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async () => {}, melde: (m) => messungen.push(m) });
+  const antwort = await client("prompt");
+  assert.match(antwort, /"done"/);
+  assert.equal(n, 2);
+  assert.ok(messungen[0].fehlversuche.some((f) => /leere_antwort/.test(f)), "die leere Antwort steht in der Messung");
+});
+
+test("Planer: GLM bekommt das Denken ausgeschaltet — ein JSON-Schritt braucht keinen Aufsatz", async () => {
+  const koerper = [];
+  const fetchImpl = async (url, init) => { koerper.push({ url, body: JSON.parse(init.body) }); return planerAntwort('{"schemaVersion":1,"decision":"done","reason":"r","result":"ok"}'); };
+  const client = buildPlannerClient({ env: { SMEJJ_LLM_ZHIPU_API_KEY: "z" }, fetchImpl, schlafe: async () => {} });
+  await client("prompt");
+  assert.equal(koerper.length, 1);
+  assert.deepEqual(koerper[0].body.thinking, { type: "disabled" }, `GLM-Anfrage ohne Denken: ${JSON.stringify(koerper[0].body).slice(0, 200)}`);
+});
+
+// --- Erst ausweichen, dann warten (gemessen 10.09.) -----------------------
+// Groq zaehlt sein Kontingent JE MODELL. Die Kette hatte das zweite
+// Groq-Modell hinter dem langsamen GLM — jedes Ratenlimit kostete darum
+// 47–100 s, obwohl daneben ein freies Kontingent lag.
+test("Planer-Kette: die Modelle desselben Anbieters stehen beieinander", async () => {
+  const gefragt = [];
+  const fetchImpl = async (url) => { gefragt.push(url.replace(/^https:\/\//, "").split("/")[0]); return planerAntwort("", 429); };
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async () => {} });
+  await client("prompt").catch(() => {});
+  const ersteDrei = gefragt.slice(0, 3);
+  assert.equal(ersteDrei[0], "api.groq.com");
+  assert.equal(ersteDrei[1], "api.groq.com", `nach dem Ratenlimit muss das zweite Groq-Modell kommen, kam aber: ${ersteDrei.join(" -> ")}`);
+});
+
+test("Ratenlimit auf einem Glied: das naechste wird SOFORT gefragt, ohne Schlaf", async () => {
+  let geschlafen = 0; let n = 0;
+  const fetchImpl = async () => (++n === 1 ? planerAntwort("", 429) : planerAntwort('{"schemaVersion":1,"decision":"done","reason":"r","result":"ok"}'));
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async (ms) => { geschlafen += ms; } });
+  assert.match(await client("prompt"), /"done"/);
+  assert.equal(geschlafen, 0, "es wurde geschlafen, obwohl ein anderes Modell frei war");
+  assert.equal(n, 2);
+});
+
+test("Steckt die GANZE Kette im Ratenlimit, wird einmal gewartet und alles erneut gefragt", async () => {
+  let geschlafen = 0; const antworten = [];
+  const fetchImpl = async () => {
+    antworten.push(1);
+    return antworten.length <= 3 ? planerAntwort("", 429) : planerAntwort('{"schemaVersion":1,"decision":"done","reason":"r","result":"ok"}');
+  };
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async (ms) => { geschlafen += ms; } });
+  assert.match(await client("prompt"), /"done"/);
+  assert.ok(geschlafen >= 15000, "nach einer vollstaendig gedrosselten Kette gehoert eine Pause hin");
+});
+
+// --- Am Limit ist etwas anderes als nicht erreichbar (gemessen 10.09.) -----
+// Beide Gratis-Kontingente waren erschoepft; der Chat schrieb "Modell
+// antwortet nicht (502)" — als waere etwas kaputt. Es war nur voll.
+test("sind ALLE Modelle gedrosselt, heisst der Fehler planer_am_limit und nennt die Wartezeit", async () => {
+  const fetchImpl = async () => planerAntwort("", 429);
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async () => {} });
+  await assert.rejects(client("prompt"), (fehler) => {
+    assert.equal(fehler.message, "planer_am_limit");
+    assert.equal(typeof fehler.wartezeitMs, "number");
+    assert.ok(fehler.wartezeitMs >= 15000);
+    return true;
+  });
+});
+
+test("ein echter Ausfall bleibt planer_nicht_erreichbar", async () => {
+  const fetchImpl = async () => { throw new Error("kein Netz"); };
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async () => {} });
+  await assert.rejects(client("prompt"), /planer_nicht_erreichbar/);
+});
+
+// --- Schrittfragen eines laufenden Auftrags werden nicht gebremst ---------
+// Gemessen 11.09.: ab dem SECHSTEN Schritt kam nur noch "Zu viele
+// Maus-Engine-Anfragen" — zwanzig Schritte hintereinander. Ein Auftrag mit 25
+// erlaubten Schritten kam nie ueber fuenf hinaus.
+test("naechsterSchritt laeuft an der Nutzer-Bremse vorbei, ein neuer Auftrag nicht", async () => {
+  const bremse = { genommen: 0, take() { this.genommen += 1; return { allowed: false, retryAfterSec: 20 }; } };
+  const resSchritt = mockRes();
+  await handleMausRun(mockReq({ body: {
+    naechsterSchritt: true, task: "t", capsuleRef: "c", domainAllowlist: ["example.com"],
+    beobachtung: { url: "https://example.com/", title: "T", elements: [] }, verlauf: [], restSchritte: 9
+  } }), resSchritt, {
+    env: ENV_OK, limiter: bremse, budgetEvaluator: () => ({ ok: true }),
+    plannerClient: async () => JSON.stringify({ schemaVersion: 1, decision: "done", reason: "da", result: "fertig" }),
+    fetchImpl: async () => { throw new Error("kein Netz im Test"); }
+  });
+  assert.equal(resSchritt.statusCode, 200, `Schrittfrage wurde gebremst: ${JSON.stringify(resSchritt.body)}`);
+  assert.equal(bremse.genommen, 0, "die Bremse darf die Schrittfrage gar nicht erst anfassen");
+
+  // Gegenprobe: ein NEUER Auftrag bleibt gebremst — sonst waere die Bremse weg.
+  const resAuftrag = mockRes();
+  await handleMausRun(mockReq({ body: { task: "t", capsuleRef: "c", domainAllowlist: ["example.com"] } }), resAuftrag, {
+    env: ENV_OK, limiter: bremse, budgetEvaluator: () => ({ ok: true })
+  });
+  assert.equal(resAuftrag.statusCode, 429);
+  assert.equal(resAuftrag.headers["Retry-After"], "20");
+  assert.equal(bremse.genommen, 1);
+});

@@ -207,6 +207,10 @@ export function saubereBeobachtungsElement(e) {
     name: text(e?.name, 200),
     id: text(e?.id, 80),
     href: text(e?.href, 300),
+    // Der fertige, auf der Seite geprueft eindeutige Selektor (11.09.). Ohne
+    // diese Zeile faellt er in der Saeuberung weg und erreicht das Modell nie —
+    // die Erlaubnisliste ist fail-closed, und das ist auch richtig so.
+    sel: text(e?.sel, 160),
     placeholder: text(e?.placeholder, 120),
     label: text(e?.label, 120),
     text: text(e?.text, 120),

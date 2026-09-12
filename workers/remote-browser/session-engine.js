@@ -37,6 +37,18 @@ export const SESSION_DEFAULTS = {
   actionTimeoutMs: 15_000,
   navTimeoutMs: 25_000,
   settleTimeoutMs: 4_000,
+  // EIGENE FRIST FUER KLICK UND TIPPEN (live 10.09., de.wikipedia.org):
+  // Playwright wartet vor einem Klick darauf, dass das Element sichtbar,
+  // ruhig und bedienbar ist. Bei Wikipedias Suchknopf dauerte das laenger als
+  // die 4 s, die fuers Abwarten einer Seite gedacht waren — die Maus bekam
+  // "locator.click: Timeout 4000ms exceeded", obwohl das Element da war.
+  // 10 s: genug fuer eine traege Seite, kurz genug, dass ein wirklich
+  // unbedienbares Ziel den Lauf nicht aufhaelt (Playwright-Standard: 30 s).
+  aktionTimeoutMs: 10_000,
+  // Playwright wartet vor einem Foto auf die Schriften der Seite. Bei
+  // Wikipedia dauerte das live ueber 15 s (Standard) — laenger als die ganze
+  // Aktion. 6 s reichen fuer jede Seite, die ueberhaupt ein Bild hergibt.
+  screenshotTimeoutMs: 6_000,
   jpegQuality: 70,
   typeMaxChars: 2_000,
   scrollMaxPx: 4_000
@@ -71,6 +83,42 @@ export const SESSION_ALLOWED_COMBOS = new Set([
 // Dieselben Strategien, die die Maus kennt — css/xpath bleiben moeglich, aber
 // role/testId/label sind die stabilen: sie ueberleben ein Umgestalten der Seite.
 const ERLAUBTE_STRATEGIEN = new Set(["role", "testId", "label", "text", "placeholder", "altText", "title", "css", "xpath"]);
+
+// Was vom Aktions-Objekt in den Playwright-Locator wandert. E2E 10.09. ueber
+// die Schnittstelle: nth kam durch die Validierung, wurde aber HIER fallen
+// gelassen — "selector_mehrdeutig" trotz "Treffer 1". Ein Feld, zwei Stellen.
+// Das Merkmal, mit dem ein per Nummer gewaehltes Element kurz angeheftet wird.
+// Es lebt nur zwischen Auswahl und Aktion und wird danach wieder entfernt.
+export const ZIEL_MARKE = "data-smejj-ziel";
+
+// Element Nummer n aus der letzten Beobachtung anheften. Fail-open: geht es
+// nicht (Seite gewechselt, Beobachtung veraltet), bleibt es beim Selektor —
+// schlechter als vorher wird es dadurch nie.
+export async function markiereGesehenes(page, n, marke = ZIEL_MARKE) {
+  if (typeof page?.evaluate !== "function" || !Number.isInteger(n) || n <= 0) return false;
+  return await page.evaluate(([nummer, feld]) => {
+    const liste = window.__smejjMausGesehen;
+    const el = Array.isArray(liste) ? liste[nummer - 1] : null;
+    document.querySelectorAll(`[${feld}]`).forEach((x) => x.removeAttribute(feld));
+    if (!el || !el.isConnected) return false;
+    el.setAttribute(feld, "1");
+    return true;
+  }, [n, marke]).catch(() => false);
+}
+
+export async function entferneMarke(page, marke = ZIEL_MARKE) {
+  if (typeof page?.evaluate !== "function") return;
+  await page.evaluate((feld) => {
+    document.querySelectorAll(`[${feld}]`).forEach((x) => x.removeAttribute(feld));
+  }, marke).catch(() => {});
+}
+
+export function selektorDefinition(action) {
+  const def = { strategy: action.strategy, value: action.value };
+  if (action.name !== undefined) def.name = action.name;
+  if (Number.isInteger(action.nth) && action.nth >= 0) def.nth = action.nth;
+  return def;
+}
 
 export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
   if (!action || typeof action !== "object" || typeof action.type !== "string") {
@@ -125,6 +173,16 @@ export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
       if (!value || value.length > 300) return { ok: false, error: "selector_value_invalid" };
       const gebaut = { type: action.type, strategy, value };
       if (action.name !== undefined) gebaut.name = String(action.name).slice(0, 200);
+      // AUSDRUECKLICHE AUSWAHL bei gleichnamigen Treffern (Schema erlaubt nth
+      // seit dem 21.08.; das Panel liess es bis 09.09. fallen). Ohne dieses
+      // Feld endete jeder Lauf mit zwei gleichen Links in "selector_mehrdeutig"
+      // — live 09.09.: Wikipedia zeigte Suchvorschlag UND Treffer fuer Ada
+      // Lovelace, die Maus gab nach zwei Versuchen auf. Kein .first(): die
+      // Wahl trifft das Modell, benannt und sichtbar im Verlauf.
+      if (Number.isInteger(action.nth) && action.nth >= 0 && action.nth <= 999) gebaut.nth = action.nth;
+      // DIE NUMMER AUS DER BEOBACHTUNG (11.09.): das Modell muss keinen
+      // Selektor mehr erfinden, es kann auf das zeigen, was es GESEHEN hat.
+      if (Number.isInteger(action.n) && action.n > 0 && action.n <= 1000) gebaut.n = action.n;
       if (action.type === "selectorType") {
         const text = String(action.text ?? "");
         if (!text || text.length > limits.typeMaxChars) return { ok: false, error: "type_text_invalid" };
@@ -204,8 +262,23 @@ export function createSessionEngine({
   const cfg = { ...SESSION_DEFAULTS, ...overrides };
   const sessions = new Map();
 
+  // AUS DER MELDUNG MUSS HERVORGEHEN, WAS ZU TUN IST. Playwrights
+  // "locator.click: Timeout 10000ms exceeded. Call log: - waiting for
+  // locator(...)" ist englisch, lang und sagt dem Modell nichts — es waehlte
+  // live 10.09. denselben Knopf noch einmal. Der Rat steht darum VORN und auf
+  // Deutsch; das Original bleibt gekuerzt dahinter, fuer die Fehlersuche.
+  function klartext(error) {
+    const roh = String(error || "session_error");
+    const m = /^locator\.(click|fill): Timeout (\d+)ms exceeded/.exec(roh);
+    if (!m) return roh.slice(0, 200);
+    const was = m[1] === "click" ? "anklicken" : "beschreiben";
+    return `element_nicht_bedienbar: Das Ziel ist da, liess sich aber in ${Math.round(Number(m[2]) / 1000)} s nicht ${was}`
+      + " (verdeckt, ausserhalb des Bildes oder abgeschaltet) — ein ANDERES Ziel aus der Elementliste waehlen,"
+      + ` NICHT dasselbe wiederholen. [${roh.slice(0, 80).replace(/\s+/g, " ")}]`;
+  }
+
   function fail(status, error) {
-    return { ok: false, status, error: String(error || "session_error").slice(0, 200) };
+    return { ok: false, status, error: klartext(error) };
   }
 
   function expiresInMs(session) {
@@ -254,10 +327,23 @@ export function createSessionEngine({
         dialog: dialogNachAussen(session.dialogWache)
       };
     }
-    const screenshot = await page.screenshot({ type: "jpeg", quality: cfg.jpegQuality });
+    // DAS BILD DARF DIE AKTION NICHT ZU FALL BRINGEN (live 10.09.,
+    // de.wikipedia.org): Der Klick hatte laengst getroffen, die neue Seite
+    // stand da — und trotzdem kam beim Aufrufer "502 page.screenshot: Timeout
+    // 15000ms exceeded, waiting for fonts to load" an. Die Maus schrieb
+    // "FEHLGESCHLAGEN" in ihren Verlauf und versuchte denselben Klick noch
+    // einmal, auf einer Seite, die es nicht mehr gab. Ein Foto ist Beiwerk:
+    // misslingt es, gilt das letzte Bild weiter, und die Aktion bleibt
+    // erfolgreich. Fail-soft nur hier — die Aktion selbst bleibt fail-closed.
+    let bild = session.letztesBild || "";
+    try {
+      const screenshot = await page.screenshot({ type: "jpeg", quality: cfg.jpegQuality, timeout: cfg.screenshotTimeoutMs });
+      bild = `data:image/jpeg;base64,${screenshot.toString("base64")}`;
+      session.letztesBild = bild;
+    } catch (error) {
+      session.bildFehler = String(error?.message || error).slice(0, 200);
+    }
     const title = await page.title().catch(() => "");
-    const bild = `data:image/jpeg;base64,${screenshot.toString("base64")}`;
-    session.letztesBild = bild;
     return {
       ok: true,
       sessionId: session.id,
@@ -265,7 +351,9 @@ export function createSessionEngine({
       finalUrl: page.url(),
       title,
       viewport: session.viewport,
-      expiresInMs: expiresInMs(session)
+      expiresInMs: expiresInMs(session),
+      // Sichtbar, aber harmlos: der Aufrufer weiss, dass das Bild von vorhin ist.
+      ...(session.bildFehler ? { bildVeraltet: true } : {})
     };
   }
 
@@ -518,15 +606,21 @@ export function createSessionEngine({
         // DER AUFLOESER DER MAUS, nicht ein zweiter. Beide muessen Elemente
         // gleich finden — sonst tut die Maus im Panel etwas anderes als in
         // ihrem eigenen Browser, und das faellt erst live auf.
-        const def = { strategy: action.strategy, value: action.value };
-        if (action.name !== undefined) def.name = action.name;
+        const def = selektorDefinition(action);
+        // ZUERST DIE NUMMER, DANN DER SELEKTOR. Genau die Reihenfolge der
+        // Chrome-Bruecke: eine Kennung aus der eigenen Beobachtung zeigt auf
+        // GENAU das gesehene Element, ein Selektor kann inzwischen auf ein
+        // zweites, gleich benanntes zeigen.
+        const perNummer = await markiereGesehenes(page, action.n);
         // EINDEUTIG statt .first() (Betreiber-Freigabe 2026-08-21, ZCode-Regel).
         // Vorher nahm diese Zeile bei mehreren Treffern kommentarlos den
         // ersten: auf einer Seite mit zwei "Anmelden"-Knoepfen wurde
         // stillschweigend der falsche geklickt. Lesen (selectorText) darf
         // weiterhin mehrdeutig sein — es veraendert nichts.
-        const locator = await resolveEindeutig(page, def, { erlaubeMehrere: action.type === "selectorText" })
-          .then((l) => (action.type === "selectorText" ? l.first() : l));
+        const locator = perNummer
+          ? page.locator(`[${ZIEL_MARKE}]`)
+          : await resolveEindeutig(page, def, { erlaubeMehrere: action.type === "selectorText" })
+            .then((l) => (action.type === "selectorText" ? l.first() : l));
         await locator.waitFor({ state: "visible", timeout: cfg.settleTimeoutMs }).catch(() => {});
         // Die Box VOR der Aktion messen: nach einem Klick ist die Seite
         // womoeglich eine andere, und das Element weg.
@@ -537,13 +631,59 @@ export function createSessionEngine({
           return mitZiel({ gelesen: String(text || "").slice(0, 2000) });
         }
         if (action.type === "selectorType") {
-          await locator.fill(action.text, { timeout: cfg.settleTimeoutMs });
+          await locator.fill(action.text, { timeout: cfg.aktionTimeoutMs });
           return mitZiel({});
         }
-        await locator.click({ timeout: cfg.settleTimeoutMs });
+        // ZWEITER VERSUCH MIT NACHDRUCK — benannt, nicht heimlich.
+        //
+        // Live 10.09. (de.wikipedia.org): Der Suchknopf ist ein
+        // `<button type="submit">`, das Wikipedia absichtlich unsichtbar macht
+        // (OOUI legt ein Symbol darueber). Playwright wartet dann auf
+        // Bedienbarkeit, die nie eintritt — fuenf Schritte hintereinander
+        // "element_nicht_bedienbar", der Auftrag scheiterte an einem Knopf,
+        // den jeder Mensch benutzen kann.
+        //
+        // Erzwungen wird NUR das, was die Maus ohnehin gewaehlt hat: ein
+        // EINDEUTIG aufgeloestes Element (Mehrdeutiges fliegt vorher raus).
+        // Es bleibt bei EINEM Nachdruck, und die Antwort sagt es (erzwungen),
+        // damit im Verlauf steht, was wirklich geschah.
+        let erzwungen = false;
+        try {
+          await locator.click({ timeout: cfg.aktionTimeoutMs });
+        } catch (fehler) {
+          if (!/Timeout .*exceeded/i.test(String(fehler?.message || fehler))) throw fehler;
+          // ERST HINSCHEUCHEN, DANN DRUECKEN: `force` ueberspringt ALLE
+          // Pruefungen — auch das Scrollen. Live 10.09. endete der erzwungene
+          // Klick darum mit "Element is outside of the viewport", obwohl er
+          // gerade das Problem loesen sollte.
+          // SCHLICHT SCROLLEN, NICHT PRUEFEND. `scrollIntoViewIfNeeded` prueft
+          // selbst auf Bedienbarkeit — bei genau den Elementen, um die es hier
+          // geht, laeuft es darum in dieselbe Frist und tut nichts. Danach warf
+          // der erzwungene Klick "Element is outside of the viewport" (live
+          // 11.09., dreimal in einem Lauf). Das DOM kann es ohne jede Pruefung.
+          await locator.evaluate((el) => el.scrollIntoView({ block: "center", inline: "center" })).catch(() => {});
+          try {
+            await locator.click({ timeout: cfg.settleTimeoutMs, force: true });
+          } catch (zweiter) {
+            // LETZTE STUFE: DER KLICK AUS DER SEITE HERAUS.
+            //
+            // Playwright weigert sich auch mit `force`, wenn das Element gar
+            // keine sichtbare Flaeche hat ("Element is not visible") — genau der
+            // Fall bei Wikipedias Suchknopf, der unter einem Symbol liegt. Live
+            // 11.09. endeten so ZWOELF Schritte eines Laufes, jeder nach zehn
+            // Sekunden Warten. Die Chrome-Bruecke macht seit dem 20.08. das
+            // Naheliegende: sie ruft `element.click()` in der Seite auf. Der
+            // ferne Browser tut das ab jetzt auch — dieselbe Maus, dasselbe
+            // Verhalten. Geklickt wird weiterhin NUR das eine, eindeutig
+            // aufgeloeste Element, das die Maus selbst gewaehlt hat.
+            if (!/not visible|outside of the viewport|Timeout .*exceeded/i.test(String(zweiter?.message || zweiter))) throw zweiter;
+            await locator.evaluate((el) => el.click());
+          }
+          erzwungen = true;
+        }
         await page.waitForLoadState("domcontentloaded", { timeout: cfg.settleTimeoutMs }).catch(() => {});
         await page.waitForTimeout?.(300)?.catch?.(() => {});
-        return mitZiel({});
+        return mitZiel(erzwungen ? { erzwungen: true } : {});
       }
       case "observe": {
         // DERSELBE Beobachter wie in der Maus-Engine, nicht ein zweiter:
@@ -658,6 +798,7 @@ export function createSessionEngine({
     }
     if (session.busy) return fail(409, "session_busy");
     session.busy = true;
+    session.bildFehler = "";
     try {
       const zusatz = await performAction(session, verdict.action);
       touch(session);

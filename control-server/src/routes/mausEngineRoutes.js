@@ -14,7 +14,7 @@ import { aiTransparencyHeaders, transparencyNotice } from "../compliance/aiTrans
 import { resolveChain, resolveModelRequest, executeWithFallback } from "../llm/modelRouter.js";
 import { planAndExecute } from "../../../workers/maus-engine/planner-roundtrip.mjs";
 import { buildStepPrompt, buildStepRetryPrompt } from "../../../workers/maus-engine/prompt-template.mjs";
-import { validateLoopDecision } from "../../../workers/maus-engine/interactive-loop.mjs";
+import { validateLoopDecision, benenneMehrdeutigeWahl } from "../../../workers/maus-engine/interactive-loop.mjs";
 import { createMacroStore } from "../../../workers/maus-engine/macro-store.mjs";
 import { idriveConfigFromEnv } from "../../../workers/maus-engine/artifact-uploader.mjs";
 import { signedS3Request } from "../../../workers/glm-salad/s3.js";
@@ -395,7 +395,29 @@ export async function handleMausRun(req, res, {
   // Ungebremst ist das nicht: die Anfrage braucht das Engine-Token, darf
   // ausschliesslich den Planer-Proxy ausloesen, und der Lauf, fuer den sie
   // fragt, ist durch maxLoopSteps und das Budget-Gate hart begrenzt.
-  const istSchrittfrage = fromWorker && !req?.authUser;
+  // Der Koerper wird VOR der Bremse gelesen, weil erst er sagt, WORUM es geht:
+  // eine Schrittfrage eines laufenden Auftrags ist etwas anderes als ein neuer
+  // Auftrag. Die Groessengrenze (MAX_BODY_BYTES) gilt unveraendert, und die
+  // Anmeldung ist oben schon geprueft.
+  let body;
+  try {
+    body = JSON.parse(await readBody(req));
+  } catch {
+    return json(res, 400, { ok: false, error: "kein_gueltiges_json" });
+  }
+
+  // SCHRITTFRAGEN EINES LAUFENDEN AUFTRAGS SIND KEINE NEUEN AUFTRAEGE.
+  //
+  // Der Kommentar unten stimmte schon 2026-08-17 — die Ausnahme galt aber nur
+  // fuer den Worker-Weg. Der freie Lauf IM PANEL fragt als angemeldeter Nutzer
+  // und lief damit weiter in die Bremse: gemessen 11.09. war ab dem sechsten
+  // Schritt jede Antwort "Zu viele Maus-Engine-Anfragen", zwanzig Schritte
+  // hintereinander, und das Panel hielt 429 fuer einen Abbruchgrund. Ein
+  // Auftrag mit 25 erlaubten Schritten kam also nie ueber fuenf hinaus.
+  //
+  // `naechsterSchritt` ist per Definition ein Schritt IN einem Lauf; seine
+  // Bremse ist die Schrittzahl (restSchritte, maxLoopSteps) und das Budget-Gate.
+  const istSchrittfrage = (fromWorker && !req?.authUser) || body?.naechsterSchritt === true;
   if (limiter && !istSchrittfrage) {
     const verdict = limiter.take(clientKeyFromRequest(req));
     if (!verdict.allowed) {
@@ -420,13 +442,6 @@ export async function handleMausRun(req, res, {
     // sah, DASS das Gate blockt, nie WARUM (Befund 2026-08-17: zwei fehlende
     // Umgebungswerte kosteten eine halbe Stunde Suche).
     return json(res, 503, { ok: false, error: "budget_gate_blockiert", reasons: budgetVerdict.reasons ?? [] });
-  }
-
-  let body;
-  try {
-    body = JSON.parse(await readBody(req));
-  } catch {
-    return json(res, 400, { ok: false, error: "kein_gueltiges_json" });
   }
 
   // Worker-Anfragen: ausschliesslich Planer-Proxy, sonst fail-closed.
@@ -498,6 +513,10 @@ export async function handleMausRun(req, res, {
 
     let entscheidung;
     let nachgefragt = false;
+    // Welches Modell hat entschieden und wie lange hat es gebraucht? Steht
+    // seit 2026-09-09 in jeder Antwort — vorher war "ueberlegt ... (101 s)"
+    // im Panel nicht zu erklaeren, ohne den Server selbst nachzumessen.
+    let planerMessung = null;
     try {
       const prompt = buildStepPrompt({
         task, capsuleRef, domainAllowlist,
@@ -508,7 +527,7 @@ export async function handleMausRun(req, res, {
         remainingSteps: restSchritte,
         erlaubteAktionen: PANEL_AKTIONEN
       });
-      const planer = plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel });
+      const planer = plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel, melde: (m) => { planerMessung = m; } });
       let roh = await planer(prompt);
       entscheidung = pruefeFuerPanel(validateLoopDecision(roh, policyInput));
       // EINMAL NACHFRAGEN, BEVOR ABGELEHNT WIRD (Befund 2026-09-05, siehe
@@ -520,9 +539,16 @@ export async function handleMausRun(req, res, {
         roh = await planer(buildStepRetryPrompt({ stepPrompt: prompt, errors: entscheidung.errors || [], vorigeAntwort: roh }));
         entscheidung = pruefeFuerPanel(validateLoopDecision(roh, policyInput));
       }
+      // Zwei gleiche Treffer, dieselbe Wahl noch einmal: benennen (nth 0) statt
+      // ein drittes Mal an derselben Stelle zu scheitern (Begruendung dort).
+      entscheidung = benenneMehrdeutigeWahl(entscheidung, verlauf);
     } catch (error) {
       return json(res, 502, {
         ok: false, error: String(error?.message || error).slice(0, 200),
+        // Wie lange es dauert, bis wieder Kontingent da ist — der Anbieter
+        // sagt es, und das Panel kann es dem Betreiber sagen.
+        ...(Number.isFinite(error?.wartezeitMs) ? { wartezeitMs: error.wartezeitMs } : {}),
+        planer: planerMessung,
         transparenzhinweis: transparencyNotice("maus-engine-v2")
       });
     }
@@ -534,12 +560,14 @@ export async function handleMausRun(req, res, {
         nachgefragt,
         vorschlag: entscheidung.vorschlag || null,
         repariert: entscheidung.repariert || [],
+        planer: planerMessung,
         transparenzhinweis: transparencyNotice("maus-engine-v2")
       });
     }
     return json(res, 200, {
       ok: true,
       entscheidung: entscheidung.decision,
+      planer: planerMessung,
       // Fuer die Messung: kam die Entscheidung im ersten oder zweiten Anlauf,
       // und was musste vorher geradegebogen werden?
       nachgefragt,

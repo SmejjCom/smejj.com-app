@@ -52,11 +52,49 @@ export function resolveLocator(page, selectorDef) {
 // `nth` bleibt erlaubt, WENN der Plan es ausdruecklich sagt: dann ist die
 // Mehrdeutigkeit gewollt und benannt, nicht verschwiegen. Genau das ist der
 // Unterschied zwischen einer Auswahl und einem Zufall.
+// DIE MELDUNG MUSS IN 220 ZEICHEN PASSEN — so weit kuerzt das Panel sie, ehe
+// sie in den Verlauf des Modells wandert. Live 10.09. stand die Trefferliste
+// hinter drei Zeilen Rat und fiel weg; danach passte der Rat nicht mehr neben
+// drei lange Treffer. Deshalb hier die Reihenfolge: Kopf und Rat sind gesetzt,
+// und es kommen so viele Treffer dazwischen, wie noch hineingehen — mindestens
+// einer, sonst waere die Liste sinnlos.
+export const MELDUNG_MAX = 220;
+export function mehrdeutigText(anzahl, selectorDef, kandidaten = [], grenze = MELDUNG_MAX) {
+  const kopf = `selector_mehrdeutig: ${anzahl} Treffer fuer ${beschreibe(selectorDef)}`;
+  const rat = ' — "nth":N (0-basiert) waehlen oder Selektor enger fassen (Bedienbaum); NICHT denselben wiederholen.';
+  const bauen = (liste) => `${kopf}${liste.length ? ` — ${liste.join(" | ")}` : ""}${rat}`;
+  const teile = [];
+  for (const [i, k] of (kandidaten || []).slice(0, 3).entries()) {
+    const eintrag = `nth ${i}: ${k}`;
+    if (bauen([...teile, eintrag]).length <= grenze) { teile.push(eintrag); continue; }
+    // Der ERSTE Treffer bleibt in jedem Fall — notfalls gekuerzt. Ohne ihn
+    // waere die Liste leer und das Modell wieder so klug wie vorher.
+    if (!teile.length) {
+      const platz = grenze - bauen([`nth ${i}: `]).length;
+      if (platz > 8) teile.push(`nth ${i}: ${k.slice(0, platz - 1)}…`);
+    }
+    break;
+  }
+  return bauen(teile);
+}
+
 export class MehrdeutigError extends Error {
-  constructor(anzahl, selectorDef) {
-    super(`selector_mehrdeutig: ${anzahl} Treffer fuer ${beschreibe(selectorDef)} — Selektor enger fassen (Rolle+Name aus dem Bedienbaum) oder nth ausdruecklich setzen`);
+  constructor(anzahl, selectorDef, kandidaten = []) {
+    // Der Rat steht VORN: das Panel kuerzt Fehlertexte, und bis 09.09. fiel
+    // genau der Teil mit "nth" weg — das Modell las nur "enger fassen" und
+    // scheiterte am selben Paar Links ein zweites Mal.
+    // DIE TREFFER BEIM NAMEN NENNEN (live 10.09.): "3 Treffer" allein half dem
+    // Modell nicht — es riet einen anderen, ebenfalls mehrdeutigen Selektor,
+    // und verbrannte je Runde eine halbe Minute Denkzeit. Wer die Treffer
+    // sieht, kann waehlen: entweder das passende "nth" oder ein Merkmal, das
+    // nur einer von ihnen traegt.
+    // DAS NUETZLICHE ZUERST: das Panel kuerzt Fehlertexte auf 220 Zeichen, und
+    // live 10.09. fiel genau die Trefferliste weg — sie stand hinter drei
+    // Zeilen Rat. Jetzt: Anzahl, Treffer, dann der Rat in einem Satz.
+    super(mehrdeutigText(anzahl, selectorDef, kandidaten));
     this.name = "MehrdeutigError";
     this.anzahl = anzahl;
+    this.kandidaten = kandidaten || [];
     // Warten hilft hier NIE: zwei Treffer werden nicht durch Geduld zu einem.
     // withRetries bricht auf diese Marke hin sofort ab.
     this.nichtWiederholen = true;
@@ -85,8 +123,24 @@ export async function resolveEindeutig(page, selectorDef, { erlaubeMehrere = fal
   if (typeof locator.count !== "function") return locator; // Mock ohne count: nicht schlechter als vorher
   const anzahl = await locator.count();
   if (anzahl === 0) throw new NichtGefundenError(selectorDef);
-  if (anzahl > 1) throw new MehrdeutigError(anzahl, selectorDef);
+  if (anzahl > 1) throw new MehrdeutigError(anzahl, selectorDef, await beschreibeTreffer(locator, anzahl));
   return locator;
+}
+
+// Kurzbeschreibung der ersten Treffer — fail-open: geht es nicht, bleibt die
+// Meldung die alte. Ein Fehler beim ERKLAEREN eines Fehlers darf nichts kosten.
+export async function beschreibeTreffer(locator, anzahl, grenze = 4) {
+  if (typeof locator?.nth !== "function") return [];
+  const aus = [];
+  for (let i = 0; i < Math.min(anzahl, grenze); i += 1) {
+    try {
+      const eins = locator.nth(i);
+      const text = String((await eins.innerText?.({ timeout: 1000 })) || "").replace(/\s+/g, " ").trim().slice(0, 40);
+      const href = String((await eins.getAttribute?.("href", { timeout: 1000 })) || "").slice(0, 60);
+      aus.push([text ? `"${text}"` : "", href ? `(${href})` : ""].filter(Boolean).join(" ") || "ohne Text");
+    } catch { aus.push("nicht lesbar"); }
+  }
+  return aus;
 }
 
 // Selektor-Kandidaten in deterministischer Reihenfolge: Hauptselektor,
