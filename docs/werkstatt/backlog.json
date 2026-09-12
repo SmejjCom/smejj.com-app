@@ -1,5 +1,5 @@
 {
-  "gesammeltAm": "2026-09-08T20:01:38.418Z",
+  "gesammeltAm": "2026-09-11T20:01:42.600Z",
   "aufgaben": [
     {
       "stufe": 1,
@@ -7,7 +7,7 @@
       "betrifft": "ai-act-wache",
       "titel": "Ausfall: EU-AI-Act-Wache",
       "befund": "Der letzte Lauf hat einen Fehler gemeldet: EU AI Act: aktive(s) Modell ohne Bestandsverzeichnis-Eintrag: smejj-1 — Kennzeichnung nach Art. 50 fehlt.",
-      "seit": "2026-09-06T17:14:27.358Z"
+      "seit": "2026-09-11T19:58:43.926Z"
     },
     {
       "stufe": 1,
@@ -16,14 +16,6 @@
       "titel": "Ausfall: Modell-Katalog-Wache",
       "befund": "Der letzte Lauf hat einen Fehler gemeldet: 1 gewählte(s) Modell(e) beim Anbieter verschwunden — Stand vor 0 h, z. B. zhipu:glm-4.5-flash.",
       "seit": "2026-09-08T10:27:52.407Z"
-    },
-    {
-      "stufe": 1,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "oberflaechenwache",
-      "titel": "Ausfall: Betriebswache",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: smejj.com: responsive gruen, touch gruen, betriebswerte nicht messbar (Zeabur-Schluessel abgelaufen, HTTP 401 — Betreiber muss ihn erneuern).",
-      "seit": "2026-09-06T18:50:50.238Z"
     },
     {
       "stufe": 1,
@@ -38,31 +30,31 @@
       "quelle": "Ampel-Vorfall",
       "betrifft": "schutz-echtheit",
       "titel": "Ausfall: Schutz-Echtheit",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: 6 Sperre(n) bewachen eine Fassung, die niemand bekommt — und melden dabei gruen: start-lock/public/index.html, start-lock/public/app.js, start-lock/public/pr",
-      "seit": "2026-09-06T01:19:13.816Z"
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: 10 Sperre(n) bewachen eine Fassung, die niemand bekommt — und melden dabei gruen: start-lock/public/index.html, start-lock/public/start-styles.css, start-loc",
+      "seit": "2026-09-11T17:53:24.964Z"
     },
     {
       "stufe": 1,
       "quelle": "Ampel-Vorfall",
       "betrifft": "synthetic-user-watchdog",
       "titel": "Ausfall: Probe-Nutzer",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Nutzerreise P1: 1 von 7 Schritten kaputt — buendel_gleichheit: sw.js weicht ab: https://smejj.com traegt smejj-shell-v819, https://api.smejj.com traegt smejj",
-      "seit": "2026-09-08T14:21:45.615Z"
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Nutzerreise P1: 1 von 7 Schritten kaputt — buendel_gleichheit: sw.js weicht ab: https://smejj.com traegt smejj-shell-v840, https://api.smejj.com traegt smejj",
+      "seit": "2026-09-10T23:55:20.435Z"
     },
     {
       "stufe": 1,
       "quelle": "Ampel-Vorfall",
-      "betrifft": "tiefe-spur-messung",
-      "titel": "Ausfall: Tiefe-Spur-Messung",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Selbsttest 5/5; tiefe Spur: nicht messbar: 4 von 14 Fällen mit Transportfehler (HTTP/Timeout/Notfall-Assistent): strukturierte-json-ausgabe — http_503 ×4; 1 ",
-      "seit": "2026-09-07T13:16:43.104Z"
+      "betrifft": "web-vitals-wache",
+      "titel": "Ausfall: Web-Vitals-Wache",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Budget gerissen: kalt: pageWeight_kb p75 302 > Budget 300 — LCP 528 ms, TTFB 152 ms, CLS 0.016, Gewicht 302 KB (kalt, Median aus 5 Laeufen).",
+      "seit": "2026-09-10T03:18:58.118Z"
     },
     {
       "stufe": 2,
       "quelle": "CVE-Waechter",
       "betrifft": "bibliothek:accelerate",
-      "titel": "accelerate 1.1.1: 1 bekannte Schwachstelle(n)",
-      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-4j2p-28q2-5m79. Quelle: workers/smejj-bild-maler/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
+      "titel": "accelerate 1.1.1: 2 bekannte Schwachstelle(n)",
+      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-4j2p-28q2-5m79, PYSEC-2026-3804. Quelle: workers/smejj-bild-maler/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
       "seit": null
     },
     {
@@ -77,8 +69,8 @@
       "stufe": 2,
       "quelle": "CVE-Waechter",
       "betrifft": "bibliothek:transformers",
-      "titel": "transformers 5.5.0: 1 bekannte Schwachstelle(n)",
-      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-xrqw-3rrv-vx5w. Quelle: workers/smejj-bild-maler/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
+      "titel": "transformers 5.5.0: 2 bekannte Schwachstelle(n)",
+      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-xrqw-3rrv-vx5w, PYSEC-2026-3929. Quelle: workers/smejj-bild-maler/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
       "seit": null
     }
   ],

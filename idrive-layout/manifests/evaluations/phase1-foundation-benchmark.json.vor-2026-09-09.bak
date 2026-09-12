@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
   "suiteId": "smejj-1-0-phase1-foundation",
-  "version": "2026-08-14.1",
+  "version": "2026-09-09.1",
   "createdAt": "2026-08-14T06:00:09.591Z",
-  "description": "Immutable smejj.com Phase 1 foundation, safety, non-regression and cost benchmark suite. (Version 2026-08-14.1: Pruefsummen von check-start-lock.mjs und check-guidelines.mjs nachgezogen; Betreiber-Freigabe 'Ja, nachziehen'. Suite-Inhalt sonst unveraendert.)",
+  "description": "Immutable smejj.com Phase 1 foundation, safety, non-regression and cost benchmark suite. (Version 2026-09-09.1: Pruefsummen von check-no-paid-services.mjs (03.09.) und check-guidelines.mjs (07.09.) nachgezogen; Betreiber-Freigabe 2026-09-09. Suite-Inhalt und Erwartungen sonst unveraendert.)",
   "immutable": true,
   "eligibleForTraining": false,
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "18b87e97b7cfd41e1c026419fb325e0aee25d3e15e7d9d749f1e67ccf5e481d6"
+    "contentSha256": "3b97c3f7c1ac14c839454f9b6a218cb8a1d5ec0972cb5551a98042a4115a8fb1"
   },
   "protection": {
     "versionedObjectKey": "evaluations/suites/smejj-1-0-phase1-foundation/2026-07-28.5/manifest.json",
@@ -115,7 +115,7 @@
       },
       {
         "path": "scripts/check-no-paid-services.mjs",
-        "sha256": "f1c6c346c078a81042b2030280dcf82c16e61af59600d1e92ebd7875d8303d92"
+        "sha256": "4dadc5659625efdb6a4c487bc6f13923db541d14c5325c96aa04fcf6b0a21e9f"
       },
       {
         "path": "scripts/check-backup-archives.mjs",
@@ -123,7 +123,7 @@
       },
       {
         "path": "scripts/check-guidelines.mjs",
-        "sha256": "b15032bf205cadbf6964809bf7fa884190148f6f6af399c858682316522e663f"
+        "sha256": "e8938f89eefa1180c2785e1ef92cb4824ba9261b0366198163c86f93111c4c43"
       },
       {
         "path": "scripts/check-start-lock.mjs",
