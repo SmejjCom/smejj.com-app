@@ -153,3 +153,51 @@ Lauf beweist das.
 Der Emulator hält mit Standardwerten keinen ganzen Rundgang durch (1,5 GB, GPU aus).
 Stabil erst mit `-memory 3072 -gpu swiftshader_indirect -no-metrics`, und nur einer zur
 Zeit — dokumentiert in `scripts/diagnose/emulator/README.md`.
+
+
+---
+
+## iOS offline sauber nachgemessen — und der eigentliche Grund gefunden
+
+**Vorgehen, damit eindeutig ist, was gemessen wird:**
+1. Die zwei alten Webclips vom 07.09. gesichert und entfernt, Simulator neu gestartet.
+2. **Genau einen** frisch angelegt: Safari → Teilen → Zum Home-Bildschirm, *„Als Web-App
+   öffnen"* an.
+3. Vom Home-Bildschirm aus geöffnet — Vollbild, **keine** Safari-Leiste.
+4. Den Speicher des Webclips **direkt im Dateisystem** ausgelesen statt Screenshots zu deuten.
+
+**Befund 1 — Safari offline funktioniert (v859):** In derselben Minute, in der
+`example.com` mit *„nicht mit dem Internet verbunden"* scheitert, lädt smejj.com über eine
+neue Adresse die vollständige App mit Chatverlauf und rotem Offline-Band. Im Safari-Speicher
+liegt der Service Worker samt Cache `smejj-shell-v859`, `mobil-dock.js` und
+`mobil-ansichten.js` inklusive. **Der v859-Service-Worker ist auf iOS offline-fähig.**
+
+**Befund 2 — die installierte App hat keinen Service Worker.** Der frische Webclip hat auch
+nach 90 Sekunden weder einen `ServiceWorkers`- noch einen `CacheStorage`-Ordner. Er zeigt
+die Landeseite, weil sein Speicher getrennt von Safari ist — dort ist niemand angemeldet.
+
+**Die Ursache, am Schreibtisch ohne jedes Anmelde-Flag bestätigt:**
+
+1. Das Symbol öffnet `https://smejj.com/`.
+2. `auth-gate-frueh.js` läuft als erstes Skript: kein Token, keine Sitzung →
+   `location.replace("/willkommen.html")`.
+3. `willkommen.html` lädt vier Skripte (`willkommen-sprache`, `willkommen-fokus`,
+   `pwa-schnellstart`, `besucher-puls`) — **keines registriert den Service Worker**.
+   Gemessen: 0 Registrierungen, 0 Caches.
+4. Registriert wird er einzig in `app.js` (Zeile 80) — und die App-Hülle erreicht ein
+   abgemeldeter Besucher nie.
+
+**Folge:** Wer smejj.com auf iPhone oder Android installiert, **bevor** er sich anmeldet —
+also jeder neue Nutzer —, hat eine App ohne Service Worker. Offline sieht er die
+Fehlerseite des Browsers statt der App. Erst nach der ersten Anmeldung wird der SW
+registriert.
+
+**Warum ich das nicht selbst geändert habe:** Die Behebung ist technisch klein (die
+Landeseite registriert `/sw.js` ebenfalls), hat aber eine Folge für **jeden** Besucher der
+Werbeseite: der Precache lädt dann ~2 MB (229 Dateien) im Hintergrund, auch für wer nur
+schaut. Die Landeseite ist bewusst schlank gehalten. Dazu arbeitet gerade eine
+Parallelsitzung am Service Worker (v859). Diese Abwägung gehört dem Betreiber.
+
+**Ehrliche Korrektur zu gestern:** Der iOS-„Offline-Beweis" vom 12.09. mittags (v858) lief
+vermutlich aus dem HTTP-Netzwerk-Cache des Webclips, nicht aus einem Service Worker — denn
+auch die alten Clips hatten keinen. Nach dem Simulator-Neustart war dieser Cache weg.
