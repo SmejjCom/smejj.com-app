@@ -40,7 +40,15 @@ export const HISTORY_DIRECTORIES = Object.freeze([
   "release",
   "prompts",
   "mockups",
-  "projects"
+  "projects",
+  // Befund 2026-09-10, dasselbe Muster wie beim Changelog fuenf Wochen zuvor:
+  // docs/werkstatt/BACKLOG.md sagt in der eigenen Kopfzeile "wird bei jedem
+  // Lauf neu geschrieben" und traegt die Befundtexte der Autopiloten-Ampel
+  // woertlich weiter. Damit stand die Kennung eines Pruefsuite-Falls
+  // ("strukturierte-json-ausgabe") im Wissenskorpus — das Modell konnte lesen,
+  // was es koennen soll. Ein Arbeitsprotokoll ist kein Regeldokument; es
+  // wechselt taeglich und beschreibt Vorfaelle, nicht geltendes Wissen.
+  "werkstatt"
 ]);
 
 /** Dateiname mit ISO-Datum = Momentaufnahme, kein geltendes Regeldokument. */

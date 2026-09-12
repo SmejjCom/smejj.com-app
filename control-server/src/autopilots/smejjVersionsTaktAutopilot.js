@@ -18,6 +18,7 @@
 // WAS ER NICHT TUT: trainieren, messen, GPU mieten, Nr. 18 anfassen. Nr. 18
 // (Release-Verwalter) bleibt, wie er ist — Nummern-Register ist eingefroren.
 import { createRecordStore } from "../admin/recordStore.js";
+import { belegeAusRegister, belegungText } from "../../../src/shared/smejjModellPlaetze.js";
 import { getModelRuntimeHealthSnapshot } from "../llm/modelRuntimeHealth.js";
 import { setzeSmejjRegister, smejjAliasZiel, SMEJJ_MODELL_ID, SMEJJ_VERSIONEN_ABLAGE, REGISTER_ID } from "../llm/smejjAlias.js";
 import {
@@ -117,6 +118,23 @@ export async function laufSmejjVersionsTakt({
     if (lt.tauglich && /Laufzeit .* rot/.test(register.liveGrund || "")) register = schalteLive(register, true, `Laufzeit wieder gruen — ${lt.grund}`, { jetztIso });
   }
 
+  /**
+   * DIE VIER PLAETZE — Betreiber-Auftrag vom 06.09.: "smejj 1.0 bis 1.3 aktiv
+   * haben und jede untereinander Aufgaben teilen, wie Claude das mit Fable,
+   * Opus, Sonnet und Haiku macht."
+   *
+   * Die Belegung wird IM REGISTER mitgefuehrt und nicht anderswo abgelegt: der
+   * Router liest ohnehin dieses eine Objekt (ueber setzeSmejjRegister), und
+   * eine zweite Ablage waere eine zweite Wahrheit, die auseinanderlaufen kann.
+   *
+   * Sie wird bei JEDEM Takt neu berechnet, auch wenn keine neue Bewertung
+   * vorlag. Eine Version kann durch einen Rueckweg ihren Platz verlieren, ohne
+   * dass eine Bewertung dazukommt — haenge man die Berechnung an neue
+   * Bewertungen, bliebe der Platz dann faelschlich besetzt.
+   */
+  const plaetze = belegeAusRegister(register);
+  register = { ...register, plaetze };
+
   let ablageStatus = "Register unveraendert";
   if (JSON.stringify(register) !== vorher) {
     try { await registerAblage.schreib({ ...register, id: REGISTER_ID }, { env, timeoutMs: 5000 }); ablageStatus = "Register geschrieben"; } catch {
@@ -131,6 +149,6 @@ export async function laufSmejjVersionsTakt({
     ok: true,
     meldung: `Selbsttest ${probe.geprueft}/${probe.geprueft}; stable ${stabil ? `${stabil.version} (${(stabil.note * 100).toFixed(1)} %, ${stabil.kritisch} kritisch)` : "keine eigene Version"}; `
       + `Alias smejj ${ziel.live ? "LIVE" : "AUS"} — ${ziel.grund}; ${neue.length} neue Bewertung(en)${entschieden.length ? `: ${entschieden.join("; ")}` : ""}; `
-      + `Versionen ${versionenText}; ${ablageStatus}`
+      + `Versionen ${versionenText}; Plaetze ${belegungText(plaetze)}; ${ablageStatus}`
   };
 }

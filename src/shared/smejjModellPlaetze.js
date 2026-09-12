@@ -71,9 +71,16 @@ export const AUFNAHME = Object.freeze({
 export function darfBesetzen(v) {
   if (!v || typeof v !== "object") return { ok: false, grund: "keine Bewertung" };
   if (v.status === "ungueltig") return { ok: false, grund: "Bewertung als ungueltig gekennzeichnet" };
-  const note = Number(v.note), basis = Number(v.basisNote), kritisch = Number(v.kritisch);
-  if (!Number.isFinite(note) || !Number.isFinite(basis)) return { ok: false, grund: "Note oder Basisnote fehlt" };
-  if (!Number.isFinite(kritisch)) return { ok: false, grund: "Zahl der kritischen Fehler fehlt" };
+  // ECHTE Zahlen verlangen, nicht "laesst sich in eine Zahl umwandeln".
+  // Number(null) ist 0 und Number.isFinite(0) ist true — eine fehlende Note
+  // saehe damit aus wie 0 %, also wie ein gemessen katastrophales Modell.
+  // Der Ausgang waere hier zufaellig derselbe (Ablehnung), die BEGRUENDUNG
+  // aber falsch: "0 Punkte gegen die Basis" statt "es wurde nichts gemessen".
+  // Eine falsche Begruendung schickt die Fehlersuche in die falsche Richtung.
+  const zahl = (w) => (typeof w === "number" && Number.isFinite(w) ? w : null);
+  const note = zahl(v.note), basis = zahl(v.basisNote), kritisch = zahl(v.kritisch);
+  if (note === null || basis === null) return { ok: false, grund: "Note oder Basisnote fehlt" };
+  if (kritisch === null) return { ok: false, grund: "Zahl der kritischen Fehler fehlt" };
   if (kritisch > AUFNAHME.maxKritisch) return { ok: false, grund: `${kritisch} kritische Fehler` };
   const vorsprung = (note - basis) * 100;
   if (vorsprung < AUFNAHME.mindestVorsprung) {
@@ -114,8 +121,16 @@ export function belegePlaetze(bewertungen = []) {
       platz: p.platz, profil: p.profil, rolle: p.rolle,
       version: v?.version ?? null,
       note: v ? Number(v.note) : null,
+      // Zwei verschiedene Gruende fuer einen leeren Platz, und sie duerfen nicht
+      // denselben Text bekommen: "es hat noch keine Version bestanden" ist eine
+      // Lage, in der nichts zu tun ist ausser weiter zu trainieren. "Es haben
+      // welche bestanden, nur nicht genug fuer alle vier Plaetze" ist die Lage
+      // danach — dort waere der Satz "keins hat bestanden" schlicht falsch und
+      // wuerde einen erfolgreichen Lauf verschweigen.
       grund: v ? `besteht mit ${(Number(v.note) * 100).toFixed(1)} % (${v.vorsprung.toFixed(1)} Punkte ueber Basis)`
-        : "frei — kein eigenes Modell hat die Messung bestanden; das Fremdmodell bleibt zustaendig"
+        : zugelassen.length === 0
+          ? "frei — noch keine eigene Version hat die Messung bestanden; das Fremdmodell bleibt zustaendig"
+          : `frei — ${zugelassen.length} bestandene Version(en) reichen nicht fuer alle vier Plaetze; hier bleibt das Fremdmodell zustaendig`
     };
   });
 }
@@ -127,4 +142,37 @@ export function belegePlaetze(bewertungen = []) {
 export function modellFuerProfil(profil, belegung) {
   const treffer = (belegung || []).find((b) => b.profil === profil);
   return treffer?.version || null;
+}
+
+/**
+ * Belegt die Plaetze aus dem VERSIONSREGISTER (smejj/versionen/register).
+ *
+ * Das Register ist die einzige Stelle, an der steht, welche eigenen Versionen
+ * es gibt und wie sie gemessen wurden — Autopilot Nr. 83 schreibt es. Seine
+ * Eintraege tragen genau die Felder, die `darfBesetzen` braucht (version, note,
+ * basisNote, kritisch), also wird hier nichts umgerechnet und nichts geraten.
+ *
+ * ABGELEHNTE VERSIONEN WERDEN VORHER AUSSORTIERT, obwohl `darfBesetzen` sie
+ * ohnehin durchfallen liesse. Der Grund ist die BEGRUENDUNG: eine Version, die
+ * Nr. 83 mit "unter der Basis" abgelehnt hat, soll im Platzbericht nicht als
+ * "0,0 Punkte gegen die Basis" auftauchen, als waere sie knapp gescheitert.
+ * Zwei Instanzen, die dasselbe Urteil verschieden begruenden, kosten bei jeder
+ * spaeteren Fehlersuche Zeit.
+ */
+export function belegeAusRegister(register) {
+  const versionen = Array.isArray(register?.versionen) ? register.versionen : [];
+  const zulaessig = versionen.filter((v) => v && v.status !== "abgelehnt" && v.status !== "zurueckgerollt");
+  return belegePlaetze(zulaessig);
+}
+
+/**
+ * Kurzfassung der Belegung fuer Meldungen und den Adminbereich.
+ * Ein leerer Platz wird ausdruecklich genannt — er ist der Normalfall, kein
+ * Fehler, und ihn zu verschweigen liesse den Eindruck entstehen, es liefe schon
+ * ein eigenes Modell.
+ */
+export function belegungText(belegung = []) {
+  return belegung
+    .map((b) => `${b.platz}: ${b.version || "frei (Fremdmodell)"}`)
+    .join(", ");
 }

@@ -294,17 +294,43 @@ test("corpus listing is complete, ordered and never silently truncated", async (
 });
 
 test("corpus never contains the eval suite answer key", async () => {
-  const suite = JSON.parse(await readFile("evals/suites/smejj-chat-core-v1.json", "utf8"));
-  const kennungen = suite.cases.map((item) => item.id);
+  // ALLE Pruefungen, nicht nur die kleine. Bis zum 10.09. sah dieser Fall nur
+  // die 14 Faelle der core-Suite — gemessen wird aber laengst mit der breiten
+  // Suite (295 Faelle in evals/packs/). Ein Waechter, der 14 von 309 Faellen
+  // prueft, gibt die Sicherheit fuer alle 309 vor.
+  const { readdir } = await import("node:fs/promises");
+  const kennungen = new Set();
+  const core = JSON.parse(await readFile("evals/suites/smejj-chat-core-v1.json", "utf8"));
+  for (const fall of core.cases || []) if (fall.id) kennungen.add(fall.id);
+  for (const datei of await readdir("evals/packs")) {
+    const pack = JSON.parse(await readFile(`evals/packs/${datei}`, "utf8"));
+    for (const fall of pack.faelle || pack.cases || []) if (fall.id) kennungen.add(fall.id);
+  }
+  assert.ok(kennungen.size > 200, `nur ${kennungen.size} Kennungen gelesen — die Pruefung waere zu schwach`);
+
   const { files } = await listKnowledgeFiles(process.cwd());
   const leck = [];
   for (const file of files) {
     const text = await readFile(file, "utf8").catch(() => "");
-    for (const id of kennungen) if (text.includes(id)) leck.push(`${file} -> ${id}`);
+    // Kurze Kennungen treffen zufaellig gewoehnliche Woerter; ab sieben
+    // Zeichen ist ein Treffer eine Aussage und kein Rauschen.
+    for (const id of kennungen) if (id.length > 6 && text.includes(id)) leck.push(`${file} -> ${id}`);
   }
   // Ein Korpus, der die Fall-Kennungen der eigenen Pruefung enthaelt, macht jede
   // gemessene Verbesserung wertlos: das Modell laese dann den Erwartungstext mit.
   assert.deepEqual(leck, [], `Antwortschluessel im Wissenskorpus: ${leck.join(", ")}`);
+});
+
+test("taeglich neu geschriebene Arbeitsprotokolle sind kein Projektwissen", () => {
+  // Die Wurzel des Lecks vom 10.09.: docs/werkstatt/BACKLOG.md wird bei jedem
+  // Autopiloten-Lauf neu geschrieben und traegt die Befundtexte der Ampel
+  // woertlich weiter — darunter die Kennung eines Pruefsuite-Falls. Die eine
+  // Zeile zu loeschen haette bis zum naechsten Lauf gehalten.
+  assert.ok(HISTORY_DIRECTORIES.includes("werkstatt"),
+    "docs/werkstatt/ enthaelt Vorfaelle und Momentaufnahmen, keine geltenden Regeln");
+  assert.equal(isKnowledgeFile("docs/werkstatt/BACKLOG.md"), false);
+  // Und die Gegenprobe: ein echtes Regeldokument bleibt drin.
+  assert.equal(isKnowledgeFile("AI_Guidelines.md"), true);
 });
 
 test("history directories and dated pattern are declared, not implied", () => {

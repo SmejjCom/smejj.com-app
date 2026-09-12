@@ -33,8 +33,20 @@ import { TRAININGS_REIFE_ABLAGE } from "./trainingsReifeAutopilot.js";
 export const MODELL_EVOLUTION_ABLAGE = "autopiloten/modell-evolution";
 /** Kennung des überschriebenen Datensatzes mit dem jüngsten Zyklus. */
 export const LETZTER_ZYKLUS_ID = "letzter-zyklus";
-/** Budgetdeckel für Training (Betreiber-Freigabe 02.09.: 10 USD/Monat). */
-export const BUDGET_MONAT_USD_STANDARD = 10;
+/**
+ * Budgetdeckel für Training.
+ *
+ * Betreiber-Anweisung 2026-09-07: "Macht mindestens hundert Euro monatlich.
+ * Weil ich will unsere Modelle schnell wie möglich hundert Prozent fertig
+ * machen." Das ersetzt die Freigabe vom 02.09. (10 USD).
+ *
+ * 100 EUR ≈ 108 USD. Gemessen am 06./07.09. kostet ein voller Zyklus
+ * (trainieren + messen) rund 0,40 USD — der Deckel bindet also nicht die
+ * Anzahl der Läufe, sondern erlaubt MEHRERE Salad-Gruppen gleichzeitig.
+ * Das ist der einzige Hebel, der die Modelle wirklich schneller fertig macht:
+ * seriell schafft ein Monat etwa 240 Zyklen, die Uhr begrenzt, nicht das Geld.
+ */
+export const BUDGET_MONAT_USD_STANDARD = 108;
 /** Unter so vielen Messungen ist eine Fähigkeits-Note Rauschen, keine Schwäche. */
 export const MINDEST_MESSUNGEN = 5;
 
