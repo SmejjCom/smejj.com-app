@@ -120,3 +120,33 @@ es aufgegangen.
 **Ergebnis:** `check:schutz-echtheit` ist erstmals wieder grün (48 ausgelieferte Dateien aus
 8 Manifesten stimmen mit smejj.com überein), 17/17 Sperren-Proben, 660 Frontend-Proben,
 Rundgang 19/19 und 152 Responsive-Messpunkte ohne Befund.
+
+
+---
+
+## NACHTRAG 2: die Offline-Probe deckte einen eigenen Fehler auf (SW v858)
+
+Beim Nachweis auf dem Handy war der Cache `smejj-shell-v857` **leer — null Dateien**,
+während der alte v855 noch danebenstand.
+
+Ursache waren **zwei doppelte Zeilen in `SHELL`**: `mobil-dock.js` und `mobil-ansichten.js`
+standen an zwei Stellen der Liste. Sie sind mir beim Abgleich hineingeraten — der Zweig
+hatte sie im Handy-Block, live lagen sie weiter unten, und beim Zusammenführen blieben
+beide stehen.
+
+**`cache.addAll()` lehnt eine Liste mit doppelten Requests komplett ab** (InvalidStateError).
+Nicht der doppelte Eintrag fällt aus, sondern der **ganze Precache** — die App wäre offline
+tot gewesen, ohne dass irgendwo ein Fehler sichtbar wird. Dieselbe Bauart wie die 404-Falle
+vom 09.09.: *addAll ist alles oder nichts.*
+
+Behoben (229 Einträge, alle eindeutig), ausgeliefert als v858, auf dem Gerät nachgemessen:
+
+- Precache **229 Dateien**, beide Handy-Module und die Startseite enthalten, alte Caches weg
+- **Offline mit Gegenprobe**: Flugmodus an (Systemwert 1), zwei fremde Adressen scheitern,
+  `navigator.onLine` false — die App steht trotzdem mit 460 Zeichen und 31 Knöpfen
+- **beide Handy-Module laden ohne Netz** — genau der Fund, der den Abgleich gerechtfertigt hat
+- das Offline-Banner verdeckt **kein** Bedienelement (`elementFromPoint` auf jede Mitte)
+- danach Netz wieder an, Rundgang 19/19 in zwei Runden
+
+Wächter dagegen: `tests/offline-verhalten.test.mjs` — „kein Eintrag steht zweimal im
+Precache", mit Gegenprobe.
