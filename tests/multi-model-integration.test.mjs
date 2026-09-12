@@ -35,7 +35,16 @@ test("chat, coding, streaming and model failure share the registry router", asyn
   const appPort = await freePort();
   const app = spawn(process.execPath, ["src/server.js"], {
     env: {
-      ...process.env,
+      // NUR DIE UMGEBUNG, DIE DER TEST SELBST SETZT — sonst misst er den Rechner.
+      //
+      // GEMESSEN 12.09. unter Last: bei "alle Modelle aus" kam HTTP 200 statt
+      // 502, und die Kopfzeile verriet warum — `backend: hausmodell:smejj-1-basis`.
+      // Der Test reichte `...process.env` durch, der Rechner trug die Zugaenge
+      // des ECHTEN Hausmodells, und die Ersatzkette fand hinter den beiden
+      // Attrappen einen dritten, lebenden Dienst im Internet. Der Test war also
+      // nicht "flakig", er mass die Umgebung mit. Ohne SMEJJ_*-Erbe misst er nur
+      // noch das, was er selbst aufgebaut hat.
+      ...Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith("SMEJJ_"))),
       PORT: String(appPort),
       SMEJJ_HOST: "127.0.0.1",
       SMEJJ_SERVER_AI_ENABLED: "true",
