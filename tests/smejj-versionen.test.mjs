@@ -65,9 +65,10 @@ test("Alias-Ziel: fail-closed ohne Register, ohne Live, ohne Flag, ohne Laufzeit
   const stableNichtLive = haengeUm(leeresRegister(T), { version: "smejj-1-1", note: 0.61, referenzNote: 100 }, { jetztIso: T });
   assert.equal(smejjAliasZiel(LAUFZEIT, stableNichtLive).live, false);
   const live = haengeUm(leeresRegister(T), { version: "smejj-1-3", note: 0.99, referenzNote: 97 }, { jetztIso: T });
-  assert.equal(smejjAliasZiel({}, live).live, false, "ohne SMEJJ_1_ENABLED bleibt der Alias aus");
-  assert.match(smejjAliasZiel({}, live).grund, /SMEJJ_1_ENABLED/);
-  assert.equal(smejjAliasZiel({ SMEJJ_1_ENABLED: "YES" }, live).live, false, "ohne Adresse/Schluessel bleibt der Alias aus");
+  // Seit 10.09. entscheidet die LAUFZEIT (Adresse + Schluessel), nicht mehr ein eigenes Flag.
+  assert.equal(smejjAliasZiel({}, live).live, false, "ohne Laufzeit bleibt der Alias aus");
+  assert.match(smejjAliasZiel({}, live).grund, /SMEJJ_LLM_SMEJJ1_/);
+  assert.equal(smejjAliasZiel({ SMEJJ_1_ENABLED: "YES" }, live).live, false, "ein Flag allein reicht nicht");
   const ziel = smejjAliasZiel(LAUFZEIT, live);
   assert.equal(ziel.live, true); assert.equal(ziel.modelId, SMEJJ_MODELL_ID); assert.equal(ziel.version, "smejj-1-3");
 });

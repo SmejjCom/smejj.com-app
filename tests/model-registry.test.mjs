@@ -31,7 +31,10 @@ test("registry keeps GLM-5.2 primary and Kimi K2.7 feature-flagged", () => {
   assert.equal(registry.models[1].active, false);
   assert.equal(registry.models[2].active, false);
   assert.equal(registry.models[3].active, false);
-  assert.equal(registry.models[4].active, false, "smejj 1 bleibt ohne Env-Freigabe inaktiv (fail-closed)");
+  // Seit 10.09. ist smejj 1 sichtbar (enabledByDefault), die Tuer ist der SCHLUESSEL:
+  // ohne ihn bleibt der Status "fallback-only", Anfragen laufen aufs Standardmodell.
+  assert.equal(registry.models[4].active, true, "smejj 1 ist waehlbar");
+  assert.equal(registry.models[4].status, "fallback-only", "ohne Schluessel nur Fallback (fail-closed)");
   assert.equal(registry.models[0].contextTokens, 1_000_000);
   assert.equal(registry.models[1].contextTokens, 262_144);
   assert.equal(JSON.stringify(registry).includes("secret"), false);

@@ -51,8 +51,8 @@ test("Maus-Spuren werden auch in Teil-Inhalten (content als Liste) erkannt; Nutz
   assert.equal(brauchtMausSchutz(nurNutzer), false, "nur ASSISTENT-Zeilen sind Maus-Spuren");
 });
 
-test("BEIDE Chat-Wege haengen den Schutz an — Cline und BYOK-Anbieter", () => {
-  for (const datei of ["control-server/src/routes/providerRoutes.js", "control-server/src/routes/apiKeysRoutes.js"]) {
+test("der Nutzer-Chatweg haengt den Schutz an (providerRoutes/Cline ist seit 11.09. entfernt)", () => {
+  for (const datei of ["control-server/src/routes/apiKeysRoutes.js"]) {
     const quelle = fs.readFileSync(datei, "utf8");
     assert.match(quelle, /import \{ ergaenzeMausSchutz \} from "\.\.\/llm\/mausImitationSchutz\.js"/, `${datei}: Import fehlt`);
     assert.match(quelle, /ergaenzeMausSchutz\(sanitizeMessages\(body\.messages\)\)/, `${datei}: Schutz nicht am Nachrichtenweg`);

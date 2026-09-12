@@ -105,7 +105,7 @@ test("Nr. 83: ohne Laufzeit-Konfiguration bleibt der Alias sichtbar AUS mit Grun
   try {
     const e = await laufSmejjVersionsTakt({ env: {}, storeFabrik: fabrik, gesundheit: () => ({}) });
     assert.equal(e.ok, true);
-    assert.match(e.meldung, /Alias smejj AUS — SMEJJ_1_ENABLED nicht gesetzt/);
+    assert.match(e.meldung, /Alias smejj AUS — Laufzeit ohne Adresse oder Schluessel/);
     const kaputt = await laufSmejjVersionsTakt({ env: {}, storeFabrik: speicher({ kaputt: SMEJJ_VERSIONEN_ABLAGE }).fabrik, gesundheit: () => ({}) });
     assert.equal(kaputt.ok, false); assert.match(kaputt.meldung, /Versionsregister nicht lesbar/);
     const kaputt2 = await laufSmejjVersionsTakt({ env: {}, storeFabrik: speicher({ kaputt: SMEJJ_BEWERTUNGEN_ABLAGE }).fabrik, gesundheit: () => ({}) });

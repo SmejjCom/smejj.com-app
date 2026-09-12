@@ -33,14 +33,14 @@ test("nur bei deutscher Oberfläche; Textknoten, Optionen und Platzhalter, nie i
   const knoten = (text, tag) => ({ textContent: text, parentElement: { tagName: tag } });
   const liste = [knoten("Free-safe", "OPTION"), knoten("API-Key", "PRE"), knoten("Sync", "SPAN")];
   let i = -1;
-  const platz = { placeholder: "Cline API-Key einmalig eingeben" };
+  const platz = { placeholder: "API-Key" }; // Cline ist seit 11.09. entfernt — exakter Treffer aus dem Woerterbuch
   const doc = { documentElement: de.documentElement, createTreeWalker: () => ({ nextNode: () => liste[++i] || null }) };
   const wurzel = { querySelectorAll: () => [platz] };
   assert.equal(m.deutscheWoerter(wurzel, doc), 3);
   assert.equal(liste[0].textContent, "Kostenfrei & sicher");
   assert.equal(liste[1].textContent, "API-Key", "in <pre> bleibt alles wie es ist");
   assert.equal(liste[2].textContent, "Abgleich");
-  assert.equal(platz.placeholder, "Cline-API-Schlüssel einmalig eingeben");
+  assert.equal(platz.placeholder, "API-Schlüssel");
   i = -1;
   assert.equal(m.deutscheWoerter(wurzel, { ...doc, documentElement: en.documentElement }), 0, "englisch: nichts anfassen");
 });
