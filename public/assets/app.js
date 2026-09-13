@@ -6,7 +6,7 @@ import { bindPasteAttach, composePastedTask } from "./composer-paste-attach.js?v
 import { bindeSuchNachlader, holeSuche, ladeSucheFuerAnsicht } from "./such-nachladen.js?v=7";
 import { initWorkspaceBridge } from "./workspace-bridge.js";
 import { ladeBeiAnsicht, ladeBeiKlick } from "./nachladen.js?v=2";
-import { holeSendepfad } from "./sendepfad-nachladen.js?v=30";
+import { holeSendepfad } from "./sendepfad-nachladen.js?v=21";
 import { applyPanelCompact, syncLeftMenuState } from "./left-menu-state.js";
 import { initPanelBackdrop } from "./panel-backdrop.js?v=panel-backdrop-20260803";
 import { buildChatTargets, buildRequestHistory } from "./chat-history-context.js";
@@ -22,7 +22,7 @@ import { getJson, postJson } from "./shared/http-json.js";
 // Kleine DOM-, Speicher- und Anzeige-Helfer. Herausgeloest am 07.09., weil
 // app.js mit 812 Zeilen ueber der Hausgrenze von 800 lag und damit
 // `npm run check:all` bei der ersten Pruefung abbrach.
-import { addEntry, downloadText, hideTaskIndicator, loadJson, loadText, setText, showTaskIndicator, snippet, writeOutput } from "./app-helfer.js?v=1";
+import { addEntry, downloadText, hideTaskIndicator, loadJson, loadText, setText, showTaskIndicator, snippet, writeOutput } from "./app-helfer.js?v=3";
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
@@ -69,7 +69,7 @@ function normalizeStufe(value) {
 const MODEL_MODES = Object.freeze({
   // Nur echte Modelle im Picker; Verbindungsarten (local browser, BYOK)
   // werden unter Einstellungen -> KI-Provider (/ai) verwaltet.
-  "smejj 1.0": AI_MODES.disabled, "smejj 1.1": AI_MODES.disabled, "smejj 1.2": AI_MODES.disabled, "smejj 1.3": AI_MODES.disabled, "Auto": AI_MODES.disabled, // 07.09.: Name reist als body.model; 1.2/1.3 tiefe Spur, "Auto" = Server-Router waehlt + Ersatzkette
+  "smejj 1.0": AI_MODES.disabled, "smejj 1.1": AI_MODES.disabled, "smejj 1.2": AI_MODES.disabled, "smejj 1.3": AI_MODES.disabled, "smejj 1": AI_MODES.disabled, "Auto": AI_MODES.disabled, // 07.09.: Name reist als body.model; 1.2/1.3 tiefe Spur, "Auto" = Server-Router waehlt + Ersatzkette; 13.09.: "smejj 1" = eigenes Modell (Hausmodell), ohne Eintrag hier fiele die Wahl still auf "smejj 1.0" zurueck
   "GLM-5.2": AI_MODES.glm52Vault, "Kimi K2.7": AI_MODES.kimiK27Vault,
   // K3 hat keinen Modell-Vault (nur API) und laeuft ueber einen Anbieter-Key —
   // darum byok, nicht *Vault wie GLM-5.2 und K2.7.
@@ -181,7 +181,13 @@ function bindModelPicker() {
   const menu = $("#modelPickerMenu");
   if (!button || !menu) return;
   state.settings = { ...state.settings, stufe: normalizeStufe(localStorage.getItem(STUFE_KEY) || state.settings.stufe) };
-  applySelectedModel(localStorage.getItem(STORAGE_KEYS.model) || state.settings.model || "smejj 1.0", { persist: false, quiet: true }); window.addEventListener("smejj:model-selected", (event) => applySelectedModel(event.detail?.model));
+  applySelectedModel(localStorage.getItem(STORAGE_KEYS.model) || state.settings.model || "smejj 1.0", { persist: false, quiet: true }); window.addEventListener("smejj:model-selected", (event) => {
+    // Das Menue schickt Modell UND Stufe. Die Stufe hier zu ignorieren war die
+    // Ursache dafuer, dass eine Wahl von "smejj 1.0" den Chip auf "smejj 1.1"
+    // stellte (live gemessen 2026-09-11): der Chip las die alte Stufe.
+    if (event.detail?.stufe) state.settings = { ...state.settings, stufe: normalizeStufe(event.detail.stufe) };
+    applySelectedModel(event.detail?.model);
+  });
   button.addEventListener("click", (event) => {
     event.stopPropagation();
     const open = menu.hidden;
@@ -233,12 +239,11 @@ function applySelectedModel(model, { persist = true, quiet = false } = {}) {
   const selectedModel = Object.hasOwn(MODEL_MODES, model) ? model : "smejj 1.0";
   const mode = MODEL_MODES[selectedModel] || AI_MODES.disabled;
   const button = $("#modelPickerButton");
-  if (selectedModel === "smejj 1.0") {
-    const stufe = state.settings.stufe || "auto";
-    if (button) button.textContent = STUFE_LABEL[stufe] || "smejj 1.0";
-  } else {
-    if (button) button.textContent = selectedModel;
-  }
+  // Der Chip zeigt die WAHL, nichts anderes. Bis 2026-09-11 stand hier ein
+  // Sonderfall aus der Zeit, als 1.1/1.2/1.3 blosse Stufen-Etiketten fuer
+  // "smejj 1.0" waren: er beschriftete den Chip aus der Stufe und widersprach
+  // damit dem Haken im Menue. Heute sind alle vier echte Eintraege.
+  if (button) button.textContent = selectedModel;
   state.settings = { ...state.settings, model: selectedModel };
   if (persist) localStorage.setItem(STORAGE_KEYS.model, selectedModel);
   const aiModeSelect = $("#aiModeSelect");
@@ -260,10 +265,12 @@ function applySelectedStufe(stufe) {
   const selected = normalizeStufe(stufe);
   state.settings = { ...state.settings, stufe: selected };
   localStorage.setItem(STUFE_KEY, selected);
-  applySelectedModel("smejj 1.0");
-  const button = $("#modelPickerButton");
-  if (button) button.textContent = STUFE_LABEL[selected] || "smejj 1.0";
+  // "Auto" ist eine Modellwahl, keine Stufe: den Traeger waehlt der Server pro
+  // Auftrag. Wer die Stufe umschaltet, darf sie nicht verlieren — bis
+  // 2026-09-11 loeschte ein Klick auf "Nachdenken" genau das (live gemessen).
+  applySelectedModel(localStorage.getItem(STORAGE_KEYS.model) === "Auto" ? "Auto" : STUFE_LABEL[selected] || "smejj 1.0");
 }
+window.smejjApplyStufe = applySelectedStufe;
 
 function hydrateComponents() {
   for (const button of $$(".nav-button")) {
@@ -344,7 +351,7 @@ function bindStartComposer() {
   };
   send.addEventListener("click", submit);
   bindPasteAttach({ getInput: () => input });
-  ladeBeiKlick(["[data-start-tool]", "#composerPlusButton"], () => import("./composer-tools.js?v=werkzeuge-22").then((m) => m.initComposerTools()));
+  ladeBeiKlick(["[data-start-tool]", "#composerPlusButton"], () => import("./composer-tools.js?v=werkzeuge-24").then((m) => m.initComposerTools()));
   initWorkspaceBridge({ workspace, ensureProject: () => ensureProject({ state, workspace }), showToast });
   input.addEventListener("input", resizeInput);
   input.addEventListener("keydown", (event) => {

@@ -423,13 +423,19 @@ export function fastLaneEnabled() {
 //   schnell     — immer die Groq-Schnellspur, auch bei Coding
 //   auto        — heutiges Verhalten, die Automatik entscheidet
 //   gruendlich  — nie die Schnellspur, immer die tiefe Spur
+//   spezial     — wie gruendlich, dazu die hoechste Denktiefe (seit 2026-09-07)
+//
+// "spezial" kam mit der Modellstaffel smejj 1.0 bis 1.3 dazu (Betreiber-Ansage
+// 2026-09-07). Ohne sie waeren 1.2 und 1.3 dasselbe gewesen — zwei Namen, ein
+// Verhalten. Ein Menuepunkt, der nichts anderes tut als der darueber, ist ein
+// Versprechen ohne Deckung; davon hatten wir mit Ox Alpha genug.
 //
 // FAIL-SAFE (Bedingung a der Freigabe): Jeder unbekannte Wert — und das
 // Fehlen des Feldes — ergibt "" und damit exakt das bisherige Verhalten.
 // Aeltere Frontends, die nichts davon wissen, aendern sich also nicht.
 export function leseStufe(body) {
   const roh = String(body?.stufe || body?.preferences?.stufe || "").trim().toLowerCase();
-  return roh === "schnell" || roh === "auto" || roh === "gruendlich" ? roh : "";
+  return roh === "schnell" || roh === "auto" || roh === "gruendlich" || roh === "spezial" ? roh : "";
 }
 
 // Schnelle Konversations-Spur: true nur wenn Groq streamt; bei false wurde noch KEIN Byte
@@ -437,9 +443,9 @@ export function leseStufe(body) {
 // bei vorhandener tiefer Spur — sonst antwortet streamModel 503 statt einer Antwort.
 export async function streamFastLane(res, messages, profile, requestedModel = "", stufe = "") {
   if (!fastLaneEnabled()) return false;
-  // "gruendlich" gibt die Schnellspur immer ab; "schnell" nimmt sie immer.
-  // Ohne Stufe gelten unveraendert die bisherigen Regeln.
-  if (stufe === "gruendlich") return false;
+  // "gruendlich" und "spezial" geben die Schnellspur immer ab; "schnell" nimmt
+  // sie immer. Ohne Stufe gelten unveraendert die bisherigen Regeln.
+  if (stufe === "gruendlich" || stufe === "spezial") return false;
   if (stufe !== "schnell"
     && (/glm|kimi|cline/i.test(String(requestedModel || "")) || (profile === "coding" && ((CONTROL_ROUTER_ENABLED && CONTROL_ORIGIN) || (LLM_BASE_URL && LLM_API_KEY && LLM_MODEL))))) return false;
   const controller = new AbortController();

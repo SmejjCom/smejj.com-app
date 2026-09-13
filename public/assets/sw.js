@@ -190,7 +190,7 @@
 // in docs/frontend/SW_VERSIONSVERLAUF_2026-08.md, so wie es der Kopf dieser
 // Datei verlangt (Touch-Ziele auf 44 px, Startseite und alle 16 Ansichten).
 // Wer den naechsten Stand sucht, schaut also besser dorthin als hierher.
-const CACHE_NAME = "smejj-shell-v839";
+const CACHE_NAME = "smejj-shell-v867";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
@@ -259,10 +259,9 @@ const SHELL = [
   "/assets/chat-markdown.js",
   "/assets/frame-guard.js",
   "/assets/app.js",
-  // Herausgeloest aus app.js am 07.09. (812 Zeilen ueber der Hausgrenze). Ohne diese
-  // Zeile waere die App OFFLINE TOT, sobald app.js nachzieht: der Import liefe ins
-  // Leere und app.js braeche komplett ab. Datei wurde zuerst ausgeliefert (22339f2),
-  // denn cache.addAll bricht beim ersten 404 ab.
+  // Herausgeloest aus app.js am 07.09. (812 Zeilen ueber der Hausgrenze).
+  // Ohne diese Zeile waere die App OFFLINE TOT: app.js importiert sie, der
+  // Import laeuft ins Leere, und app.js bricht komplett ab.
   "/assets/app-helfer.js",
   "/assets/view-title.js",
   "/assets/left-menu-state.js",
@@ -331,6 +330,7 @@ const SHELL = [
   "/assets/chat-title-auto.js",
   "/assets/chat-messages.js",
   "/assets/chat-actions.js",
+  "/assets/chat-neu-versuch.js",
   // Beispiel-Chips der Startseite (2026-08-13). index.html laedt sie per
   // <script>; ohne Eintrag hier fehlen sie offline — check:precache-imports
   // hat genau das gemeldet.
@@ -467,22 +467,67 @@ const SHELL = [
   "/assets/nachladen.js",
   "/assets/bedarf-nachladen.js",
   "/assets/sendepfad-nachladen.js",
+  // Die Landeseite (12.09.): wer angemeldet war und sich abmeldet, landet dort —
+  // auch offline soll sie dann aus diesem vollen Speicher aufgehen. Die uebrigen
+  // Dateien der Seite (willkommen-fokus, pwa-schnellstart, Logo, Manifest,
+  // pwa-192) stehen oben bereits.
+  "/willkommen.html",
+  "/assets/willkommen-sprache.js",
+  "/assets/besucher-puls.js",
+  "/assets/willkommen-offline.js",
+  "/icons/smejj_favicon.svg",
+  "/favicon.ico",
 ];
 
+// DER SCHMALE EINGANG (Betreiber-Freigabe 12.09.: "Schmaler Offline-Rueckfall").
+//
+// GEMESSEN im frisch angelegten iOS-Webclip: wer smejj.com installiert, BEVOR er
+// sich anmeldet, bekam KEINEN Service Worker — nur app.js registrierte ihn, und
+// die App-Huelle erreicht ein Abgemeldeter nie. Offline zeigte die installierte
+// App die Fehlerseite des Browsers.
+//
+// Die Landeseite registriert darum denselben Service Worker als
+// /sw.js?eingang=willkommen. Dann wird NUR sie abgelegt (~19 KB) statt der
+// ganzen App (229 Dateien, ~2 MB) — jeder Besucher der Werbeseite zahlte sonst
+// die 2 MB, auch wer nur schaut. Meldet er sich an, registriert app.js /sw.js
+// ohne Zusatz: eine andere Skript-Adresse, also ein Update; der volle Service
+// Worker uebernimmt und raeumt den schmalen Speicher beim Aktivieren weg.
+const EINGANG = new URL(self.location.href).searchParams.get("eingang") || "";
+const SCHMAL = EINGANG === "willkommen";
+const WILLKOMMEN_SHELL = [
+  "/willkommen.html",
+  "/assets/willkommen-sprache.js",
+  "/assets/willkommen-fokus.js",
+  "/assets/pwa-schnellstart.js",
+  "/assets/besucher-puls.js",
+  "/assets/willkommen-offline.js",
+  "/assets/offline-banner.js",
+  "/icons/smejj_full_logo_on_dark.svg",
+  "/manifest.webmanifest",
+  "/icons/smejj_favicon.svg",
+  "/favicon.ico",
+  "/icons/pwa-192x192.png",
+];
+const INSTALL_LISTE = SCHMAL ? WILLKOMMEN_SHELL : SHELL;
+// Eigener Name fuer den schmalen Speicher: so erkennt der volle Service Worker
+// ihn beim Aktivieren als "nicht meiner" und raeumt ihn weg — und der schmale
+// loescht umgekehrt nie einen vollen, der noch gebraucht wird.
+const AKTIVER_CACHE = SCHMAL ? CACHE_NAME.replace("smejj-shell-", "smejj-willkommen-") : CACHE_NAME;
+
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL.map((url) => new Request(url, { cache: "reload" })))));
+  event.waitUntil(caches.open(AKTIVER_CACHE).then((cache) => cache.addAll(INSTALL_LISTE.map((url) => new Request(url, { cache: "reload" })))));
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== AKTIVER_CACHE).map((key) => caches.delete(key))))
   );
   self.clients.claim();
 });
 
 // Precache-Pfade ohne Query — fuer den cache-first-Abgleich (F-24).
-const PRECACHE_PATHS = new Set(SHELL.map((entry) => new URL(entry, "https://smejj.com").pathname));
+const PRECACHE_PATHS = new Set(INSTALL_LISTE.map((entry) => new URL(entry, "https://smejj.com").pathname));
 
 // Dateien, die sich ohne Deploy aendern: netz-zuerst, Cache nur als Rueckfall.
 // Sie bleiben im Precache (damit sie offline ueberhaupt da sind), werden online
@@ -496,6 +541,15 @@ function isHtmlRequest(request, url) {
   if (request.mode === "navigate" || request.destination === "document") return true;
   return url.pathname === "/" || url.pathname.endsWith(".html") || url.pathname.endsWith("/");
 }
+
+// Die App-Routen (Spiegel von public/view-routes.js — siehe Begruendung unten
+// beim Navigations-Zweig). tests/sw-app-routen.test.mjs vergleicht beide Listen.
+const APP_ROUTEN = new Set([
+  "/search", "/smejj-claw", "/smejjBot", "/chat-history", "/browser", "/code",
+  "/projects", "/files", "/storage", "/memory", "/papierkorb", "/bereiche",
+  "/ai", "/cost", "/systemzustand", "/settings", "/profile", "/offline",
+  "/error", "/chat", "/automation", "/smejjbot"
+]);
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
@@ -526,7 +580,7 @@ self.addEventListener("fetch", (event) => {
         .then((antwort) => {
           if (antwort && antwort.ok) {
             const kopie = antwort.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, kopie)).catch(() => {});
+            caches.open(AKTIVER_CACHE).then((cache) => cache.put(request, kopie)).catch(() => {});
           }
           return antwort;
         })
@@ -543,5 +597,49 @@ self.addEventListener("fetch", (event) => {
     );
     return;
   }
-  event.respondWith(fetch(request).catch(() => caches.match(request).then((cached) => cached || caches.match("/"))));
+  // APP-ROUTEN UEBERLEBEN EIN ECHTES NEULADEN (12.09.).
+  //
+  // GitHub Pages kennt nur Dateien: ein Aufruf von /projects liefert HTTP 404,
+  // und 404.html schickt den Nutzer mit `location.replace("/")` zurueck auf die
+  // Startseite. Das ist als Notnagel gedacht — auf dem Android-Geraet wurde
+  // daraus ein KREISEL: gemessen am 12.09. wanderte die App im Sekundentakt
+  // /smejjBot -> / -> /chat-history -> / -> /browser -> /, weil jede
+  // wiederhergestellte Route beim naechsten echten Laden erneut im 404 landete.
+  //
+  // Der Service Worker kann das an der Wurzel loesen: fuer eine NAVIGATION auf
+  // eine bekannte App-Route liefert er die Huelle (/) aus dem Zwischenspeicher.
+  // Damit wirkt ein Lesezeichen auf /projects wie ein Klick in der App — online
+  // wie offline. Unbekannte Pfade bleiben unangetastet und zeigen weiter ehrlich
+  // die 404-Seite.
+  //
+  // Die Liste stammt aus public/view-routes.js (VIEW_PATHS + PATH_VIEWS). Sie
+  // steht hier ein zweites Mal, weil ein Service Worker keine Module der App
+  // laden kann — tests/sw-app-routen.test.mjs haelt beide Seiten deckungsgleich,
+  // damit aus zwei Orten nicht zwei Wahrheiten werden.
+  if (url.origin === self.location.origin && request.mode === "navigate" && APP_ROUTEN.has(url.pathname.replace(/\/$/, ""))) {
+    event.respondWith(
+      fetch(request)
+        .then((antwort) => (antwort && antwort.ok ? antwort : huelleAusCache(antwort)))
+        .catch(() => huelleAusCache(null))
+    );
+    return;
+  }
+  event.respondWith(fetch(request).catch(() => caches.match(request).then((cached) => cached || rueckfallFuer(request))));
 });
+
+function huelleAusCache(rueckfall) {
+  return caches.match("/", { ignoreSearch: true })
+    .then((huelle) => huelle || caches.match("/willkommen.html"))
+    .then((seite) => seite || rueckfall || fetch("/"));
+}
+
+// Offline ohne Treffer: die App-Huelle, wenn sie im Speicher liegt (voller
+// Service Worker — das Verhalten bleibt dort unveraendert). Fehlt sie, ist das
+// der schmale Eingang: fuer eine NAVIGATION dann die Landeseite. Andere Anfragen
+// (Bilder, Skripte) bekommen nie eine HTML-Seite untergeschoben.
+function rueckfallFuer(request) {
+  return caches.match("/").then((huelle) => {
+    if (huelle) return huelle;
+    return request.mode === "navigate" ? caches.match("/willkommen.html") : undefined;
+  });
+}

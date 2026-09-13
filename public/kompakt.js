@@ -55,6 +55,28 @@ export const REGELN = [
   + "body #code #codeSenden.send-button{width:44px;height:44px;min-height:44px}"
   + "body #code .codeleiste .repochip{min-width:44px}"
   + "body #smejj-sitzung-abgelaufen a,body #smejj-sitzung-abgelaufen button{display:inline-flex;align-items:center}"
+  // Runde 5 (Rundgang 08.09., Pixel quer 863 px und Tablet 800 px, jeweils pointer:coarse):
+  //   Kopfknoepfe der Ansichten (Zurueck, Schliessen) 32x32, Werkzeugzeilen 40 px,
+  //   Konto-Reiter 40 px, Konto-Knoepfe (Speichern, Anmelden, Entfernen) 40 px,
+  //   Eintraege im Plus-Menue 38 px (min-height stand auf 34).
+  //   Am Handy hochkant hingen die meisten schon an mobil-dock.js/mobil-ansichten.js — die
+  //   laufen aber nur bis 600 px. Hier gilt dasselbe Mass fuer jedes grobe Zeigegeraet.
+  //   Die Kopfknoepfe tragen height:32px aus dem Buendel; min-height allein setzt sich dagegen
+  //   nicht durch (live im Tablet-Emulator geprueft: 32 px blieben). Darum Breite und Hoehe
+  //   ausdruecklich — genau wie die schon bestehende Regel bis 600 px es tut.
+  + "body .view .view-chrome button,body .premium-view .view-chrome button{width:44px!important;height:44px!important}"
+  + "body .view .toolbar button,body .view .panel-actions button,body .plus-menu.plus-menu button,"
+  + "body #profile .account-nav button,body #profile .account-actions button,"
+  + "body #profile .account-picture-actions button,body #profile .account-picture-choose{min-height:44px}"
+  //   Formularfelder und Formularknoepfe der Ansichten standen auf dem Schreibtisch-Mass:
+  //   Suche 112x40, Automatisierung 42 px und mehrere Felder bei 43,5 px (Rundung auf 44).
+  + "body .view input:not([type=checkbox]):not([type=radio]):not([type=file]),body .view select,"
+  + "body .view textarea,body .view form button{min-height:44px}"
+  //   Das Start-Feld selbst blieb bei 43,5 px: die Bundel-Regel min-height:40px ist spezifischer
+  //   als "body .view textarea". Darum ausdruecklich ueber die Kennung (Rundgang quer 08.09.).
+  //   Die Buendel-Regel "#start .prompt-glass textarea" traegt min-height:40px MIT !important —
+  //   dagegen hilft nur !important (der erlaubte Fall: gegen eine wichtige Fremdregel).
+  + "body #start .prompt-glass #startMessage,body #code .codefeld #codeAufgabe{min-height:44px!important}"
   + "}",
   // Mikrofon-Zustand sichtbar (Betreiber 07.09., 17:39: "ich merke nicht, ob das Mikrofon
   // aktiv ist"): waehrend des Diktats leuchtet das Symbol in der LOGOFARBE #02fdfd (bisher

@@ -31,6 +31,9 @@ export const REGELN = "@media (max-width:600px){"
   + "-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 20px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 20px),transparent 100%)}"
   + "body #settings .settings-nav::-webkit-scrollbar,body #profile .account-nav::-webkit-scrollbar,body #chatHistory .ch-chips::-webkit-scrollbar{display:none}"
   + "body #settings .settings-nav-button.settings-nav-button,body #profile .account-nav button,body #chatHistory .ch-chips .ch-chip{flex:0 0 auto;height:44px;min-height:44px;white-space:nowrap;scroll-snap-align:start;padding:0 14px;display:inline-flex;align-items:center}"
+  // GEMESSEN 08.09.: das Suchfeld liegt IN der Reiterzeile und schrumpfte dort auf 26 px —
+  // unbedienbar und ein Ziel unter 44 px. Es bekommt eine feste Mindestbreite und scrollt mit.
+  + "body #settings .settings-nav #settingsSuche{flex:0 0 clamp(160px,48vw,220px);min-width:160px;min-height:44px;box-sizing:border-box;scroll-snap-align:start}"
   // Reiter tragen am Schreibtisch Titel + Untertitel in zwei Zeilen — in der Zeile nur der Titel
   + "body #settings .settings-nav-button .settings-nav-sub,body #settings .settings-nav-button small,body #settings .settings-nav-button span+span{display:none}"
   // (2) Kopf kompakt
@@ -40,6 +43,20 @@ export const REGELN = "@media (max-width:600px){"
   + "body #settings .settings-header .settings-status,body #profile .account-header .state-badge{display:inline-flex;margin-top:6px}"
   + "body .view.is-active .view-header.view-header{padding:0 4px;margin-bottom:6px}"
   // (3) Karten, Felder, Knoepfe
+  // (6) Einstellungen liessen sich seitlich verschieben (Betreiber-Screenshot 08.09. 08:48, API-Reiter).
+  //     GEMESSEN im Pixel-7-Emulator: .settings-content ist ein Raster, dessen einzige Spalte auf
+  //     grid-template-columns:403px stand — ein Rasterfeld hat min-width:auto und waechst bis zur
+  //     min-content-Breite seines Inhalts. Treiber war ein span.ac-sub mit white-space:nowrap
+  //     (376 px + Polster). Die Spalte wird darum auf minmax(0,1fr) gedeckelt, Felder duerfen
+  //     schrumpfen, die Ansicht selbst schneidet seitlich ab. Danach: clientWidth = scrollWidth.
+  + "body #settings.view,body #profile.view{overflow-x:hidden}"
+  + "body #settings .settings-content.settings-content{grid-template-columns:minmax(0,1fr);min-width:0}"
+  + "body #settings .settings-shell.settings-shell,body #settings .settings-content>*,body #settings .settings-panel.settings-panel{min-width:0;max-width:100%}"
+  + "body #settings .ac-sub,body #settings .ac-subhead,body #settings .settings-panel [style*=\"nowrap\"]{white-space:normal}"
+  + "body #settings select,body #settings input:not([type=checkbox]):not([type=radio]):not([type=file]){max-width:100%;min-width:0;box-sizing:border-box}"
+  // Cline-Knopfraster stand zweispaltig mit 38 px hohen Knoepfen — einspaltig und 44 px.
+  + "body #settings .cline-actions.cline-actions{grid-template-columns:minmax(0,1fr)}"
+  + "body #settings .cline-actions button{width:100%;min-height:44px}"
   + "body #settings .settings-shell.settings-shell,body #profile .account-layout.account-layout{gap:8px}"
   + "body #settings .settings-panel.settings-panel,body #profile .account-panel.account-panel,body #profile .account-card,body .view .panel{padding:12px;border-radius:12px}"
   // Zeilen: Beschriftung oben, Regler darunter volle Breite — ueber flex-wrap (das Buendel setzt es
@@ -48,6 +65,11 @@ export const REGELN = "@media (max-width:600px){"
   + "body #settings .settings-row .settings-row-copy{flex:1 1 100%}"
   + "body #settings .settings-row select,body #settings .settings-row input:not([type=checkbox]):not([type=radio]),body #profile .account-grid input,body #profile .account-grid select,body #profile input:not([type=checkbox]):not([type=radio]):not([type=file]),body #profile select{width:100%;min-height:44px;box-sizing:border-box}"
   + "body #settings .settings-row input[type=checkbox],body #settings .settings-row input[type=radio]{width:24px;height:24px;margin:10px}"
+  // GEMESSEN 08.09.: der Kippschalter selbst (label.settings-switch) ist nur 46x26 — die Trefferflaeche
+  // ist das Label, nicht das Kaestchen. Es bekommt darum die volle Zielhoehe, ohne optisch zu wachsen.
+  + "body #settings .settings-switch,body #profile .settings-switch{min-height:44px;display:inline-flex;align-items:center}"
+  // Rechtslinks (Impressum, Datenschutz, AGB, Widerruf) standen als 16 px hohe Textzeilen untereinander.
+  + "body #settings .settings-links a,body .view .settings-links a{min-height:44px;display:inline-flex;align-items:center}"
   + "body #profile .account-actions.account-actions,body #settings .settings-action.settings-action,body .view .panel-actions{display:flex;flex-direction:column;gap:8px}"
   + "body #profile .account-actions button,body #settings .settings-action button,body .view .panel-actions button,body #files .toolbar button,body #projects .toolbar button{width:100%;min-height:44px}"
   + "body #profile .account-picture.account-picture{flex-direction:column;align-items:flex-start;gap:10px}"

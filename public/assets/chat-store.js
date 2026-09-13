@@ -15,8 +15,8 @@
 // der Browser chat-markdown.js ein zweites Mal als eigenstaendiges Modul.
 import { renderChatMarkdown } from "/assets/chat-markdown.js?v=1";
 // Papierkorb & Projekte/Bereiche: chat-store-bereiche.js (Diaet 25.08.); Re-Export = EINE Instanz.
-import { aktualisiereBereichsAnweisung, verbraucheBereichVormerkung, BEREICH_ANWEISUNG_KEY, BEREICH_NEU_KEY } from "./chat-store-bereiche.js?v=5";
-export { restoreChat, endgueltigLoeschen, listGeloeschteChats, listProjekte, getProjekt, erstelleProjekt, benenneProjektUm, setzeProjektAnweisung, neuesGespraechImBereich, loescheProjekt, setzeChatProjekt, importProjekt } from "./chat-store-bereiche.js?v=5";
+import { aktualisiereBereichsAnweisung, verbraucheBereichVormerkung, BEREICH_ANWEISUNG_KEY, BEREICH_NEU_KEY } from "./chat-store-bereiche.js?v=7";
+export { restoreChat, endgueltigLoeschen, listGeloeschteChats, listProjekte, getProjekt, erstelleProjekt, benenneProjektUm, setzeProjektAnweisung, neuesGespraechImBereich, loescheProjekt, setzeChatProjekt, importProjekt } from "./chat-store-bereiche.js?v=7";
 
 // Nachrichten-Modell (2026-07-28): liefert Rohtext, Zeitstempel, Modell und
 // Bewertung je Nachricht. Ohne diese Angaben koennte ein wiederhergestellter
@@ -295,7 +295,7 @@ async function medienAuslagern() {
     const log = startLog();
     if (!log || stromLaeuft) return;
     const { lagereMedienAus, lagereMedienAusText, lagereMedienAusTextknoten } =
-      await import("./chat-medien.js?v=3");
+      await import("./chat-medien.js?v=5");
     for (const eintrag of log.querySelectorAll(":scope > .entry.assistant")) {
       // EINE Karte je Eintrag: dasselbe Medium steht unten in bis zu drei
       // Feldern, soll aber nur einmal hochgeladen werden.
@@ -322,7 +322,7 @@ async function medienAuslagern() {
 // wurde. Still und ohne Netz-Zwang — kommt nichts, bleibt die Adresse stehen.
 async function medienHolen(log) {
   try {
-    const { rehydriereMedien } = await import("./chat-medien.js?v=3");
+    const { rehydriereMedien } = await import("./chat-medien.js?v=5");
     await rehydriereMedien(log);
   } catch { /* fail-safe: lieber ein leeres Bild als ein kaputter Verlauf */ }
 }
@@ -395,7 +395,9 @@ export async function persistActive() {
 
 function safeModelName() {
   try {
-    const model = localStorage.getItem("smejj.model.v1") || localStorage.getItem("smejj.model.selected.v2") || "smejj 1.0";
+    // Die aktuelle Wahl zuerst — "smejj.model.v1" schreibt seit Langem niemand
+    // mehr; ein Altwert dort haette die echte Wahl ueberstimmt.
+    const model = localStorage.getItem("smejj.model.selected.v2") || localStorage.getItem("smejj.model.v1") || "smejj 1.0";
     return (model === "auto" || model === "Auto") ? "smejj 1.0" : model;
   } catch {
     return "smejj 1.0";
@@ -562,6 +564,14 @@ export async function createChatFrom(messages) {
   return id;
 }
 
+// Serveradressen der Medien VOR dem Einfuegen parken (chat-medien.js): sonst
+// laedt der Browser sie sofort, die Sicherheitsrichtlinie weist sie ab, und die
+// Konsole fuellt sich bei jedem Zeichnen — medienHolen() tauscht ohnehin gegen
+// blob:. Nachgeladen statt statisch importiert, weil der Store auch ohne seine
+// Nachbarn laufen koennen muss (Selbstheilungs-Tests kopieren ihn allein).
+let parkeMedien = (html) => html;
+import("./chat-medien.js?v=5").then((m) => { if (typeof m.parkeMedienAdressen === "function") parkeMedien = m.parkeMedienAdressen; }).catch(() => {});
+
 function renderEntriesInto(log, messages) {
   restoring = true;
   try {
@@ -571,7 +581,7 @@ function renderEntriesInto(log, messages) {
       const node = document.createElement("article");
       node.className = `entry ${message.role === "user" ? "user" : "assistant"}`;
       if (message.role === "assistant" && message.html) {
-        node.innerHTML = ohneToteAktion(message.html); // eigene, sanitisierte Ausgabe; Altbestand traegt noch tote Aktionsknoepfe
+        node.innerHTML = parkeMedien(ohneToteAktion(message.html)); // Adressen geparkt (siehe parkeMedien), sanitisierte Ausgabe
       } else {
         node.textContent = message.text;
         if (message.role === "assistant") renderChatMarkdown(node);
@@ -639,7 +649,11 @@ export function newChat() {
   setActiveChatId(newId());
   notifyChanged();
   if (typeof window.smejjApplyModel === "function") {
-    const currentModel = localStorage.getItem("smejj.model.v1") || "smejj 1.0";
+    // Bis 13.09. las diese Zeile NUR "smejj.model.v1" — einen Schluessel, den
+    // niemand mehr schreibt. Jeder "Neue Chat" stellte die Wahl darum still auf
+    // "smejj 1.0" zurueck, egal ob 1.3, Auto oder smejj 1 gewaehlt war (live
+    // gesehen: Chip "smejj 1.0", Speicher "smejj 1").
+    const currentModel = localStorage.getItem("smejj.model.selected.v2") || localStorage.getItem("smejj.model.v1") || "smejj 1.0";
     window.smejjApplyModel(currentModel, { persist: false, quiet: true });
   }
 }
@@ -734,7 +748,7 @@ function init() {
         // ?v=2: Projekte-Sync (2026-08-13). Ohne den Bump haelt der
         // HTTP-Cache die alte Fassung fest — die Datei ist nicht im
         // Service-Worker-Buendel und erneuert sich sonst nie zuverlaessig.
-        import("/assets/chat-sync.js?v=14").catch(() => {});
+        import("/assets/chat-sync.js?v=15").catch(() => {});
       });
   } catch {
     /* fail-safe: ohne Verlauf laeuft die App unveraendert weiter */

@@ -77,7 +77,7 @@ function bindAttachInput(selector, label, getInput, notifyInputChanged) {
       if (input.id === "startMessage" && (/\.pdf$/i.test(file.name || "") || file.type === "application/pdf")) {
         try {
           showToast(`PDF wird gelesen: ${file.name}`);
-          const { liesPdfText } = await import("./anhang-pdf-text.js?v=2");
+          const { liesPdfText } = await import("./anhang-pdf-text.js?v=3");
           const r = await liesPdfText(file);
           if (r.ok && uebernehmeTextAnhang(file.name, r.text, input)) { showToast(`PDF gelesen: ${file.name} (${r.seiten} Seiten)`); continue; }
           showToast(r.grund === "verschluesselt" ? `PDF ist verschluesselt: ${file.name}` : `Kein lesbarer Text im PDF: ${file.name}`);

@@ -40,6 +40,8 @@ import { zieheAnhaengeAusFeld, nimmAnhaengeMit } from "./code-anhaenge.js?v=1";
 import {
   MODELL_KEY,
   AUTO_WAHL,
+  SMEJJ_STAFFEL,
+  nachVersionAbsteigend,
   baueKopfzeile,
   modellAnzeige as modellAnzeigeRoh,
   oeffneModellMenue as oeffneModellMenueRoh,
@@ -73,9 +75,25 @@ function oeffneModellMenue(kontext = {}) {
   return oeffneModellMenueRoh({ ...kontext, beiWahl: () => zeichne() });
 }
 
-const STUFEN = ["auto", "gruendlich", "schnell"];
-const STUFEN_TEXT = { auto: "Automatisch", gruendlich: "Gründlich", schnell: "Schnell" };
-const MODELL_TEXT = { auto: "smejj 1.0", gruendlich: "smejj gründlich", schnell: "smejj schnell" };
+// EINE Quelle fuer die Staffel: SMEJJ_STAFFEL aus code-modell-menue.js.
+//
+// Hier stand bis 2026-09-11 eine eigene, veraltete Tabelle — und sie log
+// gleich dreifach (live gemessen):
+//   * "spezial" fehlte in STUFEN. Wer smejj 1.3 gewaehlt hatte und den
+//     Code-Bereich betrat, sah "Automatisch": stufe() fiel auf den Rueckfall.
+//   * MODELL_TEXT nannte auto "smejj 1.0" (auto ist 1.1) und fuehrte
+//     "smejj gruendlich"/"smejj schnell" — Namen, die es im Menue nicht gibt.
+//     Der Chip zeigte "smejj gründlich", der Haken im Menue stand auf 1.2.
+//   * Der Stufen-Chip schaltete nur durch drei Stufen; 1.3 war ueber ihn
+//     nicht erreichbar.
+// Dieselbe Krankheit wie im Chat am selben Tag: zwei Quellen fuer eine Wahl.
+//
+// Aufsteigend, damit der Chip von schnell nach spezial durchschaltet — die
+// Staffel selbst ist absteigend sortiert (neueste oben im Menue).
+const STUFEN = nachVersionAbsteigend(SMEJJ_STAFFEL).map((eintrag) => eintrag.stufe).reverse();
+const MODELL_TEXT = Object.fromEntries(SMEJJ_STAFFEL.map((eintrag) => [eintrag.stufe, eintrag.titel]));
+// Nur die Anzeige-Namen sind hier zuhause; sie stehen nicht in der Staffel.
+const STUFEN_TEXT = { schnell: "Schnell", auto: "Automatisch", gruendlich: "Gründlich", spezial: "Spezialfälle" };
 const TIEFE_TEXT = { medium: "Mittel", high: "Hoch", max: "Maximal" };
 const STUFE_SPEICHER = "smejj.stufe.v1";
 
@@ -285,7 +303,7 @@ async function oeffneProjektMenue() {
     ordner.type = "button";
     ordner.className = "code-projekt-ordner";
     ordner.textContent = "📁";
-    ordner.title = "Ordner für dieses Project wählen";
+    ordner.title = "Ordner für dieses Projekt wählen";
     window.smejjProjektOrdner?.ordnerName(p.id).then((n) => {
       if (n) { ordner.textContent = `📁 ${n}`; ordner.title = `Ordner: ${n} — klicken zum Wechseln`; }
     }).catch(() => {});
@@ -301,7 +319,7 @@ async function oeffneProjektMenue() {
     zeile.append(ordner);
     menue.append(zeile);
   }
-  menue.append(eintragKnopf("Neues Project anlegen …", () => {
+  menue.append(eintragKnopf("Neues Projekt anlegen …", () => {
     schliesseProjektMenue();
     document.querySelector('.nav-button[data-view="arbeitsbereiche"]')?.click();
   }));
@@ -422,7 +440,7 @@ export function initCodeFlaeche() {
     let name = "";
     try { name = projektId ? await window.smejjProjektOrdner?.ordnerName(projektId) || "" : ""; } catch { /* still */ }
     schalter?.setAttribute("aria-checked", name ? "true" : "false");
-    if (schalter) schalter.title = name ? `Verbunden: ${name} — klicken zum Trennen` : "Ordner mit dem Code-Project verbinden";
+    if (schalter) schalter.title = name ? `Verbunden: ${name} — klicken zum Trennen` : "Ordner mit dem Code-Projekt verbinden";
     konnektorenMenue.hidden = false;
     konnektorenKnopf?.setAttribute("aria-expanded", "true");
   }
@@ -708,7 +726,11 @@ export function initCodeFlaeche() {
   });
   document.getElementById("codeStufeChip")?.addEventListener("click", () => {
     const naechste = STUFEN[(STUFEN.indexOf(stufe()) + 1) % STUFEN.length];
-    document.querySelector(`[data-stufe="${naechste}"]`)?.click();
+    // Der benannte Weg statt eines Klicks in das alte, nie geoeffnete Menue:
+    // dieser Klick zwang die Modellwahl frueher auf "smejj 1.0" und loeschte
+    // damit still eine Wahl von "Auto" (Fall vom 2026-09-11, Startseite).
+    if (typeof window.smejjApplyStufe === "function") window.smejjApplyStufe(naechste);
+    else document.querySelector(`[data-stufe="${naechste}"]`)?.click();
     setTimeout(zeichne, 80);
   });
   // Vorlagen-Chips fuellen das CODE-Feld (nicht das Start-Feld).

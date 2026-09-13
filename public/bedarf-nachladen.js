@@ -24,9 +24,9 @@ try {
 // 2. Papierkorb — erst wenn die Ansicht wirklich aufgeht (Klick oder
 //    Direkteinstieg ueber die URL).
 if (location.pathname.includes("papierkorb")) {
-  import("./papierkorb.js?v=17");
+  import("./papierkorb.js?v=18");
 } else {
-  ladeBeiKlick(['[data-view="papierkorb"]', '[data-jump="papierkorb"]'], () => import("./papierkorb.js?v=17"));
+  ladeBeiKlick(['[data-view="papierkorb"]', '[data-jump="papierkorb"]'], () => import("./papierkorb.js?v=18"));
 }
 
 // 3. Kamera — lebt hinter dem Plus-Menue; derselbe Ausloeser, mit dem app.js
@@ -52,7 +52,7 @@ ladeBeiKlick(["#composerPlusButton", "[data-start-tool]", "[data-kamera-start]"]
     const wecker = () => {
       if (!/(^|\s)@/.test(String(feld.value || ""))) return;
       feld.removeEventListener("input", wecker);
-      import("./erwaehnung.js?v=7").then(() => feld.dispatchEvent(new Event("input", { bubbles: true })))
+      import("./erwaehnung.js?v=8").then(() => feld.dispatchEvent(new Event("input", { bubbles: true })))
         .catch((fehler) => console.error("[smejj.com] Nachladen fehlgeschlagen:", fehler));
     };
     feld.addEventListener("input", wecker);
@@ -70,7 +70,7 @@ ladeBeiKlick(["#composerPlusButton", "[data-start-tool]", "[data-kamera-start]"]
     import("./chat-warte-reste.js?v=1")
   ]).catch((fehler) => console.error("[smejj.com] Nachladen fehlgeschlagen:", fehler));
   const ladeCodeWerkzeuge = () => Promise.all([
-    import("./chat-code-copy.js?v=zcode2-20260816"),
+    import("./chat-code-copy.js?v=zcode3-20260816"),
     import("./chat-code-farben.js?v=1"),
     import("./chat-code-download.js?v=2")
   ]).catch((fehler) => console.error("[smejj.com] Nachladen fehlgeschlagen:", fehler));
@@ -90,10 +90,49 @@ ladeBeiKlick(["#composerPlusButton", "[data-start-tool]", "[data-kamera-start]"]
   }
 }
 
+// 7. Verlauf-Ansicht — 35 KB, die beim Start NICHTS tun.
+//
+//    chat-history-view.js baut ausschliesslich die Ansicht #chatHistory und
+//    prueft das selbst: "if (isHistoryViewVisible() || location.pathname ===
+//    '/chat-history')". Auf der Startseite laeuft sie leer — und war trotzdem
+//    fest im index.html verdrahtet. Gemessen am 2026-09-12: 35,3 KB von 740 KB
+//    Startgewicht, waehrend das Budget bei 300 KB liegt.
+//
+//    NICHT an der ADRESSE festmachen — daran ist der erste Entwurf
+//    gescheitert. `/chat-history` ist zwar die offizielle Route
+//    (view-routes.js), aber GitHub Pages liefert dafuer die 404-Seite, die
+//    ihrerseits in die App umleitet. Beim Laden dieses Moduls steht in
+//    location.pathname dann laengst etwas anderes, der Zweig greift nie, und
+//    der Verlauf bleibt leer: "Verlauf bereit." und sonst nichts. LIVE
+//    gemessen, bevor es jemand anders gemerkt haette.
+//
+//    Der verlaesslichste Ausloeser ist die ANSICHT selbst. Sie wird sichtbar,
+//    egal ob man klickt, ein Lesezeichen oeffnet oder zurueckgeht — und genau
+//    dann, und nur dann, wird das Modul gebraucht.
+{
+  const laden = () => import("./chat-history-view.js?v=b63");
+  const ansicht = document.getElementById("chatHistory");
+  const istOffen = () => ansicht?.classList.contains("is-active") || !!(ansicht?.offsetWidth || ansicht?.offsetHeight);
+  if (ansicht) {
+    if (istOffen()) laden();
+    else {
+      const wache = new MutationObserver(() => {
+        if (!istOffen()) return;
+        wache.disconnect();
+        laden().catch((fehler) => console.error("[smejj.com] Nachladen fehlgeschlagen:", fehler));
+      });
+      wache.observe(ansicht, { attributes: true, attributeFilter: ["class", "hidden", "style"] });
+    }
+  }
+  // Der Klick bleibt als zweiter Weg: er laedt schon WAEHREND der
+  // Ansichtswechsel laeuft, nicht erst danach.
+  ladeBeiKlick(['[data-view="chatHistory"]', '[data-jump="chatHistory"]'], laden);
+}
+
 // 6. Projects/Arbeitsbereiche — erst wenn die Ansicht aufgeht (Klick in der
 //    Spur oder Direkteinstieg ueber die URL).
 if (location.pathname.includes("arbeitsbereiche") || location.pathname.includes("projects")) {
-  import("./arbeitsbereiche.js?v=23");
+  import("./arbeitsbereiche.js?v=25");
 } else {
-  ladeBeiKlick(['[data-view="arbeitsbereiche"]', '[data-jump="arbeitsbereiche"]'], () => import("./arbeitsbereiche.js?v=23"));
+  ladeBeiKlick(['[data-view="arbeitsbereiche"]', '[data-jump="arbeitsbereiche"]'], () => import("./arbeitsbereiche.js?v=25"));
 }

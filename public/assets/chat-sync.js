@@ -185,7 +185,7 @@ async function rette(id) {
     if (!s?.getChat || !s?.importChat) return false;
     const [{ rettteUndSpeichere }, { lagereMedienAusText }] = await Promise.all([
       import("./chat-medien-rettung.js?v=5"),
-      import("./chat-medien.js?v=3")
+      import("./chat-medien.js?v=5")
     ]);
     const ergebnis = await rettteUndSpeichere(id, {
       laden: (kennung) => s.getChat(kennung),
@@ -208,7 +208,7 @@ async function bestandAufraeumen() {
     if (!s?.listChats || !s?.getChat || !s?.importChat) return;
     const [{ raeumeBestandAuf }, { lagereMedienAusText }] = await Promise.all([
       import("./chat-medien-rettung.js?v=5"),
-      import("./chat-medien.js?v=3")
+      import("./chat-medien.js?v=5")
     ]);
     const ergebnis = await raeumeBestandAuf({
       listen: () => s.listChats(),
@@ -275,20 +275,14 @@ async function push() {
       });
       if (antwort.status === 503) { serverSagtNein = true; break; }
       // 401/403 betrifft NICHT diesen Chat, sondern die SITZUNG — und dann ist
-      // jede weitere Anfrage dieses Laufs genauso vergeblich.
+      // jede weitere Anfrage dieses Laufs genauso vergeblich. Gemessen
+      // 2026-09-10: der Lauf schickte fuer JEDEN lokalen Chat eine Anfrage,
+      // die mit 401 zurueckkam, genau waehrend der Nutzer den Streifen "Deine
+      // Anmeldung ist abgelaufen" vor sich hatte.
       //
-      // GEMESSEN 2026-09-10 mit abgelaufener Anmeldung: der Lauf arbeitete
-      // sich durch die lokalen Chats und schickte fuer JEDEN eine Anfrage, die
-      // mit 401 zurueckkam. Bei den 113 Gespraechen, die dieser Code an
-      // anderer Stelle als Normalfall nennt, sind das 113 vergebliche
-      // Anfragen — genau in dem Moment, in dem der Nutzer den Streifen "Deine
-      // Anmeldung ist abgelaufen" vor sich hat.
-      //
-      // Bewusst OHNE Merker: der naechste planePush() (4 s Entprellung, durch
-      // eine Aenderung ausgeloest) versucht es wieder. Hat der Nutzer sich
-      // inzwischen angemeldet, laeuft der Abgleich einfach weiter. Ein
-      // dauerhafter Merker wie serverSagtNein wuerde den Abgleich bis zum
-      // Neuladen abschalten — das waere schlimmer als der Sturm.
+      // Bewusst OHNE Merker: der naechste planePush() versucht es wieder, dann
+      // mit der vielleicht frischen Anmeldung. Ein dauerhafter Merker wie
+      // serverSagtNein wuerde den Abgleich bis zum Neuladen abschalten.
       if (antwort.status === 401 || antwort.status === 403) break;
       // Die uebrigen 4xx betreffen GENAU DIESEN Chat und werden sich von
       // selbst nie aendern — also melden und mit dem naechsten weitermachen.
@@ -393,9 +387,6 @@ async function pushProjekte() {
       if (antwort.status === 404) break; // Backend noch nicht da: aufhoeren, nicht merken
       if (antwort.status === 503) { serverSagtNeinProjekte = true; break; }
       // Wie beim Chat-Push: 401/403 betrifft die Sitzung, nicht dieses Projekt.
-      // Weiterlaufen hiesse, fuer jedes Projekt dieselbe vergebliche Anfrage zu
-      // schicken. Ohne Merker — beim naechsten Anlauf zaehlt die dann
-      // vielleicht frische Anmeldung.
       if (antwort.status === 401 || antwort.status === 403) break;
       // Dieselbe Luecke wie beim Chat-Push: eine 4xx-Ablehnung war unsichtbar.
       // 404 ist oben schon abgefangen — das ist "noch nicht ausgerollt", kein Verlust.

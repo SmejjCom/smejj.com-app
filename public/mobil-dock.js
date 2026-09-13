@@ -43,11 +43,21 @@ export const REGELN = "@media (max-width:600px){"
   // (4) Wachstum bis ~5 Zeilen, dann innen scrollen
   + `body #start .prompt-glass textarea.textarea,body #start .prompt-glass #startMessage{max-height:${MAX_FELD_HOEHE}px;overflow-y:auto}`
   + `body #code .codefeld #codeAufgabe{max-height:${MAX_FELD_HOEHE}px;overflow-y:auto;min-height:44px}`
+  // (19) Das Start-Feld selbst mass 43,5 px (min-height 40 + Polster) — der einzige Rest aus dem
+  //      Rundgang. Ein halber Pixel ist unsichtbar, die 44-px-Regel gilt trotzdem.
+  //      Betreiber-Freigabe 08.09. ("alle Rechte von A bis Z"), sonst Design-Lock.
+  + "body #start .prompt-glass #startMessage,body #start .prompt-glass textarea.textarea{min-height:44px!important}"
   // (3) Platzhalter in einer Zeile
   + "body #code .codefeld #codeAufgabe::placeholder{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
   // (2) Code-Leiste in EINER Zeile
   + "body #code .codeleiste.codeleiste{flex-wrap:nowrap;gap:4px;margin-top:0;min-width:0}"
-  + "body #code .codeleiste .repochip.repochip{max-width:80px;min-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:8px;padding-right:8px;flex:0 1 auto}"
+  // (12) Stufe-Chip "Automatisch" war beidseitig abgeschnitten ("\utomatiscl", Betreiber-Screenshot
+  //      08.09. 08:55): text-overflow:ellipsis greift NICHT auf einem inline-flex-Kasten — der
+  //      Text laeuft dort einfach unter der Kante durch. Darum inline-block mit fester Zeilenhoehe
+  //      (44 px Ziel) und mittiger Ausrichtung; jetzt kuerzt der Browser sauber mit "…".
+  + "body #code .codeleiste .repochip.repochip{display:inline-block;max-width:110px;min-width:44px;height:44px;line-height:44px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:8px;padding-right:8px;flex:0 1 auto}"
+  + "body #code .codeleiste .repochip.repochip>*{display:inline;line-height:inherit}"
+  + "body #code .codeleiste #codeModusChip.repochip{max-width:72px}"
   + "body #code .codeleiste .code-rechts.code-rechts{gap:4px;flex:0 0 auto;min-width:0}"
   + "body #code .codeleiste #codeTiefeAnzeige{display:none}"
   + "body #code .codeleiste .icon-button.icon-button,body #code .codeleiste .send-button.send-button{flex:0 0 44px;width:44px;min-width:44px;height:44px;min-height:44px}"
@@ -61,6 +71,27 @@ export const REGELN = "@media (max-width:600px){"
   + "body #smejj-sitzung-abgelaufen a,body #smejj-sitzung-abgelaufen button{min-height:44px;display:inline-flex;align-items:center}"
   + "body .account-picture-choose.account-picture-choose{min-height:44px;display:inline-flex;align-items:center}"
   + "body .view .toolbar button{min-height:44px}"
+  // (17) Aktionen an Antworten wurden uebersehen: die Leiste steht auf 52 % Deckkraft und wird erst
+  //      beim Zeigen heller — am Handy gibt es kein Zeigen. Darum hier dauerhaft gut lesbar.
+  + "body #startLog .msg-actions .msg-act,body #codeLogHalter .msg-actions .msg-act{color:rgba(246,243,238,.82)}"
+  // (18) Die drei Punkte unter einer Antwort liessen sich nicht antippen (Betreiber 08.09. 16:13).
+  //      GEMESSEN: #startLog .msg-actions traegt pointer-events:none, und am Handy dazu overflow-x:auto —
+  //      die Leiste war 0 px hoch, ihre 44-px-Knoepfe ragten heraus und wurden vom Scroll-Container
+  //      ABGESCHNITTEN. Ein Treffertest fand statt des Knopfes das Log. Jetzt nimmt die Leiste selbst
+  //      Klicks an, faellt nicht mehr zusammen und schneidet nichts ab.
+  + "body #startLog .msg-actions,body #codeLogHalter .msg-actions{pointer-events:auto;min-height:44px;overflow:visible;margin-top:0}"
+  //      Dazu ein NORMALER Abstand unter dem letzten Eintrag — nicht mehr.
+  //      KORREKTUR 09.09.: hier standen 132px, damit die letzte Aktionsleiste nicht hinter dem
+  //      Eingabefeld liegt. Diese Annahme war falsch. Live nachgemessen (375x812):
+  //        .home-feed  display:grid, grid-template-rows: minmax(0,1fr) auto
+  //          #startLog      -> 1fr, scrollt selbst
+  //          .prompt-glass  -> auto, position:relative
+  //      Das Feld ist ein GESCHWISTER im Raster, kein schwebendes Overlay. Es liegt nie ueber
+  //      dem Log, also ist unter dem Log nichts freizuhalten. Die 132px hielten darum keinen
+  //      Platz frei — sie verschenkten ihn: der letzte Eintrag stand 81px ueber dem Feld statt
+  //      16px. Gemessen nach der Korrektur: Abstand 16px, Feld weiterhin buendig an der
+  //      Unterkante (0px), alle fuenf Aktionsknoepfe per elementFromPoint erreichbar.
+  + "body #start.has-start-chat #startLog.start-log,body #code #codeLogHalter.code-log-halter{padding-bottom:14px}"
   // (8) Modell-Menue (Betreiber 17:38: "rechte Seite schneidet ab"): das Untermenue war
   //     232-312 px breit mit nowrap und Ellipse — "smejj 1.3 — Sp…", Haken ueber dem Text.
   //     Am Handy liegt es jetzt FEST ueber dem Dock, 16 px Rand links und rechts, Text darf
@@ -75,7 +106,8 @@ export const REGELN = "@media (max-width:600px){"
   + "body #start .prompt-glass .model-picker.model-picker{position:static}"
   + "body #startModellMenue.code-modus-menue,body #start .prompt-glass .model-submenu.model-submenu,body #start .prompt-glass .model-menu.model-menu{position:absolute!important;left:6px!important;right:6px!important;top:auto!important;bottom:calc(100% + 8px)!important;width:auto!important;min-width:0!important;max-width:none!important;max-height:min(50vh,420px);overflow-y:auto}"
   + "body #startModellMenue.code-modus-menue{display:flex;flex-direction:column;flex-wrap:nowrap}"
-  + "body #start:not(.has-start-chat) #startModellMenue.code-modus-menue,body #start:not(.has-start-chat) .prompt-glass .model-menu.model-menu{top:calc(100% + 8px)!important;bottom:auto!important}"
+  // Das Menue klappt IMMER nach oben: seit (15) sitzt das Glas auch auf der leeren Startseite unten,
+  // nach unten waere es ueber den Werkzeug-Kacheln und am Schirmrand.
   + "body #startModellMenue.code-modus-menue button,body #code .code-modus-menue.code-modus-menue button,body .model-submenu button{display:flex;align-items:center;gap:10px;width:100%;flex:0 0 auto;min-height:44px;white-space:normal;text-align:left}"
   + "body .code-modus-menue .modus-links,body .model-submenu .model-submenu-name{flex:1 1 auto;min-width:0;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3}"
   + "body .code-modus-menue .modus-rechts,body .code-modus-menue .modus-haken,body .model-submenu .model-submenu-check{flex:0 0 auto}"
@@ -85,13 +117,47 @@ export const REGELN = "@media (max-width:600px){"
   //     mit Blur, Antwort ohne Blase; Kopfzeile als Glasstreifen unter der Statusleiste,
   //     damit "Arbeitsschritte" nicht mehr durch das Logo laeuft (Streifen siehe unten).
   + "body #startLog .entry,body #codeLogHalter .entry{max-width:100%;overflow-wrap:anywhere;word-break:break-word}"
-  + "body #startLog .entry table,body #codeLogHalter .entry table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:normal}"
+  // (13) Chat-Tabellen waren zerhackt (Betreiber-Screenshot 08.09. 08:54): fuenf Spalten wurden auf
+  //      Schirmbreite gequetscht, und das overflow-wrap:anywhere der Eintragsregel brach die Woerter
+  //      buchstabenweise um ("Ze/it", "M/or/ge/n"). Jetzt behaelt die Tabelle ihre natuerliche Breite
+  //      (max-content) und scrollt in SICH; die Zellen brechen gar nicht mehr. Lange Links ausserhalb
+  //      von Tabellen brechen weiter um (Regel darueber).
+  + "body #startLog .entry table,body #codeLogHalter .entry table{display:block;width:max-content;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:normal}"
+  + "body #startLog .entry table td,body #startLog .entry table th,body #codeLogHalter .entry table td,body #codeLogHalter .entry table th{overflow-wrap:normal;word-break:normal;white-space:nowrap;min-width:72px}"
   + "body #startLog .entry a{overflow-wrap:anywhere}"
   + "body #startLog .entry.user.user{margin-left:14%;max-width:86%;border-radius:18px 18px 6px 18px;background:rgba(255,255,255,.09);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);padding:10px 14px}"
   + "body #startLog .entry.assistant.assistant{background:transparent;border:0;padding-left:4px;padding-right:4px}"
   + "body #start.has-start-chat #startLog.start-log{padding-top:calc(env(safe-area-inset-top,0px) + 56px);scroll-padding-top:calc(env(safe-area-inset-top,0px) + 56px)}"
   + "body .mobil-kopfglas{position:fixed;top:0;left:0;right:0;height:calc(env(safe-area-inset-top,0px) + 52px);z-index:73;pointer-events:none;background:linear-gradient(180deg,rgba(7,10,14,.92) 0%,rgba(7,10,14,.72) 70%,rgba(7,10,14,0) 100%);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 70%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 70%,transparent 100%)}"
   + "body:not(.mobil-chat-offen) .mobil-kopfglas{display:none}"
+  // (15) Startseite kompakt und UNTEN (Betreiber 08.09.: "unten noch mehr runterziehen und kompakt
+  //      machen, unten ist Platz frei, oben verlieren wir viel — ChatGPT hat es ganz unten").
+  //      GEMESSEN (Pixel 7, 412x839): .home-feed steht auf justify-content:center, der Block endete
+  //      bei 686 — 153 px blieben unten leer, waehrend oben der Gruss in der Luft hing.
+  //      Jetzt sammelt sich alles an der Unterkante, mit engeren Abstaenden.
+  + "body #start:not(.has-start-chat) .home-feed.home-feed{justify-content:flex-end;gap:10px}"
+  + "body #start:not(.has-start-chat) .home-hero.home-hero{margin-bottom:2px}"
+  + "body #start:not(.has-start-chat) .erste-schritte.erste-schritte{margin-top:2px}"
+  //      NACHGEBESSERT 08.09. (Betreiber: "ChatGPT hat es richtig kompakt ganz unten"): mit flex-end
+  //      allein sass zwar der BLOCK unten, das Eingabefeld aber in der Mitte (441 von 839) — darunter
+  //      lagen noch Werkzeugzeile und "Erste Schritte" mit zusammen 374 px. Gemeint war das FELD.
+  //      Die Reihenfolge dreht sich darum um: Gruss, Vorschlaege, Werkzeuge, Feld ganz unten (714..815).
+  + "body #start:not(.has-start-chat) .home-feed .erste-schritte{order:6}"
+  + "body #start:not(.has-start-chat) .home-feed .start-chips{order:7}"
+  + "body #start:not(.has-start-chat) .home-feed .prompt-glass{order:8}"
+  // (16) Modell-Menue war nicht bedienbar (Betreiber-Screenshot 08.09. 14:29): die Werkzeug-Kacheln
+  //      lagen UEBER dem offenen Menue, der Fingerdruck traf sie statt der Modellzeile.
+  //      GEMESSEN: .prompt-glass traegt backdrop-filter und ist damit ein eigener Stapel-Kontext —
+  //      das Menue mit z-index:60 steckt darin fest, waehrend .start-chips im DOM SPAETER kommt und
+  //      bei gleichem Stapelwert gewinnt. Also hebt sich das ganze Glas ueber die Kacheln.
+  + "body #start .prompt-glass.prompt-glass{position:relative;z-index:70}"
+  + "body #startModellMenue.code-modus-menue,body #start .prompt-glass .model-menu.model-menu{background:#0d1219;z-index:80!important}"
+  // (14) Im Code-Bereich lag der Gruss "Was steht als Naechstes an, Alan?" UNTER dem Kopfglas
+  //      (Betreiber-Screenshot 08.09. 08:55) — das Glas ist fest, der Gruss beginnt bei 0.
+  //      Beide Zustaende bekommen darum dasselbe Polster wie das Start-Log: Gruss (leerer Bereich)
+  //      und Verlaufshalter (laufender Chat).
+  + "body.mobil-chat-offen #code .codegruss{padding-top:calc(env(safe-area-inset-top,0px) + 60px)}"
+  + "body #code #codeLogHalter.code-log-halter{padding-top:calc(env(safe-area-inset-top,0px) + 56px);scroll-padding-top:calc(env(safe-area-inset-top,0px) + 56px)}"
   + "}"
   // (10) Vollbild-Versatz der installierten App (Betreiber 17:32, iPhone, frisch installiert):
   //      iOS legt die Layout-Flaeche oben an, rechnet sie aber um die Statusleistenhoehe
@@ -107,8 +173,37 @@ export const REGELN = "@media (max-width:600px){"
   //      Tastatur-Historie). Verlaesslich ist die SICHTBARE Flaeche: visualViewport.offsetTop +
   //      visualViewport.height. Der Rahmen bekommt darum eine feste Hoehe bis zur sichtbaren
   //      Unterkante (--vv-unten) statt bottom:0 — bei offener Tastatur endet er an der Tastatur.
+  //      GELOEST 08.09. 12:26 — und zwar NICHT im Layout. In der installierten App im iPhone-Simulator
+  //      gemessen: Schirm 402x874, Fenster 402x812, fixed inset:0 = 812, 100dvh = 812. Es fehlten 62 pt,
+  //      genau safe-area-inset-top. Die fehlende Flaeche liegt AUSSERHALB des WebViews: ein Rahmen mit
+  //      bottom:-120px endete dort ebenso wie drei Messstreifen. Ursache war der Meta-Wert
+  //      apple-mobile-web-app-status-bar-style "black-translucent" — iOS schreibt daraus
+  //      UIWebClipStatusBarStyleLegacyBlackTranslucent in die Webclip-Datei und verkuerzt die Flaeche.
+  //      Mit "black" (index.html, seit 08.09.) reicht sie bis zur Unterkante. Alle drei Modi im
+  //      Simulator gemessen (fixed inset:0 / 100dvh / safe-area unten): Legacy 812/812/34 mit Balken,
+  //      "default" 874/874/0 aber helle Statusleiste, "black" 874/874/34 und schwarze Leiste.
+  //      Damit braucht der Rahmen
+  //      keine Sonderregel mehr — inset:0 aus dem Buendel ist wieder richtig, der untere Strich kommt zurueck.
+  //      Dafuer werden safe-area-inset-* in diesem Modus 0: den Mindestabstand zum Home-Balken traegt jetzt
+  //      die Regel unten (nie kleiner als der echte Wert, damit alte Installationen nichts verlieren).
+  //      RUNDE 8 (Betreiber 08.09. 16:13, zweimal: "oben ist immer noch schwarz, nicht Vollbild"):
+  //      Im Simulator alle Wege durchgemessen. Es gibt genau zwei Zustaende, keinen dritten:
+  //        black-translucent -> Flaeche top 0, hoch 812: VOLLBILD oben, 62 pt Schwarz unten
+  //        black / default   -> Flaeche hoch 874: kein Schwarz unten, dafuer Statusleistenbalken oben
+  //      Der Bereich unten gehoert nicht zur Seite (mit knallrotem Wurzelelement geprueft: er bleibt
+  //      schwarz). Also Vollbild oben — und der Streifen unten wird UNSICHTBAR gemacht, statt bekaempft:
+  //        (a) der Grund laeuft unten auf reines Schwarz aus, genau die Farbe dahinter,
+  //        (b) der Rahmen bekommt unten weder Strich noch Schein — nur er machte die Kante sichtbar,
+  //        (c) das Dock schliesst buendig ab (Sicherheitsrand 0): der Home-Balken liegt ohnehin in
+  //            den 62 pt darunter, ein Abstand wuerde nur Platz verschenken.
+  //      KORREKTUR 13.09. (Design V12, im Simulator mit gruen gefaerbtem Grund gemessen):
+  //      die 62 pt liegen INNERHALB des WebViews und zeigen den <html>-Grund. Der Grund ist
+  //      jetzt die App-Farbe (design-v12-vollbild.css), index.html steht auf "black"
+  //      (Layout bis zur Unterkante, safe-area unten 34 = Home-Balken bleibt frei). Fuer
+  //      alte Translucent-Installationen legt misstVollbildFehl() den Fehlbetrag an.
   + "@media (display-mode:standalone) and (max-width:600px){"
-  + "body::after{top:0;bottom:auto;height:var(--vv-unten,100%)}"
+  + "body::before{background:radial-gradient(820px 520px at 18% -12%,rgba(50,246,234,.13),transparent 62%),radial-gradient(700px 480px at 88% 108%,rgba(13,148,210,.10),transparent 64%),linear-gradient(180deg,#0b1016 0%,#0c0f13 55%,#101113 100%) #101113}"
+  + "body::after{box-shadow:inset 0 1px 0 rgba(2,253,253,.3),inset 1px 0 0 rgba(2,253,253,.3),inset -1px 0 0 rgba(2,253,253,.3),inset 0 26px 40px -26px rgba(2,253,253,.18)}"
   + "}"
   // (11) Feld buendig an der Tastatur (Betreiber 08.09. 01:44, Punkt 7): bei offener Tastatur
   //      blieb der untere Sicherheitsrand (34 pt Home-Balken) als Luecke zwischen Feld und
@@ -132,12 +227,36 @@ export function tastaturOffen({ fokusImFeld, sichtbarUnten, schirmHoehe }) {
   return unten < schirm - 80;
 }
 
+/** Fehlbetrag alter Webclips (LegacyBlackTranslucent): der Layout-Viewport ist um die
+ *  Statusleistenhoehe kuerzer als der Schirm (gemessen 874 - 812 = 62 = safe-area-inset-top).
+ *  Im "black"-Modus ist safe-area-inset-top 0 — dann ist der Fehlbetrag 0. Reine Funktion. */
+export function vollbildFehl({ standalone, tastaturOffen, schirmHoehe, innerHeight, saTop }) {
+  if (!standalone || tastaturOffen) return 0;
+  const fehl = Math.round(Number(schirmHoehe || 0) - Number(innerHeight || 0));
+  const deckel = Math.round(Number(saTop || 0));
+  if (fehl < 20 || deckel < 20) return 0;
+  return Math.min(fehl, deckel, 120);
+}
+function misstVollbildFehl(win, doc, offen) {
+  const root = doc.documentElement;
+  try {
+    const saTop = parseFloat(win.getComputedStyle(root).getPropertyValue("--sa-top")) || 0;
+    const standalone = Boolean((win.matchMedia && win.matchMedia("(display-mode: standalone)").matches) || (win.navigator && win.navigator.standalone === true));
+    const fehl = vollbildFehl({ standalone, tastaturOffen: offen, schirmHoehe: win.screen ? win.screen.height : 0, innerHeight: win.innerHeight, saTop });
+    root.style.setProperty("--vollbild-fehl", `${fehl}px`);
+    root.classList.toggle("vollbild-fehl", fehl > 0);
+  } catch (fehler) {
+    root.dataset.vollbildFehler = String(fehler && fehler.message || fehler);
+  }
+}
+
 function verdrahteTastatur(win = window, doc = document) {
   const vv = win.visualViewport;
   const imFeld = () => { const a = doc.activeElement; return Boolean(a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable)); };
   const setze = () => {
     const offen = tastaturOffen({ fokusImFeld: imFeld(), sichtbarUnten: vv ? sichtbareUnterkante(vv) : 0, schirmHoehe: win.screen?.height || win.innerHeight });
     doc.documentElement.classList.toggle("tastatur-offen", offen);
+    misstVollbildFehl(win, doc, offen);
   };
   doc.addEventListener("focusin", () => setTimeout(setze, 60), true);
   doc.addEventListener("focusout", () => setTimeout(setze, 120), true);
@@ -149,19 +268,6 @@ function verdrahteTastatur(win = window, doc = document) {
 export function sichtbareUnterkante({ offsetTop, height }) {
   const unten = Math.round(Number(offsetTop || 0) + Number(height || 0));
   return unten > 0 && Number.isFinite(unten) ? unten : 0;
-}
-
-function verdrahteVersatz(win = window, doc = document) {
-  const vv = win.visualViewport;
-  const setze = () => {
-    const unten = vv ? sichtbareUnterkante(vv) : 0;
-    if (unten) doc.documentElement.style.setProperty("--vv-unten", `${unten}px`);
-    else doc.documentElement.style.removeProperty("--vv-unten");
-  };
-  setze();
-  if (vv) { vv.addEventListener("resize", setze); vv.addEventListener("scroll", setze); }
-  win.addEventListener("resize", () => setTimeout(setze, 120));
-  win.addEventListener("orientationchange", () => setTimeout(setze, 300));
 }
 
 /** Glasstreifen hinter Logo und Globus, nur im Chat-Zustand sichtbar (Klasse am body). */
@@ -190,7 +296,6 @@ export function sorgeFuerStil(doc = document) {
 
 if (typeof document !== "undefined" && document.querySelector("#startMessage, #codeAufgabe")) {
   sorgeFuerStil();
-  verdrahteVersatz();
   verdrahteTastatur();
   verdrahteKopfglas();
   // Ansichten nach dem Login (Profil, Einstellungen, Verlauf, Dateien …) — eigenes Modul, ohne Marke.
