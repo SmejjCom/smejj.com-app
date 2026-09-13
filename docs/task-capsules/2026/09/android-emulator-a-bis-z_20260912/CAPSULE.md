@@ -240,3 +240,73 @@ Werbeseite.
 - **Keine Regression:** App-Rundgang 19/19 in zwei Runden (Selbsttest bestanden); PWA
   offline für die angemeldete App mit 235 Dateien und Gegenprobe; 678 Frontend-Proben;
   17/17 Sperren-Proben; Start-Lock gestempelt.
+
+
+---
+
+## Dritter A-bis-Z-Durchgang (13.09., SW v861)
+
+### Status: hochgeladen, gespeichert, ausgeliefert?
+
+- **Frontend:** App-Zweig und Frontend-Repo synchron mit GitHub, live **v861**.
+- **Datenspeicher:** `/api/health` → `storage: true`, Trainingsspeicher iDrive e2 `ok`.
+  Keine Datenbank-Migration nötig.
+- **Server:** läuft seit 11.09. 19:48 und entspricht **exakt** dem Bauzweig.
+  **ABER:** vier Server-Änderungen vom 07.–10.09. lagen nur im App-Zweig und liefen nie live.
+
+### Der Server-Abgleich — je Datei entschieden
+
+Seit dem gemeinsamen Ursprung (`a1101898`, 06.09.) je Datei geprüft, wer geändert hat.
+
+**Nur im App-Zweig, nie live → vorbereitet für den Server** (Zweig `bau-abgleich-20260913`):
+1. `rag/knowledgeCorpus.js` — der Wissenskorpus schließt `docs/werkstatt` aus; das Protokoll
+   trug die Kennung eines Prüfsuite-Falls, das Modell konnte lesen, was es können soll.
+2. `modellEvolutionAutopilot.js` — Trainingsdeckel-Vorgabe 100 € (108 USD), Betreiber 07.09.
+3. `smejjVersionsTaktAutopilot.js` + `smejjModellPlaetze.js` — Plätze aus dem Versionsregister.
+4. `voiceOhrRoutes.js` — nur die richtiggestellte Diagnose im Kommentar.
+
+**Bewusst nicht:** `opsModellLager.js` + Gruppierung in `opsModelle.js` — der Server löst
+dasselbe mit `opsModellbestand.js` (Live-Bestand aus e2, am Live-Bildschirm geprüft).
+`modelRegistry.js` — der Server hat alles plus den tragenden Ausweich auf `glm-4.5-flash`.
+
+**Tests:** 702 Server-Tests, 106 Tests der betroffenen Module grün.
+**Auslieferung blockiert:** Der Push auf den Bauzweig wurde von der Sitzungssperre verweigert.
+Bereit liegt `smejj.com Server-Abgleich ausliefern.command` (Doppelklick; bricht ab, falls
+sich der Bauzweig verändert hat; kein Force, kein Merge; wartet auf den neuen Bau).
+
+**Gegenrichtung erledigt:** Der App-Zweig übernahm 26 Dateien, die nur der Server geändert hatte
+(Admin-Oberfläche, Admin-Modellseite, Modell-Router, Maus-Engine, Fern-Browser, `.gitignore`).
+Admin-Sperre: Stand byte-identisch zum am 08.09. freigegebenen Manifest des Bauzweigs.
+
+### Dabei gefunden und behoben
+
+- **Ein Test war rot, den ich übersehen hatte:** `platform-pwa.test.mjs` suchte per Textmuster
+  `cache.addAll(SHELL.map` — seit v860 heißt die Liste `INSTALL_LISTE`. Er läuft nicht in
+  `check:frontend`, nur in der Gesamtsuite. Muster nachgezogen, Zusage erweitert.
+- **`session-engine.js` 846 Zeilen** (über der Hausgrenze 800) im Server-Zweig. Aufteilen wäre
+  riskant: `worker.js` lädt die Datei notfalls **einzeln** aus einem Laufzeit-Bündel nach.
+  Nur Begründungen in die README ausgelagert; Code ohne Kommentare byte-identisch; 768 Zeilen.
+
+### Bewusst nicht behoben
+
+- **Zwei Favicons doppelt im vollen Precache** (`/favicon.ico` und `?v=112`, ebenso das SVG) —
+  zwei verschiedene Adressen, kein Ausfall, ~3 KB. Eine neue SW-Version dafür ließe jeden
+  Nutzer 2 MB neu laden. Beim nächsten nötigen SW-Stand mitnehmen.
+- **Bauzweig trägt eine veraltete Kopie von `public/`** (dort meldet `check:guidelines`
+  `browser-pane.js` 825 Zeilen). Ausgeliefert wird das Frontend aus dem Frontend-Repo.
+
+### Getestet
+
+| Plattform | Ergebnis |
+|---|---|
+| Web | Selbsttest, Rundgang 19/19 ×2, 152 Responsive-Punkte, PWA offline mit Gegenprobe |
+| Android-Telefon (v861) | Selbsttest, 19/19 ×2, Layout 10 Routen, quer: 0 verdeckt, Chat per Fingertipp, Flugmodus offline |
+| Android-Tablet | Selbsttest, 19/19, Layout, 0 verdeckt — bei 1280×800 (volle 2560×1600 stürzt mit Software-Grafik ab) |
+| iOS Safari (angemeldet) | voller SW `smejj-shell-v861`, offline mit Gegenprobe: App + Offline-Band |
+| iOS installierte App | schmaler SW `smejj-willkommen-v861`, offline: Landeseite + Offline-Band |
+| Modell | `/api/health`: GLM bereit und erreichbar, Auto bereit |
+| Tests | 3.815/3.815 + 702/702 Server; alle 11 Sperren und Wächter grün |
+
+**Nicht messbar ohne Anmeldung:** eine echte Modell-Antwort. Das Probier-Feld der Landeseite
+fragt bewusst nicht ohne Konto (Kostenschutz); die Safari-Sitzung ließ sich bei gesperrtem
+Bildschirm nicht bedienen.
