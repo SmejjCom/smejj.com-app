@@ -110,7 +110,7 @@ test("Vollbild (Design V12, 13.09.): Statusleiste 'black', ein Grund fuer alles,
   assert.match(html, /apple-mobile-web-app-status-bar-style" content="black"/);
   assert.match(html, /viewport-fit=cover/, "ohne cover waere die Flaeche erst recht kleiner");
   const vollbild = readFileSync(new URL("../public/design-v12-vollbild.css", import.meta.url), "utf8");
-  assert.match(vollbild, /html \{ background: #101113; \}/, "der <html>-Grund ist die App-Farbe (theme-color)");
+  assert.match(vollbild, /html:root \{ background: #101113; \}/, "der <html>-Grund ist die App-Farbe (theme-color)");
   assert.match(vollbild, /html\.vollbild-fehl/, "alte Translucent-Installationen bekommen den Fehlbetrag");
   assert.ok(!/html\{--sa-bottom:0px;background:#000\}/.test(m.REGELN), "kein schwarzer Grund, keine Null-Safe-Area mehr");
   assert.match(m.REGELN, /body::before\{background:[^}]*#101113 100%\) #101113\}/, "Grund laeuft auf die App-Farbe aus");

@@ -6105,11 +6105,12 @@ body.spur-start-aktiv .nav-start {
 }
 
 /* ---- design-v12-vollbild.css ---- */
-html { background: #101113; }
-body { background: #101113; }
+html:root { background: #101113; }
+html:root body { background: #101113; }
 .home-feed { background: transparent; }
 @media (max-width: 600px) {
-  #start .home-feed { padding-bottom: 8px; }
+  #start:not(.has-start-chat) .home-feed,
+  #start.has-start-chat .home-feed { padding-bottom: 8px; }
 }
 html.vollbild-fehl,
 html.vollbild-fehl body { overflow: hidden; }

@@ -24,13 +24,17 @@
  */
 
 /* ---- Ein Grund für alles: Statusleiste, Flächen, Home-Balken ------------ */
-html { background: #101113; }
-body { background: #101113; }
+/* html:root (0,1,1): design-v11 setzt unter 600 px html:root{background:#050608} — nur
+   gleiche Spezifität später in der Kaskade gewinnt. */
+html:root { background: #101113; }
+html:root body { background: #101113; }
 .home-feed { background: transparent; }
 
 /* ---- Handy: kein Polster unter dem Feld (24 px "freie Fläche") ------------ */
 @media (max-width: 600px) {
-  #start .home-feed { padding-bottom: 8px; }
+  /* V11: #start:not(.has-start-chat) .home-feed { padding: 24px 16px } (1,2,0) */
+  #start:not(.has-start-chat) .home-feed,
+  #start.has-start-chat .home-feed { padding-bottom: 8px; }
 }
 
 /* ---- Alte Installationen (LegacyBlackTranslucent): Fehlbetrag ausgleichen -- */
