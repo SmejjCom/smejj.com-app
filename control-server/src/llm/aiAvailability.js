@@ -40,9 +40,24 @@ export function resolveServerAiGate(env = process.env, profile = "default", requ
   const primary = chain[0] || null;
   const registryByokOk = ["zhipu", "kimi"].includes(primary?.name)
     && primary?.logicalModelId !== "provider-fallback";
+  // DAS EIGENE MODELL (13.09.2026). Das klassische Tor ist ein AUSGABEN-Tor:
+  // es schuetzt ein Server-Budget vor Anbietern, die je Anfrage kosten. Zhipu
+  // und Kimi duerfen ohne es durch, weil sie ihr Guthaben selbst verwalten.
+  // Der Hausmodell-Dienst kostet je Anfrage GAR NICHTS — er laeuft auf einem
+  // fest bezahlten Server. Ihn hinter ein Ausgabenbudget zu stellen, schuetzt
+  // nichts und hat eine gemessene Folge: smejj-1 stand am 13.09. auf "ready",
+  // wurde im Chat gewaehlt, und JEDE Frage bekam den Rueckfall-Text
+  // ("Verstanden. Ich kann daraus eine konkrete Aufgabe machen ..."), weil
+  // dieses Tor fuer den Anbieter "hausmodell" zu blieb.
+  //
+  // Fail-closed bleibt es: providerOk verlangt eine verwendbare Kette, und die
+  // entsteht fuer smejj-1 nur mit gesetztem Schluessel (getModelRuntimeConfig).
+  // Die Ueberlast schuetzt die Warteschlange des Dienstes (Deckel 1, 24 wartend).
+  const eigenesModellOk = primary?.name === "hausmodell"
+    && primary?.logicalModelId !== "provider-fallback";
   const classicGateOk = gateEnabled && budgetOk;
-  const ai = providerOk && (classicGateOk || registryByokOk);
-  return { ai, chain, selection, gateEnabled, budgetOk, providerOk, classicGateOk, registryByokOk };
+  const ai = providerOk && (classicGateOk || registryByokOk || eigenesModellOk);
+  return { ai, chain, selection, gateEnabled, budgetOk, providerOk, classicGateOk, registryByokOk, eigenesModellOk };
 }
 
 export function evaluateAiAvailability(env = process.env, profile = "default", requestedModel = "") {

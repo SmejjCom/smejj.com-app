@@ -244,3 +244,46 @@ test("Waechter (kaputt): ohne jeden Anbieter bleibt der Rueckfall erhalten", asy
     );
   });
 });
+
+// --- Das eigene Modell (13.09.2026) ------------------------------------------
+//
+// smejj-1 stand auf "ready", wurde im Chat gewaehlt, und jede Frage bekam den
+// Rueckfall-Text. Das Tor liess nur zhipu/kimi ohne Ausgabenbudget durch; der
+// Hausmodell-Dienst kostet je Anfrage aber nichts. Diese Faelle halten fest,
+// dass er durchkommt — und dass die Tuer ohne Schluessel zu bleibt.
+
+const EIGENES = { SMEJJ_LLM_SMEJJ1_API_KEY: TEST_KEY };
+
+test("eigenes Modell: mit Schluessel ai:true, ohne Ausgabenbudget", () => {
+  const g = resolveServerAiGate({ ...EIGENES, SMEJJ_SERVER_AI_ENABLED: "false" }, "default", "smejj 1");
+  assert.equal(g.ai, true, "das Tor muss fuer den Hausmodell-Dienst offen sein");
+  assert.equal(g.chain[0].name, "hausmodell");
+  assert.equal(g.chain[0].logicalModelId, "smejj-1");
+  assert.equal(g.eigenesModellOk, true);
+  assert.equal(g.classicGateOk, false, "das Ausgabenbudget spielt dafuer keine Rolle");
+});
+
+test("eigenes Modell: ohne Schluessel entsteht keine Kette zum Hausmodell", () => {
+  // Fail-closed an der richtigen Stelle: nicht das Tor, sondern die fehlende
+  // Konfiguration haelt es zu.
+  const g = resolveServerAiGate({}, "default", "smejj 1");
+  assert.equal(g.ai, false);
+  assert.equal(g.eigenesModellOk, false);
+});
+
+test("eigenes Modell: ohne eigenen Schluessel antwortet der Rueckfall EHRLICH ueber GLM", () => {
+  // Kein stiller Rueckfall-Text: die Kette zeigt auf zhipu, und der Server
+  // setzt x-smejj-model-fallback — der Chip darf das sehen.
+  const g = resolveServerAiGate(zhipuEnv({ SMEJJ_SERVER_AI_ENABLED: "false" }), "default", "smejj 1");
+  assert.equal(g.ai, true);
+  assert.equal(g.chain[0].name, "zhipu");
+  assert.equal(g.selection.requestedModelId, "smejj-1");
+});
+
+test("eigenes Modell: die Staffel und Auto bleiben unberuehrt", () => {
+  const env = zhipuEnv({ SMEJJ_SERVER_AI_ENABLED: "false", ...EIGENES });
+  for (const wahl of ["smejj 1.0", "smejj 1.3", ""]) {
+    const g = resolveServerAiGate(env, "default", wahl);
+    assert.equal(g.chain[0].name, "zhipu", `${JSON.stringify(wahl)} darf nicht aufs Hausmodell wandern`);
+  }
+});
