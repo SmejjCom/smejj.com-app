@@ -6146,4 +6146,5 @@ html.vollbild-fehl body { overflow: hidden; }
     padding: 0 12px;
   }
   #start .prompt-glass textarea { min-height: 36px; height: 36px; }
+  #start .erste-schritte { display: none; }
 }

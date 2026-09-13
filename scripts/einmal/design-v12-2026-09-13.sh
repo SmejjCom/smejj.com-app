@@ -16,10 +16,10 @@ REPO="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.short
 KLON="/Users/alanbest/smejj-app-frontend"
 ZWEIG="feature/design-start-chat-2026-09-13"
 BASIS_VOR_AENDERUNG="a82a4dbe"
-CODE_COMMIT="fc11103c"
+CODE_COMMIT="1eeb5a6f"
 SW_VORHER="smejj-shell-v862"
 SW_NEU="smejj-shell-v863"
-DATEIEN=(index.html sw.js start-styles.css spur-start.js design-v12-spur.css design-v12-chat.css design-v12-code.css)
+DATEIEN=(index.html sw.js start-styles.css spur-start.js mobil-dock.js design-v12-spur.css design-v12-chat.css design-v12-code.css design-v12-vollbild.css)
 [ -d /Library/Developer/CommandLineTools ] && export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 export GIT_TERMINAL_PROMPT=0
 
@@ -33,9 +33,9 @@ cd "$WT" || { echo "ABBRUCH: Worktree fehlt."; exit 1; }
 echo "== 0. Ausgangslage (Worktree $WT)"
 git log --oneline -1
 git merge-base --is-ancestor "$CODE_COMMIT" HEAD || { echo "ABBRUCH: Code-Commit $CODE_COMMIT nicht im Zweig."; exit 1; }
-grep -q 'design-v12-chat.css ----' public/start-styles.css || { echo "ABBRUCH: V12 steht nicht im Start-Buendel."; exit 1; }
+grep -q 'design-v12-vollbild.css ----' public/start-styles.css || { echo "ABBRUCH: V12 steht nicht im Start-Buendel."; exit 1; }
 grep -q "$SW_NEU" public/sw.js || { echo "ABBRUCH: sw.js traegt nicht $SW_NEU."; exit 1; }
-grep -q 'start-styles.css?v=v12c-20260913' public/index.html || { echo "ABBRUCH: index.html traegt nicht die V12-Marke."; exit 1; }
+grep -q 'start-styles.css?v=v12d-20260913' public/index.html || { echo "ABBRUCH: index.html traegt nicht die V12-Marke."; exit 1; }
 LIVE_SW=$(curl -s -m 15 "https://smejj.com/sw.js?n=$RANDOM" | grep -o 'smejj-shell-v[0-9]*' | head -1)
 echo "live: $LIVE_SW"
 [ "$LIVE_SW" = "$SW_VORHER" ] || { echo "ABBRUCH: live ist $LIVE_SW, erwartet $SW_VORHER — Basis stimmt nicht mehr, Kaskade neu bauen lassen."; exit 1; }
@@ -48,7 +48,7 @@ node scripts/check-precache-imports.mjs || { echo "ABBRUCH: Precache unvollstaen
 node scripts/check-guidelines.mjs || { echo "ABBRUCH: Richtlinien rot."; exit 1; }
 node scripts/check-startgewicht.mjs || { echo "ABBRUCH: Startgewicht rot."; exit 1; }
 LOG=/tmp/design-v12-kaskade-tests.log
-node --test tests/frontend-structure.test.mjs tests/css-regelreste.test.mjs tests/deferred-start.test.mjs tests/profile-dock.test.mjs tests/platform-pwa.test.mjs tests/i18n-ui.test.mjs tests/startgewicht.test.mjs tests/modellmenue-reihenfolge.test.mjs tests/hinweisstreifen-macht-platz.test.mjs > "$LOG" 2>&1 \
+node --test tests/frontend-structure.test.mjs tests/css-regelreste.test.mjs tests/deferred-start.test.mjs tests/profile-dock.test.mjs tests/platform-pwa.test.mjs tests/i18n-ui.test.mjs tests/startgewicht.test.mjs tests/modellmenue-reihenfolge.test.mjs tests/hinweisstreifen-macht-platz.test.mjs tests/mobil-dock.test.mjs tests/pwa-vollbild-heilung.test.mjs > "$LOG" 2>&1 \
   || { echo "ABBRUCH: die Tests zu dieser Auslieferung sind rot."; tail -30 "$LOG"; exit 1; }
 grep -E "pass |fail " "$LOG" | tr '\n' ' '; echo
 
@@ -59,7 +59,7 @@ node scripts/check-start-lock.mjs --freeze --confirm "Betreiber, 2026-09-13: OK 
 echo "== 3. Stempel committen und pushen"
 git add docs/frontend/start-lock-manifest.json backups/start-design-lock 2>/dev/null
 if git diff --cached --quiet; then echo "(Manifest unveraendert)"; else
-  git commit -q -m "chore(start-lock): Stempel Design V12 2026-09-13 — index.html, start-styles.css (V12 Spur/Chat/Code), spur-start.js, SW $SW_NEU (Betreiber-Doppelklick)
+  git commit -q -m "chore(start-lock): Stempel Design V12 2026-09-13 — index.html, start-styles.css (V12 Spur/Chat/Code/Vollbild), spur-start.js, mobil-dock.js, SW $SW_NEU (Betreiber-Doppelklick)
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" || { echo "ABBRUCH: Commit fehlgeschlagen."; exit 1; }
 fi
@@ -93,7 +93,7 @@ for f in "${DATEIEN[@]}"; do
   if [ -d "$KLON/assets" ] && { [ -f "$KLON/assets/$f" ] || [ "$f" != "index.html" ]; }; then cp "$WT/public/$f" "$KLON/assets/$f" && git add "assets/$f"; fi
 done
 git status --short | head -40
-git commit -q -m "deploy(design-v12): Spur in drei Zonen, Chat/Start 19 px, Feld zwei Zeilen, Werkzeuge mit Wort, Code-Vorlagen sichtbar; SW $SW_NEU — Quelle smejj.com-app $QUELLE" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
+git commit -q -m "deploy(design-v12): Spur in drei Zonen, Chat/Start 19 px, Feld zwei Zeilen, Werkzeuge mit Wort, Code-Vorlagen sichtbar, Vollbild (Grund App-Farbe, Fehlbetrag-Ausgleich); SW $SW_NEU — Quelle smejj.com-app $QUELLE" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
 git merge-base --is-ancestor origin/main HEAD || { echo "ABBRUCH: kein Fast-Forward."; exit 1; }
 git push -q origin main || { echo "ABBRUCH: Push auf main fehlgeschlagen."; exit 1; }
 echo "gepusht: $(git rev-parse --short HEAD)"
@@ -105,6 +105,6 @@ for i in $(seq 1 24); do
   if [ "$L" = "$SW_NEU" ]; then echo "LIVE: $L nach $((i*10)) s"; break; fi
   echo "  noch $L ..."
 done
-curl -s -m 15 "https://smejj.com/assets/start-styles.css?n=$RANDOM" | grep -q 'design-v12-chat.css ----' && echo "LIVE: Buendel traegt V12" || echo "WARNUNG: Buendel live noch ohne V12 (Cache?)"
+curl -s -m 15 "https://smejj.com/assets/start-styles.css?n=$RANDOM" | grep -q 'design-v12-vollbild.css ----' && echo "LIVE: Buendel traegt V12" || echo "WARNUNG: Buendel live noch ohne V12 (Cache?)"
 cd "$WT" && node scripts/check-schutz-echtheit.mjs || echo "(Schutz-Echtheit: siehe oben)"
 echo "== FERTIG. Danach: App am Handy einmal schliessen und neu oeffnen (Service Worker $SW_NEU)."

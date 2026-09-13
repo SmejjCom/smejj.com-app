@@ -74,4 +74,7 @@ html.vollbild-fehl body { overflow: hidden; }
     padding: 0 12px;
   }
   #start .prompt-glass textarea { min-height: 36px; height: 36px; }
+  /* Der "Erste Schritte"-Kasten (Onboarding) braucht 300 px — im flachen
+     Querformat (Android-Emulator 863x304 gemessen: Seite 486 hoch) weicht er. */
+  #start .erste-schritte { display: none; }
 }
