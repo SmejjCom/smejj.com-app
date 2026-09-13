@@ -59,7 +59,8 @@ export const SOURCES = Object.freeze([
   // Design V12 (Betreiber-OK 2026-09-13, Mockup docs/mockups/start-chat-2026-09-13):
   // Spur in drei Zonen + größere Schrift. Baut auf V11 auf und steht darum
   // DAHINTER — das neue Kaskaden-Ende. Kein neuer Farbton, keine Rundung.
-  "design-v12-spur.css"
+  "design-v12-spur.css",
+  "design-v12-chat.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.
