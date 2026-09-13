@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-12T21:16:58.629Z",
-  "confirmation": "Betreiber Wof Kadavanich, 13.09.2026, Auswahl 'Schmaler Offline-Rueckfall (Empfehlung)' auf die Frage 'Soll die installierte App auch vor der Anmeldung offline starten?'. BEFUND: Wer smejj.com installierte, BEVOR er sich anmeldete, bekam keinen Service Worker — auth-gate-frueh.js leitet Abgemeldete auf willkommen.html, und nur app.js registrierte /sw.js. Offline zeigte die installierte App die Fehlerseite des Browsers; im frisch angelegten iOS-Webclip lag weder ein ServiceWorkers- noch ein CacheStorage-Ordner. AENDERUNG an public/sw.js: EIN Service Worker, zwei Groessen. Mit ?eingang=willkommen legt er nur die Landeseite ab (12 Dateien) unter eigenem Speichernamen smejj-willkommen-v…; ohne Zusatz bleibt alles wie zuvor, der volle Speicher enthaelt zusaetzlich die sechs Landeseiten-Dateien (235 statt 229). Offline liefert der schmale fuer eine Navigation die Landeseite; Bildern und Skripten wird nie eine HTML-Seite untergeschoben. Nach der Anmeldung uebernimmt der volle und raeumt den schmalen weg. Cache v861. Kein Design, kein Layout, kein Text der Startseite geaendert. BEWIESEN: Verhaltenstest mit dem ECHTEN sw.js in nachgebauter Service-Worker-Umgebung, Gegenprobe gegen den alten sw.js (vier Proben des neuen Verhaltens rot, vier des unveraenderten gruen). LIVE im iOS-Webclip: vorher 0 Service Worker und 0 Cache, nach 75 s online ein ServiceWorkers- und ein CacheStorage-Ordner mit smejj-willkommen-v861, geschaetzt 66 KB, registriert als sw.js?eingang=willkommen. Offline mit Gegenprobe (example.com scheitert): die installierte App oeffnet im Vollbild die Landeseite mit dem Offline-Band. Keine Regression: App-Rundgang 19/19 in zwei Runden mit bestandenem Selbsttest, PWA offline fuer die App mit 235 Dateien und Gegenprobe, 678 Frontend-Proben gruen.",
+  "frozenAt": "2026-09-13T09:14:07.011Z",
+  "confirmation": "Betreiber, 2026-09-13: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Auswahl im Chat 13.09.: 'Eigene Zeile (Empfehlung)'. Umgesetzt: neue Zeile 'smejj 1 · eigenes Modell · langsamer' unter 'Unsere Modelle', zwischen Staffel und Auto; die vier Staffel-Stufen unveraendert. Die Zeile setzt Modell 'smejj 1' (Registry smejj-1, Hausmodell-Dienst) und Stufe 'gruendlich', damit die Bruecke die Groq-Schnellspur abgibt. app.js kennt den Namen (MODEL_MODES), sonst fiele die Wahl still auf smejj 1.0. Service-Worker smejj-shell-v862, app.js?v=b166.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "dbeaa752808e6caaafaa9ef150118157ec32f58e87805387ccec877e2998af4b",
+    "public/index.html": "e0bcf0408b6f70ffb4ee7457306b2a31c3b519543980bbca20dc44336e43ea06",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "44fcc01c4d3d1fca199da3221dcf87c7380b77ef37488837aa40f827ef242bde",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "f8d1dd861c8168a7baf59d0dbc7a0210a6f5f0cbbd494d887f2f801c195473ad",
     "public/browser-pane.css": "a2de84280465570316b3062061a6e9359c953d35f4d02a719975b2b28afb9b8c",
-    "public/app.js": "1ad6d19195802eca9593a03dda36d7fd52a2e5423697a4d475c3741229c17262",
+    "public/app.js": "a17ae2c4719297617b180211208318d6e96cfda5483ffddb7ec995249eceb185",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "23d8ce8c091439eed3ac2436d700edfac9c15cec910d43a8157016ad063ab646",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "1ca7e5f7463951a68830112705cffd82be1f9162fcd2be5f9690d4d43eb837d5",
+    "public/sw.js": "294517ac0da23f2514e8d1b51266a7aa070a89059a37d0cd657874487ee586d5",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }

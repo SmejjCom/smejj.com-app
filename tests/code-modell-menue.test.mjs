@@ -163,7 +163,12 @@ test("oeffneModellMenue zeichnet das Menue und die Wahl greift wirklich", async 
   const beschriftung = (k) => alleKnoten(k).map((n) => n.textContent).filter(Boolean).join(" ");
   assert.match(beschriftung(knoepfe[0]), /smejj 1\.3/);
   assert.match(beschriftung(knoepfe[3]), /smejj 1\.0/);
-  assert.match(beschriftung(knoepfe[4]), /Auto/);
+  // Seit 13.09. steht das eigene Modell zwischen Staffel und Auto. Auto wird
+  // darum ueber die BESCHRIFTUNG gesucht, nicht ueber eine feste Stelle —
+  // die naechste Zeile, die jemand ergaenzt, haette den Test sonst wieder
+  // an der falschen Stelle suchen lassen.
+  assert.match(beschriftung(knoepfe[4]), /^smejj 1 /);
+  assert.match(beschriftung(knoepfe[knoepfe.length - 1]), /Auto/);
 
   // AUSLOESEN, nicht nur zeichnen: der Klick muss den Speicher setzen und
   // den Rueckruf feuern — genau die zwei Draehte, die beim Auslagern
@@ -185,9 +190,28 @@ test("die Auto-Zeile setzt Auto — und keinen Umweg ueber einen Fremdanbieter",
   await oeffneModellMenue({ chip, beiWahl: () => { neuGezeichnet += 1; } });
   const menue = document.getElementById("codeModellMenue");
   const knoepfe = alleKnoten(menue).filter((k) => k.tagName === "BUTTON");
-  knoepfe[4].click();
+  const beschriftung = (k) => alleKnoten(k).map((n) => n.textContent).filter(Boolean).join(" ");
+  knoepfe.find((k) => /Auto/.test(beschriftung(k))).click();
   assert.equal(localStorage.getItem(MODELL_KEY), AUTO_WAHL);
   assert.equal(localStorage.getItem("smejj.cline.model.v1"), null);
+  assert.equal(neuGezeichnet, 1);
+});
+
+test("die Zeile smejj 1 setzt das eigene Modell UND die Stufe, die an Groq vorbeifuehrt", async () => {
+  // Auftrag 13.09.: smejj-1 war auf dem Server "ready", im Chat nicht waehlbar.
+  // Zeichnen reicht nicht — der Klick muss beide Speicher setzen, sonst
+  // antwortet die Groq-Schnellspur unter dem Namen des eigenen Modells.
+  const { chip } = umgebungAufbauen();
+  let neuGezeichnet = 0;
+  await oeffneModellMenue({ chip, beiWahl: () => { neuGezeichnet += 1; } });
+  const menue = document.getElementById("codeModellMenue");
+  const knoepfe = alleKnoten(menue).filter((k) => k.tagName === "BUTTON");
+  const beschriftung = (k) => alleKnoten(k).map((n) => n.textContent).filter(Boolean).join(" ");
+  const eigen = knoepfe.find((k) => /^smejj 1 /.test(beschriftung(k)));
+  assert.ok(eigen, "die Zeile des eigenen Modells fehlt im Menue");
+  eigen.click();
+  assert.equal(localStorage.getItem(MODELL_KEY), "smejj 1");
+  assert.equal(localStorage.getItem("smejj.stufe.v1"), "gruendlich");
   assert.equal(neuGezeichnet, 1);
 });
 
