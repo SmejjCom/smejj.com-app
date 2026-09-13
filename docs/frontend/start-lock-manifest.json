@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-13T18:48:24.610Z",
-  "confirmation": "Betreiber, 2026-09-13: OK – so umsetzen (Design V12: Startseite, Chat, Code nach ChatGPT-Vorbild, Vollbild, Schrift groesser, Start/Code im Menue immer oben; Browser und andere Bereiche unveraendert; Modelle exakt wie live). Auslieferung per Doppelklick.",
+  "frozenAt": "2026-09-13T20:02:48.409Z",
+  "confirmation": "Betreiber, 2026-09-13: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Umgesetzt: 'Neuer Chat' setzte die Modellwahl still auf smejj 1.0 zurueck, weil chat-store.js nur den Altschluessel smejj.model.v1 las, den niemand mehr schreibt (live gesehen: Speicher 'smejj 1', Chip 'smejj 1.0'). Jetzt liest es smejj.model.selected.v2, den Schluessel des Menues. Startseiten-Dateien nur mit neuen Cache-Marken (app.js b167, search.js b57, index.html Marken) und Service-Worker smejj-shell-v865; kein Design, kein Text veraendert.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "49e4baa1a5973e01592cecc7dc7f7c0f95e644020023dbbee42f53a7be327f35",
+    "public/index.html": "2f8b8058d269970866a16144e30b9ab0a66631b2202f3e9d33d8b5f76a8ce5ec",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "1a6b943ff899a8724a4d4a7a3fc2912b1cfae3a8c618d6f34e623ef0133c617f",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,14 +13,14 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "f8d1dd861c8168a7baf59d0dbc7a0210a6f5f0cbbd494d887f2f801c195473ad",
     "public/browser-pane.css": "a2de84280465570316b3062061a6e9359c953d35f4d02a719975b2b28afb9b8c",
-    "public/app.js": "a17ae2c4719297617b180211208318d6e96cfda5483ffddb7ec995249eceb185",
+    "public/app.js": "d770bac099b264ffeac315ebfea36c4ee711bb039cfcfbfb3c055768333d6302",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "23d8ce8c091439eed3ac2436d700edfac9c15cec910d43a8157016ad063ab646",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
     "public/premium-surfaces.js": "124416ab88ee41713f47d17deb25f2e6d7eea78d641459c4c648be0a12dd3cd1",
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
-    "public/search.js": "e8a732bb305a81ceb13265caa0f0190dc39ce09b588bbe66691b5cd917cb2499",
+    "public/search.js": "e99e16bc279d6e0a072e7a1a68b44c3f11498ba881fbdd6986cc7ea915bc10a0",
     "public/composer-tools.js": "157509a6610a8ea6205e94165b0db44e10b4686c3d58464cd377bc714f421753",
     "public/composer-plus-menu.js": "65122a7e9e0b03c84ed9804d12b054c3c4b8b67e6ce55aaff6d53378186d2466",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "e057f323f412c33488cc5c81919ea9c289eac4a65d23f1def6acb7f73ab5d80a",
+    "public/sw.js": "869d8598bb253e6698c7ede2d9525431fe547fd900aff830b72a901efce22ad6",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
