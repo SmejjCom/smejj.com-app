@@ -5957,7 +5957,7 @@ body.spur-start-aktiv .nav-start {
 }
 .spur-reiter button svg { width: 18px; height: 18px; }
 .nav-start .nav-button,
-.nav-vier .nav-button {
+.sidebar .nav-vier .nav-button {
   min-height: 38px;
   padding-top: 5px;
   padding-bottom: 5px;
