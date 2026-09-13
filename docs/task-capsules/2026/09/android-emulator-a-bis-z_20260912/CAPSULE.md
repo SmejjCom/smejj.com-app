@@ -310,3 +310,29 @@ Admin-Sperre: Stand byte-identisch zum am 08.09. freigegebenen Manifest des Bauz
 **Nicht messbar ohne Anmeldung:** eine echte Modell-Antwort. Das Probier-Feld der Landeseite
 fragt bewusst nicht ohne Konto (Kostenschutz); die Safari-Sitzung ließ sich bei gesperrtem
 Bildschirm nicht bedienen.
+
+
+### NACHTRAG: Server-Abgleich ausgeliefert (13.09., 11:56 Ortszeit)
+
+Der Betreiber hat die Doppelklick-Datei gestartet.
+- **Erster Versuch** brach ab, bevor er etwas änderte: Das Terminal kam über SSH-Port 22
+  nicht zu GitHub (`connect to host github.com port 22`). Sichtbar wurde das erst durch das
+  eingebaute Protokoll (`scratchpad/server-abgleich-protokoll.txt`) — das Terminal-Fenster
+  sieht die Sitzung nicht. Die Datei probiert seitdem drei Wege: SSH, SSH über Port 443,
+  HTTPS mit der gh-Anmeldung.
+- **Zweiter Versuch:** `1eeb337b..05e84eeb` auf den Bauzweig, neuer Server nach ~30 s
+  (`gestartetAm` 08:56:53 UTC, `ok: true`).
+
+**Nachgeprüft:** alle sechs Sperren auf dem ausgelieferten Bauzweig grün; Server-Code
+App-Zweig = Bauzweig (`control-server/src`, `src`); Web gegen den neuen Server Selbsttest +
+Rundgang 19/19 ×2, PWA offline mit 235 Dateien; Standardmodell weiter GLM, eigenes Modell
+nicht befördert.
+
+**Kein Befund, obwohl es so aussah:** GLM steht nach dem Neustart auf
+`configured-unverified`. API-Modelle bekommen ihren Gesundheitseintrag erst durch die erste
+echte Anfrage (`modelRuntimeHealth.js`), und ein fehlender Eintrag sperrt die Weiterleitung
+nicht. Vor dem Neustart stand dort `ready`, weil Nutzer gechattet hatten.
+
+**Unterscheiden sich weiter nur im App-Zweig (keine Server-Dateien):** con-Autopilot (ruht
+auf Betreiber-Wunsch), Trainingsschleife (läuft nirgends), Hausmodell-Dienst, Bild-Maler,
+Fern-Browser-Hülle — eigene Dienste mit eigenem Bauweg, nicht Teil des Control-Servers.
