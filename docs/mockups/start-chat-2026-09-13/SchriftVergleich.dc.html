@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+  body { margin: 0; background: #0a0f16; color: #f2f5f4; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #7ee8da; } a:hover { color: #32f6ea; }
+  * { box-sizing: border-box; }
+  .glas { background: rgba(255,255,255,0.045); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); }
+  .hair { border: 1px solid rgba(255,255,255,0.075); }
+  .dim { color: rgba(242,245,244,0.74); }
+  .faint { color: rgba(242,245,244,0.52); }
+  .cy { color: #32f6ea; }
+  .knick { border-radius: 8px; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .col { display: flex; flex-direction: column; }
+  .nav-btn { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 8px; color: rgba(242,245,244,0.86); font-size: 16px; font-weight: 500; background: transparent; }
+  .nav-btn svg { flex: 0 0 auto; color: rgba(242,245,244,0.62); }
+  .nav-btn.an { background: rgba(255,255,255,0.07); color: #f2f5f4; box-shadow: inset 2px 0 0 #32f6ea; }
+  .nav-btn.an svg { color: #32f6ea; }
+  .gruppe { padding: 14px 12px 6px; font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(242,245,244,0.5); }
+  .reiter { display: flex; gap: 4px; padding: 3px; border-radius: 8px; background: rgba(0,0,0,0.28); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
+  .reiter > div { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; border-radius: 6px; font-size: 16px; font-weight: 600; color: rgba(242,245,244,0.7); }
+  .reiter > div.an { background: rgba(255,255,255,0.09); color: #f2f5f4; box-shadow: inset 0 0 0 1px rgba(50,246,234,0.55); }
+  .reiter > div.an svg { color: #32f6ea; }
+  .chip { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px; border-radius: 8px; background: rgba(255,255,255,0.06); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); color: rgba(242,245,244,0.86); font-size: 15px; font-weight: 600; white-space: nowrap; }
+  .chip.cy { color: #32f6ea; background: rgba(50,246,234,0.12); }
+  .ikon-knopf { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 8px; background: rgba(255,255,255,0.06); color: rgba(242,245,244,0.86); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); }
+  .ikon-knopf.senden { background: #32f6ea; color: #04211f; box-shadow: 0 0 22px rgba(50,246,234,0.18); }
+  .werkzeug { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 84px; border-radius: 8px; background: rgba(255,255,255,0.045); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); color: #f2f5f4; font-size: 15px; font-weight: 600; }
+  .werkzeug svg { color: #7ee8da; }
+  .werkzeug span { text-align: center; line-height: 1.2; padding: 0 6px; }
+  .werkzeug.klein { flex-direction: row; min-height: 44px; padding: 0 14px; gap: 9px; font-size: 15px; white-space: nowrap; flex: 0 0 auto; }
+  .frage { align-self: flex-end; max-width: 78%; padding: 12px 16px; border-radius: 8px; background: rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); font-size: 17px; line-height: 1.45; }
+  .antwort { max-width: 100%; font-size: 17px; line-height: 1.55; color: rgba(242,245,244,0.92); }
+  .aktion { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 9px; border-radius: 6px; color: rgba(242,245,244,0.62); font-size: 13.5px; font-weight: 600; }
+  .codeblock { border-radius: 8px; background: rgba(0,0,0,0.34); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; }
+  .codeblock .kopf { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.075); font-family: Inter, system-ui, sans-serif; font-size: 13.5px; color: rgba(242,245,244,0.62); }
+  .schreibfeld { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.045); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 0 0 1px rgba(50,246,234,0.18); }
+  .platzhalter { flex: 1; font-size: 18px; color: rgba(242,245,244,0.5); }
+  .avatar { width: 32px; height: 32px; border-radius: 999px; background: #32f6ea; color: #04211f; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; }
+  .sicher { background: repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0 6px, transparent 6px 12px); }
+  .vorschlag { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 8px; font-size: 16.5px; color: rgba(242,245,244,0.82); background: rgba(255,255,255,0.03); }
+  .vorschlag svg { color: rgba(242,245,234,0.5); }
+</style>
+</helmet>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 1100px; height: 300px; padding: 26px 30px; overflow: hidden;">
+  <div class="col" style="gap: 12px; padding: 18px; border-radius: 8px; background: rgba(255,255,255,0.03); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.075);">
+    <div class="dim" style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em;">HEUTE — Chat 16 px, Menü 14,5 px</div>
+    <div style="font-size: 16px; line-height: 1.5; color: rgba(242,245,244,0.92);">Morgen wird es in Los Angeles sonnig, etwa 26 Grad. Abends kommt leichter Wind vom Meer, nimm eine Jacke mit. Der Sonnenuntergang ist um 19:02 Uhr.</div>
+    <div class="row" style="gap: 12px; font-size: 14.5px; color: rgba(242,245,244,0.8);"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Python-Funktion, die zwei Zahlen addiert</div>
+    <div class="row" style="gap: 2px;"><div class="aktion" style="font-size: 13px; min-height: 26px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V4h11"/></svg>Kopieren</div><div class="aktion" style="font-size: 13px; min-height: 26px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Vorlesen</div></div>
+  </div>
+  <div class="col" style="gap: 12px; padding: 18px; border-radius: 8px; background: rgba(50,246,234,0.05); box-shadow: inset 0 0 0 1px rgba(50,246,234,0.3);">
+    <div class="cy" style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em;">NEU — Chat 19 px, Menü 17 px</div>
+    <div style="font-size: 19px; line-height: 1.55; color: rgba(242,245,244,0.92);">Morgen wird es in Los Angeles sonnig, etwa 26 Grad. Abends kommt leichter Wind vom Meer, nimm eine Jacke mit. Der Sonnenuntergang ist um 19:02 Uhr.</div>
+    <div class="row" style="gap: 12px; font-size: 17px; color: rgba(242,245,244,0.8);"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Python-Funktion, die zwei Zahlen addiert</div>
+    <div class="row" style="gap: 2px;"><div class="aktion" style="font-size: 14.5px; min-height: 30px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V4h11"/></svg>Kopieren</div><div class="aktion" style="font-size: 14.5px; min-height: 30px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Vorlesen</div></div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

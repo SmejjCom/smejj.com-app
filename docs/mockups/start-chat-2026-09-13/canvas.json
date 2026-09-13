@@ -1,0 +1,111 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "1 · Startseite (Rechner) — Feld leer, Sprachwelle",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "SchriftVergleich.dc.html",
+      "title": "2 · Schrift: heute gegen neu",
+      "x": 1560,
+      "y": 0,
+      "w": 1100,
+      "h": 300
+    },
+    {
+      "file": "Sendeknopf.dc.html",
+      "title": "3 · Ein Knopf, zwei Zustände: Welle ↔ Senden",
+      "x": 1560,
+      "y": 420,
+      "w": 960,
+      "h": 300
+    },
+    {
+      "file": "ChatDesktop.dc.html",
+      "title": "3 · Chat mit Plus-Menü (Rechner)",
+      "x": 0,
+      "y": 1020,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "ChatMenues.dc.html",
+      "title": "4 · Chat: Aktionen-, Modell- und Profil-Menü",
+      "x": 1560,
+      "y": 1020,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "Sprachmodus.dc.html",
+      "title": "5 · Sprachmodus (Rechner)",
+      "x": 0,
+      "y": 2040,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "KameraModus.dc.html",
+      "title": "6 · Kamera-Modus — smejj sieht mit",
+      "x": 1560,
+      "y": 2040,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "CodeDesktop.dc.html",
+      "title": "7 · Code: Plus-Menü, Vorlagen, Browser-Fenster",
+      "x": 0,
+      "y": 3060,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "StartHandy.dc.html",
+      "title": "9 · Startseite (iPhone)",
+      "x": 0,
+      "y": 4080,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "ChatHandy.dc.html",
+      "title": "10 · Chat (iPhone) — Text getippt, Senden",
+      "x": 520,
+      "y": 4080,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "SprachmodusHandy.dc.html",
+      "title": "11 · Sprachmodus (iPhone)",
+      "x": 1040,
+      "y": 4080,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "MenueHandy.dc.html",
+      "title": "12 · Menü (iPhone) — Kopf/Fuß fest",
+      "x": 1560,
+      "y": 4080,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "ChatQuer.dc.html",
+      "title": "13 · Chat im Querformat (iPhone)",
+      "x": 2080,
+      "y": 4080,
+      "w": 844,
+      "h": 390
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

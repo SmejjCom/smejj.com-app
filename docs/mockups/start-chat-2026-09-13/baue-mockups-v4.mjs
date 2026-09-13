@@ -1,0 +1,678 @@
+// smejj.com — Mockups "Startseite + Chat neu", VORSCHLAG 4 (Start/Chat/Code nach ChatGPT-Vorbild, groessere Schrift, Browser unangetastet) (2026-09-13): alle heutigen Icon-Plaetze bleiben.
+// Erzeugt sieben Artboards (.dc.html) + canvas.json aus EINER Stilquelle,
+// damit alle Bildschirme dieselben Werte tragen (Cyan, Glas, Inter, 8-px-Knick
+// an Bedienelementen, sonst eckig — wie public/design-v11.css + eckig.css).
+// Aufruf: node baue-mockups.mjs   (schreibt in denselben Ordner)
+import { writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const HIER = dirname(fileURLToPath(import.meta.url));
+
+// ---------------------------------------------------------------- Symbole
+const I = {
+  home: '<path d="m4 11 8-7 8 7"/><path d="M6 10v9h12v-9"/>',
+  code: '<path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  image: '<rect x="3" y="5" width="18" height="14"/><circle cx="9" cy="10" r="1.6"/><path d="m5 17 4.5-4.5 3 3L16 12l3 3"/>',
+  video: '<rect x="3" y="6" width="13" height="12"/><path d="m16 10 5-3v10l-5-3"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/>',
+  wave: '<path d="M4 12h2M8 8v8M12 5v14M16 8v8M20 12h-2"/>',
+  file: '<path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v5h5"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  browser: '<rect x="3" y="4" width="18" height="16"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/>',
+  bot: '<rect x="4" y="7" width="16" height="12"/><path d="M12 3v4M9 12h.01M15 12h.01M9 16h6"/>',
+  cloud: '<path d="M7 18h10a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 1.5A3.3 3.3 0 0 0 7 18z"/>',
+  history: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  folder: '<path d="M3 6h6l2 2h10v11H3z"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13"/>',
+  system: '<rect x="3" y="4" width="18" height="12"/><path d="M8 20h8M12 16v4"/>',
+  model: '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M5 19l3-3M16 8l3-3"/>',
+  storage: '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+  shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  chevron: '<path d="m9 6 6 6-6 6"/>',
+  down: '<path d="m6 9 6 6 6-6"/>',
+  send: '<path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>',
+  think: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.6 1 1.3 1 2.5h6c0-1.2.3-1.9 1-2.5A6 6 0 0 0 12 3z"/>',
+  copy: '<rect x="9" y="9" width="11" height="11"/><path d="M5 15V4h11"/>',
+  speaker: '<path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16 9a4 4 0 0 1 0 6"/>',
+  up: '<path d="M7 11l5-5 5 5M12 6v13"/>',
+  thumbup: '<path d="M7 11v9H4v-9zM7 11l4-8c1.5 0 2.5 1 2.5 2.5V9H19a2 2 0 0 1 2 2.2l-1 7A2 2 0 0 1 18 20H7"/>',
+  thumbdown: '<path d="M17 13V4h3v9zM17 13l-4 8c-1.5 0-2.5-1-2.5-2.5V15H5a2 2 0 0 1-2-2.2l1-7A2 2 0 0 1 6 4h11"/>',
+  camera: '<path d="M5 7h2l2-2h6l2 2h2v11H5z"/><circle cx="12" cy="12.5" r="3.2"/>',
+  screen: '<rect x="3" y="4" width="18" height="12"/><path d="m9 20 3-3 3 3"/>',
+  pen: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  panel: '<rect x="3" y="4" width="18" height="16"/><path d="M15 4v16"/>',
+  check: '<path d="m5 12 4 4L19 6"/>'
+};
+const ic = (n, s = 22) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+
+// ------------------------------------------------------------------ Stil
+const STIL = `
+  body { margin: 0; background: #0a0f16; color: #f2f5f4; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #7ee8da; } a:hover { color: #32f6ea; }
+  * { box-sizing: border-box; }
+  .glas { background: rgba(255,255,255,0.045); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); }
+  .hair { border: 1px solid rgba(255,255,255,0.075); }
+  .dim { color: rgba(242,245,244,0.74); }
+  .faint { color: rgba(242,245,244,0.52); }
+  .cy { color: #32f6ea; }
+  .knick { border-radius: 8px; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .col { display: flex; flex-direction: column; }
+  .nav-btn { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 8px; color: rgba(242,245,244,0.86); font-size: 16px; font-weight: 500; background: transparent; }
+  .nav-btn svg { flex: 0 0 auto; color: rgba(242,245,244,0.62); }
+  .nav-btn.an { background: rgba(255,255,255,0.07); color: #f2f5f4; box-shadow: inset 2px 0 0 #32f6ea; }
+  .nav-btn.an svg { color: #32f6ea; }
+  .gruppe { padding: 14px 12px 6px; font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(242,245,244,0.5); }
+  .reiter { display: flex; gap: 4px; padding: 3px; border-radius: 8px; background: rgba(0,0,0,0.28); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
+  .reiter > div { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; border-radius: 6px; font-size: 16px; font-weight: 600; color: rgba(242,245,244,0.7); }
+  .reiter > div.an { background: rgba(255,255,255,0.09); color: #f2f5f4; box-shadow: inset 0 0 0 1px rgba(50,246,234,0.55); }
+  .reiter > div.an svg { color: #32f6ea; }
+  .chip { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px; border-radius: 8px; background: rgba(255,255,255,0.06); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); color: rgba(242,245,244,0.86); font-size: 15px; font-weight: 600; white-space: nowrap; }
+  .chip.cy { color: #32f6ea; background: rgba(50,246,234,0.12); }
+  .ikon-knopf { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 8px; background: rgba(255,255,255,0.06); color: rgba(242,245,244,0.86); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); }
+  .ikon-knopf.senden { background: #32f6ea; color: #04211f; box-shadow: 0 0 22px rgba(50,246,234,0.18); }
+  .werkzeug { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 84px; border-radius: 8px; background: rgba(255,255,255,0.045); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); color: #f2f5f4; font-size: 15px; font-weight: 600; }
+  .werkzeug svg { color: #7ee8da; }
+  .werkzeug span { text-align: center; line-height: 1.2; padding: 0 6px; }
+  .werkzeug.klein { flex-direction: row; min-height: 44px; padding: 0 14px; gap: 9px; font-size: 15px; white-space: nowrap; flex: 0 0 auto; }
+  .frage { align-self: flex-end; max-width: 78%; padding: 12px 16px; border-radius: 8px; background: rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); font-size: 17px; line-height: 1.45; }
+  .antwort { max-width: 100%; font-size: 17px; line-height: 1.55; color: rgba(242,245,244,0.92); }
+  .aktion { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 9px; border-radius: 6px; color: rgba(242,245,244,0.62); font-size: 13.5px; font-weight: 600; }
+  .codeblock { border-radius: 8px; background: rgba(0,0,0,0.34); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; }
+  .codeblock .kopf { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.075); font-family: Inter, system-ui, sans-serif; font-size: 13.5px; color: rgba(242,245,244,0.62); }
+  .schreibfeld { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.045); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 0 0 1px rgba(50,246,234,0.18); }
+  .platzhalter { flex: 1; font-size: 18px; color: rgba(242,245,244,0.5); }
+  .avatar { width: 32px; height: 32px; border-radius: 999px; background: #32f6ea; color: #04211f; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; }
+  .sicher { background: repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0 6px, transparent 6px 12px); }
+  .vorschlag { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 8px; font-size: 16.5px; color: rgba(242,245,244,0.82); background: rgba(255,255,255,0.03); }
+  .vorschlag svg { color: rgba(242,245,234,0.5); }
+`;
+
+const doc = (body, extra = "") => `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>${STIL}${extra}</style>
+</helmet>
+${body}
+</x-dc>
+</body>
+</html>
+`;
+
+// ---------------------------------------------------------- Zusatz-Symbole (V3)
+Object.assign(I, {
+  eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  refresh: '<path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/>',
+  left: '<path d="m14 6-6 6 6 6"/>',
+  right: '<path d="m10 6 6 6-6 6"/>',
+  tabs: '<rect x="3" y="7" width="18" height="13"/><path d="M7 7V4h10v3"/>',
+  sliders: '<path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h10M18 18h2"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="18" r="2"/>',
+  text: '<path d="M5 6h14M5 12h14M5 18h9"/>',
+  fork: '<circle cx="6" cy="5" r="2"/><circle cx="18" cy="5" r="2"/><circle cx="12" cy="19" r="2"/><path d="M6 7v3a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V7M12 13v4"/>',
+  book: '<path d="M4 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  lang: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  card: '<rect x="3" y="6" width="18" height="12"/><path d="M3 10h18M7 15h4"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/>',
+  logout: '<path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/>',
+  micoff: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M4 4l16 16"/>',
+  speakeroff: '<path d="M4 10v4h4l5 4V6L8 10z"/><path d="M17 9l4 6M21 9l-4 6"/>',
+  switchcam: '<path d="M5 7h2l2-2h6l2 2h2v11H5z"/><path d="M9.5 12.5a2.5 2.5 0 0 1 4.3-1.8M14.5 12.5a2.5 2.5 0 0 1-4.3 1.8"/>',
+  bolt: '<path d="M13 3 4 14h7l-1 7 9-11h-7z"/>',
+  slash: '<path d="m7 20 10-16"/>',
+  plug: '<path d="M9 3v5M15 3v5M6 8h12v4a6 6 0 0 1-12 0zM12 18v3"/>',
+  chevdown: '<path d="m6 9 6 6 6-6"/>'
+});
+
+// Das echte Zeichen aus public/icons/smejj_favicon.svg (Marke #02fdfd).
+const LOGO = (s = 24) => `<svg viewBox="0 0 2000 2000" width="${s}" height="${s}" aria-hidden="true"><g transform="translate(233.8325 233.8325) scale(0.7661675 1)"><path d="M691.785,1526.022c-27.687,0-55.336-10.754-76.161-32.17L74.655,937.544c-44.875-46.145-69.587-107.01-69.587-171.376s24.712-125.23,69.587-171.376L615.623,38.486c40.899-42.061,108.149-43.004,150.205-2.1,42.059,40.899,42.997,108.149,2.1,150.205L226.96,742.898c-12.69,13.05-12.69,33.491,0,46.541l540.968,556.308c40.897,42.056,39.958,109.306-2.1,150.205-20.641,20.072-47.36,30.069-74.044,30.069Z" fill="#02fdfd"/><path d="M1308.215,1526.022c-26.688,0-53.4-9.993-74.044-30.069-42.059-40.899-42.997-108.149-2.1-150.205l540.968-556.308c12.688-13.05,12.688-33.491,0-46.541L1232.072,186.591c-40.897-42.056-39.958-109.306,2.1-150.205,42.061-40.895,109.31-39.952,150.205,2.1l540.968,556.308c44.873,46.145,69.587,107.01,69.587,171.376s-24.715,125.23-69.587,171.376l-540.968,556.308c-20.823,21.415-48.479,32.17-76.161,32.17Z" fill="#02fdfd"/><circle cx="1000" cy="555.122" r="118.015" fill="#02fdfd"/><circle cx="1000" cy="977.214" r="118.015" fill="#02fdfd"/></g></svg>`;
+// Die Sprachwelle: gefuellte Rechtecke (wie composer-sendetaste.js).
+const WELLE = (s = 22) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="currentColor" aria-hidden="true"><rect x="3" y="10" width="3" height="4"/><rect x="8" y="6" width="3" height="12"/><rect x="13" y="3" width="3" height="18"/><rect x="18" y="8" width="3" height="8"/></svg>`;
+const NEU = '<span style="margin-left: 6px; padding: 1px 6px; border-radius: 4px; background: rgba(50,246,234,0.16); color: #32f6ea; font-size: 11px; font-weight: 800; letter-spacing: 0.06em;">NEU</span>';
+
+
+// V4: groessere Schrift (Betreiber: "Schrift ist klein, nicht gut zu lesen"),
+// kompaktere Abstaende (mehr vom Gespraech sichtbar), Schreibfeld ganz unten.
+const GROSS = `<style>
+  body { font-size: 18px; }
+  .nav-btn { font-size: 17px; min-height: 38px; }
+  .gruppe { font-size: 13px; padding: 10px 12px 4px; }
+  .reiter > div { font-size: 17px; }
+  .chip { font-size: 16px; min-height: 38px; }
+  .werkzeug { font-size: 16px; }
+  .werkzeug.klein { font-size: 15.5px; min-height: 36px; }
+  .frage { font-size: 19px; line-height: 1.5; padding: 10px 14px; max-width: 76%; }
+  .antwort { font-size: 19px; line-height: 1.55; }
+  .aktion { font-size: 14.5px; min-height: 30px; }
+  .codeblock { font-size: 16px; }
+  .codeblock .kopf { font-size: 14px; padding: 6px 12px; }
+  .platzhalter { font-size: 19px; }
+  .vorschlag { font-size: 17.5px; min-height: 46px; }
+</style>`;
+const doc4 = (b) => doc(GROSS + b);
+
+// Die Eckknoepfe an den HEUTIGEN Plaetzen: Logo-Knopf oben links (Spur auf/zu),
+// Globus oben rechts (Browser-Fenster auf/zu), Maus-Wiedergabe links daneben.
+function eckKnoepfe({ oben = 10, links = 0, rechts = 0, marke = false } = {}) {
+  return `<div style="position: absolute; left: ${links}px; top: ${oben}px; display: flex; align-items: center; gap: 10px;">
+    <div style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 8px; background: rgba(255,255,255,0.06); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">${LOGO(24)}</div>
+    ${marke ? `<div class="row" style="gap: 8px;">${LOGO(30)}<span style="font-size: 26px; font-weight: 800; letter-spacing: -0.03em;">smejj</span></div>` : ""}
+  </div>
+  <div style="position: absolute; right: ${rechts}px; top: ${oben}px; display: flex; gap: 6px;">
+    <div class="ikon-knopf" style="background: rgba(255,255,255,0.06);"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 8-6 1.5L9 19z"/></svg></div>
+    <div class="ikon-knopf" style="background: rgba(255,255,255,0.06);">${ic("globe", 20)}</div>
+  </div>`;
+}
+
+function navZeile(icon, text, { an = false, kuerzel = "", zaehler = "", rot = false } = {}) {
+  return `<div class="nav-btn${an ? " an" : ""}" style="min-height: 40px;${rot ? " color: #ff9a9c;" : ""}">${ic(icon, 19)}<span style="flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${text}</span>${kuerzel ? `<span class="faint" style="font-size: 12.5px; font-weight: 600;">${kuerzel}</span>` : ""}${zaehler ? `<span class="faint" style="font-size: 13px;">${zaehler}</span>` : ""}</div>`;
+}
+function reiter(aktiv) {
+  return `<div class="reiter">
+    <div class="${aktiv === "start" ? "an" : ""}">${ic("home", 19)}<span>Start</span></div>
+    <div class="${aktiv === "code" ? "an" : ""}">${ic("code", 19)}<span>Code</span></div>
+  </div>`;
+}
+
+// Spur wie heute, NEU nur die drei Zonen: Kopf fest, Mitte scrollt, Fuss fest.
+function spur({ modus = "start", breite = 220, chatAktiv = -1, kopfPolster = 58 } = {}) {
+  const startMitte = `
+      ${navZeile("plus", "Neuer Chat", { an: chatAktiv < 0, kuerzel: "⌘K" })}
+      ${navZeile("search", "Suchen")}
+      ${navZeile("cloud", "smejjCloud")}
+      ${navZeile("bot", "smejjBot")}
+      <div class="gruppe">Heute</div>
+      ${navZeile("history", "Python-Funktion, die zwei Zahlen addiert", { an: chatAktiv === 0 })}
+      ${navZeile("history", "Drei Farben nennen", { an: chatAktiv === 1 })}
+      <div class="gruppe">Früher</div>
+      ${navZeile("history", "Ada Lovelace auf Wikipedia nachschlagen")}
+      ${navZeile("history", "Mit der Maus im Browser: wikipedia.org")}
+      ${navZeile("history", "Chrome-Browser registrieren")}
+      ${navZeile("history", "Alle 224 Gespräche", { zaehler: "›" })}
+      <div class="gruppe">Mehr</div>
+      ${navZeile("folder", "Projekte")}
+      ${navZeile("file", "Dateien")}
+      ${navZeile("trash", "Papierkorb")}
+      ${navZeile("system", "Systemzustand")}
+      ${navZeile("model", "KI-Modelle")}
+      ${navZeile("storage", "Speicher")}`;
+  const codeMitte = `
+      ${navZeile("plus", "Neu", { an: true, kuerzel: "⌘K" })}
+      ${navZeile("folder", "Meine Projekte")}
+      ${navZeile("bot", "Nach Zeitplan")}
+      ${navZeile("gear", "Regeln")}
+      ${navZeile("chevron", "Mehr")}
+      <div class="gruppe">Heute</div>
+      ${navZeile("code", "Python-Funktion addieren", { an: true })}
+      ${navZeile("code", "Login-Seite responsiv machen")}
+      <div class="gruppe">Früher</div>
+      ${navZeile("code", "Tests für chat-store.js")}
+      ${navZeile("code", "Startgewicht unter 300 KB")}
+      ${navZeile("code", "Service Worker v863")}
+      ${navZeile("history", "Alle 224 Gespräche", { zaehler: "›" })}`;
+  return `<aside style="display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); width: ${breite}px; min-width: 0; min-height: 0; height: 100%; overflow: hidden; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.075);">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: ${kopfPolster}px 10px 10px; border-bottom: 1px solid rgba(255,255,255,0.075);">${reiter(modus)}</div>
+    <div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 8px 12px; overflow-y: auto;">${modus === "code" ? codeMitte : startMitte}</div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 8px 10px; border-top: 1px solid rgba(255,255,255,0.075);">
+      ${navZeile("shield", "Kostenschutz an")}
+      <div class="row" style="min-height: 46px; padding: 0 6px; gap: 8px;">
+        <div class="avatar">s</div>
+        <div class="col" style="flex: 1; min-width: 0;">
+          <div style="font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">smejjcom@gmail.com</div>
+          <div class="faint" style="font-size: 12px;">smejj Plus</div>
+        </div>
+        <div class="ikon-knopf" style="width: 36px; height: 36px; background: transparent;">${ic("gear", 19)}</div>
+      </div>
+    </div>
+  </aside>`;
+}
+
+// Die acht Werkzeug-Chips wie heute (Reihenfolge und Platz), NEU: Symbol UND Wort.
+const WERKZEUGE = [["globe", "Im Netz"], ["image", "Bild"], ["video", "Video"], ["eye", "Bild verstehen"], ["pen", "Schreiben"], ["code", "Programmieren"], ["browser", "Maus im Browser"], ["file", "Datei"]];
+function werkzeuge({ klein = false } = {}) {
+  if (klein) return `<div style="display: flex; gap: 8px; overflow-x: auto;">${WERKZEUGE.map(([i, t]) => `<div class="werkzeug klein" style="min-height: 40px; padding: 0 12px; font-size: 14.5px;">${ic(i, 18)}<span>${t}</span></div>`).join("")}</div>`;
+  return `<div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px;">${WERKZEUGE.map(([i, t]) => `<div class="werkzeug" style="min-height: 76px;">${ic(i, 24)}<span>${t}</span></div>`).join("")}</div>`;
+}
+const werkzeugeHandy = () => `<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;">${WERKZEUGE.map(([i, t]) => `<div class="werkzeug" style="min-height: 72px; font-size: 13.5px;">${ic(i, 24)}<span>${t}</span></div>`).join("")}</div>`;
+const CODE_VORLAGEN = [["bolt", "Fehler suchen"], ["plus", "Funktion einbauen"], ["check", "Tests schreiben"], ["book", "Code erklären"]];
+
+// Der Sendeknopf wie heute: EIN Knopf, zwei Zustaende.
+// Feld leer  -> Sprachwelle (weiss), oeffnet den Sprachmodus.
+// Feld mit Text -> Senden-Pfeil (cyan).
+const sendeKnopf = (text, s = 40) => text
+  ? `<div class="ikon-knopf senden" style="width: ${s}px; height: ${s}px;">${ic("send", 22)}</div>`
+  : `<div class="ikon-knopf" style="width: ${s}px; height: ${s}px; background: #ffffff; color: #0a0f16;">${WELLE(22)}</div>`;
+
+// Schreibfeld am Rechner — heutige Reihenfolge in EINER Zeile:
+// [+] [Feld] [Nachdenken] [Modell] [Mikrofon] [Welle/Senden].
+function schreibfeldRechner({ text = "", modell = "smejj 1" } = {}) {
+  return `<div class="schreibfeld" style="gap: 6px; padding: 10px 12px 8px;">
+    <div class="row" style="min-height: 40px; padding: 0 4px;">${text ? `<div style="flex: 1; font-size: 19px;">${text}<span style="display: inline-block; width: 2px; height: 20px; background: #32f6ea; vertical-align: -4px; margin-left: 1px;"></span></div>` : `<div class="platzhalter">Frag mich alles</div>`}</div>
+    <div class="row" style="gap: 8px;">
+      <div class="ikon-knopf" style="width: 40px; height: 40px;">${ic("plus", 22)}</div>
+      <div class="chip">${ic("think", 17)}<span>Nachdenken</span></div>
+      <div class="chip">${ic("model", 17)}<span>${modell}</span>${ic("down", 14)}</div>
+      <div style="flex: 1;"></div>
+      <div class="ikon-knopf" style="width: 40px; height: 40px;">${ic("mic", 22)}</div>
+      ${sendeKnopf(text)}
+    </div>
+  </div>`;
+}
+function schreibfeldHandy({ text = "" } = {}) {
+  return `<div class="schreibfeld" style="gap: 8px; padding: 10px;">
+    <div class="row" style="min-height: 44px; padding: 0 4px;">${text ? `<div style="flex: 1; font-size: 18px;">${text}</div>` : `<div class="platzhalter">Frag mich alles</div>`}</div>
+    <div class="row" style="gap: 6px;">
+      <div class="ikon-knopf">${ic("plus", 22)}</div>
+      <div class="chip" style="padding: 0 10px;">${ic("think", 16)}<span>Nachdenken</span></div>
+      <div class="chip" style="padding: 0 10px;">${ic("model", 16)}<span>smejj 1</span></div>
+      <div style="flex: 1;"></div>
+      <div class="ikon-knopf">${ic("mic", 22)}</div>
+      ${sendeKnopf(text, 44)}
+    </div>
+  </div>`;
+}
+
+// Menues --------------------------------------------------------------
+const menueKasten = (inhalt, breite = 320) => `<div style="display: flex; flex-direction: column; width: ${breite}px; padding: 6px; border-radius: 8px; background: #141b24; box-shadow: 0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08);">${inhalt}</div>`;
+const mz = (i, t, u, extra = "") => `<div class="row" style="min-height: 44px; padding: 0 12px; gap: 12px;${extra}">${ic(i, 20)}<div class="col" style="min-width: 0;"><div style="font-size: 15.5px; font-weight: 600; white-space: nowrap;">${t}</div>${u ? `<div class="faint" style="font-size: 12.5px; white-space: nowrap;">${u}</div>` : ""}</div></div>`;
+
+function plusMenue() {
+  return menueKasten(`
+    <div class="gruppe" style="padding-top: 8px;">Hinzufügen</div>
+    ${mz("file", "Datei hinzufügen", "PDF, Word, Tabelle oder Text")}
+    ${mz("image", "Bild hinzufügen", "Foto oder Bildschirmfoto")}
+    ${mz("camera", "Foto oder Video aufnehmen", "öffnet direkt die Kamera")}
+    ${mz("eye", "Kamera", "smejj sieht, was deine Kamera sieht")}
+    ${mz("screen", "Bildschirm teilen", "smejj sieht die Fehlermeldung")}
+    <div class="gruppe">Tun</div>
+    ${mz("mic", "Sprechen statt tippen", "du diktierst, smejj schreibt")}
+    ${mz("globe", "Im Netz nachsehen", "für alles, was aktuell ist")}
+    ${mz("image", "Bild erstellen", "beschreib, was du sehen willst")}
+    ${mz("video", `Video erstellen${NEU}`, "beschreib die Szene")}
+    ${mz("code", "Programmieren", "Code schreiben, erklären, Fehler finden")}
+    ${mz("browser", "Im Browser für mich klicken", "smejj bedient eine Webseite")}
+    ${mz("bot", "Auftrag laufen lassen", "smejjBot — für größere Arbeiten")}`);
+}
+function modellMenue() {
+  const z = (t, u, an = false) => `<div class="row" style="min-height: 44px; padding: 0 12px; gap: 12px;${an ? " background: rgba(255,255,255,0.07); box-shadow: inset 2px 0 0 #32f6ea; border-radius: 8px;" : ""}"><div class="col" style="flex: 1;"><div style="font-size: 15.5px; font-weight: 600;">${t}</div>${u ? `<div class="faint" style="font-size: 12.5px;">${u}</div>` : ""}</div>${an ? `<span class="cy">${ic("check", 18)}</span>` : ""}</div>`;
+  return menueKasten(`
+    ${z("smejj 1", "unser eigenes Modell", true)}
+    ${z("Auto", "wählt selbst zwischen schnell und gründlich")}
+    ${z("Schnell", "kurze Antwort in Sekunden")}
+    ${z("Gründlich", "nimmt sich Zeit, antwortet ausführlich")}
+    <div class="gruppe">Erweiterte Modelle (BYOK)</div>
+    ${z("Kraftvoll", "GLM-5.2")}
+    ${z("Neuestes", "Kimi K3")}
+    ${z("Coding-Profi", "Kimi K2.7")}`, 300);
+}
+function aktionenMenue() {
+  return menueKasten(`
+    ${mz("book", "Quellen anzeigen")}
+    ${mz("text", "Ohne Formatierung kopieren")}
+    ${mz("speaker", "Vorlesen")}
+    ${mz("refresh", "Neu generieren")}
+    ${mz("fork", "Ab hier neuen Chat starten")}
+    ${mz("trash", "Ab hier löschen", "", " color: #ff9a9c;")}`, 290);
+}
+function profilMenue() {
+  return menueKasten(`
+    <div class="row" style="padding: 8px 12px 10px; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 4px;"><div class="avatar" style="width: 36px; height: 36px;">s</div><div class="col"><div style="font-size: 15px; font-weight: 700;">smejjcom@gmail.com</div><div class="faint" style="font-size: 12.5px;">smejj Plus</div></div></div>
+    ${mz("user", "Mein Konto")}
+    ${mz("gear", "Einstellungen")}
+    ${mz("lang", "Sprache", "Deutsch")}
+    ${mz("card", "Mein Plan")}
+    ${mz("storage", "Verbrauch")}
+    ${mz("trash", "Papierkorb")}
+    ${mz("system", "Systemzustand")}
+    ${mz("help", "Hilfe & Rückmeldung")}
+    ${mz("logout", "Abmelden", "", " color: #ff9a9c;")}`, 280);
+}
+function codePlusMenue() {
+  return menueKasten(`
+    ${mz("file", "Dateien oder Fotos hinzufügen", "⌘U")}
+    ${mz("folder", "Ordner hinzufügen")}
+    ${mz("slash", "Slash-Befehle")}
+    ${mz("plug", "Konnektoren", "verwalten · durchsuchen")}
+    ${mz("sliders", "Plugins hinzufügen …")}`, 300);
+}
+
+// Chat-Inhalt ------------------------------------------------------------
+function antwortAktionen(kompakt = false) {
+  const a = (i, t) => `<div class="aktion">${ic(i, 16)}${kompakt ? "" : t}</div>`;
+  return `<div class="row" style="gap: 2px;">${a("copy", "Kopieren")}${a("speaker", "Vorlesen")}${a("thumbup", "Hilfreich")}${a("thumbdown", "Nicht hilfreich")}<div class="aktion" style="letter-spacing: 1px;">···</div></div>`;
+}
+const frage = (t) => `<div class="row" style="align-self: flex-end; max-width: 82%; gap: 6px; align-items: flex-start;"><div class="aktion" style="min-height: 26px; padding: 0 4px; letter-spacing: 1px;">···</div><div class="frage" style="align-self: auto; max-width: 100%;">${t}</div></div>`;
+function codeblock(breit = true) {
+  return `<div class="codeblock">
+    <div class="kopf" style="${breit ? "" : "font-size: 12.5px; padding: 8px 10px;"}"><span style="white-space: nowrap;">${breit ? "Python · 2 Zeilen" : "Python"}</span><div class="row" style="gap: ${breit ? 10 : 8}px; white-space: nowrap;"><span>Kopieren</span><span>Einklappen</span><span>Rechts öffnen</span><span>${breit ? "Als Datei" : "Datei"}</span></div></div>
+    <div style="padding: 10px 14px; line-height: 1.5;"><span style="color: #7ee8da;">def</span> addiere(a, b):<br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #7ee8da;">return</span> a + b</div>
+  </div>`;
+}
+function verlauf({ breit = true, bild = true } = {}) {
+  const ak = antwortAktionen(!breit);
+  return `<div class="col" style="gap: 12px;">
+    ${frage("Schreibe eine kurze Python-Funktion, die zwei Zahlen addiert. Nur der Code.")}
+    <div class="col" style="gap: 4px;">${codeblock(breit)}${ak}</div>
+    ${frage("Nenne drei Farben.")}
+    <div class="col" style="gap: 4px;"><div class="antwort">Blau, Rot, Grün.</div>${ak}</div>
+    ${bild ? `${frage("Erstelle ein Bild von einem roten Apfel auf einem Holztisch.")}
+    <div class="col" style="gap: 8px;">
+      <div class="row" style="gap: 10px; flex-wrap: wrap;"><div class="chip cy">${ic("image", 16)}Bild wird gemalt · 2:10 min</div><div class="faint" style="font-size: 14px;">Das Bild erscheint hier, sobald es fertig ist.</div></div>
+      <div class="sicher hair" style="width: ${breit ? 320 : 220}px; height: ${breit ? 200 : 140}px;"></div>
+    </div>` : ""}
+  </div>`;
+}
+const zumEnde = (rechts, unten) => `<div class="ikon-knopf" style="position: absolute; right: ${rechts}px; bottom: ${unten}px; width: 40px; height: 40px; background: #141b24; box-shadow: 0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08);">${ic("chevdown", 22)}</div>`;
+const krume = (t) => `<div class="dim" style="position: absolute; left: 246px; top: 22px; font-size: 14.5px;">${t}</div>`;
+
+// Rechtes Browser-Fenster mit seiner Leiste (wie heute im Reiter "Browser").
+function browserFenster({ reiterAktiv = 0 } = {}) {
+  const k = (i) => `<div class="ikon-knopf" style="width: 34px; height: 34px; background: transparent;">${ic(i, 18)}</div>`;
+  return `<div class="col" style="min-height: 0;">
+    <div class="row" style="gap: 4px; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.075);">
+      ${["Browser", "Quellen", "GitHub", "Vorschau", "Status"].map((t, i) => `<div class="chip${i === reiterAktiv ? " cy" : ""}" style="min-height: 32px; padding: 0 9px; font-size: 14px;">${t}</div>`).join("")}
+      <div style="flex: 1;"></div>${k("x")}
+    </div>
+    <div class="row" style="gap: 2px; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.075);">
+      ${k("left")}${k("right")}${k("refresh")}
+      <div class="glas" style="flex: 1; display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 10px; border-radius: 8px; font-size: 14px; color: rgba(242,245,244,0.7);">${ic("globe", 15)}de.wikipedia.org</div>
+      ${k("plus")}${k("tabs")}
+      <div class="chip cy" style="min-height: 32px; padding: 0 9px; font-size: 13.5px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 3l14 8-6 1.5L9 19z"/></svg>Maus beauftragen</div>
+      ${k("sliders")}
+    </div>
+    <div class="sicher" style="flex: 1; margin: 12px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.075);"></div>
+  </div>`;
+}
+
+// Sprachmodus — heute ein Vollbild-Overlay; Leiste unten: [+ Datei] [Auge Kamera]
+// [Frage schreiben …] [Senden], darunter der grosse Mikrofon-Knopf (Stumm), X oben rechts.
+// NEU: Lautsprecher (Stimme an/aus) und Bildschirm teilen in derselben Leiste.
+function sprachmodus({ breite = 1440, hoehe = 900, handy = false } = {}) {
+  const logo = `<svg viewBox="0 0 220 160" width="${handy ? 200 : 260}" height="${handy ? 146 : 190}" fill="none" stroke="#32f6ea" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M82 30 L38 80 L82 130"/><circle cx="106" cy="63" r="11" fill="#32f6ea" stroke="none"/><path d="M138 30 L182 80 L138 130"/><circle cx="114" cy="97" r="11" fill="#32f6ea" stroke="none"/></svg>`;
+  const k = (i, neu = false) => `<div class="ikon-knopf" style="width: 44px; height: 44px; position: relative;">${ic(i, 22)}${neu ? `<span style="position: absolute; top: -8px; right: -8px; padding: 1px 5px; border-radius: 4px; background: #32f6ea; color: #04211f; font-size: 10px; font-weight: 800;">NEU</span>` : ""}</div>`;
+  return `<div style="position: relative; width: ${breite}px; height: ${hoehe}px; overflow: hidden; background: #0a0f16; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: ${handy ? 18 : 26}px; padding: ${handy ? "70px 16px 60px" : "40px"};">
+    <div class="ikon-knopf" style="position: absolute; top: ${handy ? 65 : 14}px; right: ${handy ? 10 : 14}px; width: 44px; height: 44px;">${ic("x", 22)}</div>
+    <div style="margin-top: auto;"></div>
+    ${logo}
+    <div style="font-size: ${handy ? 20 : 24}px; font-weight: 700;">Ich höre zu …</div>
+    <div class="dim" style="max-width: 640px; text-align: center; font-size: ${handy ? 17 : 19}px; line-height: 1.5;">„Wie wird das Wetter morgen in Los Angeles?“</div>
+    <div style="max-width: 640px; text-align: center; font-size: ${handy ? 17 : 19}px; line-height: 1.5;">Morgen wird es sonnig, etwa 26 Grad, abends leichter Wind vom Meer.</div>
+    <div class="faint" style="font-size: 14px;">Sprich einfach — beenden mit X oder Escape.</div>
+    <div style="margin-top: auto;"></div>
+    <div class="col" style="width: 100%; max-width: 760px; gap: 12px; align-items: center;">
+      <div class="schreibfeld" style="flex-direction: row; align-items: center; width: 100%; gap: 6px; padding: 6px 8px;">
+        ${k("plus")}${k("eye")}${k("screen", true)}
+        <div class="platzhalter" style="font-size: ${handy ? 15 : 17}px; padding: 0 4px; white-space: nowrap; overflow: hidden;">Frage schreiben …</div>
+        ${k("send")}
+      </div>
+      <div class="row" style="gap: 14px;">
+        ${k("speaker", true)}
+        <div class="ikon-knopf" style="width: 64px; height: 64px; background: #ffffff; color: #0a0f16;">${ic("mic", 30)}</div>
+        ${k("micoff")}
+      </div>
+      <div class="faint" style="font-size: 13px;">Lautsprecher an/aus · Mikrofon · Stummschalten</div>
+    </div>
+  </div>`;
+}
+
+// Kamera-Modus — heute: Live-Bild geht bei jedem Senden mit; Vorschau + Hinweis.
+function kameraModus() {
+  return `<div style="position: relative; display: flex; width: 1440px; height: 900px; overflow: hidden;">
+    ${spur({ modus: "start", chatAktiv: 0 })}
+    <div class="col" style="flex: 1; min-width: 0; padding: 70px 0 22px;">
+      <div class="col" style="width: 920px; margin: 0 auto; gap: 14px; flex: 1;">
+        <div class="row" style="justify-content: space-between;">
+          <div class="chip cy">${ic("eye", 16)}Kamera an — smejj sieht mit</div>
+          <div class="row" style="gap: 6px;"><div class="chip">${ic("switchcam", 16)}Kamera wechseln</div><div class="chip">${ic("camera", 16)}Foto jetzt</div><div class="chip">${ic("x", 16)}Kamera aus</div></div>
+        </div>
+        <div class="sicher hair" style="width: 100%; height: 420px; position: relative;"><div class="chip cy" style="position: absolute; left: 12px; top: 12px;">● Live</div></div>
+        <div class="dim" style="font-size: 15px;">Live: bei jedem Senden geht automatisch ein frisches Bild mit — aufgenommen genau in dem Moment.</div>
+        <div style="flex: 1;"></div>
+        ${schreibfeldRechner({ text: "Was steht auf dem Etikett?" })}
+      </div>
+    </div>
+    ${krume("Kamera — smejj sieht mit")}
+    ${eckKnoepfe()}
+  </div>`;
+}
+
+// ---------------------------------------------------------- Artboards
+const StartDesktop = doc4(`
+<div style="position: relative; display: flex; width: 1440px; height: 900px; overflow: hidden;">
+  ${spur({ modus: "start" })}
+  <div class="col" style="flex: 1; min-width: 0; align-items: center; justify-content: center; padding: 70px 40px 40px;">
+    <div class="col" style="width: 920px; gap: 18px;">
+      <div style="font-size: 38px; font-weight: 700; letter-spacing: -0.03em; text-align: center;">Womit kann ich dir helfen?</div>
+      ${schreibfeldRechner()}
+      ${werkzeuge()}
+      <div class="col" style="gap: 6px;">
+        <div class="vorschlag">${ic("pen", 18)}<span>Verbessere diesen Text: …</span></div>
+        <div class="vorschlag">${ic("globe", 18)}<span>Recherchiere für mich: …</span></div>
+        <div class="vorschlag">${ic("browser", 18)}<span>Erledige mit der Maus im Browser: …</span></div>
+      </div>
+    </div>
+  </div>
+  ${krume("smejj.com — KI- und Code-Assistent")}
+  ${eckKnoepfe()}
+</div>`);
+
+const Sendeknopf = doc4(`
+<div style="display: flex; flex-direction: column; gap: 22px; width: 960px; height: 300px; padding: 26px 30px; overflow: hidden;">
+  <div class="col" style="gap: 8px;"><div class="dim" style="font-size: 14px;">Feld leer → der Knopf zeigt die <b style="color: #f2f5f4;">Sprachwelle</b> und öffnet den Sprachmodus</div>${schreibfeldRechner()}</div>
+  <div class="col" style="gap: 8px;"><div class="dim" style="font-size: 14px;">Beim Tippen → derselbe Knopf wird zum <b style="color: #f2f5f4;">Senden-Pfeil</b></div>${schreibfeldRechner({ text: "Wie wird das Wetter morgen in Los Angeles?" })}</div>
+</div>`);
+
+const ChatDesktop = doc4(`
+<div style="position: relative; display: flex; width: 1440px; height: 900px; overflow: hidden;">
+  ${spur({ modus: "start", chatAktiv: 0 })}
+  <div class="col" style="flex: 1; min-width: 0;">
+    <div style="flex: 1; overflow: hidden; padding: 60px 0 0;"><div style="width: 920px; margin: 0 auto;">${verlauf()}</div></div>
+    <div class="col" style="gap: 10px; padding: 8px 0 12px;">
+      <div style="width: 920px; margin: 0 auto;">${schreibfeldRechner({ text: "Und jetzt als Video" })}</div>
+      <div style="width: 920px; margin: 0 auto;">${werkzeuge({ klein: true })}</div>
+    </div>
+  </div>
+  ${zumEnde(20, 150)}
+  <div style="position: absolute; left: 400px; bottom: 140px;">${plusMenue()}</div>
+  ${krume("Python-Funktion, die zwei Zahlen addiert")}
+  ${eckKnoepfe()}
+</div>`);
+
+const ChatMenues = doc4(`
+<div style="position: relative; display: flex; width: 1440px; height: 900px; overflow: hidden;">
+  ${spur({ modus: "start", chatAktiv: 0 })}
+  <div class="col" style="flex: 1; min-width: 0;">
+    <div style="flex: 1; overflow: hidden; padding: 60px 0 0;"><div style="width: 920px; margin: 0 auto;">${verlauf({ bild: false })}</div></div>
+    <div class="col" style="gap: 10px; padding: 8px 0 12px;">
+      <div style="width: 920px; margin: 0 auto;">${schreibfeldRechner()}</div>
+      <div style="width: 920px; margin: 0 auto;">${werkzeuge({ klein: true })}</div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 700px; top: 250px;">${aktionenMenue()}</div>
+  <div style="position: absolute; right: 116px; bottom: 100px;">${modellMenue()}</div>
+  <div style="position: absolute; left: 14px; bottom: 128px;">${profilMenue()}</div>
+  ${krume("Python-Funktion, die zwei Zahlen addiert")}
+  ${eckKnoepfe()}
+</div>`);
+
+const Sprachmodus = doc4(sprachmodus());
+const KameraModus = doc4(kameraModus());
+
+const CodeDesktop = doc4(`
+<div style="position: relative; display: flex; width: 1440px; height: 900px; overflow: hidden;">
+  ${spur({ modus: "code" })}
+  <div style="display: grid; grid-template-columns: minmax(0, 1fr) 470px; flex: 1; min-width: 0; padding-top: 60px;">
+    <div class="col" style="gap: 16px; padding: 10px 28px 24px; border-right: 1px solid rgba(255,255,255,0.075); position: relative;">
+      <div style="font-size: 30px; font-weight: 700; letter-spacing: -0.03em;">Was steht als Nächstes an?</div>
+      <div class="dim" style="font-size: 16px;">Python-Funktion addieren — Auftrag läuft, Schritt 2 von 3</div>
+      <div class="codeblock" style="max-width: 720px;">
+        <div class="kopf"><span>public/rechner.js · Änderung</span><span>Ansehen</span></div>
+        <div style="padding: 12px 14px; line-height: 1.6; color: #7ef0c2;">+ export function addiere(a, b) {<br>+ &nbsp;&nbsp;return a + b;<br>+ }</div>
+      </div>
+      <div style="flex: 1;"></div>
+      <div class="schreibfeld">
+        <div class="row" style="min-height: 44px; padding: 0 4px;"><div class="platzhalter">Beschreibe eine Aufgabe oder stelle eine Frage</div></div>
+        <div class="row" style="justify-content: space-between; flex-wrap: wrap; gap: 6px; row-gap: 8px;">
+          <div class="row" style="gap: 8px;">
+            <div class="ikon-knopf" style="width: 40px; height: 40px;">${ic("plus", 22)}</div>
+            <div class="chip">${ic("shield", 16)}<span>Auto</span></div>
+            <div class="chip">${ic("think", 16)}<span>Automatisch</span></div>
+            <div class="chip cy">${ic("folder", 16)}<span>smejj.com App</span></div>
+            <div class="ikon-knopf" style="width: 40px; height: 40px;">${ic("file", 20)}</div>
+            <div class="ikon-knopf" style="width: 40px; height: 40px;">${ic("mic", 22)}</div>
+          </div>
+          <div class="row" style="gap: 8px; margin-left: auto;">
+            <div class="chip">${ic("model", 16)}<span>smejj 1</span></div>
+            <span class="dim" style="font-size: 15px;">Mittel</span>
+            <div class="ikon-knopf senden" style="width: 40px; height: 40px;">${ic("send", 22)}</div>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">${CODE_VORLAGEN.map(([i, t]) => `<div class="werkzeug klein" style="min-height: 40px; padding: 0 12px; font-size: 14.5px;">${ic(i, 18)}<span>${t}</span></div>`).join("")}</div>
+      <div style="position: absolute; left: 28px; bottom: 262px;">${codePlusMenue()}</div>
+    </div>
+    <div class="col" style="align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center;">
+      <div class="sicher" style="width: 100%; flex: 1; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.075); display: flex; align-items: center; justify-content: center;"><div class="col" style="gap: 8px; align-items: center; padding: 20px; background: rgba(10,15,22,0.9); border-radius: 8px;"><div style="font-size: 18px; font-weight: 700;">Dein Browser-Fenster</div><div class="dim" style="font-size: 15px; max-width: 260px;">bleibt genau wie heute — nicht Teil dieses Vorschlags</div></div></div>
+    </div>
+  </div>
+  ${krume("Projekt: smejj.com App · Ordner /public")}
+  ${eckKnoepfe()}
+</div>`);
+
+const SpurZu = doc4(`
+<div style="position: relative; display: flex; width: 1440px; height: 900px; overflow: hidden;">
+  <div class="col" style="flex: 1; min-width: 0;">
+    <div style="flex: 1; overflow: hidden; padding: 60px 0 0;"><div style="width: 920px; margin: 0 auto;">${verlauf({ bild: false })}</div></div>
+    <div class="col" style="gap: 10px; padding: 8px 0 12px;">
+      <div style="width: 920px; margin: 0 auto;">${schreibfeldRechner()}</div>
+      <div style="width: 920px; margin: 0 auto;">${werkzeuge({ klein: true })}</div>
+    </div>
+  </div>
+  ${eckKnoepfe({ marke: true })}
+</div>`);
+
+function handy(inhalt, { hoehe = 844, breite = 390, oben = 59, unten = 34, links = 0, rechts = 0 } = {}) {
+  return `<div style="position: relative; width: ${breite}px; height: ${hoehe}px; overflow: hidden; background: #0a0f16;">
+    <div style="position: absolute; inset: 0; display: grid; grid-template-rows: ${oben}px minmax(0, 1fr) ${unten}px; grid-template-columns: ${links}px minmax(0, 1fr) ${rechts}px;">
+      <div style="grid-column: 1 / -1;"></div><div></div>
+      <div class="col" style="min-height: 0; position: relative;">${inhalt}</div>
+      <div></div><div style="grid-column: 1 / -1;"></div>
+    </div>
+  </div>`;
+}
+const kopfHandy = () => `<div style="position: relative; height: 56px;">${eckKnoepfe({ oben: 6, links: 8, rechts: 8 })}</div>`;
+
+const StartHandy = doc4(handy(`
+  ${kopfHandy()}
+  <div class="col" style="flex: 1; justify-content: center; gap: 18px; padding: 8px 14px;">
+    <div style="font-size: 30px; font-weight: 700; letter-spacing: -0.03em; text-align: center; line-height: 1.15;">Womit kann ich dir helfen?</div>
+    ${werkzeugeHandy()}
+    <div class="col" style="gap: 6px;">
+      <div class="vorschlag" style="min-height: 44px; font-size: 15.5px;">${ic("pen", 18)}<span>Verbessere diesen Text …</span></div>
+      <div class="vorschlag" style="min-height: 44px; font-size: 15.5px;">${ic("globe", 18)}<span>Recherchiere für mich …</span></div>
+    </div>
+  </div>
+  <div style="padding: 8px 10px 6px;">${schreibfeldHandy()}</div>
+`));
+
+const ChatHandy = doc4(handy(`
+  ${kopfHandy()}
+  <div style="flex: 1; min-height: 0; overflow: hidden; padding: 4px 14px 0;">${verlauf({ breit: false })}</div>
+  <div class="col" style="gap: 8px; padding: 8px 10px 6px; position: relative;">
+    ${zumEnde(12, 178)}
+    ${werkzeuge({ klein: true })}
+    ${schreibfeldHandy({ text: "Und jetzt als Video" })}
+  </div>
+`));
+
+const SprachmodusHandy = doc4(sprachmodus({ breite: 390, hoehe: 844, handy: true }));
+
+const MenueHandy = doc4(`
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #0a0f16;">
+  <div style="position: absolute; inset: 0; opacity: 0.35;">${handy(`${kopfHandy()}<div style="flex: 1; padding: 4px 14px;">${verlauf({ breit: false })}</div>`)}</div>
+  <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.45);"></div>
+  <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 300px; display: grid; grid-template-rows: 59px minmax(0, 1fr) 34px; grid-template-columns: minmax(0, 1fr); background: #0e141c; box-shadow: 8px 0 40px rgba(0,0,0,0.5);">
+    <div></div>
+    <div style="position: relative; min-height: 0;">
+      <div style="position: absolute; inset: 0;">${spur({ modus: "code", breite: 300, kopfPolster: 62 })}</div>
+      <div style="position: absolute; left: 8px; top: 6px; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 8px; background: rgba(255,255,255,0.06);">${LOGO(24)}</div>
+      <div style="position: absolute; right: 6px; top: 300px; width: 4px; height: 150px; border-radius: 2px; background: rgba(255,255,255,0.18);"></div>
+    </div>
+    <div></div>
+  </div>
+</div>`);
+
+const ChatQuer = doc4(handy(`
+  <div style="position: relative; display: grid; grid-template-columns: 200px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: 100%; min-height: 0;">
+    ${spur({ modus: "start", breite: 200, chatAktiv: 0, kopfPolster: 52 })}
+    <div class="col" style="min-height: 0; padding-top: 50px;">
+      <div style="flex: 1; min-height: 0; overflow: hidden; padding: 0 16px;">
+        <div class="col" style="gap: 10px;">${frage("Nenne drei Farben.")}<div class="col" style="gap: 4px;"><div class="antwort" style="font-size: 15.5px;">Blau, Rot, Grün.</div>${antwortAktionen()}</div></div>
+      </div>
+      <div class="row" style="gap: 6px; padding: 6px 10px 4px;">
+        <div class="ikon-knopf" style="width: 40px; height: 40px;">${ic("plus", 22)}</div>
+        <div class="schreibfeld" style="flex: 1; flex-direction: row; align-items: center; padding: 0 12px; min-height: 42px; gap: 8px;"><div class="platzhalter" style="font-size: 16px;">Frag mich alles</div></div>
+        <div class="chip" style="min-height: 40px;">${ic("model", 16)}<span>smejj 1</span></div>
+        <div class="ikon-knopf" style="width: 40px; height: 40px;">${ic("mic", 22)}</div>
+        ${sendeKnopf("")}
+      </div>
+    </div>
+    ${eckKnoepfe({ oben: 4, links: 4, rechts: 4 })}
+  </div>
+`, { hoehe: 390, breite: 844, oben: 0, unten: 21, links: 59, rechts: 59 }));
+
+const PROBE = 'Morgen wird es in Los Angeles sonnig, etwa 26 Grad. Abends kommt leichter Wind vom Meer, nimm eine Jacke mit. Der Sonnenuntergang ist um 19:02 Uhr.';
+const SchriftVergleich = doc(`
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 1100px; height: 300px; padding: 26px 30px; overflow: hidden;">
+  <div class="col" style="gap: 12px; padding: 18px; border-radius: 8px; background: rgba(255,255,255,0.03); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.075);">
+    <div class="dim" style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em;">HEUTE — Chat 16 px, Menü 14,5 px</div>
+    <div style="font-size: 16px; line-height: 1.5; color: rgba(242,245,244,0.92);">${PROBE}</div>
+    <div class="row" style="gap: 12px; font-size: 14.5px; color: rgba(242,245,244,0.8);">${ic("history", 16)}Python-Funktion, die zwei Zahlen addiert</div>
+    <div class="row" style="gap: 2px;"><div class="aktion" style="font-size: 13px; min-height: 26px;">${ic("copy", 14)}Kopieren</div><div class="aktion" style="font-size: 13px; min-height: 26px;">${ic("speaker", 14)}Vorlesen</div></div>
+  </div>
+  <div class="col" style="gap: 12px; padding: 18px; border-radius: 8px; background: rgba(50,246,234,0.05); box-shadow: inset 0 0 0 1px rgba(50,246,234,0.3);">
+    <div class="cy" style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em;">NEU — Chat 19 px, Menü 17 px</div>
+    <div style="font-size: 19px; line-height: 1.55; color: rgba(242,245,244,0.92);">${PROBE}</div>
+    <div class="row" style="gap: 12px; font-size: 17px; color: rgba(242,245,244,0.8);">${ic("history", 19)}Python-Funktion, die zwei Zahlen addiert</div>
+    <div class="row" style="gap: 2px;"><div class="aktion" style="font-size: 14.5px; min-height: 30px;">${ic("copy", 16)}Kopieren</div><div class="aktion" style="font-size: 14.5px; min-height: 30px;">${ic("speaker", 16)}Vorlesen</div></div>
+  </div>
+</div>`);
+
+// ----------------------------------------------------------- Ausgabe
+const dateien = {
+  "Main.dc.html": StartDesktop, "SchriftVergleich.dc.html": SchriftVergleich, "Sendeknopf.dc.html": Sendeknopf, "ChatDesktop.dc.html": ChatDesktop, "ChatMenues.dc.html": ChatMenues,
+  "Sprachmodus.dc.html": Sprachmodus, "KameraModus.dc.html": KameraModus, "CodeDesktop.dc.html": CodeDesktop,   "StartHandy.dc.html": StartHandy, "ChatHandy.dc.html": ChatHandy, "SprachmodusHandy.dc.html": SprachmodusHandy, "MenueHandy.dc.html": MenueHandy, "ChatQuer.dc.html": ChatQuer
+};
+for (const [name, inhalt] of Object.entries(dateien)) writeFileSync(join(HIER, name), inhalt);
+const canvas = {
+  artboards: [
+    { file: "Main.dc.html", title: "1 · Startseite (Rechner) — Feld leer, Sprachwelle", x: 0, y: 0, w: 1440, h: 900 },
+    { file: "SchriftVergleich.dc.html", title: "2 · Schrift: heute gegen neu", x: 1560, y: 0, w: 1100, h: 300 },
+    { file: "Sendeknopf.dc.html", title: "3 · Ein Knopf, zwei Zustände: Welle ↔ Senden", x: 1560, y: 420, w: 960, h: 300 },
+    { file: "ChatDesktop.dc.html", title: "3 · Chat mit Plus-Menü (Rechner)", x: 0, y: 1020, w: 1440, h: 900 },
+    { file: "ChatMenues.dc.html", title: "4 · Chat: Aktionen-, Modell- und Profil-Menü", x: 1560, y: 1020, w: 1440, h: 900 },
+    { file: "Sprachmodus.dc.html", title: "5 · Sprachmodus (Rechner)", x: 0, y: 2040, w: 1440, h: 900 },
+    { file: "KameraModus.dc.html", title: "6 · Kamera-Modus — smejj sieht mit", x: 1560, y: 2040, w: 1440, h: 900 },
+    { file: "CodeDesktop.dc.html", title: "7 · Code: Plus-Menü, Vorlagen, Browser-Fenster", x: 0, y: 3060, w: 1440, h: 900 },
+        { file: "StartHandy.dc.html", title: "9 · Startseite (iPhone)", x: 0, y: 4080, w: 390, h: 844 },
+    { file: "ChatHandy.dc.html", title: "10 · Chat (iPhone) — Text getippt, Senden", x: 520, y: 4080, w: 390, h: 844 },
+    { file: "SprachmodusHandy.dc.html", title: "11 · Sprachmodus (iPhone)", x: 1040, y: 4080, w: 390, h: 844 },
+    { file: "MenueHandy.dc.html", title: "12 · Menü (iPhone) — Kopf/Fuß fest", x: 1560, y: 4080, w: 390, h: 844 },
+    { file: "ChatQuer.dc.html", title: "13 · Chat im Querformat (iPhone)", x: 2080, y: 4080, w: 844, h: 390 }
+  ],
+  launch: { view: "canvas" }
+};
+writeFileSync(join(HIER, "canvas.json"), JSON.stringify(canvas, null, 2));
+console.log("geschrieben:", Object.keys(dateien).length, "Artboards + canvas.json");
