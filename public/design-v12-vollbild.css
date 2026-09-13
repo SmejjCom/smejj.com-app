@@ -14,13 +14,13 @@
  *   black (LegacyBlack): Layout 402x812 ab y=62, safe-area 0/34, Unterkante
  *     bei 874. Der Statusleisten-Streifen zeigt ebenfalls den <html>-Grund.
  * Folgerung: (1) Der <html>-Grund ist überall die App-Farbe (#101113 = die
- * theme-color) — dann ist die Statusleiste im "black"-Modus ein nahtloser
- * Teil der App (Uhr, WLAN, Akku weiss darauf), unten gibt es keinen Balken.
- * (2) index.html stellt auf "black" um. (3) Bestehende Installationen bleiben
- * im Translucent-Modus: dort misst mobil-dock.js den Fehlbetrag (screen.height
- * − innerHeight, gedeckelt auf safe-area-inset-top) als --vollbild-fehl und
- * setzt html.vollbild-fehl — die Flächen wachsen um diesen Betrag nach unten,
- * die Seite selbst scrollt nicht.
+ * theme-color) — kein Balken mehr, egal welcher Modus. (2) Der Modus bleibt
+ * black-translucent: beim Kaltstart lieferte derselbe Webclip spaeter 874 pt
+ * (Vollbild, Inhalt unter der Statusleiste, Insets 62/34); der 812-Zustand ist
+ * ein Erst-/Tastatur-Zustand. (3) Sicherheitsnetz: mobil-dock.js misst den
+ * Fehlbetrag (screen.height − innerHeight, gedeckelt auf safe-area-inset-top)
+ * als --vollbild-fehl und setzt html.vollbild-fehl — die Flächen wachsen um
+ * diesen Betrag nach unten, die Seite selbst scrollt nicht.
  */
 
 /* ---- Ein Grund für alles: Statusleiste, Flächen, Home-Balken ------------ */

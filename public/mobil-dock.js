@@ -239,10 +239,15 @@ export function vollbildFehl({ standalone, tastaturOffen, schirmHoehe, innerHeig
 }
 function misstVollbildFehl(win, doc, offen) {
   const root = doc.documentElement;
-  const saTop = parseFloat(win.getComputedStyle(root).getPropertyValue("--sa-top")) || 0;
-  const fehl = vollbildFehl({ standalone: win.matchMedia?.("(display-mode: standalone)").matches || win.navigator?.standalone === true, tastaturOffen: offen, schirmHoehe: win.screen?.height, innerHeight: win.innerHeight, saTop });
-  root.style.setProperty("--vollbild-fehl", `${fehl}px`);
-  root.classList.toggle("vollbild-fehl", fehl > 0);
+  try {
+    const saTop = parseFloat(win.getComputedStyle(root).getPropertyValue("--sa-top")) || 0;
+    const standalone = Boolean((win.matchMedia && win.matchMedia("(display-mode: standalone)").matches) || (win.navigator && win.navigator.standalone === true));
+    const fehl = vollbildFehl({ standalone, tastaturOffen: offen, schirmHoehe: win.screen ? win.screen.height : 0, innerHeight: win.innerHeight, saTop });
+    root.style.setProperty("--vollbild-fehl", `${fehl}px`);
+    root.classList.toggle("vollbild-fehl", fehl > 0);
+  } catch (fehler) {
+    root.dataset.vollbildFehler = String(fehler && fehler.message || fehler);
+  }
 }
 
 function verdrahteTastatur(win = window, doc = document) {

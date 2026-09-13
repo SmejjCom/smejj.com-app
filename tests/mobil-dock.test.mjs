@@ -100,14 +100,17 @@ test("Chat ohne Seitwaerts-Schieben: Eintraege brechen Links, Tabellen scrollen 
   assert.match(m.REGELN, /body:not\(\.mobil-chat-offen\) \.mobil-kopfglas\{display:none\}/);
 });
 
-test("Vollbild (Design V12, 13.09.): Statusleiste 'black', ein Grund fuer alles, Fehlbetrag fuer alte Webclips", () => {
+test("Vollbild (Design V12, 13.09.): black-translucent, ein Grund fuer alles, Fehlbetrag als Sicherheitsnetz", () => {
   // GEMESSEN 13.09. im iPhone-Simulator (Test-Kopie ohne Anmelde-Schranke, Diagnose-Overlay,
   // <html>-Grund gruen gefaerbt): black-translucent -> Layout 402x812 ab y=0, safe-area 62/34,
   // die unteren 62 pt zeigen den <html>-GRUND (nicht ausserhalb des WebViews — Annahme vom
   // 08.09. widerlegt). black -> Layout 402x812 ab y=62, Unterkante bei 874, Statusleisten-
-  // Streifen zeigt ebenfalls den <html>-Grund. Also: Grund = App-Farbe, Modus = black.
+  // Streifen zeigt ebenfalls den <html>-Grund. Derselbe Translucent-Webclip lieferte beim
+  // Kaltstart spaeter 874 (Vollbild mit Insets 62/34) — der 812-Zustand ist ein Erst-/
+  // Tastatur-Zustand. Also: Grund = App-Farbe, Modus bleibt black-translucent (keine
+  // Neuinstallation noetig), Fehlbetrag-Ausgleich als Sicherheitsnetz.
   const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
-  assert.match(html, /apple-mobile-web-app-status-bar-style" content="black"/);
+  assert.match(html, /apple-mobile-web-app-status-bar-style" content="black-translucent"/);
   assert.match(html, /viewport-fit=cover/, "ohne cover waere die Flaeche erst recht kleiner");
   const vollbild = readFileSync(new URL("../public/design-v12-vollbild.css", import.meta.url), "utf8");
   assert.match(vollbild, /html:root \{ background: #101113; \}/, "der <html>-Grund ist die App-Farbe (theme-color)");
