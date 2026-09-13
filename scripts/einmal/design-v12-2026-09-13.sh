@@ -15,16 +15,16 @@ set -uo pipefail
 REPO="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 KLON="/Users/alanbest/smejj-app-frontend"
 ZWEIG="feature/design-start-chat-2026-09-13"
-BASIS_VOR_AENDERUNG="a82a4dbe"
+BASIS_VOR_AENDERUNG="0bec33bc"
 CODE_COMMIT="00670d56"
-SW_VORHER="smejj-shell-v862"
-SW_NEU="smejj-shell-v863"
+SW_VORHER="smejj-shell-v863"
+SW_NEU="smejj-shell-v864"
 DATEIEN=(index.html sw.js start-styles.css spur-start.js mobil-dock.js design-v12-spur.css design-v12-chat.css design-v12-code.css design-v12-vollbild.css)
 [ -d /Library/Developer/CommandLineTools ] && export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 export GIT_TERMINAL_PROMPT=0
 
 cd "$REPO" || { echo "ABBRUCH: App-Ordner nicht erreichbar."; exit 1; }
-WT="/private/tmp/claude-501/kaskade-design-v12"
+WT="/private/tmp/claude-501/kaskade-design-v12b"
 git worktree remove --force "$WT" >/dev/null 2>&1 || true
 git rev-parse --verify -q "$ZWEIG" >/dev/null || { echo "ABBRUCH: Zweig $ZWEIG fehlt lokal."; exit 1; }
 git worktree add -q "$WT" "$ZWEIG" 2>/dev/null || git worktree add -q --detach "$WT" "$ZWEIG" || { echo "ABBRUCH: Worktree nicht anlegbar."; exit 1; }
@@ -35,7 +35,7 @@ git log --oneline -1
 git merge-base --is-ancestor "$CODE_COMMIT" HEAD || { echo "ABBRUCH: Code-Commit $CODE_COMMIT nicht im Zweig."; exit 1; }
 grep -q 'design-v12-vollbild.css ----' public/start-styles.css || { echo "ABBRUCH: V12 steht nicht im Start-Buendel."; exit 1; }
 grep -q "$SW_NEU" public/sw.js || { echo "ABBRUCH: sw.js traegt nicht $SW_NEU."; exit 1; }
-grep -q 'start-styles.css?v=v12d-20260913' public/index.html || { echo "ABBRUCH: index.html traegt nicht die V12-Marke."; exit 1; }
+grep -q 'start-styles.css?v=v12e-20260913' public/index.html || { echo "ABBRUCH: index.html traegt nicht die V12-Marke."; exit 1; }
 LIVE_SW=$(curl -s -m 15 "https://smejj.com/sw.js?n=$RANDOM" | grep -o 'smejj-shell-v[0-9]*' | head -1)
 echo "live: $LIVE_SW"
 [ "$LIVE_SW" = "$SW_VORHER" ] || { echo "ABBRUCH: live ist $LIVE_SW, erwartet $SW_VORHER — Basis stimmt nicht mehr, Kaskade neu bauen lassen."; exit 1; }
@@ -59,7 +59,7 @@ node scripts/check-start-lock.mjs --freeze --confirm "Betreiber, 2026-09-13: OK 
 echo "== 3. Stempel committen und pushen"
 git add docs/frontend/start-lock-manifest.json backups/start-design-lock 2>/dev/null
 if git diff --cached --quiet; then echo "(Manifest unveraendert)"; else
-  git commit -q -m "chore(start-lock): Stempel Design V12 2026-09-13 — index.html, start-styles.css (V12 Spur/Chat/Code/Vollbild), spur-start.js, mobil-dock.js, SW $SW_NEU (Betreiber-Doppelklick)
+  git commit -q -m "chore(start-lock): Stempel Design V12 Nachzug (Werkzeug-Zeile im Handy-Chat) 2026-09-13 — index.html, start-styles.css (V12 Spur/Chat/Code/Vollbild), spur-start.js, mobil-dock.js, SW $SW_NEU (Betreiber-Doppelklick)
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" || { echo "ABBRUCH: Commit fehlgeschlagen."; exit 1; }
 fi
@@ -93,7 +93,7 @@ for f in "${DATEIEN[@]}"; do
   if [ -d "$KLON/assets" ] && { [ -f "$KLON/assets/$f" ] || [ "$f" != "index.html" ]; }; then cp "$WT/public/$f" "$KLON/assets/$f" && git add "assets/$f"; fi
 done
 git status --short | head -40
-git commit -q -m "deploy(design-v12): Spur in drei Zonen, Chat/Start 19 px, Feld zwei Zeilen, Werkzeuge mit Wort, Code-Vorlagen sichtbar, Vollbild (Grund App-Farbe, Fehlbetrag-Ausgleich); SW $SW_NEU — Quelle smejj.com-app $QUELLE" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
+git commit -q -m "deploy(design-v12b): Werkzeug-Zeile im Handy-Chat sichtbar; zuvor Spur in drei Zonen, Chat/Start 19 px, Feld zwei Zeilen, Werkzeuge mit Wort, Code-Vorlagen sichtbar, Vollbild (Grund App-Farbe, Fehlbetrag-Ausgleich); SW $SW_NEU — Quelle smejj.com-app $QUELLE" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
 git merge-base --is-ancestor origin/main HEAD || { echo "ABBRUCH: kein Fast-Forward."; exit 1; }
 git push -q origin main || { echo "ABBRUCH: Push auf main fehlgeschlagen."; exit 1; }
 echo "gepusht: $(git rev-parse --short HEAD)"
