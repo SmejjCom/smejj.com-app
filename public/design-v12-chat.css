@@ -122,6 +122,11 @@
     font-size: 13.5px;
     white-space: normal;
     line-height: 1.15;
+    /* iPhone 17e (390 px) gemessen: "Programmieren" passt nicht in 78 px —
+       Trennung statt Abschneiden (lang="de" steht am <html>). */
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    overflow-wrap: anywhere;
   }
   #start:not(.has-start-chat) .prompt-glass { order: 3; }
   #startLog .entry { font-size: 18px; }

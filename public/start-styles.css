@@ -6067,6 +6067,9 @@ body.spur-start-aktiv .nav-start {
     font-size: 13.5px;
     white-space: normal;
     line-height: 1.15;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    overflow-wrap: anywhere;
   }
   #start:not(.has-start-chat) .prompt-glass { order: 3; }
   #startLog .entry { font-size: 18px; }
