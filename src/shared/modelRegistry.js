@@ -87,10 +87,13 @@ export const MODEL_REGISTRY = Object.freeze({
       // "Nachdenken", Auto und Codieren antworteten gar nicht mehr.
       //
       // glm-4.5-flash laeuft im Freikontingent, verursacht also keine neuen
-      // Kosten. ZURUECKSTELLEN auf "glm-5.2", sobald das Kontingent zurueck
-      // ist (fruehestens 2026-09-10 17:06) oder Guthaben aufgeladen wurde.
+      // Kosten. ZURUECKGESTELLT 2026-09-14: das Kontingent ist seit dem 10.09.
+      // zurueck (gemessen: glm-5.2 antwortet 200 ueber die Coding-Adresse).
+      // Faellt es erneut, fuehrt die Router-Kette automatisch auf glm-4.5-flash
+      // (Zweitversuch beim selben Anbieter mit dem Standardmodell) — die tiefe
+      // Spur wird dann kleiner, aber nie mehr tot.
       // Der Anzeigename der Marke bleibt unveraendert.
-      defaultModel: "glm-4.5-flash",
+      defaultModel: "glm-5.2",
       defaultHeader: "Authorization",
       storageFirstMode: "glm-5.2-storage-first",
       engines: Object.freeze(["openai-compatible", "sglang", "vllm", "ktransformers"]),

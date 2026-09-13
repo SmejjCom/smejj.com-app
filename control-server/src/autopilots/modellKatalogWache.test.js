@@ -121,6 +121,36 @@ test("frischer Stand aus der Ablage wird gemeldet statt neu gefragt", async () =
   assert.ok(ergebnis.meldung.includes("groq:tot"));
 });
 
+test("rotes Ergebnis aus der Ablage wird nachgeprueft — antwortet das Modell, wird der Stand korrigiert", async () => {
+  const env = { SMEJJ_LLM_GROQ_API_KEY: "k" };
+  const geschrieben = [];
+  const ablage = {
+    lies: async () => ({ id: "modell-katalog-stand", createdAt: new Date(Date.now() - 3_600_000).toISOString(), fehlend: 1, beispiel: "groq:openai/gpt-oss-20b", geprueft: 2, anbieter: 1 }),
+    schreib: async (d) => { geschrieben.push(d); }
+  };
+  const ergebnis = await laufModellKatalogWache({
+    env, ablage,
+    fetchImpl: async (url) => url.endsWith("/chat/completions")
+      ? { ok: true, status: 200, json: async () => ({}) }
+      : { ok: false, status: 500 } // /models darf hier gar nicht gefragt werden
+  });
+  assert.equal(ergebnis.ok, true);
+  assert.ok(ergebnis.meldung.includes("Nachgeprüft"));
+  assert.equal(geschrieben.length, 1);
+  assert.equal(geschrieben[0].fehlend, 0);
+});
+
+test("rotes Ergebnis aus der Ablage bleibt rot, wenn die Nachpruefung scheitert", async () => {
+  const env = { SMEJJ_LLM_GROQ_API_KEY: "k" };
+  const ablage = {
+    lies: async () => ({ id: "modell-katalog-stand", createdAt: new Date(Date.now() - 3_600_000).toISOString(), fehlend: 1, beispiel: "groq:tot", geprueft: 2, anbieter: 1 }),
+    schreib: async () => {}
+  };
+  const ergebnis = await laufModellKatalogWache({ env, ablage, fetchImpl: async () => ({ ok: false, status: 404 }) });
+  assert.equal(ergebnis.ok, false);
+  assert.ok(ergebnis.meldung.includes("groq:tot"));
+});
+
 test("ohne Netz: Abfrage faellig, kein Fehler", async () => {
   const ergebnis = await laufModellKatalogWache({ env: { SMEJJ_LLM_GROQ_API_KEY: "k" }, ablage: leereAblage(), mitNetz: false });
   assert.equal(ergebnis.ok, true);

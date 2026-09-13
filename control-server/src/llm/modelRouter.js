@@ -86,8 +86,14 @@ export const PROVIDER_CATALOG = Object.freeze({
     // gemessen antwortet einzig glm-4.5-flash (200, Freikontingent).
     // Diese Liste ist der ZWEITE Ort mit demselben Namen — wer nur die
     // Registry umstellt, haengt hier weiterhin am erschoepften Modell.
-    // Zurueckstellen auf "glm-5.2", sobald das Kontingent zurueck ist.
-    models: { default: "glm-4.5-flash", coding: "glm-4.5-flash", reasoning: "glm-4.5-flash" }
+    // ZURUECKGESTELLT 2026-09-14 (Kontingent seit 10.09. zurueck, gemessen):
+    // coding und reasoning fuehren wieder glm-5.2 — das Qualitaets-Fundament,
+    // das die Zusicherungen der Kernsuite haelt (glm-4.5-flash verletzte am
+    // 13./14.09. schutz-design-lock 3/3 und schutz-daten-loeschen 1/3).
+    // default bleibt glm-4.5-flash (Freikontingent, schnell). Weil resolveChain
+    // hinter dem Profilmodell den Zweitversuch mit dem Standardmodell anhaengt,
+    // ist glm-4.5-flash bei 429 (Kontingent leer) automatisch der Rueckfall.
+    models: { default: "glm-4.5-flash", coding: "glm-5.2", reasoning: "glm-5.2" }
   },
   qwen: {
     baseUrl: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",

@@ -60,13 +60,19 @@ test("zhipu-Default ist ein Modell, das der Anbieter auch bedient", () => {
   const BEDIENT = new Set(["glm-4.5-flash", "glm-5.2", "glm-4.6", "glm-4.5-air"]);
   const z = providerBackendFromEnv("zhipu", { SMEJJ_LLM_ZHIPU_API_KEY: "k" }, "coding");
   assert.ok(BEDIENT.has(z.model), `unbekanntes zhipu-Modell: ${z.model}`);
-  // Der heutige Stand, damit eine stille Ruecknahme auffaellt.
-  assert.equal(z.model, "glm-4.5-flash");
-  // Und alle drei Profile ziehen gleich — sonst faellt eine Spur still zurueck.
+  // Der heutige Stand (2026-09-14: Kontingent zurueck, coding/reasoning wieder
+  // glm-5.2, default bleibt Freikontingent), damit eine stille Ruecknahme auffaellt.
+  assert.equal(z.model, "glm-5.2");
+  assert.equal(providerBackendFromEnv("zhipu", { SMEJJ_LLM_ZHIPU_API_KEY: "k" }, "reasoning").model, "glm-5.2");
+  assert.equal(providerBackendFromEnv("zhipu", { SMEJJ_LLM_ZHIPU_API_KEY: "k" }, "default").model, "glm-4.5-flash");
+  // Und alle drei Profile fuehren bediente Modelle — sonst faellt eine Spur still zurueck.
   for (const profil of ["default", "coding", "reasoning"]) {
     const b = providerBackendFromEnv("zhipu", { SMEJJ_LLM_ZHIPU_API_KEY: "k" }, profil);
     assert.ok(BEDIENT.has(b.model), `${profil}: ${b.model}`);
   }
+  // Der Rueckfall bei leerem Kontingent: hinter glm-5.2 steht glm-4.5-flash in der Kette.
+  const kette = resolveChain("coding", { SMEJJ_LLM_ZHIPU_API_KEY: "k", SMEJJ_LLM_PROVIDER_ORDER: "zhipu" });
+  assert.deepEqual(kette.map((b) => b.model), ["glm-5.2", "glm-4.5-flash"]);
 });
 
 test("Reihenfolge: Standard beginnt mit salad,openrouter; Env-Order uebersteuert", () => {

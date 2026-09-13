@@ -119,8 +119,11 @@ test("explicit Kimi selection uses the registry runtime before GLM fallback", ()
   const backend = registryBackendFromEnv("kimi-k2-7", env, "coding");
   const request = resolveModelRequest("coding", "Kimi K2.7", env);
   assert.equal(backend.logicalModelId, "kimi-k2-7");
-  assert.deepEqual(request.chain.map((item) => item.logicalModelId), ["kimi-k2-7", "glm-5-2"]);
-  assert.deepEqual(request.chain.map((item) => item.name), ["kimi", "zhipu"]);
+  // Seit 2026-09-14 haengt hinter glm-5.2 (coding) der Zweitversuch mit dem
+  // Standardmodell glm-4.5-flash — der automatische Rueckfall bei leerem Kontingent.
+  assert.deepEqual(request.chain.map((item) => item.logicalModelId), ["kimi-k2-7", "glm-5-2", "glm-5-2"]);
+  assert.deepEqual(request.chain.map((item) => item.name), ["kimi", "zhipu", "zhipu"]);
+  assert.deepEqual(request.chain.slice(1).map((item) => item.model), ["glm-5.2", "glm-4.5-flash"]);
 });
 
 test("Kimi outage falls back to GLM-5.2 with an auditable logical model id", async () => {

@@ -145,6 +145,25 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
   if (Number.isFinite(standAlterMs) && standAlterMs < ABFRAGE_ABSTAND_MS && stand) {
     const stunden = Math.round(standAlterMs / 3_600_000);
     if (stand.fehlend > 0) {
+      // Ein Rot aus der Ablage wird NACHGEPRUEFT, bevor es gemeldet wird: das
+      // Beispiel-Modell bekommt die Kleinstanfrage. Antwortet es, war der
+      // Katalog lueckenhaft (Zhipu 08.–14.09.), und der Stand wird sofort
+      // korrigiert — sonst bliebe die Ampel bis zur naechsten Tagesabfrage rot.
+      const beispiel = String(stand.beispiel || "");
+      const [anbieterName, ...rest] = beispiel.split(":");
+      const modellName = rest.join(":").replace(/ \(.*\)$/, "");
+      if (mitNetz && anbieterName && modellName) {
+        const backend = anbieterName === "openrouter" ? openrouterBackendFromEnv(env) : providerBackendFromEnv(anbieterName, env);
+        if (backend) {
+          const probe = await bestaetigeModell(backend, modellName, { fetchImpl });
+          if (probe.antwortet) {
+            try {
+              await speicher.schreib({ ...stand, id: ABLAGE_ID, fehlend: 0, beispiel: "", ungelistet: [stand.ungelistet, beispiel].filter(Boolean).join(", "), nachgeprueft: new Date(jetztMs).toISOString() });
+            } catch { /* die Meldung unten stimmt auch ohne Ablage */ }
+            return { ok: true, meldung: `Nachgeprüft: ${beispiel} fehlt in /models, antwortet aber (Stand vor ${stunden} h korrigiert)` };
+          }
+        }
+      }
       return { ok: false, meldung: `${stand.fehlend} gewählte(s) Modell(e) beim Anbieter verschwunden — Stand vor ${stunden} h, z. B. ${String(stand.beispiel || "").slice(0, 60)}` };
     }
     return { ok: true, meldung: `Abfrage aktuell (vor ${stunden} h): ${stand.geprueft} Modell(e) bei ${stand.anbieter} Anbieter(n) bestätigt${stand.ungelistet ? `; nicht in /models gelistet, antwortet aber: ${stand.ungelistet}` : ""}${stand.unpruefbar ? `; nicht prüfbar: ${stand.unpruefbar}` : ""}` };
