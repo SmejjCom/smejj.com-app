@@ -29,9 +29,9 @@ test("untere Safe-Area nur EINMAL: Feld und Code-Leiste geben ihren Rand ab, die
     huellenRegeln.every((sel) => sel.includes("html.tastatur-offen") || sel.includes("html:not(.tastatur-offen)")),
     `Huelle nur fuer Tastatur oder Mindestabstand: ${huellenRegeln.join(" | ")}`,
   );
-  // In der installierten App faellt der Rand auf 0: der Home-Balken liegt in den 62 pt UNTER der
-  // Flaeche (Vollbild oben), ein Abstand wuerde dort nur Platz verschenken.
-  assert.ok(m.REGELN.includes('html:not(.tastatur-offen) main.shell.shell{padding-bottom:0}'));
+  // KORREKTUR 13.09. (Design V12): im "black"-Modus reicht das Layout bis zur Unterkante und
+  // safe-area-inset-bottom ist 34 — der Home-Balken liegt IM Layout, die Huelle behaelt den Rand.
+  assert.ok(!m.REGELN.includes('html:not(.tastatur-offen) main.shell.shell{padding-bottom:0}'), "Huelle behaelt den unteren Rand");
 });
 
 test("beide Felder wachsen bis ~5 Zeilen (148 px) und scrollen dann innen", () => {
@@ -100,24 +100,26 @@ test("Chat ohne Seitwaerts-Schieben: Eintraege brechen Links, Tabellen scrollen 
   assert.match(m.REGELN, /body:not\(\.mobil-chat-offen\) \.mobil-kopfglas\{display:none\}/);
 });
 
-test("Vollbild oben, und der Streifen unten wird unsichtbar gemacht statt bekaempft", () => {
-  // GEMESSEN 08.09. in der installierten App im iPhone-Simulator (Diagnoseseite, drei Messstreifen):
-  // Schirm 402x874, Fenster 402x812, fixed inset:0 = 812, 100dvh = 812 — es fehlten 62 pt, genau
-  // safe-area-inset-top. Die fehlende Flaeche liegt AUSSERHALB des WebViews; ein Rahmen mit
-  // bottom:-120px endete dort ebenso. Ursache: apple-mobile-web-app-status-bar-style
-  // "black-translucent" -> UIWebClipStatusBarStyleLegacyBlackTranslucent in der Webclip-Datei.
+test("Vollbild (Design V12, 13.09.): Statusleiste 'black', ein Grund fuer alles, Fehlbetrag fuer alte Webclips", () => {
+  // GEMESSEN 13.09. im iPhone-Simulator (Test-Kopie ohne Anmelde-Schranke, Diagnose-Overlay,
+  // <html>-Grund gruen gefaerbt): black-translucent -> Layout 402x812 ab y=0, safe-area 62/34,
+  // die unteren 62 pt zeigen den <html>-GRUND (nicht ausserhalb des WebViews — Annahme vom
+  // 08.09. widerlegt). black -> Layout 402x812 ab y=62, Unterkante bei 874, Statusleisten-
+  // Streifen zeigt ebenfalls den <html>-Grund. Also: Grund = App-Farbe, Modus = black.
   const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
-  // Betreiber-Anweisung 08.09.: Vollbild oben. Im Simulator gemessen — es gibt genau zwei Zustaende:
-  //   black-translucent -> Flaeche top 0 / hoch 812: Vollbild oben, 62 pt Schwarz unten
-  //   black oder default -> hoch 874: nichts unten, dafuer ein Statusleistenbalken oben
-  assert.match(html, /apple-mobile-web-app-status-bar-style" content="black-translucent"/);
+  assert.match(html, /apple-mobile-web-app-status-bar-style" content="black"/);
   assert.match(html, /viewport-fit=cover/, "ohne cover waere die Flaeche erst recht kleiner");
-  assert.doesNotMatch(m.REGELN, /vollbild-fehl|--vv-unten/, "keine gemessene Rahmenhoehe mehr");
-  // Der Streifen unten wird unsichtbar gemacht statt bekaempft: gleiche Farbe, kein Rahmen, kein Schein.
-  assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{html\{--sa-bottom:0px;background:#000\}/);
-  assert.match(m.REGELN, /body::before\{background:[^}]*#000 100%\) #000\}/, "Grund laeuft auf die Farbe dahinter aus");
+  const vollbild = readFileSync(new URL("../public/design-v12-vollbild.css", import.meta.url), "utf8");
+  assert.match(vollbild, /html \{ background: #101113; \}/, "der <html>-Grund ist die App-Farbe (theme-color)");
+  assert.match(vollbild, /html\.vollbild-fehl/, "alte Translucent-Installationen bekommen den Fehlbetrag");
+  assert.ok(!/html\{--sa-bottom:0px;background:#000\}/.test(m.REGELN), "kein schwarzer Grund, keine Null-Safe-Area mehr");
+  assert.match(m.REGELN, /body::before\{background:[^}]*#101113 100%\) #101113\}/, "Grund laeuft auf die App-Farbe aus");
   assert.match(m.REGELN, /body::after\{box-shadow:inset 0 1px 0[^}]*inset 0 26px 40px -26px[^}]*\}/, "unten weder Strich noch Schein");
-  assert.ok(!/body::after\{box-shadow:[^}]*inset 0 -1px/.test(m.REGELN), "kein unterer Strich");
+  // Fehlbetrag: nur standalone, nur ohne Tastatur, nur wenn safe-area-inset-top > 0 (Translucent).
+  assert.equal(m.vollbildFehl({ standalone: true, tastaturOffen: false, schirmHoehe: 874, innerHeight: 812, saTop: 62 }), 62);
+  assert.equal(m.vollbildFehl({ standalone: true, tastaturOffen: false, schirmHoehe: 874, innerHeight: 812, saTop: 0 }), 0, "black-Modus: kein Fehlbetrag");
+  assert.equal(m.vollbildFehl({ standalone: true, tastaturOffen: true, schirmHoehe: 874, innerHeight: 500, saTop: 62 }), 0, "Tastatur offen: nichts anfassen");
+  assert.equal(m.vollbildFehl({ standalone: false, tastaturOffen: false, schirmHoehe: 874, innerHeight: 700, saTop: 62 }), 0, "Browser-Tab: nichts");
 });
 
 test("Punkt 7: bei offener Bildschirmtastatur faellt der untere Sicherheitsrand weg — Feld buendig an der Tastaturkante", () => {

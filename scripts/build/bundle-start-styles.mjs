@@ -61,7 +61,8 @@ export const SOURCES = Object.freeze([
   // DAHINTER — das neue Kaskaden-Ende. Kein neuer Farbton, keine Rundung.
   "design-v12-spur.css",
   "design-v12-chat.css",
-  "design-v12-code.css"
+  "design-v12-code.css",
+  "design-v12-vollbild.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.

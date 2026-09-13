@@ -6103,3 +6103,46 @@ body.spur-start-aktiv .nav-start {
   #code .code-wchips::-webkit-scrollbar { display: none; }
   #code .code-wchips button { flex: 0 0 auto; }
 }
+
+/* ---- design-v12-vollbild.css ---- */
+html { background: #101113; }
+body { background: #101113; }
+.home-feed { background: transparent; }
+@media (max-width: 600px) {
+  #start .home-feed { padding-bottom: 8px; }
+}
+html.vollbild-fehl,
+html.vollbild-fehl body { overflow: hidden; }
+@media (max-width: 600px) {
+  html.vollbild-fehl .workspace,
+  html.vollbild-fehl .view,
+  html.vollbild-fehl .home-feed {
+    min-height: calc(100dvh - var(--sa-top) - var(--sa-bottom) + var(--vollbild-fehl, 0px));
+  }
+  html.vollbild-fehl #start.has-start-chat .home-feed.home-feed,
+  html.vollbild-fehl #code.view.is-active.is-active {
+    min-height: 0;
+    height: calc(100dvh - var(--sa-top) - var(--sa-bottom) + var(--vollbild-fehl, 0px));
+    max-height: calc(100dvh - var(--sa-top) - var(--sa-bottom) + var(--vollbild-fehl, 0px));
+  }
+}
+@media (max-width: 1000px) and (orientation: landscape) and (max-height: 520px) {
+  #start.has-start-chat #startLog {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 44px);
+    scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 44px);
+  }
+  #start .home-hero { padding-top: 12px; padding-bottom: 6px; }
+  #start .home-hero h2 { font-size: 24px; }
+  #start:not(.has-start-chat) .start-chips.start-chipreihe {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    grid-template-columns: none;
+  }
+  #start:not(.has-start-chat) .start-chips.start-chipreihe button {
+    flex-direction: row;
+    min-height: 40px;
+    padding: 0 12px;
+  }
+  #start .prompt-glass textarea { min-height: 36px; height: 36px; }
+}
