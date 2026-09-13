@@ -30,6 +30,14 @@ export const AI_SYSTEMS = Object.freeze([
     id: "kimi-k2.7", zweck: "Reserve-Fundament", anbieter: "Moonshot",
     risiko: RISK.limited, transparenzpflicht: true, protokolliert: true
   }),
+  // smejj 1: das eigene Modell antwortet seit dem 13.09.2026 ueber die echte
+  // Chat-Kette (Bruecke -> Control -> Hausmodell auf eigenem Server, Nachweis
+  // x-smejj-model-fallback: false). Die EU-AI-Act-Wache (Nr. 68) verlangte den
+  // Eintrag am selben Tag — ein aktives Modell ohne Eintrag ist Drift.
+  Object.freeze({
+    id: "smejj-1", zweck: "Chat-Antworten (Menü „smejj 1 · eigenes Modell“)", anbieter: "smejj.com (Hausmodell, eigener Server)",
+    risiko: RISK.limited, transparenzpflicht: true, protokolliert: true
+  }),
   // Ox Alpha stand hier vom 30.08. bis 06.09.2026 als "aktives Chat-Modell".
   // Betreiber-Ansage 2026-09-06: abgeschafft. Ein Transparenzverzeichnis, das
   // ein Modell fuehrt, das die Plattform nicht mehr einsetzt, ist nicht bloss

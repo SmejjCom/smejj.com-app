@@ -96,6 +96,30 @@ export async function frageModelle(backend, { fetchImpl = fetch } = {}) {
   return { ids };
 }
 
+/**
+ * Bestätigt ein Modell, das in /models FEHLT, mit der kleinstmöglichen echten
+ * Anfrage (max_tokens 1). Warum: der Zhipu-Coding-Endpunkt listet glm-4.5-flash
+ * (Freikontingent) nicht in /models, antwortet aber — gemessen 2026-09-14
+ * (HTTP 200, reasoning_content kommt). Die Wache stand deshalb seit dem 08.09.
+ * auf Rot, während jede echte Anfrage bedient wurde. Ein Katalog, der lückenhaft
+ * ist, darf keine Ampel färben — nur eine Anfrage, die wirklich scheitert.
+ * @returns {Promise<{antwortet: boolean, grund: string}>}
+ */
+export async function bestaetigeModell(backend, modell, { fetchImpl = fetch } = {}) {
+  try {
+    const antwort = await fetchImpl(`${backend.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: { [backend.apiKeyHeader]: `Bearer ${backend.apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: modell, messages: [{ role: "user", content: "ok" }], max_tokens: 1 }),
+      signal: AbortSignal.timeout(20_000)
+    });
+    if (antwort.ok) return { antwortet: true, grund: "" };
+    return { antwortet: false, grund: `HTTP ${antwort.status}` };
+  } catch (f) {
+    return { antwortet: false, grund: `Netz: ${String(f?.message || f).slice(0, 60)}` };
+  }
+}
+
 /** Die Anbieter, die mit dem gegebenen Env wirklich aktiv wären. */
 export function aktiveAnbieter(env) {
   const namen = Object.keys(PROVIDER_CATALOG)
@@ -123,7 +147,7 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
     if (stand.fehlend > 0) {
       return { ok: false, meldung: `${stand.fehlend} gewählte(s) Modell(e) beim Anbieter verschwunden — Stand vor ${stunden} h, z. B. ${String(stand.beispiel || "").slice(0, 60)}` };
     }
-    return { ok: true, meldung: `Abfrage aktuell (vor ${stunden} h): ${stand.geprueft} Modell(e) bei ${stand.anbieter} Anbieter(n) bestätigt${stand.unpruefbar ? `; nicht prüfbar: ${stand.unpruefbar}` : ""}` };
+    return { ok: true, meldung: `Abfrage aktuell (vor ${stunden} h): ${stand.geprueft} Modell(e) bei ${stand.anbieter} Anbieter(n) bestätigt${stand.ungelistet ? `; nicht in /models gelistet, antwortet aber: ${stand.ungelistet}` : ""}${stand.unpruefbar ? `; nicht prüfbar: ${stand.unpruefbar}` : ""}` };
   }
   if (!mitNetz) {
     return { ok: true, meldung: "Abfrage fällig — läuft im nächsten Netz-Takt" };
@@ -138,6 +162,7 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
 
   const fehlend = [];
   const unpruefbar = [];
+  const ungelistet = [];
   let geprueft = 0;
   for (const name of namen) {
     const backend = name === "openrouter" ? openrouterBackendFromEnv(env) : providerBackendFromEnv(name, env);
@@ -148,7 +173,12 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
       continue;
     }
     geprueft += modelle.length;
-    for (const m of fehlendeModelle(modelle, ergebnis.ids)) fehlend.push(`${name}:${m}`);
+    for (const m of fehlendeModelle(modelle, ergebnis.ids)) {
+      // Nicht gelistet ist noch nicht tot: erst die echte Anfrage entscheidet.
+      const probe = await bestaetigeModell(backend, m, { fetchImpl });
+      if (probe.antwortet) ungelistet.push(`${name}:${m}`);
+      else fehlend.push(`${name}:${m} (${probe.grund})`);
+    }
   }
 
   if (geprueft === 0 && unpruefbar.length === namen.length) {
@@ -162,11 +192,12 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
       geprueft,
       fehlend: fehlend.length,
       beispiel: fehlend[0] || "",
+      ungelistet: ungelistet.join(", "),
       unpruefbar: unpruefbar.join("; ")
     });
   } catch { /* die Meldung unten trägt die Zahlen auch ohne Ablage */ }
   if (fehlend.length) {
     return { ok: false, meldung: `${fehlend.length} gewählte(s) Modell(e) beim Anbieter verschwunden: ${fehlend.slice(0, 3).join(", ")}${unpruefbar.length ? `; nicht prüfbar: ${unpruefbar.join("; ")}` : ""}` };
   }
-  return { ok: true, meldung: `${geprueft} gewählte(s) Modell(e) bei ${namen.length - unpruefbar.length} Anbieter(n) bestätigt${unpruefbar.length ? `; nicht prüfbar: ${unpruefbar.join("; ")}` : ""}` };
+  return { ok: true, meldung: `${geprueft} gewählte(s) Modell(e) bei ${namen.length - unpruefbar.length} Anbieter(n) bestätigt${ungelistet.length ? `; nicht in /models gelistet, antwortet aber: ${ungelistet.join(", ")}` : ""}${unpruefbar.length ? `; nicht prüfbar: ${unpruefbar.join("; ")}` : ""}` };
 }

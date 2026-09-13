@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   gewaehlteModelle, fehlendeModelle, fuehreSelbsttestAus,
-  aktiveAnbieter, laufModellKatalogWache
+  aktiveAnbieter, laufModellKatalogWache, bestaetigeModell
 } from "./modellKatalogWacheAutopilot.js";
 
 // Eine Ablage-Attrappe: nichts gespeichert, Schreiben wird geschluckt.
@@ -35,10 +35,41 @@ test("fehlendes Modell macht ROT und wird benannt", async () => {
   const env = { SMEJJ_LLM_GROQ_API_KEY: "k" };
   const ergebnis = await laufModellKatalogWache({
     env, ablage: leereAblage(),
-    fetchImpl: async () => modelsAntwort(["openai/gpt-oss-120b"]) // 20b fehlt
+    // 20b fehlt in /models UND die Bestaetigungs-Anfrage scheitert -> wirklich tot
+    fetchImpl: async (url) => url.endsWith("/chat/completions")
+      ? { ok: false, status: 404 }
+      : modelsAntwort(["openai/gpt-oss-120b"])
   });
   assert.equal(ergebnis.ok, false);
   assert.ok(ergebnis.meldung.includes("groq:openai/gpt-oss-20b"));
+  assert.ok(ergebnis.meldung.includes("HTTP 404"));
+});
+
+test("nicht gelistet, antwortet aber -> GRUEN mit Hinweis (Zhipu glm-4.5-flash, 14.09.)", async () => {
+  const env = { SMEJJ_LLM_GROQ_API_KEY: "k" };
+  const anfragen = [];
+  const ergebnis = await laufModellKatalogWache({
+    env, ablage: leereAblage(),
+    fetchImpl: async (url, init) => {
+      if (url.endsWith("/chat/completions")) {
+        anfragen.push(JSON.parse(init.body));
+        return { ok: true, status: 200, json: async () => ({ choices: [] }) };
+      }
+      return modelsAntwort(["openai/gpt-oss-120b"]); // 20b nicht gelistet
+    }
+  });
+  assert.equal(ergebnis.ok, true);
+  assert.ok(ergebnis.meldung.includes("nicht in /models gelistet, antwortet aber: groq:openai/gpt-oss-20b"));
+  assert.equal(anfragen.length, 1, "genau eine Bestaetigungs-Anfrage fuer das eine fehlende Modell");
+  assert.equal(anfragen[0].max_tokens, 1, "die Probe ist so klein wie moeglich");
+});
+
+test("bestaetigeModell: Netzfehler ist 'antwortet nicht' mit Grund", async () => {
+  const probe = await bestaetigeModell({ baseUrl: "https://x", apiKeyHeader: "Authorization", apiKey: "k" }, "m", {
+    fetchImpl: async () => { throw new Error("ECONNRESET"); }
+  });
+  assert.equal(probe.antwortet, false);
+  assert.ok(probe.grund.includes("ECONNRESET"));
 });
 
 test("alle gewaehlten Modelle vorhanden -> gruen mit Zahlen", async () => {

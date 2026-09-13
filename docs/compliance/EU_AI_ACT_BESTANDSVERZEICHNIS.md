@@ -37,7 +37,7 @@ der Fremdmodelle werden nicht veraendert; es findet kein Fine-Tuning statt
 | **maus-engine-v2** | autonome Browser-Steuerung | smejj.com (eigen) | begrenztes Risiko, **kein Hochrisiko** — siehe `RISIKOEINSTUFUNG_MAUS_ENGINE.md` | erforderlich, **verschaerft** | Job-Protokoll + Artefakte + Audit-Log |
 | **voice-tts-premium** | Sprachausgabe | smejj.com (eigen) | begrenztes Risiko (Art. 50 Abs. 2) | erforderlich | Job-Protokoll |
 | **embed-bm25** | Suche / RAG | smejj.com (eigen) | minimales Risiko | nicht erforderlich | — |
-| **smejj 1.0** | eigenes Zielmodell | smejj.com (eigen) | noch nicht produktiv | bei Inbetriebnahme neu zu bewerten | — |
+| **smejj-1** (smejj 1 · eigenes Modell) | Chat-Antworten, eigene Menüzeile | smejj.com (Hausmodell, eigener Server) | begrenztes Risiko (Art. 50) | erforderlich | Job-Protokoll + Audit-Log — produktiv seit 13.09.2026 (Nachweis `x-smejj-model-fallback: false`) |
 
 ## Keine Hochrisiko-Anwendung
 
