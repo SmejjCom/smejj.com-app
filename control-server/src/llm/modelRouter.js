@@ -29,6 +29,7 @@ import {
   markModelRuntimeSuccess
 } from "./modelRuntimeHealth.js";
 import { smejjAliasZiel } from "./smejjAlias.js";
+import { brauchtSchlankeAnfrage, schlankeMaxTokens, schlankeNachrichten } from "./schlankeAnfrage.js";
 
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 
@@ -433,15 +434,18 @@ export async function executeWithFallback(chain, messages, {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), limitMs);
     try {
+      // Kleines Fenster (smejj 1, 4.096 Tokens auf 2 Kernen): nur Rolle und
+      // Frage, keine Werkzeuge, kurze Antwortgrenze — siehe schlankeAnfrage.js.
+      const schlank = brauchtSchlankeAnfrage(backend);
       const baueKoerper = (mitUsage) => JSON.stringify({
         model: backend.model,
-        messages,
+        messages: schlank ? schlankeNachrichten(messages) : messages,
         stream,
         ...(mitUsage ? { stream_options: { include_usage: true } } : {}),
         ...(temperature === undefined ? {} : { temperature }),
-        ...(Array.isArray(tools) && tools.length ? { tools } : {}),
-        ...(toolChoice === undefined ? {} : { tool_choice: toolChoice }),
-        ...(maxTokens === undefined ? {} : { max_tokens: maxTokens }),
+        ...(!schlank && Array.isArray(tools) && tools.length ? { tools } : {}),
+        ...(schlank || toolChoice === undefined ? {} : { tool_choice: toolChoice }),
+        ...(schlank ? { max_tokens: schlankeMaxTokens(maxTokens) } : maxTokens === undefined ? {} : { max_tokens: maxTokens }),
         ...(responseFormat === undefined ? {} : { response_format: responseFormat }),
         ...(thinking !== undefined && backendSupportsThinking(backend) ? { thinking } : {}),
         // Dasselbe Ziel, andere Sprache: llama.cpp kennt `thinking` nicht.
