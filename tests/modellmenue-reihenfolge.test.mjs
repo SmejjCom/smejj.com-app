@@ -76,7 +76,12 @@ test("jede Stufe schaltet auf eine ANDERE Spur", () => {
   // Der eigentliche Schutz. Vier Namen mit derselben Wirkung waeren eine
   // Attrappe: der Nutzer waehlt 1.3 und bekommt, was 1.0 auch geliefert haette.
   const [{ text }] = findeMenueDatei();
-  const stufen = [...text.matchAll(/stufe: "([a-z]+)"/g)].map((m) => m[1]);
+  // Nur die vier Stufen-Zeilen zaehlen (smejj 1.3 … 1.0). Die Zeile "smejj 1"
+  // (eigenes Modell, Betreiber-Wahl 13.09., v862) ist KEINE Stufe: sie waehlt
+  // ein anderes Modell und darf darum dieselbe Spur tragen wie eine Stufe.
+  const zeilen = [...text.matchAll(/titel: "([^"]+)"[^}]*?stufe: "([a-z]+)"/g)]
+    .filter((m) => /^smejj 1\.\d$/.test(m[1]));
+  const stufen = zeilen.map((m) => m[2]);
   const erwartet = ["spezial", "gruendlich", "auto", "schnell"];
   assert.deepEqual(stufen, erwartet,
     "Die vier Stufen muessen in der Reihenfolge 1.3, 1.2, 1.1, 1.0 je eine eigene Spur setzen");
