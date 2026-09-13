@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-13T09:14:07.011Z",
-  "confirmation": "Betreiber, 2026-09-13: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Auswahl im Chat 13.09.: 'Eigene Zeile (Empfehlung)'. Umgesetzt: neue Zeile 'smejj 1 · eigenes Modell · langsamer' unter 'Unsere Modelle', zwischen Staffel und Auto; die vier Staffel-Stufen unveraendert. Die Zeile setzt Modell 'smejj 1' (Registry smejj-1, Hausmodell-Dienst) und Stufe 'gruendlich', damit die Bruecke die Groq-Schnellspur abgibt. app.js kennt den Namen (MODEL_MODES), sonst fiele die Wahl still auf smejj 1.0. Service-Worker smejj-shell-v862, app.js?v=b166.",
+  "frozenAt": "2026-09-13T17:24:22.588Z",
+  "confirmation": "Betreiber, 2026-09-13: OK – so umsetzen (Design V12: Startseite, Chat, Code nach ChatGPT-Vorbild, Vollbild, Schrift groesser, Start/Code im Menue immer oben; Browser und andere Bereiche unveraendert; Modelle exakt wie live). Auslieferung per Doppelklick.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "e0bcf0408b6f70ffb4ee7457306b2a31c3b519543980bbca20dc44336e43ea06",
+    "public/index.html": "7f8a00c66a04fb97e1dee256523ddfd8ac1a180148b8b1a9cb0637ee7e7dba04",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
-    "public/start-styles.css": "44fcc01c4d3d1fca199da3221dcf87c7380b77ef37488837aa40f827ef242bde",
+    "public/start-styles.css": "ae9a4fe387eafa45b8aea9c98255c6a06ebf5a660d120978f9ea9db61595f4ee",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "10ba77e36d5b6e57b90245a559b2451db1ec256ff9d5aa8004677c9236a76b59",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "294517ac0da23f2514e8d1b51266a7aa070a89059a37d0cd657874487ee586d5",
+    "public/sw.js": "d78c356f5a038b854a4bcc8cbee7e7c52c27d116b186ec95726ead5f6c6d4478",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
