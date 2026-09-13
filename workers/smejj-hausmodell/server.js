@@ -164,8 +164,41 @@ async function inferenz(anfrage, antwort, pfad) {
   }
 
   const kennung = `${modell.id}-${Date.now().toString(36)}`;
+  // FRUEH ANTWORTEN (13.09.2026, gemessen). Die Kopfzeilen kamen bisher erst mit
+  // dem ersten fertigen Wort: Kaltstart rund 25 s, dazu das Lesen des
+  // Chat-Begleittexts auf 2 Kernen. Davor stehen drei Fristen, und alle messen
+  // bis zu den KOPFZEILEN: der Browser 15 s (danach wiederholt er die Anfrage),
+  // der Router des Control-Servers 45 s (danach weicht er auf GLM aus), die
+  // Bruecke 60 s. Folge live: jede Wiederholung wurde eine NEUE Rechnung in der
+  // Warteschlange, die alten rechneten verwaist weiter, der Dienst war
+  // dauerhaft belegt — und geantwortet hat trotzdem GLM.
+  //
+  // Bei einem Datenstrom gehen die Kopfzeilen jetzt SOFORT raus, gefolgt von
+  // SSE-Kommentaren (": ..."), die jeder Leser ueberspringt und die nur die
+  // Leitung offen halten. Fehler danach kommen als lesbarer Text im Strom,
+  // weil ein Statuscode dann nicht mehr moeglich ist.
+  const strom = koerper.stream === true;
+  const abbruch = new AbortController();
+  let fertig = false;
+  let wachhalter = null;
+  if (strom) {
+    antwort.writeHead(200, {
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-store",
+      "x-hausmodell-modell": modell.id,
+      "x-hausmodell-frueh": "1"
+    });
+    antwort.write(": smejj-hausmodell nimmt an\n\n");
+    wachhalter = setInterval(() => { if (!fertig) antwort.write(": warte\n\n"); }, 10_000);
+    // Legt der Anfragende auf, wird die Rechnung abgebrochen statt verwaist
+    // weiterzulaufen: llama-server beendet die Erzeugung, wenn die Verbindung
+    // schliesst, und der eine Rechenplatz ist sofort wieder frei.
+    antwort.on("close", () => { if (!fertig) abbruch.abort(); });
+  }
+  const stoppeWachhalter = () => { if (wachhalter) clearInterval(wachhalter); wachhalter = null; };
   try {
     await schlange.einreihen(async () => {
+      if (abbruch.signal.aborted) return;
       const begonnen = Date.now();
       const bezug = await depot.bereitstellen(modell);
       if (bezug.quelle !== "ssd-cache") {
@@ -177,46 +210,74 @@ async function inferenz(anfrage, antwort, pfad) {
       // niemand, dass das trainierte Modell gar nicht gelaufen ist.
       const adapter = await depot.adapterBereitstellen(modell);
       await motor.sicherstellen(modell, bezug.pfad, adapter?.pfad || null);
+      if (abbruch.signal.aborted) return;
 
       motor.anfrageBeginnt();
       try {
-        await leiteWeiter(pfad, koerper, antwort, modell);
+        await leiteWeiter(pfad, koerper, antwort, modell, {
+          fruehGeoeffnet: strom,
+          signal: abbruch.signal,
+          beiErstemByte: stoppeWachhalter
+        });
       } finally {
         motor.anfrageEndet();
       }
     }, { kennung });
   } catch (fehler) {
+    stoppeWachhalter();
     if (antwort.headersSent) {
-      antwort.end();
+      if (strom && !abbruch.signal.aborted && !antwort.writableEnded) {
+        antwort.write(`data: ${JSON.stringify({ choices: [{ delta: { content: `smejj 1 konnte gerade nicht antworten (${fehler.message}). Bitte gleich noch einmal versuchen.` } }] })}\n\n`);
+        antwort.write("data: [DONE]\n\n");
+      }
+      if (!antwort.writableEnded) antwort.end();
       return;
     }
     const status = fehler.status || 502;
     sendeJson(antwort, status, { error: { message: fehler.message, type: "hausmodell_fehler" } });
+  } finally {
+    fertig = true;
+    stoppeWachhalter();
   }
 }
 
 /** Reicht die Anfrage an llama-server durch — auch als Datenstrom (stream: true). */
-async function leiteWeiter(pfad, koerper, antwort, modell) {
+async function leiteWeiter(pfad, koerper, antwort, modell, { fruehGeoeffnet = false, signal = null, beiErstemByte = () => {} } = {}) {
   const nachOben = { ...koerper, model: modell.id };
+  const frist = AbortSignal.timeout(Number(process.env.SMEJJ_HAUSMODELL_INFERENZ_MS || 600_000));
   const antwortVomMotor = await fetch(`${motor.basisUrl}${pfad}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(nachOben),
-    signal: AbortSignal.timeout(Number(process.env.SMEJJ_HAUSMODELL_INFERENZ_MS || 600_000))
+    signal: signal ? AbortSignal.any([signal, frist]) : frist
   });
 
-  antwort.writeHead(antwortVomMotor.status, {
-    "content-type": antwortVomMotor.headers.get("content-type") || "application/json",
-    "cache-control": "no-store",
-    "x-hausmodell-modell": modell.id,
-    "x-hausmodell-kaltstart-ms": String(motor.letzterStartMs ?? 0)
-  });
+  if (fruehGeoeffnet) {
+    // Die Kopfzeilen sind schon draussen. Ein Fehler des Motors wird darum
+    // als lesbarer Text geschickt — ein Statuscode kann nicht mehr folgen.
+    if (!antwortVomMotor.ok) {
+      beiErstemByte();
+      const grund = (await antwortVomMotor.text().catch(() => "")).slice(0, 200);
+      throw Object.assign(new Error(`motor_http_${antwortVomMotor.status}${grund ? `: ${grund}` : ""}`), { status: antwortVomMotor.status });
+    }
+  } else {
+    antwort.writeHead(antwortVomMotor.status, {
+      "content-type": antwortVomMotor.headers.get("content-type") || "application/json",
+      "cache-control": "no-store",
+      "x-hausmodell-modell": modell.id,
+      "x-hausmodell-kaltstart-ms": String(motor.letzterStartMs ?? 0)
+    });
+  }
 
   if (!antwortVomMotor.body) {
     antwort.end();
     return;
   }
-  for await (const stueck of antwortVomMotor.body) antwort.write(Buffer.from(stueck));
+  let erstes = true;
+  for await (const stueck of antwortVomMotor.body) {
+    if (erstes) { erstes = false; beiErstemByte(); }
+    antwort.write(Buffer.from(stueck));
+  }
   antwort.end();
 }
 
