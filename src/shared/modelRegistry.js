@@ -348,7 +348,15 @@ export const MODEL_REGISTRY = Object.freeze({
     // Waehlbarkeit fuer "Auto": das Hausmodell, das langfristige Ziel des
     // Projekts. Tempo 7 GESCHAETZT. Kontextfenster 4.096 — genug fuer kurze
     // Fragen, zu wenig fuer Programmieraufgaben.
-    auswahl: Object.freeze({ kostenklasse: "eigen", tempo: 7, eigen: true }),
+    // nurAufWunsch (13.09.2026, gemessen): das Modell laeuft auf 2 Kernen mit
+    // EINEM Rechenplatz. Kaum war der Schluessel gesetzt, setzte die Automatik
+    // es bei schnellen Fragen an die ERSTE Stelle der Kette (eigene Modelle
+    // bekommen +30) und in jeder anderen Kette als stillen Ersatz hinter GLM.
+    // Ergebnis live: der Dienst dauerhaft ausgelastet, Anfragen liefen nach
+    // 120 s in der Warteschlange ab, der Chat meldete "Verbindung zum Server
+    // unterbrochen". Der Betreiber hat am selben Tag entschieden: eigene Zeile
+    // im Menue, NICHT ueber Auto. Wer es waehlt, bekommt es — sonst niemand.
+    auswahl: Object.freeze({ kostenklasse: "eigen", tempo: 7, eigen: true, nurAufWunsch: true }),
     capabilities: Object.freeze({
       chat: true,
       coding: true,
@@ -443,6 +451,9 @@ function weitereErsatzmodelle(bereits, profile, env) {
   const zusatz = [];
   for (const model of Object.values(MODEL_REGISTRY)) {
     if (model.id === AUTO_MODEL_ID || bereits.includes(model.id)) continue;
+    // Ein Modell "nur auf Wunsch" ist kein stiller Ersatz: faellt GLM aus, soll
+    // die Frage nicht unbemerkt auf einen 2-Kern-Server wandern (13.09.).
+    if (model.auswahl?.nurAufWunsch) continue;
     if (!isModelEnabled(model, env)) continue;
     if (!getModelRuntimeConfig(model, env, profile).configured) continue;
     zusatz.push(model.id);
@@ -628,6 +639,8 @@ function enabledDefaultModelId(env) {
  */
 export function bewerteFuerAuto(model, profile, env, health = null) {
   if (!model || model.id === AUTO_MODEL_ID) return null;
+  // Nur auf ausdruecklichen Wunsch — die Automatik waehlt es nie (13.09.).
+  if (model.auswahl?.nurAufWunsch) return null;
   if (!isModelEnabled(model, env)) return null;
   if (!getModelRuntimeConfig(model, env, profile).configured) return null;
 

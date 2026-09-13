@@ -287,3 +287,19 @@ test("eigenes Modell: die Staffel und Auto bleiben unberuehrt", () => {
     assert.equal(g.chain[0].name, "zhipu", `${JSON.stringify(wahl)} darf nicht aufs Hausmodell wandern`);
   }
 });
+
+test("eigenes Modell: nur auf Wunsch — Auto und stille Ersatzketten nehmen es NIE", async () => {
+  // Gemessen am 13.09.: kaum war der Schluessel gesetzt, stand das Hausmodell
+  // bei schnellen Auto-Fragen an ERSTER Stelle und sonst als Ersatz hinter GLM.
+  // Ein Rechenplatz auf 2 Kernen — der Dienst war dauerhaft belegt, Anfragen
+  // liefen nach 120 s ab. Wer "smejj 1" waehlt, bekommt es; sonst niemand.
+  const { resolveModelRequest } = await import("../control-server/src/llm/modelRouter.js");
+  const env = zhipuEnv({ SMEJJ_SERVER_AI_ENABLED: "false", ...EIGENES });
+  for (const [profil, wahl] of [["fast", "auto"], ["default", "auto"], ["coding", "auto"], ["default", ""], ["default", "smejj 1.1"]]) {
+    const { chain } = resolveModelRequest(profil, wahl, env);
+    assert.equal(chain.some((c) => c.name === "hausmodell"), false,
+      `${profil}/${JSON.stringify(wahl)} darf nicht auf den Hausmodell-Dienst fuehren`);
+  }
+  const eigen = resolveModelRequest("fast", "smejj 1", env);
+  assert.equal(eigen.chain[0].name, "hausmodell", "die ausdrueckliche Wahl muss es weiter bekommen");
+});

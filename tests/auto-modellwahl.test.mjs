@@ -33,9 +33,24 @@ test("Auto ist per Vorgabe AN — sonst waehlt es nichts", () => {
   assert.equal(waehle("fast", { ...GLM, SMEJJ_MODEL_AUTO_ENABLED: "0" }).autoEnabled, false);
 });
 
-test("das eigene Hausmodell gewinnt bei kurzen Fragen — das ist das Projektziel", () => {
+test("ein eigenes Modell gewinnt bei kurzen Fragen — das ist das Projektziel", () => {
   // Kostenklasse "eigen" + Tempo schlagen ein fremdes Modell auf Gratis-Kontingent.
-  assert.equal(waehle("fast", { ...GLM, ...HAUS }).selectedModelId, "smejj-1");
+  //
+  // Bis zum 13.09. stand hier smejj-1. Das Ziel gilt weiter, nur nicht fuer
+  // DIESES Modell: smejj fast 1.0 (GPU, Tempo 9) traegt es, smejj-1 nicht.
+  assert.equal(waehle("fast", { ...GLM, ...FAST }).selectedModelId, "smejj-fast-1");
+});
+
+test("smejj-1 waehlt die Automatik NIE — nur wer es ausdruecklich will", () => {
+  // Gemessen am 13.09.: kaum war der Schluessel gesetzt, bekam der
+  // Hausmodell-Dienst (2 Kerne, EIN Rechenplatz) jede schnelle Auto-Frage.
+  // Er war dauerhaft belegt, Anfragen liefen nach 120 s Warteschlange ab, der
+  // Chat meldete "Verbindung zum Server unterbrochen". Der Betreiber hat am
+  // selben Tag entschieden: eigene Zeile im Menue, nicht ueber Auto
+  // (Option "Nur ueber Auto" ausdruecklich NICHT gewaehlt).
+  assert.equal(waehle("fast", { ...GLM, ...HAUS }).selectedModelId, "glm-5-2");
+  assert.equal(bewerteFuerAuto(MODEL_REGISTRY["smejj-1"], "fast", { ...GLM, ...HAUS }), null);
+  assert.equal(MODEL_REGISTRY["smejj-1"].auswahl.nurAufWunsch, true);
 });
 
 test("aber NICHT beim Programmieren — 4.096 Tokens tragen keine Codeaufgabe", () => {
