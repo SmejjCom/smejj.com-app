@@ -85,5 +85,11 @@ body.spur-start-aktiv .nav-start {
   .sidebar {
     padding-top: calc(32px + env(safe-area-inset-top, 0px));
     padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    /* GEMESSEN im Android-Emulator 2026-09-13 (412x839): Spur UND Schreibfeld
+       standen beide auf z-index 70 — das spaetere Glas deckte den Fuss der
+       offenen Spur zu (Betreiber: "keine Ueberlagerungen mit Chat oder
+       Eingabefeld"). 74 liegt ueber Glas (70) und Kopfglas (73), aber unter
+       dem Logo-Knopf (75), der die Spur wieder schliesst. */
+    z-index: 74;
   }
 }
