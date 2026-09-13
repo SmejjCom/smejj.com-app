@@ -448,7 +448,9 @@ const GESTARTET_AM = new Date().toISOString();
 
 async function handleHealth(res) {
   // ai spiegelt den echten Router-Zustand: Gate + Budget + Provider-Kette (fail-closed).
-  await refreshModelRuntimeHealth(process.env);
+  //
+  // Proben im Hintergrund: ein ausgelastetes Hausmodell liess sonst Zeabur diesen Server ungesund melden (13.09.).
+  void refreshModelRuntimeHealth(process.env).catch(() => {});
   const aiStatus = evaluateAiAvailability(process.env);
   json(res, 200, {
     ok: true,
