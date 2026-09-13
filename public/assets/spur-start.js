@@ -255,6 +255,12 @@ export function initSpurStart() {
   const vier = document.querySelector('.nav[aria-label="Arbeitsbereiche"]');
   if (!vier || document.querySelector(".nav-start")) return false;
   vier.classList.add("nav-vier");
+  // Design V12: auch die Vier-Gruppen-Spur bekommt Kopf (Reiter) und
+  // scrollende Liste — sonst wanderte der Reiter dort genauso weg.
+  const vierListe = document.createElement("div");
+  vierListe.className = "spur-liste";
+  vierListe.append(...vier.childNodes);
+  vier.append(vierListe);
   vier.prepend(baueReiter());
   const halter = document.createElement("nav");
   halter.className = "nav nav-start";

@@ -60,7 +60,8 @@ export const SOURCES = Object.freeze([
   // Spur in drei Zonen + größere Schrift. Baut auf V11 auf und steht darum
   // DAHINTER — das neue Kaskaden-Ende. Kein neuer Farbton, keine Rundung.
   "design-v12-spur.css",
-  "design-v12-chat.css"
+  "design-v12-chat.css",
+  "design-v12-code.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.

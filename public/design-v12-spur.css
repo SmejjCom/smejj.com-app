@@ -34,10 +34,20 @@ body.spur-start-aktiv .nav-start {
   min-height: 0;
   overflow: hidden;
 }
-.nav-start .spur-reiter {
+.nav-vier {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.nav-start .spur-reiter,
+.nav-vier .spur-reiter {
   margin: 2px 4px 8px;
 }
-.nav-start .spur-liste {
+.nav-start .spur-liste,
+.nav-vier .spur-liste {
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -54,7 +64,8 @@ body.spur-start-aktiv .nav-start {
   font-size: 16px;
 }
 .spur-reiter button svg { width: 18px; height: 18px; }
-.nav-start .nav-button {
+.nav-start .nav-button,
+.nav-vier .nav-button {
   min-height: 38px;
   padding-top: 5px;
   padding-bottom: 5px;
