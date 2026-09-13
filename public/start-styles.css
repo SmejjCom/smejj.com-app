@@ -5914,3 +5914,53 @@ body.spur-zu:not(.right-panel-open) #code .code-wchips button {
 #start .erwaehnung-menue [role="menuitem"]:focus-visible { background: rgba(242, 245, 244, 0.08); }
 #start .erwaehnung-menue [role="menuitem"] b { font-weight: 600; color: var(--v11-cy); }
 .chat-erwaehnung[hidden] { display: none !important; }
+
+/* ---- design-v12-spur.css ---- */
+.sidebar {
+  min-height: 0;
+  height: auto;
+}
+body.spur-start-aktiv .nav-start {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.nav-start .spur-reiter {
+  margin: 2px 4px 8px;
+}
+.nav-start .spur-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+  scrollbar-width: thin;
+}
+.spur-reiter button {
+  padding: 9px 0;
+  font-size: 16px;
+}
+.spur-reiter button svg { width: 18px; height: 18px; }
+.nav-start .nav-button {
+  min-height: 38px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  font-size: 16.5px;
+}
+.nav-start .spur-chat { font-size: 15.5px; }
+.nav-start .spur-alle { font-size: 15.5px; }
+.nav-start .side-block { font-size: 12.5px; }
+.nav-kuerzel { font-size: 12px; }
+.profile-dock-name { font-size: 15px; }
+.profile-dock-plan { font-size: 13.5px; }
+@media (max-width: 767px) {
+  .sidebar {
+    padding-top: calc(32px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  }
+}

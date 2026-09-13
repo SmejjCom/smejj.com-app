@@ -55,7 +55,11 @@ export const SOURCES = Object.freeze([
   // Mobil-Composer (25.08.): Chip-Ellipsis + wrap-Netz — direkt vor der
   // V11-Schicht, die vertragsgemaess das Kaskaden-Ende bleibt.
   "mobil-composer.css",
-  "design-v11.css"
+  "design-v11.css",
+  // Design V12 (Betreiber-OK 2026-09-13, Mockup docs/mockups/start-chat-2026-09-13):
+  // Spur in drei Zonen + größere Schrift. Baut auf V11 auf und steht darum
+  // DAHINTER — das neue Kaskaden-Ende. Kein neuer Farbton, keine Rundung.
+  "design-v12-spur.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.
