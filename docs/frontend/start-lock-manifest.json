@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-14T21:32:11.740Z",
-  "confirmation": "Betreiber, 2026-09-14 (A-bis-Z-Pruefauftrag, Master-Prompt/Ship-Loop): Nach der Umsetzung bitte live gehen, live testen und pruefen, ob alles richtig funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber laeuft. — E2E Fixrunde 5: Betreiber-Auftrag E2E-Test 14.09.: 'Waehrend dieses Auftrags darfst du notwendige Reparaturen durchfuehren.' — Reparaturen ohne Designaenderung am Eingabefeld der Startseite: app.js eine Zeile (Lader als window.smejjLadeComposerTools), Code-Leiste nur unter 340 px; Cache-Marken und SW smejj-shell-v878.",
+  "frozenAt": "2026-09-14T21:38:39.948Z",
+  "confirmation": "Betreiber, 2026-09-14 (A-bis-Z-Pruefauftrag, Master-Prompt/Ship-Loop): Nach der Umsetzung bitte live gehen, live testen und pruefen, ob alles richtig funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber laeuft. — E2E Fixrunde 6: Betreiber-Auftrag E2E-Test 14.09.: 'Waehrend dieses Auftrags darfst du notwendige Reparaturen durchfuehren.' — keine Designaenderung an Startseite/Eingabefeld; nur Cache-Marken (composer-tools.js u. a.) und SW smejj-shell-v879.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "862d3dc4d4694fad2bcf7c7328d59dfeaf183485a76b29b3dab306019bba56f6",
+    "public/index.html": "a4e5a4063f1b628bb7d6d23aea2b3e60a7396fd692fa4b722c9a0cc5ecec6b6e",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "f2cd5a51d7ea3d5a21e3f478ce965358155ed30b67ca30a38df744fcd20d9403",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "f8d1dd861c8168a7baf59d0dbc7a0210a6f5f0cbbd494d887f2f801c195473ad",
     "public/browser-pane.css": "a2de84280465570316b3062061a6e9359c953d35f4d02a719975b2b28afb9b8c",
-    "public/app.js": "3da5a29779c4c24613bebbf07b01c3d308f5f1b95213195bb91a52a94dd29f4c",
+    "public/app.js": "38797ef7e685e50446806cffbbc32e70880e99e7dccf4318b9d80f62453090ac",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "23d8ce8c091439eed3ac2436d700edfac9c15cec910d43a8157016ad063ab646",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -21,8 +21,8 @@
     "public/autonomous-coding.js": "95a765c2888895d5e48458a289bda3ab29595ac5871a1edc95d992a45e027164",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "b41761720083bffe248f7c3340f860e2f437389b11adb122eef851c5a00511d6",
-    "public/composer-tools.js": "4ff0fa12c75e66bc8f8735e3c7ed35f987d19513cfd7849f387e297b91a0481e",
-    "public/composer-plus-menu.js": "65122a7e9e0b03c84ed9804d12b054c3c4b8b67e6ce55aaff6d53378186d2466",
+    "public/composer-tools.js": "59904ea1c124b339e6aa99d66a75a384cdc0c7f03e3c08fc15d0ba145417273d",
+    "public/composer-plus-menu.js": "9bcbd87b2a839394d2e10f30f3b8f43c8f08e2c16314bd1dc65b9ee092b0dc71",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "82c9879c2a49dc10195e52540e0438eaaee56adf623682a28ff321fc3cf7a45e",
     "public/browser-pane-render.js": "f6a0df7abdd279f737b41d836722385b8bcdbcebc260fc5d5aa7a0262ae3d49c",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "397e73a79bd2b575250c24c5d669385edfe94565aaf322bc723a09c6d54ccdd7",
+    "public/sw.js": "ddc90223ce985fabd391739f10ebf0bf5ca6ae12482c0228091d94bd9de37a92",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
