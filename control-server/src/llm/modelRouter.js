@@ -294,7 +294,12 @@ export function resolveModelRequest(profile = "default", requestedModel = "", en
 
   const legacyChain = resolveChain(safeProfile, env).map((backend) => ({
     ...backend,
-    logicalModelId: backend.name === "zhipu" ? "glm-5-2" : backend.logicalModelId || "provider-fallback"
+    // Zwei zhipu-Glieder, zwei Kennungen (Review-Befund 14.09., wie im Bauzweig):
+    // die Laufzeit-Gesundheit haengt an der logischen Kennung — der Zweitversuch
+    // glm-4.5-flash darf ein leeres 5.2-Kontingent nicht wieder auf "ready" setzen.
+    logicalModelId: backend.name === "zhipu"
+      ? (backend.model === "glm-4.5-flash" ? "glm-4-5-flash" : "glm-5-2")
+      : backend.logicalModelId || "provider-fallback"
   }));
   const chain = dedupeBackends([...modelChain, ...legacyChain]);
   return { selection, chain };

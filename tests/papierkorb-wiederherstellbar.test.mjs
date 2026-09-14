@@ -29,12 +29,17 @@ test("F1: jede Konstante, die chat-store-bereiche.js nutzt, ist dort auch bekann
   const importBlock = (bereiche.match(/import \{([\s\S]*?)\} from "\.\/chat-store\.js/) || ["", ""])[1];
   const importiert = new Set(importBlock.split(",").map((s) => s.trim()).filter(Boolean));
   const deklariert = new Set([...bereiche.matchAll(/(?:const|let|export const)\s+([A-Z][A-Z0-9_]+)\s*=/g)].map((m) => m[1]));
-  const benutzt = new Set([...bereiche.matchAll(/\b([A-Z][A-Z0-9_]{3,})\b/g)].map((m) => m[1]));
+  // Kommentare raus, sonst zaehlen Woerter wie WICHTIG oder IMMER als Bezeichner.
+  const ohneKommentare = bereiche.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  const benutzt = new Set([...ohneKommentare.matchAll(/\b([A-Z][A-Z0-9_]{3,})\b/g)].map((m) => m[1]));
   for (const name of benutzt) {
-    if (/^(STORE|PROJEKT_STORE|MAX_PROJEKTE)$/.test(name)) continue; // importiert
-    if (name === "PAPIERKORB_TAGE") assert.ok(deklariert.has(name) || importiert.has(name), `${name} wird benutzt, ist aber weder importiert noch deklariert`);
+    if (name in globalThis) continue; // JSON, URL … sind eingebaut
+    assert.ok(deklariert.has(name) || importiert.has(name), `${name} wird benutzt, ist aber weder importiert noch deklariert`);
   }
   assert.match(bereiche, /export const PAPIERKORB_TAGE = 30;/);
+  // Und die Zahl lebt NUR dort: keine zweite Deklaration im Kern, der Papierkorb liest sie.
+  assert.doesNotMatch(store, /const PAPIERKORB_TAGE = /);
+  assert.match(lies("public/papierkorb.js"), /PAPIERKORB_TAGE \} from/);
 });
 
 test("F2: Loeschen und Wiederherstellen heben updatedAt an — sonst sieht der Sync keine Aenderung", () => {
@@ -62,8 +67,12 @@ test("F4: Escape schliesst das Such-Overlay auch ohne Fokus im Overlay", () => {
 });
 
 test("F7: der Vorwaermer der Sprachwelle trifft eine Route, die es auf der Bruecke gibt", () => {
-  assert.doesNotMatch(warmup, /fetch\(`\$\{origin\}\/api\/health`/);
-  assert.match(warmup, /fetch\(`\$\{origin\}\/api\/voice\/status`/);
+  // Die Bruecke beantwortet JEDES GET unter /api/* mit 404 (Methodenwache vor dem
+  // Routing, public/chat-bridge.js) — /health ist ihre einzige GET-Route.
+  assert.doesNotMatch(warmup, /fetch\(`\$\{origin\}\/api\//);
+  assert.match(warmup, /fetch\(`\$\{origin\}\/health`/);
+  const bruecke = lies("public/chat-bridge.js");
+  assert.match(bruecke, /"\/health"/, "die Bruecke muss /health als GET-Route fuehren");
 });
 
 test("F5: der Mikrofon-Knopf traegt aria-pressed", () => {
