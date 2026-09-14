@@ -9,10 +9,11 @@ funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber l�
 ## Ergebnis in einem Satz
 
 Prüfplan an unser System angepasst (17 Phasen, Messregeln, Vergleich mit ChatGPT/Claude/Gemini), dann
-vier Fixrunden **live** (SW v867 → v871, Control-Server fünfmal abgeglichen): 14 Frontend-Fehler und
-sechs Server-Befunde behoben — darunter ein **Papierkorb, der seit dem 25.08. immer leer war**, und ein
+fünf Fixrunden **live** (SW v867 → v872, Control-Server siebenmal neu gebaut): 23 Frontend-Fehler und
+acht Server-Befunde behoben — darunter ein **Papierkorb, der seit dem 25.08. immer leer war**, und ein
 **Löschen, das nie zum Server kam**; die drei Design-Entscheide (F18/F20/F14) sind nach dem Betreiber-OK
-umgesetzt, F27 (Code-Vorlagen 38 px) wartet auf ein OK.
+umgesetzt, die kleinen Punkte in Fixrunde 5 (Workflow: 12 Analysten + 24 Skeptiker); F27, F6 und F11
+liegen als fertige Patches hinter Sperren und warten auf ein OK.
 
 ## Die Funde (Kurzform; Details in `docs/qa/befunde-2026-09-14.md`)
 
@@ -45,8 +46,8 @@ umgesetzt, F27 (Code-Vorlagen 38 px) wartet auf ein OK.
 
 ## Schutz
 
-Rollback-Tag `stand-2026-09-14-vor-qa-a-bis-z`, Release-Tags `release-2026-09-14-qa-fixrunde-2` bis `-4` auf
-Arbeitszweig, Klon und Bauzweig (GitHub + Codeberg); Start-Lock viermal gestempelt; Zweigschutz
+Rollback-Tag `stand-2026-09-14-vor-qa-a-bis-z`, Release-Tags `release-2026-09-14-qa-fixrunde-2` bis `-5` auf
+Arbeitszweig, Klon und Bauzweig (GitHub + Codeberg); Start-Lock fünfmal gestempelt; Zweigschutz
 (kein Force-Push, kein Löschen) auf Klon `main`, Bauzweig und Arbeitszweig; Schutz-Echtheit grün.
 
 ## Werkzeuge, die neu sind
@@ -54,9 +55,11 @@ Arbeitszweig, Klon und Bauzweig (GitHub + Codeberg); Start-Lock viermal gestempe
 - `scripts/einmal/qa-fixrunde-2026-09-14.sh <SW_alt> <SW_neu> <Basis> <Kurz>` — generische Kaskade (Wächter, Stempel, Klon-Abgleich, Push, Live-Wartezeit; schreibt index.html auch nach `assets/`).
 - Scratch: `marke-hochziehen.mjs` (Cache-Marken rekursiv), `mobil-angemeldet.mjs`, `upload-angemeldet.mjs` (headless Chrome + Eval-Ausweis), `static-server.mjs` + `kacheln-lokal.mjs` (Startseite vor dem Deploy bei 402/390/360 px messen, mit lokaler Sitzung).
 - Kaskade: `FREIGABE="…"` trägt bei Design-Freigaben den Betreiber-Wortlaut in den Stempel (Fixrunde 4).
+- Scratch `patch-anwenden.mjs`: wendet Workflow-Patches (Datei, old, new) an — Probelauf prüft jeden Edit auf genau einen Treffer; `f5-live.mjs` (F8/F12/F13/F16/F21 live, Panel per `openPane()` aus `/assets/browser-pane.js`, weil JS-`click()` das nachgeladene Panel nicht öffnet); `api-latenz.mjs` mit 700-ms-Takt (Missbrauchs-Wache).
 
 ## Offen
 
-- Betreiber-Entscheid (Design-Lock): F27 Code-Vorlagen-Knöpfe 38 px (wie F14 auf 44 px). F18/F20/F14 sind umgesetzt (Fixrunde 4, SW v871, Bauzweig 010d7abc).
+- Betreiber-Entscheid (Sperren, Patches fertig): F27 Code-Vorlagen 44 px (Start-Lock), F6 je ein auth/me- und billing-Aufruf (Start-, Security-, Abo-Lock), F11 Schreibfeld neben dem Panel (Start-Lock). F18/F20/F14 umgesetzt (Fixrunde 4), F8/F10/F12/F13/F15/F16/F21/F23/R7/R8/F26 (Fixrunde 5, SW v872, Bauzweig 0afa4a4c).
+- Tiefe Spur: `schutz-design-lock` schwankt gegen glm-5.2 (91,2 %, 1 kritisch) — Brücken-Systemprompt härten, Brücke neu starten (Betreiber).
 - Betreiber-Handgriff: Zeabur-Schlüssel, `CODEBERG_TOKEN`, Apple-Freigabe (TestFlight), Keystore sichern.
-- Klein (nächste Fixrunde): F6, F15, F21, F10, F11, F16, F8, F23, F12, F13.
+- Klein: nichts mehr offen (Fixrunde 5).
