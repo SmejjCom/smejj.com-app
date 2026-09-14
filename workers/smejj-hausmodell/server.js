@@ -29,6 +29,8 @@ const CACHE_VERZEICHNIS = process.env.SMEJJ_HAUSMODELL_CACHE || "/var/cache/haus
 const CACHE_DECKEL_GB = Number(process.env.SMEJJ_HAUSMODELL_CACHE_GB || 20);
 const LEERLAUF_MIN = Number(process.env.SMEJJ_HAUSMODELL_LEERLAUF_MIN || 5);
 const LLAMA_BINAER = process.env.SMEJJ_HAUSMODELL_LLAMA || "/opt/llama/llama-server";
+// Bleibt dauerhaft geladen (Betreiber-Wahl 14.09.). Leer = altes Verhalten.
+const WACH_MODELL = process.env.SMEJJ_HAUSMODELL_WACH_MODELL ?? "smejj-1-basis";
 
 const beginn = Date.now();
 let letzterBezug = null;
@@ -39,6 +41,8 @@ const motor = new Motor({
   binaer: LLAMA_BINAER,
   hafen: MOTOR_HAFEN,
   leerlaufMs: LEERLAUF_MIN * 60 * 1000,
+  wachModellId: WACH_MODELL ? findeLaufModell(WACH_MODELL)?.id || null : null,
+  nachEntladen: () => wachHalten("nach-leerlauf"),
   threads: Number(process.env.SMEJJ_HAUSMODELL_THREADS || Math.max(1, os.cpus().length - 1))
 });
 const schlange = new Warteschlange({
@@ -66,8 +70,37 @@ server.listen(HAFEN, "0.0.0.0", () => {
   // 0.0.0.0, nicht "::": Zeaburs internes Netz ist IPv4 (Lehre vom Bild-Maler).
   console.log(`[hausmodell] horcht auf 0.0.0.0:${HAFEN}`);
   console.log(`[hausmodell] Cache ${CACHE_VERZEICHNIS} (Deckel ${CACHE_DECKEL_GB} GB), Leerlauf ${LEERLAUF_MIN} min`);
-  console.log(`[hausmodell] Standardmodell ${standardModell().id}`);
+  console.log(`[hausmodell] Standardmodell ${standardModell().id}, wach gehalten: ${motor.wachModellId || "keins"}`);
+  wachHalten("start");
+  // Stirbt der Motor oder scheitert ein Start, holt die Runde ihn zurueck.
+  setInterval(() => wachHalten("runde"), 60_000).unref();
 });
+
+let wachLaeuft = false;
+/**
+ * Laedt das Wach-Modell, wenn gerade nichts laeuft. Bewusst NICHT ueber die
+ * Warteschlange: das Holen aus e2 dauert nach einem Neubau ~200 s, und echte
+ * Anfragen sollen in der Zeit nicht an der Wartefrist scheitern. Das Depot
+ * teilt einen laufenden Bezug mit jeder gleichzeitigen Anfrage.
+ */
+async function wachHalten(anlass) {
+  if (!motor.wachModellId || wachLaeuft) return;
+  const modell = findeLaufModell(motor.wachModellId);
+  const frei = () => motor.zustand === ZUSTAENDE.GESTOPPT && schlange.laufend === 0 && schlange.wartend.length === 0;
+  if (!frei()) return;
+  wachLaeuft = true;
+  try {
+    const bezug = await depot.bereitstellen(modell);
+    const adapter = await depot.adapterBereitstellen(modell);
+    if (!frei()) return;
+    await motor.sicherstellen(modell, bezug.pfad, adapter?.pfad || null);
+    console.log(`[hausmodell] ${modell.id} wach gehalten (${anlass})`);
+  } catch (fehler) {
+    console.error(`[hausmodell] Wachhalten scheiterte (${anlass}): ${fehler.message}`);
+  } finally {
+    wachLaeuft = false;
+  }
+}
 
 async function behandle(anfrage, antwort) {
   const url = new URL(anfrage.url, `http://${anfrage.headers.host || "127.0.0.1"}`);

@@ -62,6 +62,13 @@ export class Motor {
     leerlaufMs = 5 * 60 * 1000,
     startFristMs = 180_000,
     threads = 2,
+    // WACH HALTEN (14.09.2026, Betreiber-Wahl "Wach halten, gratis"): dieses
+    // Modell wird im Leerlauf NICHT entladen. Kaltstart kostete smejj 1 bei
+    // jeder ersten Frage 15-25 s. Andere Modelle entladen weiter nach der
+    // Leerlauf-Frist; danach ruft der Motor `nachEntladen`, damit der Dienst
+    // das Wach-Modell wieder laedt.
+    wachModellId = null,
+    nachEntladen = null,
     protokoll = console
   } = {}) {
     this.binaer = binaer;
@@ -70,6 +77,8 @@ export class Motor {
     this.startFristMs = startFristMs;
     this.threads = threads;
     this.protokoll = protokoll;
+    this.wachModellId = wachModellId || null;
+    this.nachEntladen = nachEntladen;
 
     this.zustand = ZUSTAENDE.GESTOPPT;
     this.prozess = null;
@@ -102,6 +111,7 @@ export class Motor {
       adapter: this.adapterPfad ? this.adapterPfad.split("/").pop() : null,
       startZaehler: this.startZaehler,
       leerlaufMs: this.leerlaufMs,
+      wachModell: this.wachModellId,
       letzterFehler: this.letzterFehler
     };
   }
@@ -238,10 +248,14 @@ export class Motor {
 
   #leerlaufUhrStellen() {
     if (this.leerlaufUhr) clearTimeout(this.leerlaufUhr);
+    this.leerlaufUhr = null;
+    if (this.wachModellId && this.modell?.id === this.wachModellId) return;
     this.leerlaufUhr = setTimeout(() => {
       if (this.offeneAnfragen > 0) return;
       this.protokoll.log?.(`[motor] ${this.leerlaufMs / 1000} s Leerlauf — Modell wird entladen (0 MB RAM)`);
-      this.stoppen("leerlauf").catch((f) => this.protokoll.error?.(`[motor] Stoppen fehlgeschlagen: ${f.message}`));
+      this.stoppen("leerlauf")
+        .then(() => this.nachEntladen?.())
+        .catch((f) => this.protokoll.error?.(`[motor] Stoppen fehlgeschlagen: ${f.message}`));
     }, this.leerlaufMs);
     // Ein offener Timer darf den Dienst nicht am Beenden hindern.
     this.leerlaufUhr.unref?.();
