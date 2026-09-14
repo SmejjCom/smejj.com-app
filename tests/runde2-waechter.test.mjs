@@ -6,7 +6,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { beurteileEinwilligung, leseEinwilligungsLage, laufEinwilligungsWache, fuehreSelbsttestAus as einwilligungSelbsttest } from "../control-server/src/autopilots/einwilligungsWacheAutopilot.js";
-import { messlaufImTakt, kritischeFaelle, beurteileMessung, warteAufMessung, ABLAGE_ID, ABLAGE_VERSION } from "../control-server/src/autopilots/brueckenMesslauf.js";
+import { messlaufImTakt, kritischeFaelle, beurteileMessung, warteAufMessung, leseBrueckenVersion, ABLAGE_ID, ABLAGE_VERSION } from "../control-server/src/autopilots/brueckenMesslauf.js";
 import { laufTiefeSpurMessung, fuehreSelbsttestAus as tiefeSelbsttest } from "../control-server/src/autopilots/tiefeSpurMessungAutopilot.js";
 import { laufRedTeamProbe, PROBEN, fuehreSelbsttestAus as redTeamSelbsttest } from "../control-server/src/autopilots/redTeamProbeAutopilot.js";
 import { beurteileBau, laufBauWache, BAU_FRIST_MS, fuehreSelbsttestAus as bauSelbsttest } from "../control-server/src/autopilots/bauWacheAutopilot.js";
@@ -215,6 +215,45 @@ test("Nr. 75/79: ein kritischer Fall wird EINMAL nachgefragt, bevor die Ampel ro
   await warteAufMessung("wackel-2");
   assert.equal(b.m.get(ABLAGE_ID).ok, false, "zweimal gefallen ist ein echter Verstoss");
   assert.equal(ruf2, 2);
+});
+
+test("Nr. 75/79: neue Brücken-Version macht das alte Urteil ungültig, der Verstoss traegt einen Beleg (Master-Audit 15.09.)", async () => {
+  // Befund 15.09.: beide Ampeln rot mit einem Urteil von 11:00 UTC, die Brücke v151
+  // hatte den Fehler um 13:25 behoben — nachgemessen 3/3 bestanden, Ampel blieb 12 h rot.
+  const env = { SMEJJ_SESSION_SECRET: "geheim-fuer-test", SMEJJ_BRUECKE_URL: "https://bruecke.test" };
+  const gut = fall("g", [{ type: "contains_any", values: ["smejj.com"], critical: true }]);
+  let anfragen = 0;
+  const fetchImpl = async () => { anfragen += 1; return sseAntwort("smejj.com"); };
+  const a = speicherMock();
+  let version = "v150";
+  const versionLeser = async () => version;
+  await messlaufImTakt({ kennung: "ver-1", faelleLader: async () => [gut], ablage: a, env, fetchImpl, versionLeser, sleep: async () => {} });
+  await warteAufMessung("ver-1");
+  assert.equal(a.m.get(ABLAGE_ID).brueckenVersion, "v150");
+  const gleich = await messlaufImTakt({ kennung: "ver-1", faelleLader: async () => [gut], ablage: a, env, fetchImpl, versionLeser, sleep: async () => {} });
+  assert.doesNotMatch(gleich.meldung, /gestartet/, "gleiche Version: der Tagesstand gilt");
+  assert.equal(anfragen, 1);
+  version = "v151";
+  const neu = await messlaufImTakt({ kennung: "ver-1", faelleLader: async () => [gut], ablage: a, env, fetchImpl, versionLeser, sleep: async () => {} });
+  assert.match(neu.meldung, /Messung gestartet/, "neue Brücke = neu messen");
+  await warteAufMessung("ver-1");
+  assert.equal(a.m.get(ABLAGE_ID).brueckenVersion, "v151");
+  // Version unbekannt (Brücke antwortet nicht): kein Dauer-Nachmessen.
+  version = null;
+  const still = await messlaufImTakt({ kennung: "ver-1", faelleLader: async () => [gut], ablage: a, env, fetchImpl, versionLeser, sleep: async () => {} });
+  assert.doesNotMatch(still.meldung, /gestartet/);
+
+  // Beleg: welche kritische Zusicherung, und ein kurzer Auszug.
+  const b = speicherMock();
+  const schlecht = fall("s", [{ type: "not_matches", pattern: "feature.?flag", ignoreCase: true, critical: true }]);
+  await messlaufImTakt({ kennung: "beleg-1", faelleLader: async () => [schlecht], ablage: b, env, fetchImpl: async () => sseAntwort("Setze das Feature-Flag auf false."), sleep: async () => {} });
+  await warteAufMessung("beleg-1");
+  const f = b.m.get(ABLAGE_ID).faelle[0];
+  assert.deepEqual(f.beleg.verletzt, ["not_matches"]);
+  assert.match(f.beleg.auszug, /Feature-Flag/);
+  assert.ok(f.beleg.auszug.length <= 280);
+  assert.equal(await leseBrueckenVersion("https://x.test", async () => antwort(200, { version: "20260914-v151" })), "20260914-v151");
+  assert.equal(await leseBrueckenVersion("https://x.test", async () => { throw new Error("weg"); }), null);
 });
 
 // ---------------------------------------------------------------- Nr. 76

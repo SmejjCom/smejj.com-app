@@ -32,6 +32,18 @@ function auswerten(name, pruefungen) {
   return { ok: true, meldung: `${name}: ${pruefungen.length}/${pruefungen.length} Pruefungen bestanden` };
 }
 
+// EHRLICHKEIT (Master-Audit 15.09.): die Autopiloten, deren Lauf der Laeufer hiermit
+// umhuellt, pruefen ihr Modul nur mit festen Beispiel-Eingaben — keiner arbeitet an
+// echten Nutzerdaten oder am Live-System. Gruen heisst dort "Baustein rechnet richtig",
+// nicht "Funktion laeuft". Die Meldung sagt das selbst, damit niemand 2/2 fuer Live-Wirkung haelt.
+export const BAUSTEIN_PRAEFIX = "Baustein-Selbsttest, keine Live-Wirkung — ";
+export function alsBaustein(fn) {
+  return () => {
+    const e = fn();
+    return e && typeof e.meldung === "string" ? { ...e, meldung: BAUSTEIN_PRAEFIX + e.meldung } : e;
+  };
+}
+
 export function laufDeepResearch() {
   const plan = generateResearchPlan("Vergleich von Vektordatenbanken", 3);
   const schritte = Array.isArray(plan) ? plan : plan?.steps || plan?.plan;
@@ -118,13 +130,17 @@ export function laufProcessReward() {
 }
 
 export function laufKnowledgeDistiller() {
+  // Master-Audit 15.09.: der Test uebergab `solution`, das Modul liest `reasoning`/`code`.
+  // Ergebnis war isSound:false — und die Ampel trotzdem gruen, weil nur "ein Objekt kam" geprueft wurde.
   const beste = distillOptimalReasoning("Summe von 1 bis 10", [
-    { model: "a", solution: "Die Summe ist 55, denn n(n+1)/2 = 10*11/2 = 55.", correct: true },
-    { model: "b", solution: "Keine Ahnung.", correct: false }
+    { model: "a", reasoning: "Schritt 1: Wir nutzen die Formel n(n+1)/2. Daher ist die Summe von 1 bis 10 gleich 55.", code: "const s = 10 * 11 / 2; s;" },
+    { model: "b", reasoning: "Keine Ahnung." }
   ]);
+  const leer = distillOptimalReasoning("Summe von 1 bis 10", [{ model: "b", reasoning: "Keine Ahnung." }]);
   return auswerten("Destillation", [
-    { was: "waehlt ein Ergebnis", erfuellt: Boolean(beste) },
-    { was: "waehlt nicht die leere Antwort", erfuellt: !JSON.stringify(beste || "").includes("Keine Ahnung") }
+    { was: "waehlt die belegte Loesung", erfuellt: beste?.winnerModel === "a" && beste?.isSound === true },
+    { was: "waehlt nicht die leere Antwort", erfuellt: !String(beste?.distilledReasoning || "").includes("Keine Ahnung") },
+    { was: "eine leere Antwort allein ist nicht belastbar", erfuellt: leer?.isSound === false }
   ]);
 }
 
@@ -132,7 +148,9 @@ export function laufEvolutionaryMutation() {
   const bericht = runEvolutionaryStressTest("function teile(a, b) { return a / b; }");
   return auswerten("Mutationstest", [
     { was: "Bericht entsteht", erfuellt: Boolean(bericht) && typeof bericht === "object" },
-    { was: "Faelle wurden geprueft", erfuellt: JSON.stringify(bericht).length > 20 }
+    // Vorher "JSON laenger als 20 Zeichen" — das war immer wahr (Master-Audit 15.09.).
+    { was: "Mutationen wurden angewandt", erfuellt: Number(bericht?.mutationsApplied) > 0 && Array.isArray(bericht?.mutationDetails) && bericht.mutationDetails.length === bericht.mutationsApplied },
+    { was: "Widerstandswert liegt zwischen 0 und 1", erfuellt: Number.isFinite(bericht?.resilienceScore) && bericht.resilienceScore >= 0 && bericht.resilienceScore <= 1 }
   ]);
 }
 
@@ -173,11 +191,15 @@ export function laufWebContainer() {
 
 export function laufVoicePair() {
   const sitzung = createVoicePairSession("selbsttest", "voice_only");
-  const rahmen = processRealtimePairFrame({ sessionId: sitzung?.sessionId || sitzung?.id, audio: "AAAA", timestamp: 0 });
+  // Master-Audit 15.09.: der Test uebergab `audio`, das Modul liest `audioChunkBase64` —
+  // jeder Rahmen hiess "Stumm", und "Rahmen wird verarbeitet" war trotzdem erfuellt.
+  const rahmen = processRealtimePairFrame({ sessionId: sitzung?.sessionId || sitzung?.id, audioChunkBase64: "AAAA", timestamp: 0 });
+  const stumm = processRealtimePairFrame({ sessionId: sitzung?.sessionId || sitzung?.id, timestamp: 0 });
   return auswerten("Sprachsitzung", [
     { was: "Sitzung entsteht", erfuellt: Boolean(sitzung) && typeof sitzung === "object" },
     { was: "Sitzung hat eine Kennung", erfuellt: Boolean(sitzung?.sessionId || sitzung?.id) },
-    { was: "Rahmen wird verarbeitet", erfuellt: Boolean(rahmen) }
+    { was: "Audio-Rahmen wird als Audio erkannt", erfuellt: /Audio-Eingabe aktiv/.test(String(rahmen?.contextSummary || "")) },
+    { was: "Rahmen ohne Audio heisst stumm", erfuellt: /Stumm/.test(String(stumm?.contextSummary || "")) }
   ]);
 }
 
