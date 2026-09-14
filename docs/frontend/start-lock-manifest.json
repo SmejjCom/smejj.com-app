@@ -1,19 +1,19 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-14T20:41:42.571Z",
-  "confirmation": "Betreiber, 2026-09-14 (A-bis-Z-Pruefauftrag, Master-Prompt/Ship-Loop): Nach der Umsetzung bitte live gehen, live testen und pruefen, ob alles richtig funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber laeuft. — E2E Fixrunde 4: Betreiber-Auftrag E2E-Test 14.09.: 'Waehrend dieses Auftrags darfst du notwendige Reparaturen durchfuehren.' — keine Designaenderung an Startseite/Eingabefeld; nur Cache-Marke pwa-schnellstart.js und SW smejj-shell-v877.",
+  "frozenAt": "2026-09-14T21:32:11.740Z",
+  "confirmation": "Betreiber, 2026-09-14 (A-bis-Z-Pruefauftrag, Master-Prompt/Ship-Loop): Nach der Umsetzung bitte live gehen, live testen und pruefen, ob alles richtig funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber laeuft. — E2E Fixrunde 5: Betreiber-Auftrag E2E-Test 14.09.: 'Waehrend dieses Auftrags darfst du notwendige Reparaturen durchfuehren.' — Reparaturen ohne Designaenderung am Eingabefeld der Startseite: app.js eine Zeile (Lader als window.smejjLadeComposerTools), Code-Leiste nur unter 340 px; Cache-Marken und SW smejj-shell-v878.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "eba39cfd8512ce7652317b6c680683befb75db2c35adcd68cbebb2e0d54417e9",
+    "public/index.html": "862d3dc4d4694fad2bcf7c7328d59dfeaf183485a76b29b3dab306019bba56f6",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
-    "public/start-styles.css": "dabfb2cbf5b870ec8d2c6201ccda60e8c46ae33e185f29723433905139c75a2d",
+    "public/start-styles.css": "f2cd5a51d7ea3d5a21e3f478ce965358155ed30b67ca30a38df744fcd20d9403",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "10ba77e36d5b6e57b90245a559b2451db1ec256ff9d5aa8004677c9236a76b59",
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "f8d1dd861c8168a7baf59d0dbc7a0210a6f5f0cbbd494d887f2f801c195473ad",
     "public/browser-pane.css": "a2de84280465570316b3062061a6e9359c953d35f4d02a719975b2b28afb9b8c",
-    "public/app.js": "f9a03eb04ca12061bcefe302c2a1dc642931fdda6412ddadd3625f52cb7e715a",
+    "public/app.js": "3da5a29779c4c24613bebbf07b01c3d308f5f1b95213195bb91a52a94dd29f4c",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "23d8ce8c091439eed3ac2436d700edfac9c15cec910d43a8157016ad063ab646",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "eab87f16596507f58da6cdc72c25ba7151bf367397cd4a21796e157a2a74bc4f",
+    "public/sw.js": "397e73a79bd2b575250c24c5d669385edfe94565aaf322bc723a09c6d54ccdd7",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
