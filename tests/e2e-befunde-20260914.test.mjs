@@ -59,3 +59,31 @@ test("E11: alle Sprachseiten erlauben api.smejj.com in connect-src (wie die Star
     assert.doesNotMatch(csp, /salad\.cloud/, `${l}: abgeschaltete Salad-Hosts raus`);
   }
 });
+
+// E12–E19: statische Suche nach undefinierten Namen (ESLint no-undef, 14.09.2026)
+// fand Reste frueherer Auslagerungen — jeder davon warf ReferenceError beim Klick.
+test("E12/E13: Export und Upload-Liste importieren downloadText (gleiche Adresse wie app.js)", () => {
+  for (const d of ["projects-surface.js", "uploads-surface.js"]) assert.match(lies(d), /import \{ downloadText \} from "\.\/app-helfer\.js\?v=4";/, d);
+  assert.match(lies("app.js"), /from "\.\/app-helfer\.js\?v=4"/);
+});
+
+test("E14: API-Bereich-Aktionen kennen ihre Konstanten und Helfer", () => {
+  const q = lies("api-center-aktionen.js");
+  for (const n of ["DEV_PREFIX", "BYOK_PREFIX", "MODELL_KEY"]) assert.match(q, new RegExp(`const ${n} = `), n);
+  assert.match(q, /import \{ api, cssEscape, escapeHtml, fehlerText, zahl \} from "\.\/api-center-helfer\.js\?v=1";/);
+  assert.doesNotMatch(q, /^\s+schliessePopovers\(root\);/m, "nur ueber hof");
+  assert.match(lies("api-center-surface.js"), /return \{ alleEintraege, laden, melde, schliessePopovers \};/);
+  // Wortgleich zur Flaeche — sonst zeigen zwei Stellen auf zwei Adressen.
+  const flaeche = lies("api-center-surface.js");
+  for (const n of ["DEV_PREFIX", "BYOK_PREFIX", "MODELL_KEY"]) assert.equal(q.match(new RegExp(`const ${n} = [^;]+;`))[0], flaeche.match(new RegExp(`const ${n} = [^;]+;`))[0], n);
+});
+
+test("E16–E19: Browser-Rechtsklick, Code-Anhang, Coding-Rueckfall, Admin-Ausweichhost", () => {
+  assert.match(lies("browser-pane.js"), /import \{ zeigeVerlaufMenue \} from "\.\/browser-pane-menue\.js\?v=browser-pane-20260709-2";/);
+  assert.match(lies("code-anhaenge.js"), /export function anhaengeZahl\(\)/);
+  assert.match(lies("code-flaeche.js"), /!anhaengeZahl\(\)/);
+  assert.doesNotMatch(lies("code-flaeche.js"), /!anhaenge\.length/);
+  assert.doesNotMatch(lies("free-coding-fallback.js"), /projectId: state\.currentProjectId/);
+  assert.doesNotMatch(lies("admin/api.js"), /\? ZWEIT_ORIGIN/);
+  assert.match(lies("admin/api.js"), /const ALT_ORIGIN = /);
+});
