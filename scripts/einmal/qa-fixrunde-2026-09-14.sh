@@ -42,7 +42,10 @@ echo "live: $LIVE_SW"
 # Nur vorhandene Dateien (ACMR): eine im Repo geloeschte Altlast (z. B. die
 # Weiterleitung admin/uebersicht) bleibt im Klon stehen — geloescht wird live nie
 # von hier aus (Daten-Lock).
-DATEIEN=($(git diff --name-only --diff-filter=ACMR "$BASIS_VOR_AENDERUNG" HEAD -- public/ | grep -v '^public/assets/' | sed 's|^public/||'))
+# chat-bridge.js ist im Klon das GEBUENDELTE Artefakt (assets/chat-bridge.js, Quelle der
+# Wahrheit: feature/design-v11, Buendel per scripts/deploy/bundle_chat_bridge.mjs) — die
+# Quelldatei darf nie darueber kopiert werden (14.09.2026).
+DATEIEN=($(git diff --name-only --diff-filter=ACMR "$BASIS_VOR_AENDERUNG" HEAD -- public/ | grep -v '^public/assets/' | grep -v '^public/chat-bridge\.js$' | sed 's|^public/||'))
 echo "== Dateien (${#DATEIEN[@]}): ${DATEIEN[*]}"
 [ "${#DATEIEN[@]}" -gt 0 ] || { echo "ABBRUCH: nichts zu liefern."; exit 1; }
 

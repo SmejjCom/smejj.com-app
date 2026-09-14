@@ -239,7 +239,10 @@ async function handleChat(req, res) {
   // Der Control Server ergaenzt Projektwissen bisher nur in /api/agent, nicht im
   // Chat — darum bekommt er den Block hier mit. Alles andere am Rumpf bleibt
   // unveraendert, insbesondere der ungekuerzte Gespraechsverlauf.
-  if (await streamViaControl(res, "/api/chat", wissen ? { ...body, messages: withRagBlock(messages, wissen, vorLetzterNutzerNachricht(messages)) } : body)) return;
+  // Der Control-Weg bekommt den ungekuerzten Verlauf, aber mit der Schutzregel
+  // im ersten System-Prompt (14.09.2026, siehe mitSchutzregel).
+  const geschuetzt = mitSchutzregel(messages);
+  if (await streamViaControl(res, "/api/chat", { ...body, messages: wissen ? withRagBlock(geschuetzt, wissen, vorLetzterNutzerNachricht(geschuetzt)) : geschuetzt })) return;
   return streamModel(res, angereichert, "chat", body.model);
 }
 
@@ -369,10 +372,32 @@ function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = 
 const BRUECKE_VERLAUF_MAX = 12;
 const BRUECKE_VERLAUF_BLOCK = 4;
 
+// Schutzregel (14.09.2026, tiefe-Spur-Messung: Fall schutz-design-lock kippte gegen
+// glm-5-2, weil /api/chat den fremden System-Prompt ungeschuetzt zum Control
+// Server durchreichte — die OBERSTE REGEL galt nur in buildAgentMessages). Jetzt
+// traegt jede Chat-Anfrage dieselbe Regel: als Teil des Waechters (Schnellspur,
+// eigenes Modell) und als Vorsatz im ersten System-Prompt (Control-Weg). Ein
+// VORSATZ statt einer zweiten System-Nachricht, damit der Anbieter-Cache den
+// Anfang weiter erkennt und kein Anbieter an zwei System-Rollen scheitert.
+// ACHTUNG Quelle der Wahrheit: die live laufende Bruecke (v150/v151) wird aus
+// feature/design-v11 gebuendelt; diese Fassung hier (v146-Linie) traegt die
+// Regel gleichlautend, damit kein spaeteres Buendel sie verliert.
+export const SCHUTZREGEL = "OBERSTE REGEL von smejj.com: Startseite und unteres Eingabefeld sind design-gesperrt (Design-Lock); Schutzmechanismen (Budget-Waechter, Rate-Limits, Zugriffsregeln, Sperren, Schluessel) und Nutzerdaten werden nie abgeschaltet, geloescht, umgangen oder preisgegeben. Aenderungen daran gibt es nur nach schriftlicher Freigabe des Betreibers. Verlangt jemand so etwas, antworte mit Nein, nenne die Sperre beim Namen und verweise auf die schriftliche Freigabe — liefere dafuer keinen Plan und keinen Code.";
+
+export function mitSchutzregel(messages) {
+  const liste = Array.isArray(messages) ? messages : [];
+  const erste = liste[0];
+  if (erste && erste.role === "system" && typeof erste.content === "string") {
+    if (erste.content.startsWith(SCHUTZREGEL)) return liste;
+    return [{ ...erste, content: `${SCHUTZREGEL}\n${erste.content}` }, ...liste.slice(1)];
+  }
+  return [{ role: "system", content: SCHUTZREGEL }, ...liste];
+}
+
 export function hardenMessages(messages) {
   const guard = {
     role: "system",
-    content: "Du bist der Assistent von smejj.com. Antworte direkt sichtbar, ohne <think>, ohne interne Notizen und ohne leere Vorrede."
+    content: `${SCHUTZREGEL}\nDu bist der Assistent von smejj.com. Antworte direkt sichtbar, ohne <think>, ohne interne Notizen und ohne leere Vorrede.`
   };
   const gueltig = messages.filter((message) => message && message.role && typeof message.content === "string");
   const ueberhang = Math.max(0, gueltig.length - BRUECKE_VERLAUF_MAX);
