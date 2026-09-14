@@ -23,7 +23,13 @@ const ABFRAGE_ABSTAND_MS = 24 * 60 * 60 * 1000;
 // Eine gescheiterte Nachpruefung eines roten Ablage-Stands wird fruehestens
 // nach dieser Frist wiederholt; hoechstens so viele Kleinstanfragen je Tageslauf.
 const NACHPRUEF_ABSTAND_MS = 6 * 60 * 60 * 1000;
+// Netz-Aussetzer sind kein Beleg fuer ein verschwundenes Modell (gemessen 14.09.,
+// 13:13 UTC: "The operation was aborted" waehrend eines Bruecken-Neustarts, danach
+// 6 h rot). Ein totes Modell antwortet schnell mit HTTP 4xx; eine Zeitueberschreitung
+// heisst "nicht pruefbar". Solche Staende werden nach 30 min erneut geprueft.
+const NETZ_NACHPRUEF_ABSTAND_MS = 30 * 60 * 1000;
 const PROBEN_DECKEL = 5;
+const istNetzGrund = (grund) => /^Netz:/.test(String(grund || ""));
 const ABLAGE_ID = "modell-katalog-stand";
 
 let ablageStandard = null;
@@ -165,7 +171,9 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
       const modellName = rest.join(":").replace(/ \(.*\)$/, "");
       const kennung = `${anbieterName}:${modellName}`;
       const zuletztMs = Date.parse(stand.nachgeprueft || 0);
-      const wiederFaellig = !Number.isFinite(zuletztMs) || jetztMs - zuletztMs >= NACHPRUEF_ABSTAND_MS;
+      const nurNetz = / \(Netz: /.test(beispiel);
+      const abstandMs = nurNetz ? NETZ_NACHPRUEF_ABSTAND_MS : NACHPRUEF_ABSTAND_MS;
+      const wiederFaellig = !Number.isFinite(zuletztMs) || jetztMs - zuletztMs >= abstandMs;
       if (mitNetz && stand.fehlend === 1 && anbieterName && modellName && wiederFaellig) {
         const backend = anbieterName === "openrouter" ? openrouterBackendFromEnv(env) : providerBackendFromEnv(anbieterName, env);
         if (backend) {
@@ -175,6 +183,14 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
               await speicher.schreib({ ...stand, id: ABLAGE_ID, fehlend: 0, beispiel: "", ungelistet: [stand.ungelistet, kennung].filter(Boolean).join(", "), nachgeprueft: new Date(jetztMs).toISOString() });
             } catch { /* die Meldung unten stimmt auch ohne Ablage */ }
             return { ok: true, meldung: `Nachgeprüft: ${kennung} fehlt in /models, antwortet aber (Stand vor ${stunden} h korrigiert)` };
+          }
+          if (nurNetz && istNetzGrund(probe.grund)) {
+            // Zweimal nur ein Netz-Aussetzer: kein Beleg fuer "verschwunden" —
+            // der Stand wird als nicht pruefbar abgelegt, die Tagesabfrage misst neu.
+            try {
+              await speicher.schreib({ ...stand, id: ABLAGE_ID, fehlend: 0, beispiel: "", unpruefbar: [stand.unpruefbar, `${kennung} (${probe.grund})`].filter(Boolean).join("; "), nachgeprueft: new Date(jetztMs).toISOString() });
+            } catch { /* die Meldung unten stimmt auch ohne Ablage */ }
+            return { ok: true, meldung: `Nachgeprüft: ${kennung} nicht erreichbar (${probe.grund}) — kein Beleg für ein verschwundenes Modell, die Tagesabfrage prüft neu` };
           }
           try { await speicher.schreib({ ...stand, id: ABLAGE_ID, nachgeprueft: new Date(jetztMs).toISOString() }); } catch { /* still */ }
         }
@@ -216,6 +232,7 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
       proben += 1;
       const probe = await bestaetigeModell(backend, m, { fetchImpl });
       if (probe.antwortet) ungelistet.push(`${name}:${m}`);
+      else if (istNetzGrund(probe.grund)) unpruefbar.push(`${name}:${m} (${probe.grund})`);
       else fehlend.push(`${name}:${m} (${probe.grund})`);
     }
   }

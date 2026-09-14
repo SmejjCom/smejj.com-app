@@ -214,3 +214,55 @@ test("ohne Netz: Abfrage faellig, kein Fehler", async () => {
   assert.equal(ergebnis.ok, true);
   assert.ok(ergebnis.meldung.includes("Netz-Takt"));
 });
+
+// Netz-Aussetzer (14.09.2026, 13:13 UTC): "The operation was aborted" waehrend eines
+// Bruecken-Neustarts machte die Ampel 6 h rot. Ein Timeout belegt kein totes Modell.
+const abbruch = () => { const f = new Error("The operation was aborted due to timeout"); f.name = "TimeoutError"; throw f; };
+
+test("Tageslauf: ein Netz-Aussetzer bei der Kleinstanfrage zaehlt als nicht pruefbar, nicht als verschwunden", async () => {
+  const env = { SMEJJ_LLM_GROQ_API_KEY: "k", SMEJJ_LLM_GROQ_MODEL_DEFAULT: "m1" };
+  const geschrieben = [];
+  const ergebnis = await laufModellKatalogWache({
+    env, ablage: { lies: async () => null, schreib: async (d) => { geschrieben.push(d); } },
+    fetchImpl: async (url) => (url.endsWith("/chat/completions") ? abbruch() : modelsAntwort(["nichts-davon"]))
+  });
+  assert.equal(ergebnis.ok, true, ergebnis.meldung);
+  assert.equal(geschrieben[0].fehlend, 0);
+  assert.match(geschrieben[0].unpruefbar, /Netz:/);
+});
+
+test("Tageslauf: ein echtes HTTP 404 bleibt rot (die Netz-Regel weicht nichts auf)", async () => {
+  const env = { SMEJJ_LLM_GROQ_API_KEY: "k", SMEJJ_LLM_GROQ_MODEL_DEFAULT: "m1" };
+  const ergebnis = await laufModellKatalogWache({
+    env, ablage: leereAblage(),
+    fetchImpl: async (url) => (url.endsWith("/chat/completions") ? { ok: false, status: 404 } : modelsAntwort(["nichts-davon"]))
+  });
+  assert.equal(ergebnis.ok, false);
+  assert.match(ergebnis.meldung, /HTTP 404/);
+});
+
+test("roter Netz-Stand aus der Ablage wird nach 30 min erneut geprueft und bei erneutem Aussetzer als nicht pruefbar abgelegt", async () => {
+  const env = { SMEJJ_LLM_ZHIPU_API_KEY: "z" };
+  const jetzt = Date.parse("2026-09-14T14:00:00Z");
+  const stand = { id: "modell-katalog-stand", createdAt: "2026-09-14T13:00:00Z", fehlend: 1, beispiel: "zhipu:glm-4.5-flash (Netz: The operation was aborted due to timeout)", geprueft: 3, anbieter: 1, nachgeprueft: "2026-09-14T13:13:00Z" };
+  const geschrieben = [];
+  let proben = 0;
+  const ergebnis = await laufModellKatalogWache({
+    env, jetztMs: jetzt,
+    ablage: { lies: async () => stand, schreib: async (d) => { geschrieben.push(d); } },
+    fetchImpl: async () => { proben += 1; return abbruch(); }
+  });
+  assert.equal(proben, 1, "nach 47 min ist die Netz-Nachpruefung faellig (nicht erst nach 6 h)");
+  assert.equal(ergebnis.ok, true, ergebnis.meldung);
+  assert.match(ergebnis.meldung, /nicht erreichbar/);
+  assert.equal(geschrieben[0].fehlend, 0);
+  assert.match(geschrieben[0].unpruefbar, /zhipu:glm-4\.5-flash/);
+});
+
+test("roter HTTP-Stand behaelt die 6-h-Frist", async () => {
+  const env = { SMEJJ_LLM_ZHIPU_API_KEY: "z" };
+  const jetzt = Date.parse("2026-09-14T14:00:00Z");
+  const stand = { id: "modell-katalog-stand", createdAt: "2026-09-14T13:00:00Z", fehlend: 1, beispiel: "zhipu:glm-4.5-flash (HTTP 404)", geprueft: 3, anbieter: 1, nachgeprueft: "2026-09-14T13:13:00Z" };
+  const ergebnis = await laufModellKatalogWache({ env, jetztMs: jetzt, ablage: { lies: async () => stand, schreib: async () => {} }, fetchImpl: async () => { throw new Error("darf nie gerufen werden"); } });
+  assert.equal(ergebnis.ok, false);
+});
