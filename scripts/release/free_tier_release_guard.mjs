@@ -54,8 +54,18 @@ function walkObject(value, visit, pathParts = []) {
   }
 }
 
+// DIESELBE Erlaubnisliste wie scripts/check-no-paid-services.mjs (Betreiber-
+// Entscheidung 2026-08-15: oeffentliches Repo, Actions 0 EUR, ersetzen den
+// abgeschafften Zeabur-Dienst smejj-autopilot-jobs). Bis 14.09.2026 fehlte sie
+// hier — release:preflight war seit dem 20.08. rot, obwohl check:security gruen
+// war. tests/release-guard-gleichlauf.test.mjs haelt beide Listen gleich.
+export const ERLAUBTE_WORKFLOWS = Object.freeze([
+  ".github/workflows/codeberg-spiegel.yml",
+  ".github/workflows/qualitaets-messlauf.yml"
+]);
+
 function checkNoGitHubActions(files) {
-  const workflows = files.filter((file) => file.startsWith(".github/workflows/"));
+  const workflows = files.filter((file) => file.startsWith(".github/workflows/") && !ERLAUBTE_WORKFLOWS.includes(file));
   if (workflows.length) {
     fail(`GitHub Actions workflows are not allowed as core architecture: ${workflows.join(", ")}`);
   }
@@ -153,8 +163,11 @@ function checkTrackedSecrets(files) {
     /\bsk-[A-Za-z0-9_-]{20,}\b/,
     /\bAKIA[0-9A-Z]{16}\b/,
     /\bASIA[0-9A-Z]{16}\b/,
-    /IDRIVE_E2_(?:(?:TRAINING|WATCHDOG)_)?SECRET_KEY=(?!$|replace_me|<set>)[^\s]+/,
-    /IDRIVE_E2_(?:(?:TRAINING|WATCHDOG)_)?ACCESS_KEY=(?!$|replace_me|<set>)[^\s]+/,
+    // Verweis-Formen (verweis:NAME, ${NAME}, Platzhalter ...) sind keine Werte —
+    // geeicht wie in check-no-paid-services.mjs (25.08.2026). Ein echter Wert
+    // faellt weiter auf.
+    /IDRIVE_E2_(?:(?:TRAINING|WATCHDOG)_)?SECRET_KEY=(?!$|replace_me|<set>|\.\.\.|verweis:|\$\{)[^\s]+/,
+    /IDRIVE_E2_(?:(?:TRAINING|WATCHDOG)_)?ACCESS_KEY=(?!$|replace_me|<set>|\.\.\.|verweis:|\$\{)[^\s]+/,
     /SMEJJ_LLM_API_KEY=(?!$|replace_me|local)[^\s]+/
   ];
 

@@ -20,6 +20,16 @@ import {
 } from "../llm/modelRouter.js";
 
 const ABFRAGE_ABSTAND_MS = 24 * 60 * 60 * 1000;
+// Eine gescheiterte Nachpruefung eines roten Ablage-Stands wird fruehestens
+// nach dieser Frist wiederholt; hoechstens so viele Kleinstanfragen je Tageslauf.
+const NACHPRUEF_ABSTAND_MS = 6 * 60 * 60 * 1000;
+// Netz-Aussetzer sind kein Beleg fuer ein verschwundenes Modell (gemessen 14.09.,
+// 13:13 UTC: "The operation was aborted" waehrend eines Bruecken-Neustarts, danach
+// 6 h rot). Ein totes Modell antwortet schnell mit HTTP 4xx; eine Zeitueberschreitung
+// heisst "nicht pruefbar". Solche Staende werden nach 30 min erneut geprueft.
+const NETZ_NACHPRUEF_ABSTAND_MS = 30 * 60 * 1000;
+const PROBEN_DECKEL = 5;
+const istNetzGrund = (grund) => /^Netz:/.test(String(grund || ""));
 const ABLAGE_ID = "modell-katalog-stand";
 
 let ablageStandard = null;
@@ -96,6 +106,32 @@ export async function frageModelle(backend, { fetchImpl = fetch } = {}) {
   return { ids };
 }
 
+/**
+ * Bestätigt ein Modell, das in /models FEHLT, mit der kleinstmöglichen echten
+ * Anfrage (max_tokens 1). Warum: der Zhipu-Coding-Endpunkt listet glm-4.5-flash
+ * (Freikontingent) nicht in /models, antwortet aber — gemessen 2026-09-14
+ * (HTTP 200, reasoning_content kommt). Die Wache stand deshalb seit dem 08.09.
+ * auf Rot, während jede echte Anfrage bedient wurde. Ein Katalog, der lückenhaft
+ * ist, darf keine Ampel färben — nur eine Anfrage, die wirklich scheitert.
+ * @returns {Promise<{antwortet: boolean, grund: string}>}
+ */
+export async function bestaetigeModell(backend, modell, { fetchImpl = fetch } = {}) {
+  try {
+    const antwort = await fetchImpl(`${backend.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: { [backend.apiKeyHeader]: `Bearer ${backend.apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: modell, messages: [{ role: "user", content: "ok" }], max_tokens: 1 }),
+      // 8 s reichen fuer ein Token; 20 s je Modell haetten einen Lauf mit
+      // lueckenhaftem Katalog minutenlang aufgehalten (Review 14.09.).
+      signal: AbortSignal.timeout(8_000)
+    });
+    if (antwort.ok) return { antwortet: true, grund: "" };
+    return { antwortet: false, grund: `HTTP ${antwort.status}` };
+  } catch (f) {
+    return { antwortet: false, grund: `Netz: ${String(f?.message || f).slice(0, 60)}` };
+  }
+}
+
 /** Die Anbieter, die mit dem gegebenen Env wirklich aktiv wären. */
 export function aktiveAnbieter(env) {
   const namen = Object.keys(PROVIDER_CATALOG)
@@ -121,9 +157,47 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
   if (Number.isFinite(standAlterMs) && standAlterMs < ABFRAGE_ABSTAND_MS && stand) {
     const stunden = Math.round(standAlterMs / 3_600_000);
     if (stand.fehlend > 0) {
+      // Ein Rot aus der Ablage wird NACHGEPRUEFT, bevor es gemeldet wird: das
+      // Beispiel-Modell bekommt die Kleinstanfrage. Antwortet es, war der
+      // Katalog lueckenhaft (Zhipu 08.–14.09.), und der Stand wird sofort
+      // korrigiert — sonst bliebe die Ampel bis zur naechsten Tagesabfrage rot.
+      // Review-Befunde 14.09.: (1) nur bei GENAU EINEM fehlenden Modell — bei
+      // mehreren kennt die Ablage nur das Beispiel, die uebrigen blieben
+      // ungeprueft und wuerden fuer lebendig erklaert; (2) eine gescheiterte
+      // Nachpruefung wird vermerkt und fruehestens nach NACHPRUEF_ABSTAND_MS
+      // wiederholt, statt in jedem Takt das tote Modell anzufragen.
+      const beispiel = String(stand.beispiel || "");
+      const [anbieterName, ...rest] = beispiel.split(":");
+      const modellName = rest.join(":").replace(/ \(.*\)$/, "");
+      const kennung = `${anbieterName}:${modellName}`;
+      const zuletztMs = Date.parse(stand.nachgeprueft || 0);
+      const nurNetz = / \(Netz: /.test(beispiel);
+      const abstandMs = nurNetz ? NETZ_NACHPRUEF_ABSTAND_MS : NACHPRUEF_ABSTAND_MS;
+      const wiederFaellig = !Number.isFinite(zuletztMs) || jetztMs - zuletztMs >= abstandMs;
+      if (mitNetz && stand.fehlend === 1 && anbieterName && modellName && wiederFaellig) {
+        const backend = anbieterName === "openrouter" ? openrouterBackendFromEnv(env) : providerBackendFromEnv(anbieterName, env);
+        if (backend) {
+          const probe = await bestaetigeModell(backend, modellName, { fetchImpl });
+          if (probe.antwortet) {
+            try {
+              await speicher.schreib({ ...stand, id: ABLAGE_ID, fehlend: 0, beispiel: "", ungelistet: [stand.ungelistet, kennung].filter(Boolean).join(", "), nachgeprueft: new Date(jetztMs).toISOString() });
+            } catch { /* die Meldung unten stimmt auch ohne Ablage */ }
+            return { ok: true, meldung: `Nachgeprüft: ${kennung} fehlt in /models, antwortet aber (Stand vor ${stunden} h korrigiert)` };
+          }
+          if (nurNetz && istNetzGrund(probe.grund)) {
+            // Zweimal nur ein Netz-Aussetzer: kein Beleg fuer "verschwunden" —
+            // der Stand wird als nicht pruefbar abgelegt, die Tagesabfrage misst neu.
+            try {
+              await speicher.schreib({ ...stand, id: ABLAGE_ID, fehlend: 0, beispiel: "", unpruefbar: [stand.unpruefbar, `${kennung} (${probe.grund})`].filter(Boolean).join("; "), nachgeprueft: new Date(jetztMs).toISOString() });
+            } catch { /* die Meldung unten stimmt auch ohne Ablage */ }
+            return { ok: true, meldung: `Nachgeprüft: ${kennung} nicht erreichbar (${probe.grund}) — kein Beleg für ein verschwundenes Modell, die Tagesabfrage prüft neu` };
+          }
+          try { await speicher.schreib({ ...stand, id: ABLAGE_ID, nachgeprueft: new Date(jetztMs).toISOString() }); } catch { /* still */ }
+        }
+      }
       return { ok: false, meldung: `${stand.fehlend} gewählte(s) Modell(e) beim Anbieter verschwunden — Stand vor ${stunden} h, z. B. ${String(stand.beispiel || "").slice(0, 60)}` };
     }
-    return { ok: true, meldung: `Abfrage aktuell (vor ${stunden} h): ${stand.geprueft} Modell(e) bei ${stand.anbieter} Anbieter(n) bestätigt${stand.unpruefbar ? `; nicht prüfbar: ${stand.unpruefbar}` : ""}` };
+    return { ok: true, meldung: `Abfrage aktuell (vor ${stunden} h): ${stand.geprueft} Modell(e) bei ${stand.anbieter} Anbieter(n) bestätigt${stand.ungelistet ? `; nicht in /models gelistet, antwortet aber: ${stand.ungelistet}` : ""}${stand.unpruefbar ? `; nicht prüfbar: ${stand.unpruefbar}` : ""}` };
   }
   if (!mitNetz) {
     return { ok: true, meldung: "Abfrage fällig — läuft im nächsten Netz-Takt" };
@@ -138,7 +212,9 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
 
   const fehlend = [];
   const unpruefbar = [];
+  const ungelistet = [];
   let geprueft = 0;
+  let proben = 0;
   for (const name of namen) {
     const backend = name === "openrouter" ? openrouterBackendFromEnv(env) : providerBackendFromEnv(name, env);
     const modelle = gewaehlteModelle(name, env);
@@ -148,7 +224,17 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
       continue;
     }
     geprueft += modelle.length;
-    for (const m of fehlendeModelle(modelle, ergebnis.ids)) fehlend.push(`${name}:${m}`);
+    for (const m of fehlendeModelle(modelle, ergebnis.ids)) {
+      // Nicht gelistet ist noch nicht tot: erst die echte Anfrage entscheidet.
+      // Deckel je Lauf: liefert ein Anbieter /models leer, sollen nicht alle
+      // gewaehlten Modelle einzeln angefragt werden (Review 14.09.).
+      if (proben >= PROBEN_DECKEL) { fehlend.push(`${name}:${m} (ungeprüft, Deckel ${PROBEN_DECKEL})`); continue; }
+      proben += 1;
+      const probe = await bestaetigeModell(backend, m, { fetchImpl });
+      if (probe.antwortet) ungelistet.push(`${name}:${m}`);
+      else if (istNetzGrund(probe.grund)) unpruefbar.push(`${name}:${m} (${probe.grund})`);
+      else fehlend.push(`${name}:${m} (${probe.grund})`);
+    }
   }
 
   if (geprueft === 0 && unpruefbar.length === namen.length) {
@@ -162,11 +248,12 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
       geprueft,
       fehlend: fehlend.length,
       beispiel: fehlend[0] || "",
+      ungelistet: ungelistet.join(", "),
       unpruefbar: unpruefbar.join("; ")
     });
   } catch { /* die Meldung unten trägt die Zahlen auch ohne Ablage */ }
   if (fehlend.length) {
     return { ok: false, meldung: `${fehlend.length} gewählte(s) Modell(e) beim Anbieter verschwunden: ${fehlend.slice(0, 3).join(", ")}${unpruefbar.length ? `; nicht prüfbar: ${unpruefbar.join("; ")}` : ""}` };
   }
-  return { ok: true, meldung: `${geprueft} gewählte(s) Modell(e) bei ${namen.length - unpruefbar.length} Anbieter(n) bestätigt${unpruefbar.length ? `; nicht prüfbar: ${unpruefbar.join("; ")}` : ""}` };
+  return { ok: true, meldung: `${geprueft} gewählte(s) Modell(e) bei ${namen.length - unpruefbar.length} Anbieter(n) bestätigt${ungelistet.length ? `; nicht in /models gelistet, antwortet aber: ${ungelistet.join(", ")}` : ""}${unpruefbar.length ? `; nicht prüfbar: ${unpruefbar.join("; ")}` : ""}` };
 }

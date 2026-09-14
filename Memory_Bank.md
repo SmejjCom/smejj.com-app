@@ -5,6 +5,17 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-09-14] A-BIS-Z-QA: SECHS FIXRUNDEN LIVE — UND DIE BRUECKE KOMMT AUS EINEM ANDEREN ZWEIG (job_a_bis_z_qa_20260914)
+
+Capsule: `docs/task-capsules/2026/09/a-bis-z-qa_20260914/CAPSULE.md`, Befunde `docs/qa/befunde-2026-09-14.md`,
+Bericht `docs/qa/abschluss-a-bis-z-2026-09-14.md`. Live SW v873, Bruecke v151, Tags `release-2026-09-14-qa-fixrunde-2` bis `-6`.
+
+- **Entscheidung:** Die live laufende Bruecke wird aus `feature/design-v11` gebuendelt (Beweis: eigenes Buendel == `assets/chat-bridge.js` im Klon bis auf eine Zeile). Die Kaskade nimmt `public/chat-bridge.js` darum aus der Auslieferung aus — im Klon liegt das Buendel-Artefakt, nie die Quelle. **Begruendung:** eine Kopie der v146-Quelle haette die Bruecke beim naechsten Neustart vier Versionen zurueckgesetzt.
+- **Entscheidung:** Die Schutzregel (Design-Lock, Sperren, Schluessel, Daten) steht als VORSATZ im ersten System-Prompt, auch auf dem Control-Weg von `/api/chat`. **Begruendung:** der Weg reichte fremde System-Prompts ungeschuetzt durch; eine zweite System-Nachricht haette den Anbieter-Cache gebrochen. **Verifikation:** Probe 15/15, Qualitaetsmessung 78,4 → 86,3 %.
+- **Entscheidung:** Ein Netz-Aussetzer ist kein verschwundenes Modell (Katalog-Wache: Timeout = nicht pruefbar, Netz-Stand nach 30 min neu geprueft; HTTP 404 bleibt rot). **Verifikation:** 22 Tests.
+- **Entscheidung:** Messlatten werden nur mit Beleg beider Richtungen geweitet (Kernsuite 1.2.0, Pruefsumme neu, Muster ≤ 300 Zeichen — laengere wertet der Scorer STILL als falsch). **Verifikation:** `tests/eval-suite-verweigerung.test.mjs`.
+- **Pattern:** Mac-Waechter lesen oeffentliche Repos ueber HTTPS; SSH-Ports waren an drei Abenden zu.
+
 ### [2026-09-08] WENN VIER LAYOUT-ANLAEUFE NICHTS BEWIRKEN, IST DIE FLAECHE SELBST ZU KLEIN (job_mobil_vollbild_dock_20260907, Runde 6)
 
 Capsule: `task-capsules/2026/09/job_mobil_vollbild_dock_20260907/capsule.json`.

@@ -61,6 +61,7 @@ und Abo-Lock einmal gestempelt; Zweigschutz
 ## Offen
 
 - Erledigt nach Freigabe „alle Rechte“ (Fixrunde 6, SW v873, Bauzweig 74d7df57): F27, F6, F11; Brücke v151 mit Schutzregel auf dem Chat-Weg (Quelle der Wahrheit `feature/design-v11`, Kaskade nimmt `chat-bridge.js` aus); Mac-Wächter auf HTTPS; Codeberg-Spiegel gerade.
-- Betreiber (Zugangsdaten/Apple): Zeabur-API-Schlüssel für die Betriebswerte, Apple-Freigabe X29W6DM972, Play-Paket/Keystore (auf dem Mac nicht mehr auffindbar).
+- Fixrunde 7: Katalog-Wache (Netz-Aussetzer ≠ verschwunden), Kernsuite 1.2.0 (drei belegte Weitungen, Prüfsumme neu), Sicherheitscheck grün (`.gitignore` für Store-Bilder), Play-Keystore nach `~/.config/smejj.com/keys/` gesichert, Memory_Bank-Eintrag.
+- Betreiber (Zugangsdaten/Apple): Zeabur-API-Schlüssel für die Betriebswerte der Oberflächenwache, Apple-Freigabe X29W6DM972.
 - Betreiber-Handgriff: Zeabur-Schlüssel, `CODEBERG_TOKEN`, Apple-Freigabe (TestFlight), Keystore sichern.
 - Klein: nichts mehr offen (Fixrunde 5).

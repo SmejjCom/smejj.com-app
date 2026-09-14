@@ -9,7 +9,7 @@ und 8 Server-Befunde behoben, darunter ein seit dem 25.08. immer leerer Papierko
 kam; die komplette Suite (3.832 Tests) und alle Wächter sind grün, die Live-Matrix ist ohne Befund, die drei Design-
 Entscheide (F18/F20/F14) sind nach dem Betreiber-OK umgesetzt, die kleinen Punkte sind in Fixrunde 5 nachgezogen, die drei
 Patches hinter Sperren (F27, F6, F11) und die Brücken-Schutzregel nach der Freigabe „alle Rechte“ in Fixrunde 6; offen bleiben nur noch
-Handgriffe, die Zugangsdaten oder Apple brauchen.
+zwei Handgriffe, die Zugangsdaten oder Apple brauchen (Zeabur-API-Schlüssel, Apple-Freigabe).
 
 ---
 
@@ -32,6 +32,7 @@ Handgriffe, die Zugangsdaten oder Apple brauchen.
 | Fixrunde 6 | 14.09. 12:55 | v873 | Betreiber „alle Rechte von A bis Z 100 %“: F27 Code-Vorlagen 44 px, F6 je EINE Anfrage auth/me + billing/status, F11 Schreibfeld neben dem Panel in einer Zeile; Security-/Abo-Lock gestempelt |
 | Brücke | 14.09. 13:11 | v151 | Schutzregel (Design-Lock, Sperren, Schlüssel, Daten) auf dem Chat-Weg, auch für den Control-Weg; gebündelt aus `feature/design-v11` (Quelle der live laufenden v150), Neustart in Zeabur; Probe 15/15 |
 | Server 8 | 14.09. 13:05 | — | Bündel-Abgleich v873, Manifeste, Brücken-Quelle in den Bauzweig (74d7df57) |
+| Server 9 | 14.09. 13:50 | — | Katalog-Wache: Netz-Aussetzer = nicht prüfbar, 30-min-Nachprüfung; Kernsuite 1.2.0 mit neuer Prüfsumme (11ceb660, a24d5439) |
 
 Rollback-Punkte: Tag `stand-2026-09-14-vor-qa-a-bis-z` (Arbeitszweig 95e06b2a, Klon 6abe1b1), Release-Tags
 `release-2026-09-14-qa-fixrunde-2` bis `-6` auf Arbeitszweig, Klon, Bauzweig sowie `release-2026-09-14-bruecke-v151` auf `feature/design-v11` (GitHub + Codeberg).
@@ -56,7 +57,7 @@ Code-Vorlagen 44 px · F6 je ein auth/me- und billing-Aufruf · F11 Schreibfeld 
 **Betreiber-Handgriffe (brauchen Zugangsdaten oder Apple — darf ich nicht eintragen):** Zeabur-API-Schlüssel erneuern und in
 `~/.config/smejj.com/autopilot-keys.env` eintragen (Betriebswerte der Oberflächenwache) · `CODEBERG_TOKEN` in GitHub nur, wenn die
 Action gewünscht ist (der Mac-Spiegel läuft wieder) ·
-Apple-Freigabe X29W6DM972 abwarten, dann 99 USD (TestFlight) · Keystore aus `~/Downloads` sichern · 4 Python-CVEs im
+Apple-Freigabe X29W6DM972 abwarten, dann 99 USD (TestFlight) · ~~Keystore sichern~~ (erledigt: `~/.config/smejj.com/keys/`) · 4 Python-CVEs im
 Bild-Maler-Worker (transformers 5.5.0, accelerate 1.1.1) brauchen eine GPU-Bauumgebung.
 
 ## 3. Getestete Bereiche, Geräte, Browser
@@ -96,7 +97,7 @@ Bild-Maler-Worker (transformers 5.5.0, accelerate 1.1.1) brauchen eine GPU-Bauum
 
 ## 6. Nächste Schritte (Empfehlung)
 
-1. Tiefe-Spur- und Qualitätsmessung nach Brücke v151 abwarten (Tagesläufe; meine Probe: 15/15).
+1. Tiefe-Spur-Tageslauf nach Brücke v151 abwarten (Probe 15/15; Schnellspur-Messung 78,4 → 86,3 %, Kernsuite 1.2.0 ohne die drei Messartefakte).
 2. Zeabur-API-Schlüssel für die Betriebswerte der Oberflächenwache eintragen (Betreiber).
 3. Test-/Vitals-Wächter (Mac-launchd `com.smejj.test-waechter`, `com.smejj.web-vitals`): lesen GitHub per SSH und scheitern nachts — auf HTTPS umstellen wie der Codeberg-Spiegel (`~/.local/share/*/wache.sh`), Betreiber-Mac.
 4. Nach Apple-Freigabe: iOS-Hülle bauen, TestFlight, Smoke-Test.

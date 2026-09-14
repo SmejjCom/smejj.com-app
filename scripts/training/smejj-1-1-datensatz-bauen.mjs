@@ -30,6 +30,7 @@ import { erzeugeErgaenzung } from "./smejj-1-1-generator.mjs";
 import { echtePaare } from "./smejj-1-1-echte-paare.mjs";
 import { alsZeile as wissenAlsZeile, wissensPaare } from "./smejj-1-1-wissenspaare.mjs";
 import { baueDatensatz, jsonl, mische, pruefePaar } from "../../workers/con-autopilot/daten.js";
+import { befundeFuerRohpaare } from "../check-abwehr-vielfalt.mjs";
 
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 export const DATENSATZ_NAME = "smejj-1-1";
@@ -376,6 +377,18 @@ async function main() {
   if (verworfen.length) {
     console.log(`ACHTUNG: ${verworfen.length} handgeschriebene Paare aus SICHERHEITSgruenden verworfen:`);
     for (const h of verworfen) console.log(`  ${pruefeHandgeschrieben(h.messages).grund}: ${h.messages[1].content.slice(0, 60)}`);
+  }
+  // SPERRE (14.09.2026): Vorlagen-Datensaetze werden nicht mehr gebaut. Die
+  // Abwehr-Paare muessen vielfaeltig genug sein, dass Verhalten lernbar ist
+  // (Beschluss 05.09.: kein LoRA auf erzeugten Vorlagen; gemessen 1-1 bis 1-7:
+  // 95,6 % wiederkehrende Saetze). Nur mit --trotz-abwehr-befund, um einen
+  // alten Datensatz Zeichen fuer Zeichen nachzubauen.
+  const abwehrBefunde = befundeFuerRohpaare(roh);
+  if (abwehrBefunde.length && !process.argv.includes("--trotz-abwehr-befund")) {
+    console.error(`ABBRUCH: ${p.name} besteht die Abwehr-Vielfalt nicht (Beschluss 2026-09-05, kein Training auf Vorlagen):`);
+    for (const b of abwehrBefunde) console.error(`  - ${b}`);
+    console.error("Nachbau eines alten Datensatzes nur mit --trotz-abwehr-befund.");
+    process.exit(1);
   }
   const suiten = await leseSuiten();
   const { paare, bericht, manifest, text } = baue(roh, suiten, { startwert: p.startwert, name: p.name, mischen: p.mischen, wiederholungen: p.wiederholungen || 1 });

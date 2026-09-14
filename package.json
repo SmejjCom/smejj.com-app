@@ -52,7 +52,7 @@
     "check:startgewicht": "node scripts/check-startgewicht.mjs && node --test tests/startgewicht.test.mjs",
     "check:schutz-echtheit": "node scripts/check-schutz-echtheit.mjs && node --test tests/schutz-echtheit.test.mjs",
     "nach-auslieferung": "node scripts/check-schutz-echtheit.mjs",
-    "check:abwehr-vielfalt": "node scripts/check-abwehr-vielfalt.mjs && node --test tests/abwehr-vielfalt.test.mjs",
+    "check:abwehr-vielfalt": "node scripts/check-abwehr-vielfalt.mjs --release && node --test tests/abwehr-vielfalt.test.mjs",
     "check:server-startsicher": "node scripts/check-server-startsicher.mjs && node --test tests/server-startsicher.test.mjs",
     "check:admin-konsole": "node scripts/check-admin-konsole.mjs",
     "check:deploy-abgleich": "node scripts/check-deploy-abgleich.mjs",
