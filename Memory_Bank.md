@@ -15,6 +15,8 @@ Bericht `docs/qa/abschluss-a-bis-z-2026-09-14.md`. Live SW v873, Bruecke v151, T
 - **Entscheidung:** Ein Netz-Aussetzer ist kein verschwundenes Modell (Katalog-Wache: Timeout = nicht pruefbar, Netz-Stand nach 30 min neu geprueft; HTTP 404 bleibt rot). **Verifikation:** 22 Tests.
 - **Entscheidung:** Messlatten werden nur mit Beleg beider Richtungen geweitet (Kernsuite 1.2.0, Pruefsumme neu, Muster ≤ 300 Zeichen — laengere wertet der Scorer STILL als falsch). **Verifikation:** `tests/eval-suite-verweigerung.test.mjs`.
 - **Pattern:** Mac-Waechter lesen oeffentliche Repos ueber HTTPS; SSH-Ports waren an drei Abenden zu.
+- **Entscheidung:** Eine Datensatz-Sperre gehoert an den BAU, nicht an die Website-Auslieferung (Abwehr-Vielfalt: Vorlagen-Profile brechen den Bau ab; check:all prueft, dass die Sperre existiert). **Verifikation:** `release:preflight` EXIT 0, 2.403 Tests.
+- **Pattern:** Zwei Pruefskripte mit derselben Regel driften — ein Gleichlauf-Test (`tests/release-guard-gleichlauf.test.mjs`) haelt Erlaubnisliste und Eichung gleich.
 
 ### [2026-09-08] WENN VIER LAYOUT-ANLAEUFE NICHTS BEWIRKEN, IST DIE FLAECHE SELBST ZU KLEIN (job_mobil_vollbild_dock_20260907, Runde 6)
 

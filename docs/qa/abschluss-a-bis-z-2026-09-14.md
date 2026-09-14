@@ -9,7 +9,7 @@ und 8 Server-Befunde behoben, darunter ein seit dem 25.08. immer leerer Papierko
 kam; die komplette Suite (3.832 Tests) und alle Wächter sind grün, die Live-Matrix ist ohne Befund, die drei Design-
 Entscheide (F18/F20/F14) sind nach dem Betreiber-OK umgesetzt, die kleinen Punkte sind in Fixrunde 5 nachgezogen, die drei
 Patches hinter Sperren (F27, F6, F11) und die Brücken-Schutzregel nach der Freigabe „alle Rechte“ in Fixrunde 6; offen bleiben nur noch
-zwei Handgriffe, die Zugangsdaten oder Apple brauchen (Zeabur-API-Schlüssel, Apple-Freigabe).
+zwei Handgriffe, die Zugangsdaten oder Apple brauchen (Zeabur-API-Schlüssel, Apple-Freigabe) — und eine Sicherheitsfrage: die Admin-Liste enthält seit 17:47 UTC eine neue Adresse (Konto-Wache).
 
 ---
 
@@ -33,6 +33,7 @@ zwei Handgriffe, die Zugangsdaten oder Apple brauchen (Zeabur-API-Schlüssel, Ap
 | Brücke | 14.09. 13:11 | v151 | Schutzregel (Design-Lock, Sperren, Schlüssel, Daten) auf dem Chat-Weg, auch für den Control-Weg; gebündelt aus `feature/design-v11` (Quelle der live laufenden v150), Neustart in Zeabur; Probe 15/15 |
 | Server 8 | 14.09. 13:05 | — | Bündel-Abgleich v873, Manifeste, Brücken-Quelle in den Bauzweig (74d7df57) |
 | Server 9 | 14.09. 13:50 | — | Katalog-Wache: Netz-Aussetzer = nicht prüfbar, 30-min-Nachprüfung; Kernsuite 1.2.0 mit neuer Prüfsumme (11ceb660, a24d5439) |
+| Release | 14.09. 17:55 | — | `release:preflight` Arbeitszweig EXIT 0 (2.403 Tests), `check:all` Bauzweig EXIT 0 (2.328): Abwehr-Sperre im Datensatz-Bau, Release-Guard geeicht, doppelter PDF-Worker aus Git (b61927c3, fbfe3a59) |
 
 Rollback-Punkte: Tag `stand-2026-09-14-vor-qa-a-bis-z` (Arbeitszweig 95e06b2a, Klon 6abe1b1), Release-Tags
 `release-2026-09-14-qa-fixrunde-2` bis `-6` auf Arbeitszweig, Klon, Bauzweig sowie `release-2026-09-14-bruecke-v151` auf `feature/design-v11` (GitHub + Codeberg).

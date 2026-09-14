@@ -1,0 +1,115 @@
+{
+  "url": "https://smejj.com/",
+  "runs": 5,
+  "gemessenMit": "Chrome headless ueber DevTools-Protokoll, ohne Zusatzpakete",
+  "kalt": {
+    "ttfb_ms": {
+      "median": 67,
+      "p75": 219,
+      "min": 50,
+      "max": 248
+    },
+    "fcp_ms": {
+      "median": 216,
+      "p75": 364,
+      "min": 184,
+      "max": 872
+    },
+    "lcp_ms": {
+      "median": 216,
+      "p75": 364,
+      "min": 184,
+      "max": 872
+    },
+    "cls": {
+      "median": 0.019,
+      "p75": 0.019,
+      "min": 0.019,
+      "max": 0.021
+    },
+    "inp_ms": {
+      "median": 16,
+      "p75": 16,
+      "min": 16,
+      "max": 16
+    },
+    "domInteractive_ms": {
+      "median": 227,
+      "p75": 342,
+      "min": 154,
+      "max": 823
+    },
+    "pageWeight_kb": {
+      "median": 298,
+      "p75": 298,
+      "min": 298,
+      "max": 298
+    },
+    "resources": {
+      "median": 98,
+      "p75": 98,
+      "min": 98,
+      "max": 98
+    },
+    "lcpElement": "H2"
+  },
+  "warm": {
+    "ttfb_ms": {
+      "median": 52,
+      "p75": 53,
+      "min": 51,
+      "max": 124
+    },
+    "fcp_ms": {
+      "median": 108,
+      "p75": 112,
+      "min": 108,
+      "max": 188
+    },
+    "lcp_ms": {
+      "median": 108,
+      "p75": 112,
+      "min": 108,
+      "max": 188
+    },
+    "cls": {
+      "median": 0.021,
+      "p75": 0.021,
+      "min": 0.019,
+      "max": 0.021
+    },
+    "inp_ms": {
+      "median": 24,
+      "p75": 24,
+      "min": 16,
+      "max": 24
+    },
+    "domInteractive_ms": {
+      "median": 101,
+      "p75": 102,
+      "min": 100,
+      "max": 181
+    },
+    "pageWeight_kb": {
+      "median": 73,
+      "p75": 73,
+      "min": 73,
+      "max": 73
+    },
+    "resources": {
+      "median": 98,
+      "p75": 98,
+      "min": 98,
+      "max": 98
+    },
+    "lcpElement": "H2"
+  },
+  "budgets": {
+    "ttfb_ms": 500,
+    "lcp_ms": 1500,
+    "cls": 0.1,
+    "inp_ms": 200,
+    "pageWeight_kb": 300
+  },
+  "verstoesse": []
+}
