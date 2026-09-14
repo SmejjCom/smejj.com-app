@@ -115,3 +115,9 @@ test("R2: Code-Leiste passt bei 320 px, Tippziele bleiben 44 px", () => {
   assert.match(block, /#codeModellAnzeige \{ min-width: 44px;/);
   assert.ok(lies("start-styles.css").includes("html body #code .codeleiste .code-rechts.code-rechts"), "Buendel neu gebaut");
 });
+
+test("E26: Textdateien reisen auch aus dem Code-Feld MIT INHALT (nicht nur als Verweis)", () => {
+  const q = lies("composer-plus-menu.js");
+  assert.match(q, /const textdateien = andere\.filter\(istTextdatei\);/);
+  assert.doesNotMatch(q, /const textdateien = input\.id === "startMessage"/);
+});
