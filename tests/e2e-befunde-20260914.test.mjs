@@ -96,3 +96,22 @@ test("E21: Erstbesuch laedt NICHT neu, nur ein echter Worker-Wechsel", () => {
   assert.match(q, /\|\| !hatteSteuerung\) return;/);
   assert.match(q, /location\.reload\(\);/, "Update-Neuladen bleibt erhalten");
 });
+
+test("E24/E25: Chips 'Bild verstehen'/'Datei' laden die Composer-Werkzeuge und schreiben keine Aufschrift ins Feld", () => {
+  const app = lies("app.js");
+  assert.match(app, /window\.smejjLadeComposerTools = ladeBeiKlick\(\["\[data-start-tool\]", "#composerPlusButton"\]/);
+  const chips = lies("start-chips.js");
+  assert.match(chips, /window\.smejjLadeComposerTools\?\.\(\)/);
+  const laden = chips.indexOf("window.smejjLadeComposerTools?.()");
+  const ohneVorlage = chips.indexOf("if (aktion && !knopf.dataset.chip)");
+  assert.ok(laden > -1 && ohneVorlage > laden, "erst laden, dann Dateiwahl");
+  assert.match(lies("code-nachladen.js"), /window\.smejjLadeComposerTools\?\.\(\) \|\| import\("\.\/composer-tools\.js\?v=werkzeuge-25"\)/);
+});
+
+test("R2: Code-Leiste passt bei 320 px, Tippziele bleiben 44 px", () => {
+  const css = lies("design-v12-code.css");
+  const block = css.slice(css.indexOf("@media (max-width: 340px)"));
+  assert.match(block, /html body #code \.codeleiste \.code-rechts\.code-rechts \{ flex-shrink: 1; min-width: 0; gap: 4px; \}/);
+  assert.match(block, /#codeModellAnzeige \{ min-width: 44px;/);
+  assert.ok(lies("start-styles.css").includes("html body #code .codeleiste .code-rechts.code-rechts"), "Buendel neu gebaut");
+});
