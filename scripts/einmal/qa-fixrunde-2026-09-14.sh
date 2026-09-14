@@ -93,7 +93,8 @@ for f in "${DATEIEN[@]}"; do
     # index.html: fruehere Kaskaden schrieben nur die Wurzel, die assets/-Kopie hinkt
     # deshalb genau eine Fassung hinterher — das ist kein Fremdstand. Ab jetzt werden
     # beide Orte geschrieben (Schritt 5), damit die Kopie nicht weiter driftet.
-    if [ "$f" = "index.html" ] || [[ "$f" == */index.html ]]; then c="$a"; fi
+    # admin/api.js: alle Admin-Seiten laden /admin/api.js; assets/admin/api.js ist eine ungenutzte Altkopie (14.09.).
+    if [ "$f" = "index.html" ] || [[ "$f" == */index.html ]] || [ "$f" = "admin/api.js" ]; then c="$a"; fi
     if [ "$a" = "$b" ] && { [ -z "$c" ] || [ "$a" = "$c" ] || ! git show "origin/main:assets/$f" >/dev/null 2>&1; }; then echo "  gleich  $f"; else echo "  FREMD   $f"; FREMD=1; fi
   else
     if git show "origin/main:$f" >/dev/null 2>&1; then echo "  FREMD   $f (live vorhanden, bei uns neu)"; FREMD=1; else echo "  neu     $f"; fi
