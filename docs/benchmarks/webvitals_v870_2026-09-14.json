@@ -1,0 +1,117 @@
+{
+  "url": "https://smejj.com/",
+  "runs": 5,
+  "gemessenMit": "Chrome headless ueber DevTools-Protokoll, ohne Zusatzpakete",
+  "kalt": {
+    "ttfb_ms": {
+      "median": 114,
+      "p75": 132,
+      "min": 60,
+      "max": 136
+    },
+    "fcp_ms": {
+      "median": 396,
+      "p75": 544,
+      "min": 200,
+      "max": 656
+    },
+    "lcp_ms": {
+      "median": 396,
+      "p75": 544,
+      "min": 200,
+      "max": 656
+    },
+    "cls": {
+      "median": 0.021,
+      "p75": 0.021,
+      "min": 0.019,
+      "max": 0.021
+    },
+    "inp_ms": {
+      "median": 16,
+      "p75": 16,
+      "min": 16,
+      "max": 16
+    },
+    "domInteractive_ms": {
+      "median": 614,
+      "p75": 672,
+      "min": 173,
+      "max": 785
+    },
+    "pageWeight_kb": {
+      "median": 302,
+      "p75": 302,
+      "min": 302,
+      "max": 302
+    },
+    "resources": {
+      "median": 99,
+      "p75": 99,
+      "min": 99,
+      "max": 99
+    },
+    "lcpElement": "H2"
+  },
+  "warm": {
+    "ttfb_ms": {
+      "median": 106,
+      "p75": 113,
+      "min": 78,
+      "max": 243
+    },
+    "fcp_ms": {
+      "median": 156,
+      "p75": 172,
+      "min": 128,
+      "max": 292
+    },
+    "lcp_ms": {
+      "median": 156,
+      "p75": 172,
+      "min": 128,
+      "max": 292
+    },
+    "cls": {
+      "median": 0.021,
+      "p75": 0.021,
+      "min": 0.019,
+      "max": 0.021
+    },
+    "inp_ms": {
+      "median": 16,
+      "p75": 16,
+      "min": 16,
+      "max": 16
+    },
+    "domInteractive_ms": {
+      "median": 132,
+      "p75": 143,
+      "min": 104,
+      "max": 271
+    },
+    "pageWeight_kb": {
+      "median": 73,
+      "p75": 73,
+      "min": 73,
+      "max": 73
+    },
+    "resources": {
+      "median": 99,
+      "p75": 99,
+      "min": 99,
+      "max": 99
+    },
+    "lcpElement": "H2"
+  },
+  "budgets": {
+    "ttfb_ms": 500,
+    "lcp_ms": 1500,
+    "cls": 0.1,
+    "inp_ms": 200,
+    "pageWeight_kb": 300
+  },
+  "verstoesse": [
+    "kalt: pageWeight_kb p75 302 > Budget 300"
+  ]
+}
