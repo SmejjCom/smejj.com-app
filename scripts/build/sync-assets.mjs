@@ -56,7 +56,10 @@ export const AUSNAHMEN = Object.freeze({
   "chat-bridge.js": "gebuendeltes Artefakt — nur ueber bundle:bridge",
   "chat-bridge-strom.js": "gehoert zum Bruecken-Buendel",
   "chat-bridge-rag.js": "gehoert zum Bruecken-Buendel",
-  "chat-bridge-weather.js": "gehoert zum Bruecken-Buendel",
+  // chat-bridge-weather.js fehlt hier ABSICHTLICH (Befund R8, 14.09.): seit
+  // 2026-09-07 importiert ai/live-daten.js das Modul im Browser, es wird als
+  // /assets/chat-bridge-weather.js verbatim ausgeliefert. Die Kopie muss der
+  // Quelle folgen — die alte Fassung ohne process-Wache spraengte das Modul.
   "chat-bridge-vision.js": "gehoert zum Bruecken-Buendel",
   "chat-bridge-bilder.js": "gehoert zum Bruecken-Buendel",
   "chat-bridge-evolution.js": "gehoert zum Bruecken-Buendel"
