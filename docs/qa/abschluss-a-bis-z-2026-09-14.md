@@ -4,11 +4,12 @@
 live gehen, live testen, bis alles sauber läuft; danach 100 % Schutz. Master-Prompt (Ship-Loop, Rote/Grüne Liste,
 Performance-Budgets) gilt.
 
-**Ergebnis in einem Satz:** Fünf Fixrunden sind live (SW v867 → v872, Control-Server siebenmal neu gebaut), 23 Frontend-
+**Ergebnis in einem Satz:** Sechs Fixrunden sind live (SW v867 → v873, Brücke v151, Control-Server neunmal neu gebaut), 26 Frontend-
 und 8 Server-Befunde behoben, darunter ein seit dem 25.08. immer leerer Papierkorb und ein Löschen, das nie zum Server
 kam; die komplette Suite (3.832 Tests) und alle Wächter sind grün, die Live-Matrix ist ohne Befund, die drei Design-
-Entscheide (F18/F20/F14) sind nach dem Betreiber-OK umgesetzt, die kleinen Punkte sind in Fixrunde 5 nachgezogen; offen bleiben drei
-Patches hinter Sperren (F27, F6, F11 — liegen fertig vor) und vier Betreiber-Handgriffe.
+Entscheide (F18/F20/F14) sind nach dem Betreiber-OK umgesetzt, die kleinen Punkte sind in Fixrunde 5 nachgezogen, die drei
+Patches hinter Sperren (F27, F6, F11) und die Brücken-Schutzregel nach der Freigabe „alle Rechte“ in Fixrunde 6; offen bleiben nur noch
+Handgriffe, die Zugangsdaten oder Apple brauchen.
 
 ---
 
@@ -28,13 +29,16 @@ Patches hinter Sperren (F27, F6, F11 — liegen fertig vor) und vier Betreiber-H
 | Server 6 | 14.09. 10:50 | — | F26: Chat-Index je Konto per ETag (eine e2-Rundreise), models/status und Speicherstand mit Haltespeicher; F12: Proxy fängt Google-Anmeldeseite ab (b11d87ce) |
 | Fixrunde 5 | 14.09. 10:55 | v872 | F8 SVG-Menü im Verlauf, F10 pwa-offline zählt richtig, F12/F13 Browser-Panel (Tabs ≤ 8, „Maus beauftragen“ füllt das Feld), F15 zwei Module erst bei Bedarf (295 KB), F16 Einstellungs-Kopf, F21 Streifen-Versatz, F23 Bild-Miniatur, R7 Sync-Konflikt behält Kopie, R8 assets-Wächter |
 | Server 7 | 14.09. 10:58 | — | Bündel-Abgleich v872 + Tests in den Bauzweig (0afa4a4c) |
+| Fixrunde 6 | 14.09. 12:55 | v873 | Betreiber „alle Rechte von A bis Z 100 %“: F27 Code-Vorlagen 44 px, F6 je EINE Anfrage auth/me + billing/status, F11 Schreibfeld neben dem Panel in einer Zeile; Security-/Abo-Lock gestempelt |
+| Brücke | 14.09. 13:11 | v151 | Schutzregel (Design-Lock, Sperren, Schlüssel, Daten) auf dem Chat-Weg, auch für den Control-Weg; gebündelt aus `feature/design-v11` (Quelle der live laufenden v150), Neustart in Zeabur; Probe 15/15 |
+| Server 8 | 14.09. 13:05 | — | Bündel-Abgleich v873, Manifeste, Brücken-Quelle in den Bauzweig (74d7df57) |
 
 Rollback-Punkte: Tag `stand-2026-09-14-vor-qa-a-bis-z` (Arbeitszweig 95e06b2a, Klon 6abe1b1), Release-Tags
-`release-2026-09-14-qa-fixrunde-2` bis `-5` auf Arbeitszweig, Klon, Bauzweig (GitHub + Codeberg).
+`release-2026-09-14-qa-fixrunde-2` bis `-6` auf Arbeitszweig, Klon, Bauzweig sowie `release-2026-09-14-bruecke-v151` auf `feature/design-v11` (GitHub + Codeberg).
 
 ## 2. Gefundene Fehler (vollständige Liste in `docs/qa/befunde-2026-09-14.md`)
 
-**Behoben und live (30):** F1 Papierkorb immer leer · F2 Löschen nie synchron (3 Ursachen) · F3 Panel sprang nach Schließen
+**Behoben und live (34):** F1 Papierkorb immer leer · F2 Löschen nie synchron (3 Ursachen) · F3 Panel sprang nach Schließen
 wieder auf · F4 Escape im Such-Overlay · F5 Mikrofon a11y · F7 Vorwärmer 404 · R1 Escape traf Panels mit · R2 tote Zweit-
 konstante · R3 Erstlauf der 30-Tage-Räumung hätte Altlasten überall gelöscht · R4 Lösch-Sync lud verworfene Chats hoch ·
 R5 Registry ohne Profil (Schnellspur lief auf glm-5.2) · R6 Gesundheit der Modellkette (Zweitversuch überschrieb 5.2) ·
@@ -42,16 +46,16 @@ S1 Katalog-Wache falsch rot · S2 AI-Act ohne smejj-1 · S3 api.smejj.com mit al
 Modell · S6 dritte Admin-Kopie · F18 Werkzeug-Kacheln zwei Spalten · F20 Farbschema „hell“ gesperrt · F14 Spur 44 px
 (Fixrunde 4 nach Betreiber-OK, 10:22 UTC) · F8 SVG-Menü · F10 pwa-offline · F12 verwaiste Tabs · F13 „Maus beauftragen“ · F15
 295 KB · F16 Einstellungs-Kopf · F21 Streifen-Versatz · F23 Bild-Miniatur · R7 Sync-Konflikt · R8 assets-Wächter · F26 API-Latenz
-(health p95 147 ms, models/status 503 ms; Chat-Abgleich 662 ms bleibt über dem Ziel — e2-Listenabfrage) (Fixrunde 5, 10:55 UTC).
+(health p95 147 ms, models/status 503 ms; Chat-Abgleich 662 ms bleibt über dem Ziel — e2-Listenabfrage) (Fixrunde 5, 10:55 UTC) · F27
+Code-Vorlagen 44 px · F6 je ein auth/me- und billing-Aufruf · F11 Schreibfeld neben dem Panel · T1 Brücken-Schutzregel v151 (Fixrunde 6).
 
-**Offen, Entscheidung des Betreibers (Sperren) — drei Patches liegen fertig vor:** F27 die vier Vorlagen-Knöpfe der Code-Ansicht
-(38 px → 44 px bei grobem Zeiger, Bündel = Start-Lock) · F6 je EIN Aufruf von `/api/auth/me` und `/api/billing/status` beim Laden
-statt je drei (`autonomous-coding.js` = Start-Lock, `account-sessions.js` = Security- und Abo-Lock) · F11 Schreibfeld neben dem
-Browser-Panel in einer Zeile (Container-Abfrage im Glas, Bündel = Start-Lock).
+**Offen, Entscheidung des Betreibers:** nichts mehr — F27, F6, F11 sind nach der Freigabe „alle Rechte“ live (Fixrunde 6).
 
 **Offen, klein:** nichts mehr — die Liste aus Fixrunde 4 ist abgearbeitet (F6/F11 warten hinter Sperren, siehe oben).
 
-**Betreiber-Handgriffe:** Zeabur-Schlüssel erneuern (Betriebswache) · `CODEBERG_TOKEN` in GitHub (Spiegel-Action) ·
+**Betreiber-Handgriffe (brauchen Zugangsdaten oder Apple — darf ich nicht eintragen):** Zeabur-API-Schlüssel erneuern und in
+`~/.config/smejj.com/autopilot-keys.env` eintragen (Betriebswerte der Oberflächenwache) · `CODEBERG_TOKEN` in GitHub nur, wenn die
+Action gewünscht ist (der Mac-Spiegel läuft wieder) ·
 Apple-Freigabe X29W6DM972 abwarten, dann 99 USD (TestFlight) · Keystore aus `~/Downloads` sichern · 4 Python-CVEs im
 Bild-Maler-Worker (transformers 5.5.0, accelerate 1.1.1) brauchen eine GPU-Bauumgebung.
 
@@ -63,7 +67,7 @@ Bild-Maler-Worker (transformers 5.5.0, accelerate 1.1.1) brauchen eine GPU-Bauum
 | Modellzeilen mit Kopfzeilen-Beweis | POST Brücke, `x-smejj-model-backend/-fallback` | Schnell/Auto: groq 0,7–1,2 s · smejj 1.2: zhipu:glm-5.2 6 s · smejj 1: hausmodell:smejj-1-basis 6 s — alle `fallback: false` |
 | Web nicht angemeldet | `rundgang.mjs` 19 Ansichten × 2 Runden, viermal (v867/v868/v869/v870) | 0 Befunde |
 | Responsive | `messe_responsive.mjs` 8 Größen 320–1920, hoch/quer | 152 Messpunkte, 0 Verstöße (zweimal) |
-| Touch-Ziele | `measure_touch_targets_app.mjs` 375×812, vor und nach Fixrunde 4 | v870: nur F14 (16 Verstöße) · v871: Startseite/Spur 0, übrig F27 (4 Code-Vorlagen, vorbestehend) |
+| Touch-Ziele | `measure_touch_targets_app.mjs` 375×812, nach jeder Runde | v870: 16 (F14) · v871: 4 (F27) · v873: **0 Verstöße in allen 21 Bereichen** |
 | Mobil angemeldet | headless Chrome 402×874 + Eval-Ausweis | Bubble-Umbruch, Composer an der Unterkante |
 | Datei-Anhang | CDP `setFileInputFiles` angemeldet | Chip + Inhalt kommen an („Ananas“) |
 | PWA | `pwa-offline.mjs`, Cache-Zählung | SW aktiv, 235 Einträge, App offen ohne Netz; Update v867→v870 ohne leere Caches |
@@ -73,7 +77,7 @@ Bild-Maler-Worker (transformers 5.5.0, accelerate 1.1.1) brauchen eine GPU-Bauum
 | API-Latenz (20 Aufrufe je Route) | `api-latenz.mjs` → `docs/benchmarks/api-latenz_v870_2026-09-14.json` | 5xx-Rate 0/200; p95: health 741, auth/config 246, capabilities 256, chats-Abgleich 957, billing 432, projekte 484, models/status 951 ms — p50 240 ms Grundlatenz vom Betreiber-Netz; Abgleich und models/status über dem 300-ms-Budget (F26) |
 | Sicherheit | check:security/abuse/gatekeeper/passkey/users, CVE-Wächter, Dependabot, Zweigschutz | grün; 4 bekannte CVEs im nicht gebauten/GPU-Worker; kein Force-Push/Löschen mehr auf Klon `main`, Bauzweig, Arbeitszweig |
 | Suite | `check:all` 1.117 Tests + `test:tests` 3.832 Tests (Arbeitszweig); Bauzweig control-server/llm-router/ai/frontend/voice/rag | grün (2 Pins an die neue Modellkette angepasst, 1 Kettenlängen-Annahme entfernt) |
-| Ampel (85 Autopiloten) | Live-Ampel | nach Fixrunde 5: 79 grün, 6 rot: Codeberg-Token und Zeabur-Schlüssel (Betreiber), Qualitätsmessung (Mac-Cron, letzter Lauf 13.09. 16:16 UTC), Web-Vitals-Wache (noch die 302 KB von vor v872; live jetzt 295), tiefe Spur 91,2 % mit einer verletzten Zusicherung (`schutz-design-lock`, schwankend), Projektwissen-Export (Brücke neu bauen) |
+| Ampel (85 Autopiloten) | Live-Ampel | nach Fixrunde 6 (13:25 UTC): 81 grün, 4 rot — Oberflächenwache (Betriebswerte ohne Zeabur-Schlüssel, Betreiber), Modell-Katalog-Wache (Netz-Timeout der Kleinstanfrage, prüft in 6 h nach), Nutzerreise-Wächter (30-s-Timeout während des Brücken-Neustarts, 15-Minuten-Takt), tiefe Spur (Tageswert von vor v151). Codeberg-Spiegel, Web-Vitals (298 KB), Projektwissen-Export (13:00), Qualitätsmessung wieder grün |
 | Adversarische Review | Workflow: 3 Blickwinkel, 26 Befunde, je 3 Skeptiker | 20 bestätigt → 10 mit Code behoben (Fixrunde 3 / Server 4), Rest dokumentiert |
 
 ## 4. iOS-/Android-Build, Datenbank, Backup, Release
@@ -92,7 +96,7 @@ Bild-Maler-Worker (transformers 5.5.0, accelerate 1.1.1) brauchen eine GPU-Bauum
 
 ## 6. Nächste Schritte (Empfehlung)
 
-1. Betreiber-Entscheide F27, F6, F11 (Patches fertig, je 15–30 Minuten nach „OK“: Stempel, Kaskade, Live-Test).
-2. Tiefe Spur: `schutz-design-lock` schwankt gegen glm-5.2 (1 von 14 Fällen kritisch, 91,2 %) — härtere Regel im Brücken-Systemprompt, dann Brücke neu starten (Zeabur-Token, Betreiber).
+1. Tiefe-Spur- und Qualitätsmessung nach Brücke v151 abwarten (Tagesläufe; meine Probe: 15/15).
+2. Zeabur-API-Schlüssel für die Betriebswerte der Oberflächenwache eintragen (Betreiber).
 3. Test-/Vitals-Wächter (Mac-launchd `com.smejj.test-waechter`, `com.smejj.web-vitals`): lesen GitHub per SSH und scheitern nachts — auf HTTPS umstellen wie der Codeberg-Spiegel (`~/.local/share/*/wache.sh`), Betreiber-Mac.
 4. Nach Apple-Freigabe: iOS-Hülle bauen, TestFlight, Smoke-Test.

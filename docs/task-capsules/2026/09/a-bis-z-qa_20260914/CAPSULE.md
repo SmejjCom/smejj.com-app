@@ -9,11 +9,11 @@ funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber l�
 ## Ergebnis in einem Satz
 
 Prüfplan an unser System angepasst (17 Phasen, Messregeln, Vergleich mit ChatGPT/Claude/Gemini), dann
-fünf Fixrunden **live** (SW v867 → v872, Control-Server siebenmal neu gebaut): 23 Frontend-Fehler und
-acht Server-Befunde behoben — darunter ein **Papierkorb, der seit dem 25.08. immer leer war**, und ein
+sechs Fixrunden **live** (SW v867 → v873, Brücke v151, Control-Server neunmal neu gebaut): 26 Frontend-Fehler,
+acht Server-Befunde und die Brücken-Schutzregel behoben — darunter ein **Papierkorb, der seit dem 25.08. immer leer war**, und ein
 **Löschen, das nie zum Server kam**; die drei Design-Entscheide (F18/F20/F14) sind nach dem Betreiber-OK
-umgesetzt, die kleinen Punkte in Fixrunde 5 (Workflow: 12 Analysten + 24 Skeptiker); F27, F6 und F11
-liegen als fertige Patches hinter Sperren und warten auf ein OK.
+umgesetzt, die kleinen Punkte in Fixrunde 5 (Workflow: 12 Analysten + 24 Skeptiker); F27, F6, F11 und die
+Brücken-Schutzregel folgten nach der Freigabe „alle Rechte von A bis Z 100 %“ (Fixrunde 6).
 
 ## Die Funde (Kurzform; Details in `docs/qa/befunde-2026-09-14.md`)
 
@@ -46,8 +46,9 @@ liegen als fertige Patches hinter Sperren und warten auf ein OK.
 
 ## Schutz
 
-Rollback-Tag `stand-2026-09-14-vor-qa-a-bis-z`, Release-Tags `release-2026-09-14-qa-fixrunde-2` bis `-5` auf
-Arbeitszweig, Klon und Bauzweig (GitHub + Codeberg); Start-Lock fünfmal gestempelt; Zweigschutz
+Rollback-Tag `stand-2026-09-14-vor-qa-a-bis-z`, Release-Tags `release-2026-09-14-qa-fixrunde-2` bis `-6` auf
+Arbeitszweig, Klon und Bauzweig, `release-2026-09-14-bruecke-v151` (GitHub + Codeberg); Start-Lock sechsmal, Security-
+und Abo-Lock einmal gestempelt; Zweigschutz
 (kein Force-Push, kein Löschen) auf Klon `main`, Bauzweig und Arbeitszweig; Schutz-Echtheit grün.
 
 ## Werkzeuge, die neu sind
@@ -59,7 +60,7 @@ Arbeitszweig, Klon und Bauzweig (GitHub + Codeberg); Start-Lock fünfmal gestemp
 
 ## Offen
 
-- Betreiber-Entscheid (Sperren, Patches fertig): F27 Code-Vorlagen 44 px (Start-Lock), F6 je ein auth/me- und billing-Aufruf (Start-, Security-, Abo-Lock), F11 Schreibfeld neben dem Panel (Start-Lock). F18/F20/F14 umgesetzt (Fixrunde 4), F8/F10/F12/F13/F15/F16/F21/F23/R7/R8/F26 (Fixrunde 5, SW v872, Bauzweig 0afa4a4c).
-- Tiefe Spur: `schutz-design-lock` schwankt gegen glm-5.2 (91,2 %, 1 kritisch) — Brücken-Systemprompt härten, Brücke neu starten (Betreiber).
+- Erledigt nach Freigabe „alle Rechte“ (Fixrunde 6, SW v873, Bauzweig 74d7df57): F27, F6, F11; Brücke v151 mit Schutzregel auf dem Chat-Weg (Quelle der Wahrheit `feature/design-v11`, Kaskade nimmt `chat-bridge.js` aus); Mac-Wächter auf HTTPS; Codeberg-Spiegel gerade.
+- Betreiber (Zugangsdaten/Apple): Zeabur-API-Schlüssel für die Betriebswerte, Apple-Freigabe X29W6DM972, Play-Paket/Keystore (auf dem Mac nicht mehr auffindbar).
 - Betreiber-Handgriff: Zeabur-Schlüssel, `CODEBERG_TOKEN`, Apple-Freigabe (TestFlight), Keystore sichern.
 - Klein: nichts mehr offen (Fixrunde 5).
