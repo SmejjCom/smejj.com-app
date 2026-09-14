@@ -78,7 +78,7 @@ export async function handleModelsStatus(res, { env = process.env } = {}) {
   });
 }
 
-export async function handleWorkerPreflight(url, res, { env = process.env } = {}) {
+export async function handleWorkerPreflight(url, res, { env = process.env, live = false } = {}) {
   const requested = url.searchParams.get("model") || DEFAULT_MODEL_ID;
   const definition = getModelDefinition(requested) || getModelDefinition(DEFAULT_MODEL_ID);
   const model = resolveVaultStatus(definition.storage?.vaultStatusId);
@@ -93,8 +93,11 @@ export async function handleWorkerPreflight(url, res, { env = process.env } = {}
     });
   }
   const mode = url.searchParams.get("mode") || "planner-vault";
-  // Vor einem Worker-Start zaehlt der Tresor live, nie aus dem Haltespeicher.
-  const modelStatus = await readModelStatus(model, env, { frisch: true });
+  // Vor einem Worker-Start zaehlt der Tresor live, nie aus dem Haltespeicher —
+  // aber NUR fuer angemeldete Aufrufer (E2E-Sicherheitspruefung 14.09.2026: die
+  // Route steht auf der offenen Liste, und JEDER fremde Aufruf loeste eine
+  // e2-Zaehlung aus). Ohne Anmeldung gilt der Haltespeicher (vaultHalteMs).
+  const modelStatus = await readModelStatus(model, env, { frisch: live === true });
   const preflight = evaluateWorkerPreflight({
     model,
     liveStorage: modelStatus.liveStorage || {},

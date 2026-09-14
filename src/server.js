@@ -176,6 +176,11 @@ const bildExternRoutes = createBildExternRoutes({ env: process.env, readSession,
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host}`);
+    // HSTS (E2E-Sicherheitspruefung 14.09.2026): api.smejj.com lieferte keine
+    // Strict-Transport-Security — ein erster Aufruf ueber http:// waere abhoerbar.
+    // Nur hinter dem HTTPS-Proxy setzen (x-forwarded-proto), damit lokale
+    // http-Tests nicht betroffen sind; ohne includeSubDomains, nur dieser Host.
+    if (String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim() === "https") res.setHeader("Strict-Transport-Security", "max-age=15552000");
     if (await handlePublicApiRoute(req, url, res)) return; // /v1: Bearer statt Sitzung, muss VOR allem stehen (Grund dort)
     if (url.pathname.startsWith("/api/")) {
       // Missbrauchs-Wache (Nr. 51): jede API-Anfrage einmal zählen — Absender
@@ -330,7 +335,7 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && url.pathname === ROUTES.api.modelStatus) return await handleModelStatus(res, "kimi-k2-7");
     if (readMethod && url.pathname === ROUTES.api.glmModelStatus) return await handleModelStatus(res, "glm-5-2");
     if (readMethod && url.pathname === ROUTES.api.modelsStatus) return await handleModelsStatus(res);
-    if (readMethod && url.pathname === ROUTES.api.workerPreflight) return await handleWorkerPreflight(url, res);
+    if (readMethod && url.pathname === ROUTES.api.workerPreflight) return await handleWorkerPreflight(url, res, { live: Boolean(readSession(req)) });
     if (req.method === "POST" && url.pathname === ROUTES.api.workerValidate) return await handleWorkerValidate(req, res);
     if (req.method === "POST" && url.pathname === ROUTES.api.workerModelAction) return await handleWorkerModelAction(req, res);
 

@@ -431,3 +431,28 @@ test("der Spiegel unter /assets ist Zeichen fuer Zeichen gleich", () => {
   const spiegel = readFileSync(new URL("../public/assets/auth-gate.js", import.meta.url), "utf8");
   assert.equal(spiegel, quelle, "smejj.com liefert /assets/ aus — ein alter Spiegel macht den Fix unsichtbar");
 });
+
+// E2E-Test 14.09.2026: gueltiges Token ohne smejj.session.v1 — der Chat antwortete,
+// speicherte aber nichts (Chat-Speicher kennt die Konto-ID nur aus der Sitzung).
+test("bestaetigtes Token ohne Sitzungsangabe: Sitzung wird nachgetragen, vorhandene nie ueberschrieben", async () => {
+  const { trageSitzungNach } = await import("../public/auth-gate.js");
+  const mitSpeicher = (eintraege = {}) => { const m = new Map(Object.entries(eintraege)); return { location: { pathname: "/", replace: () => {} }, localStorage: { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) }, sessionStorage: { setItem: () => {} } }; };
+  const win = mitSpeicher({ "smejj.auth.accessToken.v1": "tok" });
+  const ergebnis = await verifyStoredSession(win, {
+    apiOrigin: "https://api.example",
+    speicher: erzeugeAuthMeSpeicher(),
+    fetchFn: async () => ({ ok: true, json: async () => ({ authenticated: true, user: { userId: "user_x", email: "Nutzer.Test@Example.com", method: "google" } }) })
+  });
+  assert.equal(ergebnis, "gueltig");
+  const sitzung = JSON.parse(win.localStorage.getItem("smejj.session.v1"));
+  assert.equal(sitzung.authenticated, true);
+  assert.equal(sitzung.userId, "user_nutzer_test_example_com", "dieselbe Form wie auth/auth-page.js");
+  // Vorhandene Sitzung bleibt unangetastet
+  const zwei = mitSpeicher({ "smejj.session.v1": JSON.stringify({ authenticated: true, userId: "user_alt" }) });
+  assert.equal(trageSitzungNach(zwei, { email: "neu@example.com" }), false);
+  assert.equal(JSON.parse(zwei.localStorage.getItem("smejj.session.v1")).userId, "user_alt");
+  // Ohne Nutzerangabe: nichts
+  const drei = mitSpeicher();
+  assert.equal(trageSitzungNach(drei, {}), false);
+  assert.equal(drei.localStorage.getItem("smejj.session.v1"), null);
+});
