@@ -72,20 +72,34 @@ export function istIndexSchluessel(key) {
 }
 
 /**
- * Schluessel und Aenderungszeit aus einer S3-Objektliste.
+ * Schluessel, Aenderungszeit und ETag aus einer S3-Objektliste.
+ *
+ * ETag (F26, 2026-09-14): die Objektliste nennt zu jedem Objekt seinen ETag.
+ * Damit laesst sich ein im Speicher gehaltener Index-Rumpf OHNE zweiten
+ * Abruf als unveraendert beweisen — gleicher ETag, gleicher Inhalt. Die XML-
+ * Fassung traegt die Anfuehrungszeichen als &quot;; hier werden sie zurueck-
+ * uebersetzt, damit der Wert dem ETag-Kopf einer GET-Antwort gleicht.
  *
  * @param {string} xml Rumpf der ListObjectsV2-Antwort.
- * @returns {Array<{key: string, zeitMs: number}>} zeitMs 0, wenn unlesbar.
+ * @returns {Array<{key: string, zeitMs: number, etag: string}>} zeitMs 0 und
+ *   etag "" wenn unlesbar — beides heisst "nicht beweisbar", nie "frisch".
  */
 export function eintraegeMitZeit(xml) {
   const treffer = [];
   for (const block of String(xml || "").matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)) {
     const key = (block[1].match(/<Key>([\s\S]*?)<\/Key>/) || [])[1] || "";
     const roh = (block[1].match(/<LastModified>([\s\S]*?)<\/LastModified>/) || [])[1] || "";
+    const etagRoh = (block[1].match(/<ETag>([\s\S]*?)<\/ETag>/) || [])[1] || "";
     if (!key) continue;
-    treffer.push({ key, zeitMs: Date.parse(String(roh).trim()) || 0 });
+    treffer.push({ key, zeitMs: Date.parse(String(roh).trim()) || 0, etag: listenEtag(etagRoh) });
   }
   return treffer;
+}
+
+/** ETag aus der Liste in die Form des GET-Kopfes bringen: "abc" mit Anfuehrungszeichen, sonst "". */
+function listenEtag(roh) {
+  const wert = String(roh || "").replace(/&quot;/g, '"').trim();
+  return /^"[\x21\x23-\x7e]{1,200}"$/.test(wert) && !wert.includes("\\") ? wert : "";
 }
 
 /**

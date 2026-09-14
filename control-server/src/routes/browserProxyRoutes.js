@@ -63,6 +63,18 @@ const BLOCKED_HOST_PATTERNS = [
   /^\[?fe80:/i
 ];
 
+// Anmelde-Sackgassen (Befund F12, A-bis-Z 14.09.2026): Google lehnt Anmeldungen
+// aus automatisierten Browsern grundsaetzlich ab ("Dieser Browser oder diese
+// App ist moeglicherweise nicht sicher"). Ein Tab auf accounts.google.com zeigt
+// im Fernbrowser also IMMER nur diesen Fehler — und kam ueber die gespeicherte
+// Tab-Liste bei jedem Start wieder. Hier wird die Adresse mit klarer Ansage
+// abgefangen, statt Googles Fehlerseite zu zeigen. Anmelden geht im eigenen
+// Browser; Zugangsdaten gehoeren ohnehin nie in den Fernbrowser. Greift bei
+// /session (open), /session/act (navigate) und /fetch — nicht bei Klicks, die
+// die Seite selbst im Fernbrowser ausloest.
+const ANMELDE_SACKGASSEN = [/^accounts\.google\.com$/i];
+export const ANMELDE_SACKGASSE_TEXT = "Google-Anmeldung geht im Fernbrowser nicht — Google sperrt automatisierte Browser. Bitte im eigenen Browser anmelden.";
+
 export function parseBrowserTarget(rawUrl) {
   const input = String(rawUrl || "").trim();
   if (!input) return { ok: false, error: "Parameter url fehlt." };
@@ -78,6 +90,9 @@ export function parseBrowserTarget(rawUrl) {
   const host = target.hostname;
   if (!host || BLOCKED_HOST_PATTERNS.some((pattern) => pattern.test(host))) {
     return { ok: false, error: "Ziel-Host ist blockiert (privates Netz)." };
+  }
+  if (ANMELDE_SACKGASSEN.some((pattern) => pattern.test(host))) {
+    return { ok: false, error: ANMELDE_SACKGASSE_TEXT };
   }
   return { ok: true, url: target };
 }

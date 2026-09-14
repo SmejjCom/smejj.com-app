@@ -17,10 +17,40 @@ import {
 } from "../llm/modelRuntimeHealth.js";
 import { parseS3Keys, signedS3List } from "../storage/s3Signer.js";
 
+// Vault-Stand 30 s halten (F26, 2026-09-14).
+//
+// GEMESSEN 14.09.: `/api/models/status` p50 414 / p95 951 ms; mit warmer
+// Verbindung ~350 ms, davon ~200 ms Serverzeit — je Aufruf ZWEI Objektlisten
+// (Kimi- und GLM-Tresor), obwohl sich die Objektzahl eines Tresors zwischen
+// zwei Aufrufen nie aendert. Gehalten wird nur ein GELUNGENER Listenabruf;
+// ein Fehler wird beim naechsten Aufruf sofort neu gemessen. `checkedAt`
+// bleibt die echte Messzeit, die Antwort luegt also nicht ueber ihr Alter.
+// Der Worker-Preflight liest mit `frisch: true` weiter live.
+export const VAULT_HALTE_MS = 30_000;
+const vaultGehalten = new Map(); // model.id -> { zeit, prefix, ergebnis }
+
+/** Nur fuer Tests: gehaltene Vault-Staende vergessen. */
+export function vergissVaultStand() { vaultGehalten.clear(); }
+
+function vaultHalteMs(env) {
+  const wert = Number(env.SMEJJ_MODEL_VAULT_STATUS_TTL_MS);
+  return Number.isFinite(wert) && wert >= 0 ? Math.min(wert, 15 * 60_000) : VAULT_HALTE_MS;
+}
+
+// Laufzeit-Proben (Moonshot-Guthaben, Hausmodell /health) im Hintergrund wie
+// bei /api/health seit 13.09.: eine abgelaufene Probe kostete den Aufrufer
+// sonst bis zu 3 x 5 s. Nur beim KALTEN Start (noch kein einziger Eintrag)
+// wird gewartet, damit die erste Antwort nach einem Deploy das Hausmodell
+// nicht faelschlich als unerreichbar zeigt.
+async function laufzeitGesundheitAuffrischen(env) {
+  const lauf = refreshModelRuntimeHealth(env).catch(() => {});
+  if (Object.keys(getModelRuntimeHealthSnapshot()).length === 0) await lauf;
+}
+
 export async function handleModelStatus(res, modelId, { env = process.env } = {}) {
   const model = resolveVaultStatus(modelId);
   if (!model) return json(res, 404, { ok: false, error: "Unknown model" });
-  await refreshModelRuntimeHealth(env);
+  await laufzeitGesundheitAuffrischen(env);
   const result = await readModelStatus(model, env);
   const registry = getPublicModelRegistry(env, getModelRuntimeHealthSnapshot());
   return json(res, 200, {
@@ -31,7 +61,7 @@ export async function handleModelStatus(res, modelId, { env = process.env } = {}
 
 export async function handleModelsStatus(res, { env = process.env } = {}) {
   const results = await Promise.all(Object.values(MODEL_STATUSES).map((model) => readModelStatus(model, env)));
-  await refreshModelRuntimeHealth(env);
+  await laufzeitGesundheitAuffrischen(env);
   const registry = getPublicModelRegistry(env, getModelRuntimeHealthSnapshot());
   return json(res, 200, {
     ok: results.every((result) => result.ok),
@@ -63,7 +93,8 @@ export async function handleWorkerPreflight(url, res, { env = process.env } = {}
     });
   }
   const mode = url.searchParams.get("mode") || "planner-vault";
-  const modelStatus = await readModelStatus(model, env);
+  // Vor einem Worker-Start zaehlt der Tresor live, nie aus dem Haltespeicher.
+  const modelStatus = await readModelStatus(model, env, { frisch: true });
   const preflight = evaluateWorkerPreflight({
     model,
     liveStorage: modelStatus.liveStorage || {},
@@ -85,7 +116,7 @@ export async function handleWorkerPreflight(url, res, { env = process.env } = {}
   return json(res, preflight.ok ? 200 : 409, { ok: preflight.ok, modelStatus, preflight });
 }
 
-export async function readModelStatus(model, env = process.env) {
+export async function readModelStatus(model, env = process.env, { frisch = false, jetztMs = Date.now(), fetchImpl = fetch } = {}) {
   const storage = modelStorageConfig(env);
   const prefix = modelPrefix(model, env);
   if (!storage.configured) {
@@ -97,7 +128,10 @@ export async function readModelStatus(model, env = process.env) {
     };
   }
 
-  const { response, body } = await signedS3List({ ...storage, prefix });
+  const gehalten = frisch ? null : vaultGehalten.get(model.id);
+  if (gehalten && gehalten.prefix === prefix && jetztMs - gehalten.zeit < vaultHalteMs(env)) return gehalten.ergebnis;
+
+  const { response, body } = await signedS3List({ ...storage, prefix, fetchImpl });
   if (!response.ok) {
     return {
       ok: false,
@@ -115,7 +149,7 @@ export async function readModelStatus(model, env = process.env) {
 
   const objectCount = parseS3Keys(body).length;
   const expectedObjectCount = expectedObjectsForPrefix(model, prefix);
-  return {
+  const ergebnis = {
     ok: objectCount >= expectedObjectCount,
     configured: true,
     model,
@@ -126,9 +160,11 @@ export async function readModelStatus(model, env = process.env) {
       prefix,
       objectCount,
       expectedObjectCount,
-      checkedAt: new Date().toISOString()
+      checkedAt: new Date(jetztMs).toISOString()
     }
   };
+  vaultGehalten.set(model.id, { zeit: jetztMs, prefix, ergebnis });
+  return ergebnis;
 }
 
 function resolveVaultStatus(modelId) {

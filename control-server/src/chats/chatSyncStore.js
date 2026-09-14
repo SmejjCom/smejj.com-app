@@ -37,6 +37,41 @@ export const MAX_CHAT_BYTES = 512 * 1024; // ein Chat mit 8 Fassungen bleibt kla
 // S3-Schreibwege ohne Zeitlimit scheitern STILL (Befund 2026-08-xx, S3-Timeout).
 export const S3_TIMEOUT_MS = 2500;
 
+// Index-Rumpf je Konto im Speicher halten (F26, 2026-09-14).
+//
+// GEMESSEN 14.09.: `/api/chats?nurAbgleich=1` kostete p50 569 / p95 957 ms.
+// Der schnelle Weg brauchte ZWEI Rundreisen zum Objektspeicher nacheinander:
+// die Objektliste (Frische-Beweis) und dann den Index selbst — obwohl der
+// Index sich zwischen zwei Aufrufen fast nie aendert. Die Liste nennt zu
+// jedem Objekt den ETag; stimmt er mit dem ETag des zuletzt gelesenen Rumpfs
+// ueberein, IST es derselbe Rumpf. Der zweite Abruf entfaellt.
+//
+// Keine zweite Wahrheit: die Objektliste wird weiterhin bei JEDEM Aufruf
+// gelesen — sie bleibt der einzige Frische-Beweis. Gehalten wird nur ein
+// Rumpf, dessen ETag die GET-Antwort selbst genannt hat; wiederverwendet nur,
+// wenn die Liste denselben ETag meldet. Fehlt ein ETag (Liste ohne <ETag>,
+// GET ohne Kopf), wird gelesen wie bisher. Begrenzt, damit ein Server mit
+// vielen Konten nicht unbegrenzt waechst (aeltester Eintrag faellt raus).
+export const INDEX_HALTESPEICHER_MAX = 2000;
+const indexGehalten = new Map(); // kontoId -> { etag, eintraege }
+
+/** Nur fuer Tests: gehaltene Index-Ruempfe vergessen. */
+export function vergissIndexHaltespeicher() { indexGehalten.clear(); }
+
+function indexMerken(kontoId, etag, eintraege) {
+  if (!etag || !Array.isArray(eintraege)) return;
+  indexGehalten.delete(kontoId);
+  indexGehalten.set(kontoId, { etag, eintraege: eintraege.map((eintrag) => ({ ...eintrag })) });
+  while (indexGehalten.size > INDEX_HALTESPEICHER_MAX) indexGehalten.delete(indexGehalten.keys().next().value);
+}
+
+/** Gehaltene Eintraege, wenn die Liste denselben ETag nennt — sonst null. Liefert Kopien. */
+function indexAusHaltespeicher(kontoId, listenEtag) {
+  const gehalten = listenEtag ? indexGehalten.get(kontoId) : null;
+  if (!gehalten || gehalten.etag !== listenEtag) return null;
+  return gehalten.eintraege.map((eintrag) => ({ ...eintrag }));
+}
+
 export function syncAktiv(env = process.env) {
   return /^(1|true|yes|on)$/i.test(String(env.SMEJJ_CHAT_SYNC_ENABLED || ""));
 }
@@ -290,8 +325,17 @@ export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch,
   // Beschleuniger, nie eine zweite Wahrheit.
   if (nurAbgleich && indexIstFrisch(objekte, indexKey)) {
     try {
-      const antwort = await signedS3Get({ ...cfg, key: indexKey, allowNotFound: true, fetchImpl, timeoutMs: S3_TIMEOUT_MS });
-      const eintraege = antwort?.body ? leseIndex(antwort.body) : null;
+      // Gleicher ETag in der Liste wie beim letzten Lesen: derselbe Rumpf,
+      // kein zweiter Abruf (F26). Sonst lesen — und den Rumpf nur dann merken,
+      // wenn die GET-Antwort ihren ETag nennt und er dem der Liste gleicht.
+      const listenEtag = objekte.find((eintrag) => eintrag.key === indexKey)?.etag || "";
+      let eintraege = indexAusHaltespeicher(kontoId, listenEtag);
+      let ausHaltespeicher = Boolean(eintraege);
+      if (!eintraege) {
+        const antwort = await signedS3Get({ ...cfg, key: indexKey, allowNotFound: true, fetchImpl, timeoutMs: S3_TIMEOUT_MS });
+        eintraege = antwort?.body ? leseIndex(antwort.body) : null;
+        if (eintraege && antwort.etag && antwort.etag === listenEtag) indexMerken(kontoId, listenEtag, eintraege);
+      }
       // VOLLSTAENDIGKEIT (2026-08-23): Der Index wurde einst aus den damals 100
       // gekappten Chats gebaut und wuchs danach nur durch Nachtragen — fuenf
       // gueltige Chats fehlten dauerhaft, obwohl er nach Zeit "frisch" war.
@@ -301,7 +345,7 @@ export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch,
       const erwartet = Math.min(schluesselListe.length, limit);
       if (eintraege && eintraege.length >= erwartet) {
         eintraege.sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
-        return { ok: true, chats: eintraege.slice(0, limit), ausIndex: true };
+        return { ok: true, chats: eintraege.slice(0, limit), ausIndex: true, ...(ausHaltespeicher ? { ausHaltespeicher: true } : {}) };
       }
     } catch { /* faellt auf den regulaeren Weg zurueck */ }
   }
