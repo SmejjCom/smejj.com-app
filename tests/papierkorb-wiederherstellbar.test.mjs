@@ -49,6 +49,10 @@ test("F2: der Verlauf-Sync sendet auch weich geloeschte Chats", () => {
   assert.match(bereiche, /export async function listEigeneChatsMitGeloeschten\(\)/);
   assert.match(store, /export \{[^}]*listEigeneChatsMitGeloeschten[^}]*\} from "\.\/chat-store-bereiche\.js/);
   assert.match(sync, /listEigeneChatsMitGeloeschten/);
+  // chat-sync.js greift NICHT auf das Modul zu, sondern auf window.smejjChatStore —
+  // die Funktion muss dort registriert sein (live gemessen 2026-09-14: fehlte, der
+  // Sync fiel still auf listChats zurueck und das Loeschen blieb lokal).
+  assert.match(bereiche, /window\.smejjChatStore = \{[\s\S]*listEigeneChatsMitGeloeschten[\s\S]*\};/);
   // listChats bleibt fuer Ansichten der Weg OHNE Papierkorb.
   assert.match(store, /const sichtbar = eigene\.filter\(\(chat\) => !chat\.deletedAt\);/);
 });
