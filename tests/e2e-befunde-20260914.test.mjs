@@ -87,3 +87,12 @@ test("E16–E19: Browser-Rechtsklick, Code-Anhang, Coding-Rueckfall, Admin-Auswe
   assert.doesNotMatch(lies("admin/api.js"), /\? ZWEIT_ORIGIN/);
   assert.match(lies("admin/api.js"), /const ALT_ORIGIN = /);
 });
+
+test("E21: Erstbesuch laedt NICHT neu, nur ein echter Worker-Wechsel", () => {
+  const q = lies("pwa-schnellstart.js");
+  const an = q.indexOf("const hatteSteuerung = Boolean(navigator.serviceWorker.controller);");
+  const hoerer = q.indexOf('navigator.serviceWorker.addEventListener("controllerchange"');
+  assert.ok(an > -1 && an < hoerer, "Steuerung wird VOR dem Hoerer festgehalten (beim Laden, nicht beim Ereignis)");
+  assert.match(q, /\|\| !hatteSteuerung\) return;/);
+  assert.match(q, /location\.reload\(\);/, "Update-Neuladen bleibt erhalten");
+});
