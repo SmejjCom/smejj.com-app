@@ -582,10 +582,15 @@ test("Ratenlimit auf einem Glied: das naechste wird SOFORT gefragt, ohne Schlaf"
 });
 
 test("Steckt die GANZE Kette im Ratenlimit, wird einmal gewartet und alles erneut gefragt", async () => {
-  let geschlafen = 0; const antworten = [];
-  const fetchImpl = async () => {
-    antworten.push(1);
-    return antworten.length <= 3 ? planerAntwort("", 429) : planerAntwort('{"schemaVersion":1,"decision":"done","reason":"r","result":"ok"}');
+  let geschlafen = 0; const gesehen = new Set();
+  // Jedes Glied der Kette bekommt EINMAL 429 — egal wie lang die Kette ist
+  // (seit 14.09. haengt hinter glm-5.2 der Zweitversuch glm-4.5-flash). Erst
+  // die zweite Anfrage an dasselbe Modell, also der Neuanlauf nach der Pause,
+  // bekommt die Antwort.
+  const fetchImpl = async (url, init) => {
+    const glied = `${url}#${JSON.parse(init?.body || "{}").model || ""}`;
+    if (!gesehen.has(glied)) { gesehen.add(glied); return planerAntwort("", 429); }
+    return planerAntwort('{"schemaVersion":1,"decision":"done","reason":"r","result":"ok"}');
   };
   const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async (ms) => { geschlafen += ms; } });
   assert.match(await client("prompt"), /"done"/);
