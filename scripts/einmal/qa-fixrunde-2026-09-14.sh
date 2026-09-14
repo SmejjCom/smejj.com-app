@@ -55,12 +55,15 @@ node scripts/check-guidelines.mjs || { echo "ABBRUCH: Richtlinien rot."; exit 1;
 node scripts/check-startgewicht.mjs || { echo "ABBRUCH: Startgewicht rot."; exit 1; }
 node scripts/check-favicon-lock.mjs || { echo "ABBRUCH: Favicon-Lock rot."; exit 1; }
 LOG=/tmp/qa-fixrunde-tests.log
-node --test tests/frontend-structure.test.mjs tests/css-regelreste.test.mjs tests/deferred-start.test.mjs tests/platform-pwa.test.mjs tests/startgewicht.test.mjs tests/modellmenue-reihenfolge.test.mjs tests/knopf-puffer.test.mjs tests/papierkorb-wiederherstellbar.test.mjs tests/chat-store-selbstheilung.test.mjs tests/module-queries.test.mjs > "$LOG" 2>&1 \
+node --test tests/frontend-structure.test.mjs tests/css-regelreste.test.mjs tests/deferred-start.test.mjs tests/platform-pwa.test.mjs tests/startgewicht.test.mjs tests/modellmenue-reihenfolge.test.mjs tests/knopf-puffer.test.mjs tests/papierkorb-wiederherstellbar.test.mjs tests/chat-store-selbstheilung.test.mjs tests/module-queries.test.mjs tests/design-freigabe-f14-f18-f20.test.mjs tests/touch-ziele.test.mjs tests/settings-runtime.test.mjs tests/i18n-ui.test.mjs > "$LOG" 2>&1 \
   || { echo "ABBRUCH: die Tests zu dieser Auslieferung sind rot."; tail -30 "$LOG"; exit 1; }
 grep -E "pass |fail " "$LOG" | tr '\n' ' '; echo
 
+# Umgebung FREIGABE: ersetzt den Standardsatz "keine Designaenderung …" — fuer Runden,
+# in denen der Betreiber eine Design-Lock-Aenderung schriftlich freigegeben hat
+# (z. B. 14.09.: "OK – F18, F20 und F14 umsetzen"). Der Wortlaut landet im Stempel.
 echo "== 2. Start-Lock stempeln (Betreiber-Wortlaut)"
-node scripts/check-start-lock.mjs --freeze --confirm "Betreiber, 2026-09-14 (A-bis-Z-Pruefauftrag, Master-Prompt/Ship-Loop): Nach der Umsetzung bitte live gehen, live testen und pruefen, ob alles richtig funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber laeuft. — $KURZ: keine Designaenderung an Startseite/Eingabefeld, nur Fehlerbehebung, Cache-Marken und SW $SW_NEU." \
+node scripts/check-start-lock.mjs --freeze --confirm "Betreiber, 2026-09-14 (A-bis-Z-Pruefauftrag, Master-Prompt/Ship-Loop): Nach der Umsetzung bitte live gehen, live testen und pruefen, ob alles richtig funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber laeuft. — $KURZ: ${FREIGABE:-keine Designaenderung an Startseite/Eingabefeld, nur Fehlerbehebung, Cache-Marken und SW $SW_NEU}." \
   || { echo "ABBRUCH: Stempel fehlgeschlagen."; exit 1; }
 
 echo "== 3. Stempel committen und pushen"
