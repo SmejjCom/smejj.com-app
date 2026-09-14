@@ -193,3 +193,26 @@ test("inSaetze zerlegt an Satzzeichen und laesst Bruchstuecke weg", () => {
   assert.ok(s.every((x) => x.split(" ").length >= 4), "zu kurze Fragmente zaehlen nicht als Satz");
   assert.ok(s.some((x) => x.includes("genug woerter")), "der lange Satz muss dabei sein");
 });
+
+// --- 14.09.2026: Release-Modus und Sperre im Datensatz-Bau ---
+import { readFileSync as leseQuelle } from "node:fs";
+import { befundeFuerRohpaare } from "../scripts/check-abwehr-vielfalt.mjs";
+
+test("befundeFuerRohpaare: Vorlagen-Profil smejj-1-1 faellt durch, das handgeschriebene Profil smejj-1-11 besteht", async () => {
+  const { erzeuge } = await import("../workers/con-autopilot/daten/generator.mjs");
+  const { echtePaare } = await import("../scripts/training/smejj-1-1-echte-paare.mjs");
+  const vorlagen = [...echtePaare(), ...erzeuge({ startwert: 20260904, reasoning: 0, sicherheit: 2600, sprache: 0 })];
+  assert.ok(befundeFuerRohpaare(vorlagen).length > 0, "Vorlagen muessen gesperrt bleiben");
+  assert.deepEqual(befundeFuerRohpaare(echtePaare()), [], "die 83 handgeschriebenen Paare bestehen");
+  assert.deepEqual(befundeFuerRohpaare([]), [], "ohne Abwehr-Paare nichts zu beanstanden");
+});
+
+test("der Datensatz-Bau traegt die Sperre VOR dem Schreiben — sonst waeren Vorlagen wieder baubar", () => {
+  const bau = leseQuelle(new URL("../scripts/training/smejj-1-1-datensatz-bauen.mjs", import.meta.url), "utf8");
+  const sperre = bau.indexOf("befundeFuerRohpaare(roh)");
+  assert.ok(sperre > 0, "Sperre fehlt");
+  assert.ok(sperre < bau.indexOf('writeFile(path.join(ziel, "train.jsonl")'), "Sperre muss vor dem Schreiben stehen");
+  assert.match(bau, /--trotz-abwehr-befund/);
+  const paket = JSON.parse(leseQuelle(new URL("../package.json", import.meta.url), "utf8"));
+  assert.match(paket.scripts["check:abwehr-vielfalt"], /--release/, "check:all misst die Bau-Profile samt Sperre");
+});

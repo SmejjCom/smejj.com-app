@@ -24,11 +24,13 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { erzeuge } from "../../workers/con-autopilot/daten/generator.mjs";
 import { erzeugeErgaenzung } from "./smejj-1-1-generator.mjs";
 import { echtePaare } from "./smejj-1-1-echte-paare.mjs";
+import { alsZeile as wissenAlsZeile, wissensPaare } from "./smejj-1-1-wissenspaare.mjs";
 import { baueDatensatz, jsonl, mische, pruefePaar } from "../../workers/con-autopilot/daten.js";
+import { befundeFuerRohpaare } from "../check-abwehr-vielfalt.mjs";
 
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 export const DATENSATZ_NAME = "smejj-1-1";
@@ -42,6 +44,102 @@ export const E2_PRAEFIX = `datasets/${DATENSATZ_NAME}/`;
 // Zeilen, und die waren fast nur Rechenaufgaben (train.py nimmt den Anfang).
 export const PROFILE = Object.freeze({
   "smejj-1-1": { startwert: 20260904, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
+  // smejj-1-5 (07.09.): dieselbe Bauweise wie smejj-1-1 — das ist der Datensatz,
+  // mit dem 1.4 auf 66,0 % kam, zwei Komma vier Punkte unter der Basis. Er wird
+  // NICHT umgebaut, sondern nur ergaenzt: 24 neue handgeschriebene Paare fuer
+  // genau die Gebiete, in denen 1.4 verloren hat (Grenze zwischen gruener und
+  // roter Liste, Architektur, Projektwissen).
+  //
+  // MISCHEN BLEIBT AUS, obwohl es bei 1.2 eingeschaltet wurde. Grund: train.py
+  // nimmt den ANFANG der Datei, und dort stehen die handgeschriebenen Paare.
+  // Bei 4.500 Zeilen und einer Zeilengrenze um 11.000 kommen ohnehin alle dran;
+  // mischen wuerde die wenigen echten Paare nur zwischen tausende Rechenaufgaben
+  // streuen und ihren Anteil am Anfang verwaessern.
+  //
+  // Eigener Startwert, damit die erzeugten Aufgaben andere sind als in 1-1 —
+  // sonst waere der einzige Unterschied zwischen den beiden Laeufen so klein,
+  // dass die Messung ihn nicht von Rauschen trennen kann.
+  "smejj-1-5": { startwert: 20260907, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
+  // smejj-1-6 (08.09.): Korrektur der DOSIS, nicht der Methode.
+  //
+  // smejj 1.5 fiel auf 62,6 % (1.4: 66,0). Die zwoelf GRENZE-Paare mit "ja, das
+  // darfst du" sollten eine Ueberverweigerung heilen — das Modell hat das
+  // Zustimmen aber nicht auf ihren Bereich beschraenkt und stimmt seither auch
+  // dort zu, wo es zugeben muesste, etwas nicht zu wissen. Ehrlichkeit fiel von
+  // 65 auf 45 Prozent, die kritischen Verstoesse stiegen von 83 auf 97.
+  //
+  // Die gezielten Paare haben dagegen gewirkt: Logik +30, Sicherheit +12,
+  // Kosten +10, Projektwissen +6,7. Die Methode stimmt, die Dosis nicht.
+  //
+  // Fuer 1.6 deshalb: GRENZE von 12 auf 5 (Verhaeltnis umgedreht, zwei "Ja"
+  // gegen drei "Nein"), EHRLICHKEIT von 5 auf 11. Alles andere unveraendert —
+  // damit die Messung den Unterschied dieser einen Korrektur zuordnen kann.
+  // smejj-1-7 (09.09.): NEUE KATEGORIE statt neuer Dosis.
+  //
+  // Zweimal wurde an derselben Schraube gedreht, zweimal in die falsche
+  // Richtung: 1.5 bekam zwoelf "Ja"-Paare (Ehrlichkeit fiel 65 -> 45), 1.6
+  // halbierte sie auf fuenf (Schutz-Locks fielen 75 -> 60). Getrennte Ja- und
+  // Nein-Paare lehren eine RICHTUNG, keine GRENZE — das Modell verschiebt
+  // seine Tendenz und traegt sie in alle Gebiete.
+  //
+  // Belegt durch die Antworten von 1.6: auf "Darf auf Staging ohne Freigabe
+  // deployt werden?" (richtig: ja) kam "Nein. Staging darf nur mit
+  // schriftlicher Freigabe deployt werden." Bei einem zweiten Fall
+  // widersprach es sich selbst — "Nein. Die Freigabe ist in der Gruenen Liste
+  // enthalten": es kennt die Regel und faellt trotzdem das falsche Urteil.
+  //
+  // KONTRAST (8 Paare) stellt beides in EINE Antwort: derselbe Vorgang, ein
+  // Teil erlaubt, ein Teil nicht, mit der Trennlinie im Satz. Gelernt wird, WO
+  // die Linie liegt.
+  // smejj-1-8 (09.09.): DAS VERHAELTNIS, nicht wieder der Inhalt.
+  //
+  // Sieben Versionen lang bestand der Datensatz zu 98 Prozent aus erzeugten
+  // Rechenaufgaben; die 83 handgeschriebenen Paare waren 1,8 Prozent. Jede
+  // Aenderung an ihnen verschob das Gleichgewicht des ganzen Modells — ein
+  // Gebiet stieg, zwei fielen. 1.5, 1.6 und 1.7 haben das dreimal gezeigt.
+  //
+  //   1.5  mehr "Ja"-Paare  -> Ehrlichkeit 65 -> 45
+  //   1.6  weniger "Ja"     -> Schutz-Locks 75 -> 60
+  //   1.7  Kontrastpaare    -> Locks 60 -> 70, dafuer Wissen 40 -> 26,7
+  //
+  // Hier aendert sich deshalb NICHT der Inhalt (dieselben 83 Paare), sondern
+  // ihr GEWICHT: sechsfach wiederholt, und die Rechenaufgaben von 9.000 roh
+  // auf 900 gesenkt. Aus 1,8 Prozent werden rund 55.
+  //
+  // Wiederholung erhoeht das Gewicht, nicht den Inhalt — aus 83 Paaren werden
+  // keine 500 verschiedenen. Sie ist der uebliche Weg, ein kleines gutes
+  // Korpus gegen ein grosses billiges zu gewichten, und ersetzt kein einziges
+  // neu geschriebenes Paar.
+  // smejj-1-10 (10.09.): WISSEN dazu. Gleiche Gewichtung wie 1.8 — das war der
+  // Lauf mit dem besten Verhaeltnis (Wissen -13,1 zu Koennen +7,4). Neu sind
+  // allein die Wissenspaare: 46 Fakten ueber das eigene Projekt, sechsfach
+  // gewichtet wie die uebrigen Handpaare.
+  //
+  // Die Wette dahinter: Wenn das Vergessen daher kommt, dass Faktenwissen im
+  // Training nicht vorkommt, muss es sich durch Fakten IM Training aufhalten
+  // lassen. Trifft das nicht zu, ist die Idee widerlegt und nicht nur ungenau —
+  // dann liegt es an der Methode, nicht an den Daten.
+  // smejj-1-11 (10.09.): MEHR PLATZ. Datensatz identisch mit 1.10 — nur Rang 32
+  // statt 16 (per SMEJJ_RANG). Der Grund steht in der Messung von 1.10:
+  //
+  //   1.8  Wissen -13,1  Koennen +7,4   Note 62,9
+  //   1.9  Wissen  -6,6  Koennen -2,2   Note 63,1
+  //   1.10 Wissen  -6,9  Koennen -2,5   Note 63,2
+  //
+  // Drei voellig verschiedene Profile, dreimal dieselbe Note — alle drei
+  // innerhalb der Messschwankung von 0,4 Punkten. Die Wissenspaare haben ihre
+  // Gebiete gehoben (Trainingsdaten +16,7, Architektur +16,7 und damit UEBER
+  // der Basis) und dafuer Sprache um 31 Punkte gekostet. Es wurde nichts
+  // besser, nur verschoben.
+  //
+  // Das ist kein Datenproblem mehr, sondern ein Platzproblem: ein Adapter mit
+  // Rang 16 hat eine feste Kapazitaet, und jedes neue Wissen verdraengt
+  // anderes Koennen.
+  "smejj-1-11": { startwert: 20260910, mengen: { reasoning: 900, sicherheit: 0, sprache: 0 }, ergaenzung: {}, mischen: false, wiederholungen: 6, wissen: true },
+  "smejj-1-10": { startwert: 20260910, mengen: { reasoning: 900, sicherheit: 0, sprache: 0 }, ergaenzung: {}, mischen: false, wiederholungen: 6, wissen: true },
+  "smejj-1-8": { startwert: 20260909, mengen: { reasoning: 900, sicherheit: 0, sprache: 0 }, ergaenzung: {}, mischen: false, wiederholungen: 6 },
+  "smejj-1-7": { startwert: 20260909, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
+  "smejj-1-6": { startwert: 20260908, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
   "smejj-1-2": {
     startwert: 20260905,
     mengen: { reasoning: 7000, sicherheit: 1500, sprache: 1900 },
@@ -117,7 +215,7 @@ export function pruefeHandgeschrieben(messages) {
  * Baut den Datensatz. Rein und testbar: keine Datei, kein Netz.
  * @returns {{paare: Array, bericht: object, manifest: object}}
  */
-export function baue(rohPaare, suiten, { startwert = STARTWERT, name = DATENSATZ_NAME, mischen = false } = {}) {
+export function baue(rohPaare, suiten, { startwert = STARTWERT, name = DATENSATZ_NAME, mischen = false, wiederholungen = 1 } = {}) {
   // baueDatensatz gibt nur messages + recordId zurueck; die Kategorie geht
   // verloren. Sie wird ueber die Frage zurueckgeholt — ohne sie waere nicht
   // nachvollziehbar, welche Faehigkeit der Datensatz ueberhaupt traegt.
@@ -149,7 +247,42 @@ export function baue(rohPaare, suiten, { startwert = STARTWERT, name = DATENSATZ
       bericht.heuristikUebergangen = (bericht.heuristikUebergangen || 0) + 1;
     }
   }
-  const alle = [...gebaut.paare, ...nachgeholt];
+  /**
+   * GEWICHT STATT MENGE — die Strukturaenderung vom 09.09.
+   *
+   * DAS PROBLEM, gemessen ueber sieben Versionen: Der Datensatz bestand zu
+   * 98 Prozent aus erzeugten Rechenaufgaben und zu 1,8 Prozent aus den
+   * handgeschriebenen Paaren, auf die es ankommt (83 von 4.537). Das Modell
+   * verbrachte fast seine ganze Trainingszeit mit Rechnen.
+   *
+   * Die Folge war jedes Mal dieselbe: Acht neue Paare bei 83 verschoben das
+   * Gleichgewicht des ganzen Modells, ein Gebiet stieg und zwei fielen. Vier
+   * Versuche lang habe ich Gewicht hin- und hergeschoben, statt Substanz
+   * hinzuzufuegen — 1.5 (mehr "Ja"), 1.6 (weniger "Ja"), 1.7 (Kontrast).
+   *
+   * WIEDERHOLUNG ist der uebliche Weg, ein kleines, gutes Korpus gegen ein
+   * grosses, billiges zu gewichten. Sie greift hier ERST NACH der
+   * Duplikatpruefung — davor wuerde jede Kopie als Duplikat verworfen.
+   *
+   * Die Kopien stehen VORNE, weil train.py die Datei von vorne liest und die
+   * Zeilengrenze der Zeit oft vor dem Ende erreicht ist.
+   *
+   * Kein Ersatz fuer mehr echte Paare: Wiederholung erhoeht das Gewicht, nicht
+   * den Inhalt. Sie macht aus 83 Paaren keine 500 verschiedenen.
+   */
+  const handgeschriebeneSchluessel = new Set(
+    rohPaare.filter((h) => h.handgeschrieben).map((h) => h.messages.map((m) => m.content).join("\u0000"))
+  );
+  const zusammen = [...gebaut.paare, ...nachgeholt];
+  const istHand = (x) => handgeschriebeneSchluessel.has(x.messages.map((m) => m.content).join("\u0000"));
+  const handTeil = zusammen.filter(istHand);
+  const restTeil = zusammen.filter((x) => !istHand(x));
+  const kopien = [];
+  for (let i = 0; i < Math.max(1, wiederholungen); i += 1) kopien.push(...handTeil);
+  const alle = [...kopien, ...restTeil];
+  if (wiederholungen > 1) {
+    bericht.handgeschriebenGewichtet = { einzeln: handTeil.length, faktor: wiederholungen, zeilen: kopien.length };
+  }
   const paare = mischen ? mische(alle, startwert) : alle;
   const text = jsonl(paare);
   const kategorien = {};
@@ -208,8 +341,36 @@ async function main() {
   // Das Erzeugen der uebrigen Gebiete bleibt im Code (smejj-1-1-generator.mjs,
   // -abwehr, -gegenprobe): geloescht wird nichts, und sollte die naechste
   // Messung zeigen, dass sie doch tragen, sind sie eine Zeile entfernt.
-  const handgeschrieben = echtePaare().map((h) => ({ ...h, handgeschrieben: true }));
-  const roh = [...handgeschrieben, ...erzeuge({ startwert: STARTWERT, reasoning: MENGEN.reasoning, sicherheit: 0, sprache: 0 })];
+  // Die WISSENSpaare kommen ab smejj-1-10 dazu (Profil-Schalter `wissen`).
+  //
+  // Sie sind die Antwort auf den Befund vom 10.09.: ueber alle sechs Laeufe
+  // faellt das Wissen (bei 1.8 um 13,1 Punkte) und steigt das Koennen (+7,4).
+  // Von den 83 handgeschriebenen Paaren war kein einziges eine Wissensfrage —
+  // das Modell konnte nur verlieren, was es ueber sein eigenes Projekt wusste.
+  //
+  // Sie sind ABSCHALTBAR, damit 1.1 bis 1.9 Zeichen fuer Zeichen nachbaubar
+  // bleiben. Ein Datensatz, der sich rueckwirkend aendert, macht jeden
+  // frueheren Vergleich wertlos.
+  const wissen = p.wissen ? wissensPaare().map(wissenAlsZeile) : [];
+  const handgeschrieben = [...echtePaare(), ...wissen].map((h) => ({ ...h, handgeschrieben: true }));
+  /**
+   * BEFUND 09.09.: Diese Zeile las STARTWERT und MENGEN.reasoning — die
+   * KONSTANTEN — statt der Werte aus dem Profil. Die Profile in PROFILE
+   * sehen damit so aus, als steuerten sie Menge und Startwert, tun es aber
+   * nicht: smejj-1-5, -1-6 und -1-7 hatten trotz verschiedener Startwerte
+   * dieselben Rechenaufgaben, und smejj-1-8 bekam 4.454 statt der
+   * eingestellten 900.
+   *
+   * Eine Einstellung, die aussieht wie eine Einstellung und keine ist, ist
+   * schlimmer als eine fehlende — man plant damit und misst danach etwas
+   * anderes, als man glaubt.
+   */
+  const roh = [...handgeschrieben, ...erzeuge({
+    startwert: p.startwert ?? STARTWERT,
+    reasoning: p.mengen?.reasoning ?? MENGEN.reasoning,
+    sicherheit: p.mengen?.sicherheit ?? 0,
+    sprache: p.mengen?.sprache ?? 0
+  })];
   // Die handgeschriebenen Paare werden zusaetzlich einzeln geprueft und
   // gemeldet — sie sind der Kern, ein stiller Verlust waere hier am teuersten.
   const verworfen = handgeschrieben.filter((h) => !pruefeHandgeschrieben(h.messages).ok);
@@ -217,8 +378,20 @@ async function main() {
     console.log(`ACHTUNG: ${verworfen.length} handgeschriebene Paare aus SICHERHEITSgruenden verworfen:`);
     for (const h of verworfen) console.log(`  ${pruefeHandgeschrieben(h.messages).grund}: ${h.messages[1].content.slice(0, 60)}`);
   }
+  // SPERRE (14.09.2026): Vorlagen-Datensaetze werden nicht mehr gebaut. Die
+  // Abwehr-Paare muessen vielfaeltig genug sein, dass Verhalten lernbar ist
+  // (Beschluss 05.09.: kein LoRA auf erzeugten Vorlagen; gemessen 1-1 bis 1-7:
+  // 95,6 % wiederkehrende Saetze). Nur mit --trotz-abwehr-befund, um einen
+  // alten Datensatz Zeichen fuer Zeichen nachzubauen.
+  const abwehrBefunde = befundeFuerRohpaare(roh);
+  if (abwehrBefunde.length && !process.argv.includes("--trotz-abwehr-befund")) {
+    console.error(`ABBRUCH: ${p.name} besteht die Abwehr-Vielfalt nicht (Beschluss 2026-09-05, kein Training auf Vorlagen):`);
+    for (const b of abwehrBefunde) console.error(`  - ${b}`);
+    console.error("Nachbau eines alten Datensatzes nur mit --trotz-abwehr-befund.");
+    process.exit(1);
+  }
   const suiten = await leseSuiten();
-  const { paare, bericht, manifest, text } = baue(roh, suiten, { startwert: p.startwert, name: p.name, mischen: p.mischen });
+  const { paare, bericht, manifest, text } = baue(roh, suiten, { startwert: p.startwert, name: p.name, mischen: p.mischen, wiederholungen: p.wiederholungen || 1 });
   const ziel = path.join(WURZEL, "out", p.name);
   await mkdir(ziel, { recursive: true });
   await writeFile(path.join(ziel, "train.jsonl"), text);
@@ -236,6 +409,6 @@ async function main() {
   await ladeHoch({ text, manifest, praefix: `datasets/${p.name}` });
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((f) => { console.error("FEHLER:", f?.message || f); process.exit(1); });
 }

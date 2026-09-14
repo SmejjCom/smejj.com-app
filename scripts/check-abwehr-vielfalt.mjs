@@ -38,6 +38,7 @@
 // Aufruf:
 //   node scripts/check-abwehr-vielfalt.mjs                  (erzeugt die Menge selbst)
 //   node scripts/check-abwehr-vielfalt.mjs --datei <pfad>   (JSONL messen)
+//   node scripts/check-abwehr-vielfalt.mjs --release        (alle Bau-Profile + Sperre im Bau, check:all)
 import { existsSync, readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
@@ -297,7 +298,72 @@ function ausDatei(pfad, alle = false) {
   return paare;
 }
 
+// Kategorien, deren Antwort eine Abwehr IST — alles andere ist die Gegenprobe
+// (hilfreiche Antworten mit demselben Vokabular).
+const ABWEHR_KATEGORIEN = new Set(["sicherheit", "schutz", "grenze"]);
+
+/**
+ * Befunde fuer genau die Rohpaare, die der Datensatz-Bau zusammensetzt
+ * ({messages, kategorie}). Wird im Bau selbst aufgerufen: dort, wo ein
+ * Vorlagen-Datensatz Schaden anrichten wuerde (14.09.2026).
+ */
+export function befundeFuerRohpaare(roh) {
+  const inhaltOderLeer = (p) => ({
+    frage: (p?.messages?.find((m) => m.role === "user") || {}).content || "",
+    antwort: (p?.messages?.find((m) => m.role === "assistant") || {}).content || ""
+  });
+  const liste = Array.isArray(roh) ? roh : [];
+  const abwehr = liste.filter((p) => ABWEHR_KATEGORIEN.has(p?.kategorie)).map(inhaltOderLeer);
+  const gegen = liste.filter((p) => !ABWEHR_KATEGORIEN.has(p?.kategorie)).map(inhaltOderLeer);
+  if (!abwehr.length) return [];
+  const m = miss(abwehr, []);
+  const u = missUeberverweigerung(abwehr, gegen);
+  if (u.verhaeltnis > SCHWELLE.ueberverweigerung) m.ueberverweigerung = u.verhaeltnis;
+  return befunde(m);
+}
+
+/**
+ * Release-Modus (check:all, 14.09.2026). Frueher mass die Pruefung den alten
+ * Abwehr-Generator, den der Bau seit dem 06.09. gar nicht mehr aufruft — sie war
+ * dauerhaft rot, und ein dauerhaft roter Waechter wird uebersehen. Jetzt:
+ *   1. jedes Profil des Datensatz-Baus wird so gemessen, wie der Bau es
+ *      zusammensetzt (handgeschriebene Paare, Wissenspaare, con-Generator);
+ *   2. der Bau MUSS die Sperre tragen (befundeFuerRohpaare vor dem Schreiben,
+ *      Abbruch ohne --trotz-abwehr-befund) — fehlt sie, ist die Pruefung rot;
+ *   3. mindestens ein Profil muss baubar sein, sonst ist die Messung selbst kaputt.
+ * Die Vorlagen-Profile bleiben damit gesperrt, und das an der Stelle, an der
+ * sie Schaden anrichten wuerden — nicht an der Auslieferung der Website.
+ */
+async function releaseModus() {
+  const bau = await import(new URL("./training/smejj-1-1-datensatz-bauen.mjs", import.meta.url).href);
+  const { erzeuge } = await import(new URL("../workers/con-autopilot/daten/generator.mjs", import.meta.url).href);
+  const { echtePaare } = await import(new URL("./training/smejj-1-1-echte-paare.mjs", import.meta.url).href);
+  const w = await import(new URL("./training/smejj-1-1-wissenspaare.mjs", import.meta.url).href);
+  const quelle = readFileSync(new URL("./training/smejj-1-1-datensatz-bauen.mjs", import.meta.url), "utf8");
+  const sperreDa = /befundeFuerRohpaare\(roh\)/.test(quelle) && /--trotz-abwehr-befund/.test(quelle) && /process\.exit\(1\)/.test(quelle);
+  const gesperrt = [];
+  const baubar = [];
+  for (const name of Object.keys(bau.PROFILE)) {
+    const p = bau.profil(name);
+    const wissen = p.wissen ? w.wissensPaare().map(w.alsZeile) : [];
+    const roh = [...echtePaare(), ...wissen, ...erzeuge({
+      startwert: p.startwert ?? bau.STARTWERT,
+      reasoning: 0,
+      sicherheit: p.mengen?.sicherheit ?? 0,
+      sprache: p.mengen?.sprache ?? 0
+    })];
+    (befundeFuerRohpaare(roh).length ? gesperrt : baubar).push(name);
+  }
+  console.log(`abwehr-vielfalt (Release): ${baubar.length} Profile baubar (${baubar.join(", ") || "keins"})`);
+  console.log(`  gesperrt, weil Vorlagen: ${gesperrt.join(", ") || "keins"}`);
+  console.log(`  Sperre im Datensatz-Bau: ${sperreDa ? "vorhanden" : "FEHLT"}`);
+  if (!sperreDa) { console.error("\nabwehr-vielfalt VERLETZT: der Datensatz-Bau prueft die Abwehr-Vielfalt nicht mehr — Vorlagen-Profile waeren baubar."); process.exit(1); }
+  if (!baubar.length) { console.error("\nabwehr-vielfalt VERLETZT: kein einziges Profil ist baubar — die Messung oder die Paare sind kaputt."); process.exit(1); }
+  console.log(`\nabwehr-vielfalt OK — Vorlagen-Profile sind im Bau gesperrt, ${baubar.length} Profile erfuellen die Schwellen.`);
+}
+
 async function main() {
+  if (process.argv.includes("--release")) return releaseModus();
   const argv = process.argv.slice(2);
   const i = argv.indexOf("--datei");
   let paare, ziele = [];

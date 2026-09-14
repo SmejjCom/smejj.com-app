@@ -50,3 +50,8 @@ scripts/model-management/run_glm_fp8_contabo_transfer 2.sh
 # Generierte Design-Mockups (Einzeldatei > 800 Zeilen, kein Code)
 docs/mockups/*.html
 __pycache__/
+
+# Store-Screenshots (Google Play / App Store) sind grosse Binaerdateien (bis 1,7 MB) —
+# sie gehoeren nicht in Git (Free-only, 1-MB-Grenze von check:security). Die Dateien
+# bleiben lokal liegen; nichts wird geloescht. 14.09.2026.
+docs/store/screenshots-*/

@@ -97,7 +97,14 @@ test("service worker caches only small app shell assets and has offline fallback
   assert.match(sw, /\/assets\/autonomous-coding\.css/);
   assert.match(sw, /url\.pathname\.replace\(\/\\\/\$\/, ""\) === "\/home"/);
   assert.match(sw, /Response\.redirect\(new URL\("\/", url\.origin\)\.href, 302\)/);
-  assert.match(sw, /cache\.addAll\(SHELL\.map\(\(url\) => new Request\(url, \{ cache: "reload" \}\)\)\)/);
+  // 2026-09-13: Seit dem schmalen Eingang der Landeseite (SW v860) legt der
+  // Service Worker INSTALL_LISTE ab — SHELL fuer die App, WILLKOMMEN_SHELL fuer
+  // /sw.js?eingang=willkommen. Die Zusage dieses Tests bleibt dieselbe: frisch
+  // vom Netz ("reload"), und fuer die App ist die Liste weiterhin SHELL.
+  // Das Verhalten beider Groessen pruefen tests/sw-schmaler-eingang.test.mjs
+  // am ECHTEN sw.js.
+  assert.match(sw, /cache\.addAll\(INSTALL_LISTE\.map\(\(url\) => new Request\(url, \{ cache: "reload" \}\)\)\)/);
+  assert.match(sw, /const INSTALL_LISTE = SCHMAL \? WILLKOMMEN_SHELL : SHELL;/, "ohne Zusatz muss weiterhin die volle App-Liste gelten");
   assert.match(sw, /fetch\(request\)\.catch/);
   assert.match(sw, /caches\.match\("\/"\)/);
   // v159 -> v160 (QA-Welle 1, F-24): Precache-Dateien cache-first, HTML und
