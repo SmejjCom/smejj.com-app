@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-14T20:13:56.693Z",
-  "confirmation": "Betreiber, 2026-09-14 (A-bis-Z-Pruefauftrag, Master-Prompt/Ship-Loop): Nach der Umsetzung bitte live gehen, live testen und pruefen, ob alles richtig funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber laeuft. — E2E Fixrunde 3: Betreiber-Auftrag E2E-Test 14.09.: 'Waehrend dieses Auftrags darfst du notwendige Reparaturen durchfuehren.' — keine Designaenderung an Startseite/Eingabefeld; app.js/browser-pane.js nur Cache-Marken bzw. ein fehlender Import (E16); Cache-Marken und SW smejj-shell-v876.",
+  "frozenAt": "2026-09-14T20:41:42.571Z",
+  "confirmation": "Betreiber, 2026-09-14 (A-bis-Z-Pruefauftrag, Master-Prompt/Ship-Loop): Nach der Umsetzung bitte live gehen, live testen und pruefen, ob alles richtig funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber laeuft. — E2E Fixrunde 4: Betreiber-Auftrag E2E-Test 14.09.: 'Waehrend dieses Auftrags darfst du notwendige Reparaturen durchfuehren.' — keine Designaenderung an Startseite/Eingabefeld; nur Cache-Marke pwa-schnellstart.js und SW smejj-shell-v877.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "17ab87108b671a5e53188a7b8bf17c58d08e8527f994841d151100b8f7cfae67",
+    "public/index.html": "eba39cfd8512ce7652317b6c680683befb75db2c35adcd68cbebb2e0d54417e9",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "dabfb2cbf5b870ec8d2c6201ccda60e8c46ae33e185f29723433905139c75a2d",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "7a4a6ca0415f2c8d4af0c1cadcaaf9cee962c58425e934855ddf3c918da55536",
+    "public/sw.js": "eab87f16596507f58da6cdc72c25ba7151bf367397cd4a21796e157a2a74bc4f",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
