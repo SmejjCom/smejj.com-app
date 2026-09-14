@@ -35,3 +35,27 @@ test("E3: Fuehrungsblase misst ihre echte Hoehe und weicht nach oben aus", () =>
 test("Assets-Kopien sind identisch", () => {
   for (const d of ["fehler-faenger.js", "fuehrung.js", "auth-gate.js"]) assert.equal(lies(d), lies(`assets/${d}`), d);
 });
+
+test("E9: Projektliste und Projektwahl kennen state (kein ReferenceError mehr)", () => {
+  const q = lies("projects-surface.js");
+  const liste = q.slice(q.indexOf("export async function refreshProjectList"));
+  assert.match(liste.slice(0, 600), /const \{ \$, state, workspace/);
+  assert.match(q, /export function selectedProjectId\(\$, state = \{\}\)/);
+  assert.equal((q.match(/selectedProjectId\(\$\)/g) || []).length, 0, "kein Aufruf ohne state");
+});
+
+test("E10: Stopp-Knopf schluckt den zweiten Klick eines Doppelklicks", () => {
+  const q = lies("chat-stopp.js");
+  assert.match(q, /const DOPPELKLICK_SPERRE_MS = \d{3};/);
+  assert.match(q, /stoppSeit = Date\.now\(\);/);
+  const fang = q.slice(q.indexOf("if (Date.now() - stoppSeit < DOPPELKLICK_SPERRE_MS) return;") - 1200, q.indexOf("if (Date.now() - stoppSeit < DOPPELKLICK_SPERRE_MS) return;"));
+  assert.match(fang, /e\.stopImmediatePropagation\(\);/, "Klick wird geschluckt, bevor die Sperre greift (sonst Sprachmodus)");
+});
+
+test("E11: alle Sprachseiten erlauben api.smejj.com in connect-src (wie die Startseite)", () => {
+  for (const l of ["ar", "bn", "de", "en", "es", "fr", "hi", "id", "it", "ja", "ko", "pt", "ru", "tr", "zh"]) {
+    const csp = (lies(`${l}/index.html`).match(/connect-src[^;"]*/) || [""])[0];
+    assert.match(csp, /https:\/\/api\.smejj\.com/, l);
+    assert.doesNotMatch(csp, /salad\.cloud/, `${l}: abgeschaltete Salad-Hosts raus`);
+  }
+});
