@@ -66,7 +66,7 @@ Bild-Maler-Worker (transformers 5.5.0, accelerate 1.1.1) brauchen eine GPU-Bauum
 | API-Latenz (20 Aufrufe je Route) | `api-latenz.mjs` → `docs/benchmarks/api-latenz_v870_2026-09-14.json` | 5xx-Rate 0/200; p95: health 741, auth/config 246, capabilities 256, chats-Abgleich 957, billing 432, projekte 484, models/status 951 ms — p50 240 ms Grundlatenz vom Betreiber-Netz; Abgleich und models/status über dem 300-ms-Budget (F26) |
 | Sicherheit | check:security/abuse/gatekeeper/passkey/users, CVE-Wächter, Dependabot, Zweigschutz | grün; 4 bekannte CVEs im nicht gebauten/GPU-Worker; kein Force-Push/Löschen mehr auf Klon `main`, Bauzweig, Arbeitszweig |
 | Suite | `check:all` 1.117 Tests + `test:tests` 3.832 Tests (Arbeitszweig); Bauzweig control-server/llm-router/ai/frontend/voice/rag | grün (2 Pins an die neue Modellkette angepasst, 1 Kettenlängen-Annahme entfernt) |
-| Ampel (85 Autopiloten) | Live-Ampel | 77 grün; rot: Codeberg-Token, Zeabur-Schlüssel (Betreiber), Tiefe-Spur (Tagesmessung steht aus), Test-/Vitals-Wächter überfällig seit 12.09. (Actions), Projektwissen-Export (14.09. erneuert), Missbrauchs-Wache (142 Anfragen/10 min vom Betreiber-Mac = meine Latenzmessung, keine Sperre) |
+| Ampel (85 Autopiloten) | Live-Ampel | 77 grün; rot: Codeberg-Token, Zeabur-Schlüssel (Betreiber), Tiefe-Spur (Tagesmessung steht aus), Test-/Vitals-Wächter überfällig seit 12.09. (Mac-launchd-Jobs 05:45/06:15 brechen ab: „github.com weder über Port 22 noch ssh.github.com:443 erreichbar“ — nachts kein SSH vom Mac; am 14.09. manuell nachgeholt), Projektwissen-Export (14.09. erneuert), Missbrauchs-Wache (142 Anfragen/10 min vom Betreiber-Mac = meine Latenzmessung, keine Sperre) |
 | Adversarische Review | Workflow: 3 Blickwinkel, 26 Befunde, je 3 Skeptiker | 20 bestätigt → 10 mit Code behoben (Fixrunde 3 / Server 4), Rest dokumentiert |
 
 ## 4. iOS-/Android-Build, Datenbank, Backup, Release
@@ -87,5 +87,5 @@ Bild-Maler-Worker (transformers 5.5.0, accelerate 1.1.1) brauchen eine GPU-Bauum
 
 1. Betreiber-Entscheide F18/F20/F14 (Design-Lock) — je 1–2 Stunden Umsetzung nach „OK“.
 2. Fixrunde 4 mit den kleinen offenen Punkten (F6, F8, F10, F11, F16, F21, F23, R7-Hinweis, R8).
-3. Test-/Vitals-Wächter: GitHub-Actions seit 12.09. still — prüfen, warum (vermutlich Secret/Token), sonst Mac-Job wie beim Codeberg-Spiegel.
+3. Test-/Vitals-Wächter (Mac-launchd `com.smejj.test-waechter`, `com.smejj.web-vitals`): lesen GitHub per SSH und scheitern nachts — auf HTTPS umstellen wie der Codeberg-Spiegel (`~/.local/share/*/wache.sh`), Betreiber-Mac.
 4. Nach Apple-Freigabe: iOS-Hülle bauen, TestFlight, Smoke-Test.
