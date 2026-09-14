@@ -35,3 +35,91 @@ test("E3: Fuehrungsblase misst ihre echte Hoehe und weicht nach oben aus", () =>
 test("Assets-Kopien sind identisch", () => {
   for (const d of ["fehler-faenger.js", "fuehrung.js", "auth-gate.js"]) assert.equal(lies(d), lies(`assets/${d}`), d);
 });
+
+test("E9: Projektliste und Projektwahl kennen state (kein ReferenceError mehr)", () => {
+  const q = lies("projects-surface.js");
+  const liste = q.slice(q.indexOf("export async function refreshProjectList"));
+  assert.match(liste.slice(0, 600), /const \{ \$, state, workspace/);
+  assert.match(q, /export function selectedProjectId\(\$, state = \{\}\)/);
+  assert.equal((q.match(/selectedProjectId\(\$\)/g) || []).length, 0, "kein Aufruf ohne state");
+});
+
+test("E10: Stopp-Knopf schluckt den zweiten Klick eines Doppelklicks", () => {
+  const q = lies("chat-stopp.js");
+  assert.match(q, /const DOPPELKLICK_SPERRE_MS = \d{3};/);
+  assert.match(q, /stoppSeit = Date\.now\(\);/);
+  const fang = q.slice(q.indexOf("if (Date.now() - stoppSeit < DOPPELKLICK_SPERRE_MS) return;") - 1200, q.indexOf("if (Date.now() - stoppSeit < DOPPELKLICK_SPERRE_MS) return;"));
+  assert.match(fang, /e\.stopImmediatePropagation\(\);/, "Klick wird geschluckt, bevor die Sperre greift (sonst Sprachmodus)");
+});
+
+test("E11: alle Sprachseiten erlauben api.smejj.com in connect-src (wie die Startseite)", () => {
+  for (const l of ["ar", "bn", "de", "en", "es", "fr", "hi", "id", "it", "ja", "ko", "pt", "ru", "tr", "zh"]) {
+    const csp = (lies(`${l}/index.html`).match(/connect-src[^;"]*/) || [""])[0];
+    assert.match(csp, /https:\/\/api\.smejj\.com/, l);
+    assert.doesNotMatch(csp, /salad\.cloud/, `${l}: abgeschaltete Salad-Hosts raus`);
+  }
+});
+
+// E12–E19: statische Suche nach undefinierten Namen (ESLint no-undef, 14.09.2026)
+// fand Reste frueherer Auslagerungen — jeder davon warf ReferenceError beim Klick.
+test("E12/E13: Export und Upload-Liste importieren downloadText (gleiche Adresse wie app.js)", () => {
+  for (const d of ["projects-surface.js", "uploads-surface.js"]) assert.match(lies(d), /import \{ downloadText \} from "\.\/app-helfer\.js\?v=4";/, d);
+  assert.match(lies("app.js"), /from "\.\/app-helfer\.js\?v=4"/);
+});
+
+test("E14: API-Bereich-Aktionen kennen ihre Konstanten und Helfer", () => {
+  const q = lies("api-center-aktionen.js");
+  for (const n of ["DEV_PREFIX", "BYOK_PREFIX", "MODELL_KEY"]) assert.match(q, new RegExp(`const ${n} = `), n);
+  assert.match(q, /import \{ api, cssEscape, escapeHtml, fehlerText, zahl \} from "\.\/api-center-helfer\.js\?v=1";/);
+  assert.doesNotMatch(q, /^\s+schliessePopovers\(root\);/m, "nur ueber hof");
+  assert.match(lies("api-center-surface.js"), /return \{ alleEintraege, laden, melde, schliessePopovers \};/);
+  // Wortgleich zur Flaeche — sonst zeigen zwei Stellen auf zwei Adressen.
+  const flaeche = lies("api-center-surface.js");
+  for (const n of ["DEV_PREFIX", "BYOK_PREFIX", "MODELL_KEY"]) assert.equal(q.match(new RegExp(`const ${n} = [^;]+;`))[0], flaeche.match(new RegExp(`const ${n} = [^;]+;`))[0], n);
+});
+
+test("E16–E19: Browser-Rechtsklick, Code-Anhang, Coding-Rueckfall, Admin-Ausweichhost", () => {
+  assert.match(lies("browser-pane.js"), /import \{ zeigeVerlaufMenue \} from "\.\/browser-pane-menue\.js\?v=browser-pane-20260709-2";/);
+  assert.match(lies("code-anhaenge.js"), /export function anhaengeZahl\(\)/);
+  assert.match(lies("code-flaeche.js"), /!anhaengeZahl\(\)/);
+  assert.doesNotMatch(lies("code-flaeche.js"), /!anhaenge\.length/);
+  assert.doesNotMatch(lies("free-coding-fallback.js"), /projectId: state\.currentProjectId/);
+  assert.doesNotMatch(lies("admin/api.js"), /\? ZWEIT_ORIGIN/);
+  assert.match(lies("admin/api.js"), /const ALT_ORIGIN = /);
+});
+
+test("E21: Erstbesuch laedt NICHT neu, nur ein echter Worker-Wechsel", () => {
+  const q = lies("pwa-schnellstart.js");
+  const an = q.indexOf("const hatteSteuerung = Boolean(navigator.serviceWorker.controller);");
+  const hoerer = q.indexOf('navigator.serviceWorker.addEventListener("controllerchange"');
+  assert.ok(an > -1 && an < hoerer, "Steuerung wird VOR dem Hoerer festgehalten (beim Laden, nicht beim Ereignis)");
+  assert.match(q, /\|\| !hatteSteuerung\) return;/);
+  assert.match(q, /location\.reload\(\);/, "Update-Neuladen bleibt erhalten");
+});
+
+test("E24/E25: Chips 'Bild verstehen'/'Datei' laden die Composer-Werkzeuge und schreiben keine Aufschrift ins Feld", () => {
+  const app = lies("app.js");
+  assert.match(app, /window\.smejjLadeComposerTools = ladeBeiKlick\(\["\[data-start-tool\]", "#composerPlusButton"\]/);
+  const chips = lies("start-chips.js");
+  assert.match(chips, /window\.smejjLadeComposerTools\?\.\(\)/);
+  const laden = chips.indexOf("window.smejjLadeComposerTools?.()");
+  const ohneVorlage = chips.indexOf("if (aktion && !knopf.dataset.chip)");
+  assert.ok(laden > -1 && ohneVorlage > laden, "erst laden, dann Dateiwahl");
+  assert.match(lies("code-nachladen.js"), /window\.smejjLadeComposerTools\?\.\(\) \|\| import\("\.\/composer-tools\.js\?v=werkzeuge-\d+"\)/);
+  const marke = (d) => (lies(d).match(/composer-tools\.js\?v=(werkzeuge-\d+)/) || [])[1];
+  assert.equal(marke("code-nachladen.js"), marke("app.js"), "gleiche Marke, sonst laedt das Modul doppelt");
+});
+
+test("R2: Code-Leiste passt bei 320 px, Tippziele bleiben 44 px", () => {
+  const css = lies("design-v12-code.css");
+  const block = css.slice(css.indexOf("@media (max-width: 340px)"));
+  assert.match(block, /html body #code \.codeleiste \.code-rechts\.code-rechts \{ flex-shrink: 1; min-width: 0; gap: 4px; \}/);
+  assert.match(block, /#codeModellAnzeige \{ min-width: 44px;/);
+  assert.ok(lies("start-styles.css").includes("html body #code .codeleiste .code-rechts.code-rechts"), "Buendel neu gebaut");
+});
+
+test("E26: Textdateien reisen auch aus dem Code-Feld MIT INHALT (nicht nur als Verweis)", () => {
+  const q = lies("composer-plus-menu.js");
+  assert.match(q, /const textdateien = andere\.filter\(istTextdatei\);/);
+  assert.doesNotMatch(q, /const textdateien = input\.id === "startMessage"/);
+});

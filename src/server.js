@@ -755,7 +755,10 @@ async function handleStorageStatus(res) {
     bucket,
     prefix: normalizedPrefix,
     objectCount: keys.length,
-    keys,
+    // E2E-Sicherheitspruefung 14.09.2026: hier stand die komplette Liste der
+    // Objektschluessel (158 interne Modell-Dateipfade) — sichtbar fuer JEDEN
+    // angemeldeten Nutzer ueber "IDrive e2 pruefen". Die Oberflaeche braucht nur
+    // die Anzahl; die Liste bleibt dem Admin-Speicherbereich vorbehalten.
     storageRole: STORAGE.role
   });
 }

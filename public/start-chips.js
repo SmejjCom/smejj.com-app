@@ -25,6 +25,16 @@ if (feld) {
     // [data-jump] — hier nur uebersetzen, keine Vorlage anhaengen.
     if (knopf.dataset.jump) return;
     knopf.addEventListener("click", () => {
+      const aktion = knopf.dataset.composerAction;
+      // E24 (14.09.): Datei-Handler leben in composer-tools.js — im selben Klick laden.
+      if (aktion) { try { window.smejjLadeComposerTools?.()?.catch?.(() => {}); } catch { /* Laden ist Beiwerk */ } }
+      // E25: ohne data-chip keine Vorlage (sonst stand "Datei" im Feld).
+      if (aktion && !knopf.dataset.chip) {
+        feld.focus();
+        if (aktion === "attach-file") document.getElementById("composerFileInput")?.click();
+        if (aktion === "attach-photo") document.getElementById("composerPhotoInput")?.click();
+        return;
+      }
       const satz = t(vorlage);
       // Nach dem vollbreiten Doppelpunkt (CJK) kein Leerzeichen — dort waere es
       // ein Satzzeichenfehler; sonst trennt es die Vorlage vom Weitergetippten.

@@ -134,8 +134,10 @@ if (willNeu || willSprechen) {
 // der Reload einfach beim naechsten App-Start.
 if ("serviceWorker" in navigator) {
   let schonNeuGeladen = false;
+  // E21 (14.09.): Erstbesuch nicht neu laden (alles frisch), nur bei Worker-Wechsel.
+  const hatteSteuerung = Boolean(navigator.serviceWorker.controller);
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (schonNeuGeladen || !navigator.serviceWorker.controller) return;
+    if (schonNeuGeladen || !navigator.serviceWorker.controller || !hatteSteuerung) return;
     const antwortLaeuft = document.body?.classList?.contains("task-indicator-active");
     const feld = document.querySelector("#startMessage, .prompt-glass textarea");
     const tipptGerade = Boolean(feld && feld.value && feld.value.trim());

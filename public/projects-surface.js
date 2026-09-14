@@ -6,6 +6,9 @@
 
 import { STORAGE_KEYS } from "./config.js";
 import { PROJECT_ROLES } from "/assets/storage/index.js";
+// E2E-Test 14.09.2026: fehlte — "Exportieren" brach mit "downloadText is not defined" ab.
+// Gleiche Adresse wie app.js (?v=4), sonst laedt der Browser das Modul ein zweites Mal.
+import { downloadText } from "./app-helfer.js?v=4";
 
 export function bindProjects(deps) {
   const { $, state, workspace, showToast, writeOutput, ensureProject, refreshLocalWorkspaceStatus, renderProjectCards, renderEmptyState } = deps;
@@ -32,7 +35,7 @@ export function bindProjects(deps) {
 
   $("#projectOpen").addEventListener("click", async () => {
     try {
-      const projectId = selectedProjectId($);
+      const projectId = selectedProjectId($, state);
       const result = await workspace.openProject(projectId, { localOnly: true });
       state.currentProjectId = projectId;
       localStorage.setItem(STORAGE_KEYS.currentProject, projectId);
@@ -57,9 +60,14 @@ export function bindProjects(deps) {
   });
 
   $("#projectSnapshot").addEventListener("click", async () => {
-    const projectId = await ensureProject();
-    const result = await workspace.snapshot(projectId);
-    writeOutput("#projectOutput", JSON.stringify({ ok: true, snapshot: result.id, files: result.manifest.files }, null, 2));
+    try {
+      const projectId = await ensureProject();
+      const result = await workspace.snapshot(projectId);
+      writeOutput("#projectOutput", JSON.stringify({ ok: true, snapshot: result.id, files: result.manifest.files }, null, 2));
+      showToast("Snapshot erstellt.");
+    } catch (error) {
+      writeOutput("#projectOutput", JSON.stringify({ ok: false, error: error.message }, null, 2));
+    }
   });
 
   $("#projectManifest").addEventListener("click", async () => {
@@ -103,7 +111,7 @@ export function bindProjects(deps) {
 
   $("#projectDelete").addEventListener("click", async () => {
     try {
-      const projectId = selectedProjectId($);
+      const projectId = selectedProjectId($, state);
       const confirmed = window.confirm(`Projekt ${projectId} wirklich lokal loeschen? Immutable Objects bleiben erhalten.`);
       const result = await workspace.deleteProject(projectId, { confirmed, localOnly: true });
       if (state.currentProjectId === projectId) {
@@ -121,7 +129,11 @@ export function bindProjects(deps) {
 }
 
 export async function refreshProjectList(deps) {
-  const { $, workspace, renderProjectCards, renderEmptyState } = deps;
+  // E2E-Test 14.09.2026 (smejj.com live): `state` fehlte hier und in
+  // selectedProjectId — seit der Auslagerung aus app.js warf JEDER Aufruf
+  // "ReferenceError: state is not defined". Folge: angelegte Projekte erschienen
+  // nie in der Liste, "Projekt öffnen"/"speichern"/"löschen" scheiterten immer.
+  const { $, state, workspace, renderProjectCards, renderEmptyState } = deps;
   const projects = await workspace.listProjects();
   const select = $("#projectSelect");
   if (select) {
@@ -141,8 +153,8 @@ export async function refreshProjectList(deps) {
   renderProjectCards(projects);
 }
 
-export function selectedProjectId($) {
-  const selected = $("#projectSelect")?.value || state.currentProjectId;
+export function selectedProjectId($, state = {}) {
+  const selected = $("#projectSelect")?.value || state?.currentProjectId;
   if (!selected) throw new Error("Kein Projekt ausgewaehlt.");
   return selected;
 }
