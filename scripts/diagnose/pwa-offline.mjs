@@ -22,6 +22,8 @@
 // in der ersten Zeile ("launchChrome is not defined") — eine Messung, die gar
 // nicht erst laeuft, sieht im Protokoll aus wie eine, die nichts gefunden hat.
 import { launchChrome, openPage, sleep } from "../testing/cdp-client.mjs";
+import fs from "node:fs";
+import { cacheNameAusSw, shellListeAusSw, zaehleShellCache } from "./pwa-cache-zaehlung.mjs";
 
 const chrome = await launchChrome();
 process.once("SIGTERM", () => { chrome.close().catch(()=>{}); process.exit(130); });
@@ -54,11 +56,31 @@ if (seite !== "App") {
   process.exit(1);
 }
 
-// Der Precache braucht Zeit: 229 Dateien, darunter ein 1,2-MB-Arbeiter.
-// Warten, bis er steht — eine zu knappe Frist meldet "leer" fuer "noch am Fuellen".
+// BEFUND F10 (14.09.): "dateien: 12" bei 235 Eintraegen live. Der erste,
+// unangemeldete Aufruf oben landet auf der Werbeseite, die /sw.js?eingang=
+// willkommen registriert und smejj-willkommen-v<N> mit genau 12 Dateien fuellt.
+// Die alte Fassung summierte ALLE Speicher und brach ihre Warteschleife beim
+// ersten Eintrag ab — also beim schmalen Speicher, bevor der volle Precache
+// stand. Jetzt zaehlt NUR der aktive Shell-Cache (smejj-shell-v<N>), und die
+// Messlatte ist die SHELL-Liste des LIVE ausgelieferten sw.js: jeder Eintrag
+// muss im Speicher liegen, die Kern-Dateien ohnehin (pwa-cache-zaehlung.mjs).
+const swLive = await ev('fetch("/sw.js", { cache: "no-store" }).then((r) => r.ok ? r.text() : "")', "sw-quelle");
+const swLokal = fs.readFileSync(new URL("../../public/sw.js", import.meta.url), "utf8");
+const swQuelle = swLive && shellListeAusSw(swLive).length > 0 ? swLive : swLokal;
+const precacheListe = shellListeAusSw(swQuelle);
+console.log("   Messlatte:", swQuelle === swLive ? "sw.js LIVE" : "sw.js LOKAL (live nicht lesbar)",
+  cacheNameAusSw(swQuelle), "mit", precacheListe.length, "Eintraegen; lokal:", cacheNameAusSw(swLokal));
+
+// Alle Speicher mit ihren Anfrage-URLs — die Zaehlung selbst passiert in Node,
+// damit sie ohne Browser pruefbar ist (tests/pwa-offline-zaehlung.test.mjs).
+const SPEICHER_ABZUG = '(async () => { const aus = {}; for (const n of await caches.keys()) aus[n] = (await (await caches.open(n)).keys()).map((r) => r.url); return aus; })()';
+
+// Der Precache braucht Zeit: 235 Dateien, darunter ein 1,2-MB-Arbeiter.
+// Warten, bis er VOLLSTAENDIG steht — nicht bis irgendein Speicher etwas hat.
+let zaehlung = zaehleShellCache({}, precacheListe);
 for (let i = 0; i < 24; i += 1) {
-  const voll = await ev('(async () => { const n = await caches.keys(); let z = 0; for (const k of n) z += (await (await caches.open(k)).keys()).length; return z; })()', "warten");
-  if (voll > 0) break;
+  zaehlung = zaehleShellCache((await ev(SPEICHER_ABZUG, "warten")) || {}, precacheListe);
+  if (zaehlung.vollstaendig) break;
   await sleep(5000);
 }
 
@@ -70,13 +92,18 @@ console.log("  ", JSON.stringify(await ev(`(async () => {
     zustand: r && r.active ? r.active.state : null };
 })()`, "sw")));
 
-console.log("2. Zwischenspeicher (Precache)");
-console.log("  ", JSON.stringify(await ev(`(async () => {
-  const namen = await caches.keys();
-  let dateien = 0;
-  for (const n of namen) { const c = await caches.open(n); dateien += (await c.keys()).length; }
-  return { speicher: namen, dateien };
-})()`, "cache")));
+console.log("2. Zwischenspeicher (Precache) — nur der aktive Shell-Cache zaehlt");
+console.log("  ", JSON.stringify({
+  speicher: zaehlung.speicher, aktiverCache: zaehlung.aktiverCache,
+  dateien: zaehlung.dateien, erwartet: zaehlung.erwartet,
+  kernDateienDa: zaehlung.kernFehlt.length === 0, kernFehlt: zaehlung.kernFehlt,
+  precacheFehlt: zaehlung.fehlend.slice(0, 10), precacheFehltAnzahl: zaehlung.fehlend.length,
+  vollstaendig: zaehlung.vollstaendig,
+}));
+if (!zaehlung.vollstaendig) {
+  console.log("   BEFUND: der Shell-Cache ist unvollstaendig oder fehlt — Offline-Ergebnis unten mit Vorsicht lesen.");
+  process.exitCode = 1;
+}
 
 console.log("3. OFFLINE: geht die App noch auf?");
 // Erst blockieren, DANN navigieren — und nach der Navigation erneut setzen:
