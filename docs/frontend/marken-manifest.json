@@ -2,8 +2,8 @@
   "hinweis": "Fingerabdruck je Modul und Marke. Aendert sich der Inhalt, MUSS die Marke steigen.",
   "module": {
     "account-sessions.js": {
-      "marke": "b46",
-      "finger": "b6623e48ec0482b4"
+      "marke": "b47",
+      "finger": "5e3495cba6a9e147"
     },
     "language-options.js": {
       "marke": "1",
@@ -78,8 +78,8 @@
       "finger": "518d644a4f3dc1f4"
     },
     "premium-surfaces.js": {
-      "marke": "b47v-2",
-      "finger": "0203845ff337fd9c"
+      "marke": "b47v-3",
+      "finger": "ecc8948c3b57a435"
     },
     "composer-tools.js": {
       "marke": "werkzeuge-25",
@@ -362,8 +362,8 @@
       "finger": "9c20b31fb9a63a08"
     },
     "spur-start.js": {
-      "marke": "b57",
-      "finger": "010d345b2e524641"
+      "marke": "b58",
+      "finger": "33f4ce91a47637d3"
     },
     "code-nachladen.js": {
       "marke": "25",
@@ -374,8 +374,8 @@
       "finger": "3e44865ddb7c26a7"
     },
     "app.js": {
-      "marke": "b172",
-      "finger": "19e7ae829824a780"
+      "marke": "b173",
+      "finger": "ceb23b0bfa6a1e55"
     },
     "pwa-schnellstart.js": {
       "marke": "13",
@@ -390,8 +390,8 @@
       "finger": "349521e305ea8b81"
     },
     "profile-dock.js": {
-      "marke": "b53",
-      "finger": "626584e5c9c860fd"
+      "marke": "b54",
+      "finger": "4d5a38914856bcb4"
     },
     "chat-actions.js": {
       "marke": "b60",
@@ -426,24 +426,24 @@
       "finger": "a7f008cff4186447"
     },
     "autonomous-coding.js": {
-      "marke": "6",
-      "finger": "6b08b7a49a30bec1"
+      "marke": "7",
+      "finger": "95a765c2888895d5"
     },
     "settings-surface.js": {
       "marke": "b66",
       "finger": "2a3a431fddc3425b"
     },
     "account-privacy.js": {
-      "marke": "b48",
-      "finger": "70ad307a4a688960"
+      "marke": "b49",
+      "finger": "9b8bc6ff7d0d75f5"
     },
     "auth-gate.js": {
       "marke": "6",
       "finger": "17f2790cec353e61"
     },
     "profile-dock-menu.js": {
-      "marke": "b46",
-      "finger": "0424ff5f13fdc502"
+      "marke": "b47",
+      "finger": "6de676cca5474234"
     },
     "quellen-panel.js": {
       "marke": "1",
