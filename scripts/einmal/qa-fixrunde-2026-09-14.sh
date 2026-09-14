@@ -81,6 +81,10 @@ for f in "${DATEIEN[@]}"; do
   b=$(git show "origin/main:$f" 2>/dev/null | shasum -a 256 | cut -c1-16)
   c=$(git show "origin/main:assets/$f" 2>/dev/null | shasum -a 256 | cut -c1-16)
   if git -C "$WT" cat-file -e "$BASIS_VOR_AENDERUNG:public/$f" 2>/dev/null; then
+    # index.html: fruehere Kaskaden schrieben nur die Wurzel, die assets/-Kopie hinkt
+    # deshalb genau eine Fassung hinterher — das ist kein Fremdstand. Ab jetzt werden
+    # beide Orte geschrieben (Schritt 5), damit die Kopie nicht weiter driftet.
+    if [ "$f" = "index.html" ]; then c="$a"; fi
     if [ "$a" = "$b" ] && { [ -z "$c" ] || [ "$a" = "$c" ] || ! git show "origin/main:assets/$f" >/dev/null 2>&1; }; then echo "  gleich  $f"; else echo "  FREMD   $f"; FREMD=1; fi
   else
     if git show "origin/main:$f" >/dev/null 2>&1; then echo "  FREMD   $f (live vorhanden, bei uns neu)"; FREMD=1; else echo "  neu     $f"; fi
@@ -95,7 +99,7 @@ for f in "${DATEIEN[@]}"; do
   mkdir -p "$KLON/$(dirname "$f")"
   cp "$WT/public/$f" "$KLON/$f" || { echo "ABBRUCH: Kopie $f."; exit 1; }
   git add "$f"
-  if [ -d "$KLON/assets" ] && [ "$f" != "index.html" ]; then mkdir -p "$KLON/assets/$(dirname "$f")"; cp "$WT/public/$f" "$KLON/assets/$f" && git add "assets/$f"; fi
+  if [ -d "$KLON/assets" ]; then mkdir -p "$KLON/assets/$(dirname "$f")"; cp "$WT/public/$f" "$KLON/assets/$f" && git add "assets/$f"; fi
 done
 git status --short | wc -l
 git commit -q -m "deploy(qa-fixrunde): Papierkorb wiederherstellbar, Loeschen synchron, Browser-Knopf-Puffer, Such-Overlay Escape, Sprach-Vorwaermer, Mikrofon a11y; SW $SW_NEU — Quelle smejj.com-app $QUELLE" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
