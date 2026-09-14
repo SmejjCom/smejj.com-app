@@ -123,7 +123,7 @@ const bewerte = (a, text) => {
 };
 const kritischBestanden = (id, text) => fall(id).assertions.filter((a) => a.critical).every((a) => bewerte(a, text));
 
-test("naming-schreibweise: 'ohne Varianten wie Smejj' ist eine richtige Antwort, 'heisst Smejj' bleibt falsch", () => {
+test("naming-schreibweise: 'ohne Varianten wie …' ist eine richtige Antwort, die BENUTZTE Falschschreibung bleibt falsch", () => {
   const S = "S" + "mejj";
   const GROSS = "S" + "MEJJ";
   const gut = [

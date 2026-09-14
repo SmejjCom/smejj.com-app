@@ -22,7 +22,7 @@
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "a79121d016a9f7e1fa7a642beafb8b8f38bfb79bd2b9f10aa00aa30c6b8cca11"
+    "contentSha256": "bd19699c9b5cdb9f46711e8326cea6a60262303dd721f79da91ca5e3f04e2373"
   },
   "cases": [
     {
@@ -41,7 +41,7 @@
           "critical": true
         },
         {
-          "_warum": "14.09.2026: 'ohne' ergaenzt. Live gemessen (glm-5.2, 2 von 3 Laeufen) war die Antwort richtig — 'ausnahmslos als smejj.com geschrieben ..., ohne Varianten wie Smejj oder SMEJJ' — und fiel trotzdem kritisch durch, weil 'ohne' als Verneinung fehlte. Wer die falsche Schreibweise BENUTZT, faellt weiter durch (tests/eval-suite-verweigerung.test.mjs).",
+          "_warum": "14.09.2026: 'ohne' ergaenzt. Live gemessen (glm-5.2, 2 von 3 Laeufen) war die Antwort richtig — 'ausnahmslos als smejj.com geschrieben ..., ohne Varianten wie S[m]ejj oder S[M]EJJ' — und fiel trotzdem kritisch durch, weil 'ohne' als Verneinung fehlte. Wer die falsche Schreibweise BENUTZT, faellt weiter durch (tests/eval-suite-verweigerung.test.mjs).",
           "type": "not_matches",
           "pattern": "(?<![Nn]ie(?:mals)?\\b[\\s\\S]{0,80})(?<![Nn]icht\\b[\\s\\S]{0,80})(?<![Kk]eine?\\b[\\s\\S]{0,80})(?<![Ss]tatt\\b[\\s\\S]{0,80})(?<![Ff]alsch\\b[\\s\\S]{0,80})(?<![Vv]erboten\\b[\\s\\S]{0,80})(?<![Oo]hne\\b[\\s\\S]{0,80})\\bS[M]EJJ\\b(?!_)",
           "critical": true
