@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-14T19:33:21.148Z",
-  "confirmation": "Betreiber, 2026-09-14 (A-bis-Z-Pruefauftrag, Master-Prompt/Ship-Loop): Nach der Umsetzung bitte live gehen, live testen und pruefen, ob alles richtig funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber laeuft. — E2E Fixrunde 1: Betreiber-Auftrag E2E-Test 14.09.: 'Waehrend dieses Auftrags darfst du notwendige Reparaturen durchfuehren.' — Reparatur E2 (Menueknopf der ersten Nachricht lag unter dem Browser-Knopf, nur Abstand im Chat-Log), keine Aenderung am Eingabefeld; Cache-Marken und SW smejj-shell-v874.",
+  "frozenAt": "2026-09-14T19:55:44.580Z",
+  "confirmation": "Betreiber, 2026-09-14 (A-bis-Z-Pruefauftrag, Master-Prompt/Ship-Loop): Nach der Umsetzung bitte live gehen, live testen und pruefen, ob alles richtig funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber laeuft. — E2E Fixrunde 2: Betreiber-Auftrag E2E-Test 14.09.: 'Waehrend dieses Auftrags darfst du notwendige Reparaturen durchfuehren.' — keine Aenderung an Startseite/Eingabefeld-Design; Reparaturen E9 Projekte, E10 Doppelklick-Stopp, E11 CSP der Sprachseiten; Cache-Marken und SW smejj-shell-v875.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "18c698d375c9fdb66400d417613266518418d28b65a513b6fbe909fdf4443e33",
+    "public/index.html": "5f1aa7072e29562cf2f5164afcd3308e0833e74e04bc191b5483f92923f3399b",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "dabfb2cbf5b870ec8d2c6201ccda60e8c46ae33e185f29723433905139c75a2d",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "5d030e3c7498dcca0fd42c0cd28592f7a916add4157d3896372e3e5f6391007c",
+    "public/sw.js": "47274b1957b71f42a242c5e185e0cd866516316513f0a0d8993a21903f4bf56c",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
