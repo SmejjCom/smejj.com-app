@@ -34,6 +34,17 @@ test("der Puffer prueft die WIRKUNG, statt app.js zu befragen", () => {
   assert.match(puffer, /rest <= 0/);
 });
 
+test("ein Klick bei OFFENEM Panel ist ein Schliessen — der Puffer klickt dann nie nach", () => {
+  // Gemessen 2026-09-14: Panel per Wiederherstellung offen, Nutzer klickt zu,
+  // 60 ms spaeter "nicht offen" — der Puffer hielt das fuer einen verlorenen
+  // Klick und riss das Panel wieder auf. Die Pruefung muss VOR dem setTimeout
+  // stehen: offen beim Klick => verdrahtet => erledigt.
+  const vorher = puffer.indexOf("if (panelOffen()) { erledigt = true; return; }");
+  const timer = puffer.indexOf("setTimeout(function () {");
+  assert.ok(vorher > 0, "Wache 'offen beim Klick' fehlt");
+  assert.ok(vorher < timer, "die Wache muss VOR dem verzoegerten Nachklicken stehen");
+});
+
 test("der Puffer liegt im Precache — offline darf der Knopf nicht sterben", () => {
   assert.match(sw, /"\/assets\/knopf-puffer\.js"/);
 });
