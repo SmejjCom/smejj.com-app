@@ -59,11 +59,11 @@ Bild-Maler-Worker (transformers 5.5.0, accelerate 1.1.1) brauchen eine GPU-Bauum
 | Modellzeilen mit Kopfzeilen-Beweis | POST Brücke, `x-smejj-model-backend/-fallback` | Schnell/Auto: groq 0,7–1,2 s · smejj 1.2: zhipu:glm-5.2 6 s · smejj 1: hausmodell:smejj-1-basis 6 s — alle `fallback: false` |
 | Web nicht angemeldet | `rundgang.mjs` 19 Ansichten × 2 Runden, viermal (v867/v868/v869/v870) | 0 Befunde |
 | Responsive | `messe_responsive.mjs` 8 Größen 320–1920, hoch/quer | 152 Messpunkte, 0 Verstöße (zweimal) |
-| Touch-Ziele | `measure_touch_targets_app.mjs` 375×812 | nur F14 |
+| Touch-Ziele | `measure_touch_targets_app.mjs` 375×812, vor und nach Fixrunde 4 | v870: nur F14 (16 Verstöße) · v871: Startseite/Spur 0, übrig F27 (4 Code-Vorlagen, vorbestehend) |
 | Mobil angemeldet | headless Chrome 402×874 + Eval-Ausweis | Bubble-Umbruch, Composer an der Unterkante |
 | Datei-Anhang | CDP `setFileInputFiles` angemeldet | Chip + Inhalt kommen an („Ananas“) |
 | PWA | `pwa-offline.mjs`, Cache-Zählung | SW aktiv, 235 Einträge, App offen ohne Netz; Update v867→v870 ohne leere Caches |
-| iOS | Simulator iPhone 17 Pro, Safari (angemeldet), `simctl io screenshot` | Layout/Safe-Areas sauber; F18; Bildschirmtastatur nicht prüfbar (Hardware-Tastatur) |
+| iOS | Simulator iPhone 17 Pro, Safari (angemeldet), `simctl io screenshot` | Layout/Safe-Areas sauber; F18 (in Fixrunde 4 behoben, v871); Bildschirmtastatur nicht prüfbar (Hardware-Tastatur) |
 | Android | Emulator `smejj_pixel`, installierte Play-App `com.smejj.app` (TWA), CDP | 38 Ansichten grün (abgemeldet); F21 |
 | Web Vitals v870 (5 Läufe) | `measure_web_vitals.mjs` → `docs/benchmarks/webvitals_v870_2026-09-14.json` | kalt TTFB p75 132 ms, LCP 544 ms, CLS 0,021, INP 16 ms, Gewicht 302 KB; warm LCP 172 ms — Budgets eingehalten (Gewicht 2 KB über 300, F15) |
 | API-Latenz (20 Aufrufe je Route) | `api-latenz.mjs` → `docs/benchmarks/api-latenz_v870_2026-09-14.json` | 5xx-Rate 0/200; p95: health 741, auth/config 246, capabilities 256, chats-Abgleich 957, billing 432, projekte 484, models/status 951 ms — p50 240 ms Grundlatenz vom Betreiber-Netz; Abgleich und models/status über dem 300-ms-Budget (F26) |
