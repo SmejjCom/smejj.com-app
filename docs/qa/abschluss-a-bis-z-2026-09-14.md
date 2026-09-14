@@ -4,10 +4,10 @@
 live gehen, live testen, bis alles sauber läuft; danach 100 % Schutz. Master-Prompt (Ship-Loop, Rote/Grüne Liste,
 Performance-Budgets) gilt.
 
-**Ergebnis in einem Satz:** Drei Fixrunden sind live (SW v867 → v870, Control-Server viermal neu gebaut), 11 Frontend-
+**Ergebnis in einem Satz:** Vier Fixrunden sind live (SW v867 → v871, Control-Server fünfmal abgeglichen), 14 Frontend-
 und 6 Server-Befunde behoben, darunter ein seit dem 25.08. immer leerer Papierkorb und ein Löschen, das nie zum Server
-kam; die komplette Suite (3.832 Tests) und alle Wächter sind grün, die Live-Matrix ist ohne Befund, drei Design-
-Entscheide und vier Betreiber-Handgriffe bleiben offen.
+kam; die komplette Suite (3.832 Tests) und alle Wächter sind grün, die Live-Matrix ist ohne Befund, die drei Design-
+Entscheide (F18/F20/F14) sind nach dem Betreiber-OK umgesetzt, ein kleiner Design-Punkt (F27) und vier Betreiber-Handgriffe bleiben offen.
 
 ---
 
@@ -22,22 +22,25 @@ Entscheide und vier Betreiber-Handgriffe bleiben offen.
 | Server 3 | 14.09. 00:55 | — | Bündel-Abgleich v869, Tests an die neue Modellkette angepasst |
 | Fixrunde 3 | 14.09. 06:21 | v870 | Review-Befunde: Vorwärmer auf `/health`, `PAPIERKORB_TAGE` an einem Ort, Altlast-Löschungen erst synchronisieren statt sofort räumen, Lösch-Sync ohne Rettungs-Toasts, Escape schließt genau eines, Registry kennt Profile (Schnell/Web bleiben glm-4.5-flash), Zweitversuch mit eigener Kennung, Altlast `admin/uebersicht` aus dem Repo |
 | Server 4 | 14.09. 06:22 | — | Katalog-Wache: Nachprüfung nur bei genau einem fehlenden Modell, 6-h-Frist nach Fehlversuch, Deckel 5 Proben, 8-s-Timeout; Registry-Profile; Kennung `glm-4-5-flash` |
+| Fixrunde 4 | 14.09. 10:22 | v871 | Betreiber-OK „OK – F18, F20 und F14 umsetzen“: Werkzeug-Kacheln unter 430 px zwei Spalten ohne Silbentrennung (F18), Farbschema hell/system gesperrt mit Hinweis (F20), Spur-Einträge 44 px bei grobem Zeiger (F14) |
+| Server 5 | 14.09. 10:26 | — | Bündel-Abgleich v871 in den Bauzweig (010d7abc); Bündel-Skript dort auf die V12-Quellen nachgezogen |
 
 Rollback-Punkte: Tag `stand-2026-09-14-vor-qa-a-bis-z` (Arbeitszweig 95e06b2a, Klon 6abe1b1), Release-Tags
-`release-2026-09-14-qa-fixrunde-2` und `release-2026-09-14-qa-fixrunde-3` auf Arbeitszweig, Klon, Bauzweig (GitHub + Codeberg).
+`release-2026-09-14-qa-fixrunde-2`, `-3` und `-4` auf Arbeitszweig, Klon, Bauzweig (GitHub + Codeberg).
 
 ## 2. Gefundene Fehler (vollständige Liste in `docs/qa/befunde-2026-09-14.md`)
 
-**Behoben und live (17):** F1 Papierkorb immer leer · F2 Löschen nie synchron (3 Ursachen) · F3 Panel sprang nach Schließen
+**Behoben und live (20):** F1 Papierkorb immer leer · F2 Löschen nie synchron (3 Ursachen) · F3 Panel sprang nach Schließen
 wieder auf · F4 Escape im Such-Overlay · F5 Mikrofon a11y · F7 Vorwärmer 404 · R1 Escape traf Panels mit · R2 tote Zweit-
 konstante · R3 Erstlauf der 30-Tage-Räumung hätte Altlasten überall gelöscht · R4 Lösch-Sync lud verworfene Chats hoch ·
 R5 Registry ohne Profil (Schnellspur lief auf glm-5.2) · R6 Gesundheit der Modellkette (Zweitversuch überschrieb 5.2) ·
 S1 Katalog-Wache falsch rot · S2 AI-Act ohne smejj-1 · S3 api.smejj.com mit altem Bündel · S4 tiefe Spur auf dem kleinen
-Modell · S6 dritte Admin-Kopie.
+Modell · S6 dritte Admin-Kopie · F18 Werkzeug-Kacheln zwei Spalten · F20 Farbschema „hell“ gesperrt · F14 Spur 44 px
+(Fixrunde 4 nach Betreiber-OK, 10:22 UTC).
 
-**Offen, Entscheidung des Betreibers (Design-Lock):** F18 Werkzeug-Kacheln trennen Wörter auf dem iPhone (Empfehlung: zwei
-Spalten unter 430 px) · F20 Farbschema „hell“ macht Verlauf/Code unlesbar (Option verbergen oder Thema fertigstellen) ·
-F14 Spur-Einträge 38 px auf Mobil (44 px gefordert).
+**Offen, Entscheidung des Betreibers (Design-Lock):** F27 die vier Vorlagen-Knöpfe der Code-Ansicht („Fehler suchen“,
+„Funktion einbauen“, „Tests schreiben“, „Code erklären“) sind 38 px hoch — gleicher Fix wie F14 (44 px bei grobem Zeiger),
+Bündel = Design-Lock; bestand schon in v870.
 
 **Offen, klein (nächste Runde, ohne Betreiber):** F6 doppelte Anfragen beim Laden · F8 Emoji-Icons im Verlauf-Menü ·
 F10 Messwerkzeug pwa-offline zählt falsch · F11/F16 Layout bei offenem Panel · F12 verwaiste Browser-Tabs · F13 „Maus
@@ -66,7 +69,7 @@ Bild-Maler-Worker (transformers 5.5.0, accelerate 1.1.1) brauchen eine GPU-Bauum
 | API-Latenz (20 Aufrufe je Route) | `api-latenz.mjs` → `docs/benchmarks/api-latenz_v870_2026-09-14.json` | 5xx-Rate 0/200; p95: health 741, auth/config 246, capabilities 256, chats-Abgleich 957, billing 432, projekte 484, models/status 951 ms — p50 240 ms Grundlatenz vom Betreiber-Netz; Abgleich und models/status über dem 300-ms-Budget (F26) |
 | Sicherheit | check:security/abuse/gatekeeper/passkey/users, CVE-Wächter, Dependabot, Zweigschutz | grün; 4 bekannte CVEs im nicht gebauten/GPU-Worker; kein Force-Push/Löschen mehr auf Klon `main`, Bauzweig, Arbeitszweig |
 | Suite | `check:all` 1.117 Tests + `test:tests` 3.832 Tests (Arbeitszweig); Bauzweig control-server/llm-router/ai/frontend/voice/rag | grün (2 Pins an die neue Modellkette angepasst, 1 Kettenlängen-Annahme entfernt) |
-| Ampel (85 Autopiloten) | Live-Ampel | 77 grün; rot: Codeberg-Token, Zeabur-Schlüssel (Betreiber), Tiefe-Spur (Tagesmessung steht aus), Test-/Vitals-Wächter überfällig seit 12.09. (Mac-launchd-Jobs 05:45/06:15 brechen ab: „github.com weder über Port 22 noch ssh.github.com:443 erreichbar“ — nachts kein SSH vom Mac; am 14.09. manuell nachgeholt), Projektwissen-Export überfällig (Export vom Mac scheitert am 30-s-Deckel der e2-Leitung; Brücke neu bauen — Zeabur-Token, Betreiber), Missbrauchs-Wache (142 Anfragen/10 min vom Betreiber-Mac = meine Latenzmessung, keine Sperre) |
+| Ampel (85 Autopiloten) | Live-Ampel | nach Fixrunde 4: 79 grün, 1 gelb (Qualitätsmessung in der Schonfrist), 5 rot: Codeberg-Token und Zeabur-Schlüssel (Betreiber), Web-Vitals 302 KB (F15, Messung vor v871), tiefe Spur zeigt den 19 h alten Stand vor dem GLM-5.2-Fix (Tagesmessung steht aus), Projektwissen-Export (Brücke neu bauen); Test-/Vitals-Wächter auf dem Mac scheitern nachts an SSH zu GitHub |
 | Adversarische Review | Workflow: 3 Blickwinkel, 26 Befunde, je 3 Skeptiker | 20 bestätigt → 10 mit Code behoben (Fixrunde 3 / Server 4), Rest dokumentiert |
 
 ## 4. iOS-/Android-Build, Datenbank, Backup, Release
@@ -85,7 +88,7 @@ Bild-Maler-Worker (transformers 5.5.0, accelerate 1.1.1) brauchen eine GPU-Bauum
 
 ## 6. Nächste Schritte (Empfehlung)
 
-1. Betreiber-Entscheide F18/F20/F14 (Design-Lock) — je 1–2 Stunden Umsetzung nach „OK“.
-2. Fixrunde 4 mit den kleinen offenen Punkten (F6, F8, F10, F11, F16, F21, F23, R7-Hinweis, R8).
+1. Betreiber-Entscheid F27 (Code-Vorlagen 44 px, Design-Lock) — 15 Minuten nach „OK“; F18/F20/F14 sind seit 10:22 UTC live (SW v871).
+2. Fixrunde 5 mit den kleinen offenen Punkten (F6, F8, F10, F11, F16, F21, F23, R7-Hinweis, R8).
 3. Test-/Vitals-Wächter (Mac-launchd `com.smejj.test-waechter`, `com.smejj.web-vitals`): lesen GitHub per SSH und scheitern nachts — auf HTTPS umstellen wie der Codeberg-Spiegel (`~/.local/share/*/wache.sh`), Betreiber-Mac.
 4. Nach Apple-Freigabe: iOS-Hülle bauen, TestFlight, Smoke-Test.

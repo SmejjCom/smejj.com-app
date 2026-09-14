@@ -9,9 +9,10 @@ funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber l�
 ## Ergebnis in einem Satz
 
 Prüfplan an unser System angepasst (17 Phasen, Messregeln, Vergleich mit ChatGPT/Claude/Gemini), dann
-zwei Fixrunden **live** (SW v867 → v869, Control-Server dreimal neu gebaut): sieben Frontend-Fehler und
-vier Server-Befunde behoben — darunter ein **Papierkorb, der seit dem 25.08. immer leer war**, und ein
-**Löschen, das nie zum Server kam**; drei Design-Entscheide bleiben beim Betreiber.
+vier Fixrunden **live** (SW v867 → v871, Control-Server fünfmal abgeglichen): 14 Frontend-Fehler und
+sechs Server-Befunde behoben — darunter ein **Papierkorb, der seit dem 25.08. immer leer war**, und ein
+**Löschen, das nie zum Server kam**; die drei Design-Entscheide (F18/F20/F14) sind nach dem Betreiber-OK
+umgesetzt, F27 (Code-Vorlagen 38 px) wartet auf ein OK.
 
 ## Die Funde (Kurzform; Details in `docs/qa/befunde-2026-09-14.md`)
 
@@ -44,17 +45,18 @@ vier Server-Befunde behoben — darunter ein **Papierkorb, der seit dem 25.08. i
 
 ## Schutz
 
-Rollback-Tag `stand-2026-09-14-vor-qa-a-bis-z`, Release-Tag `release-2026-09-14-qa-fixrunde-2` auf
-Arbeitszweig, Klon und Bauzweig (GitHub + Codeberg); Start-Lock zweimal gestempelt; Zweigschutz
+Rollback-Tag `stand-2026-09-14-vor-qa-a-bis-z`, Release-Tags `release-2026-09-14-qa-fixrunde-2` bis `-4` auf
+Arbeitszweig, Klon und Bauzweig (GitHub + Codeberg); Start-Lock viermal gestempelt; Zweigschutz
 (kein Force-Push, kein Löschen) auf Klon `main`, Bauzweig und Arbeitszweig; Schutz-Echtheit grün.
 
 ## Werkzeuge, die neu sind
 
 - `scripts/einmal/qa-fixrunde-2026-09-14.sh <SW_alt> <SW_neu> <Basis> <Kurz>` — generische Kaskade (Wächter, Stempel, Klon-Abgleich, Push, Live-Wartezeit; schreibt index.html auch nach `assets/`).
-- Scratch: `marke-hochziehen.mjs` (Cache-Marken rekursiv), `mobil-angemeldet.mjs`, `upload-angemeldet.mjs` (headless Chrome + Eval-Ausweis).
+- Scratch: `marke-hochziehen.mjs` (Cache-Marken rekursiv), `mobil-angemeldet.mjs`, `upload-angemeldet.mjs` (headless Chrome + Eval-Ausweis), `static-server.mjs` + `kacheln-lokal.mjs` (Startseite vor dem Deploy bei 402/390/360 px messen, mit lokaler Sitzung).
+- Kaskade: `FREIGABE="…"` trägt bei Design-Freigaben den Betreiber-Wortlaut in den Stempel (Fixrunde 4).
 
 ## Offen
 
-- Betreiber-Entscheid (Design-Lock): F18 Kacheln unter 430 px, F20 Farbschema „hell“, F14 Spur-Höhe.
+- Betreiber-Entscheid (Design-Lock): F27 Code-Vorlagen-Knöpfe 38 px (wie F14 auf 44 px). F18/F20/F14 sind umgesetzt (Fixrunde 4, SW v871, Bauzweig 010d7abc).
 - Betreiber-Handgriff: Zeabur-Schlüssel, `CODEBERG_TOKEN`, Apple-Freigabe (TestFlight), Keystore sichern.
 - Klein (nächste Fixrunde): F6, F15, F21, F10, F11, F16, F8, F23, F12, F13.
