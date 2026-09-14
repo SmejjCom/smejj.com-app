@@ -94,6 +94,11 @@ export const MODEL_REGISTRY = Object.freeze({
       // Spur wird dann kleiner, aber nie mehr tot.
       // Der Anzeigename der Marke bleibt unveraendert.
       defaultModel: "glm-5.2",
+      // Profil-Laufzeit (Review-Befund 14.09.): die Registry kannte kein Profil,
+      // also begann JEDE Kette — auch Schnellspur und Websuche — mit glm-5.2.
+      // Schnell und Web bleiben auf dem Freikontingent; default/coding/reasoning
+      // tragen das Qualitaetsmodell. Env SMEJJ_LLM_ZHIPU_MODEL_<PROFIL> gewinnt.
+      profileModels: Object.freeze({ fast: "glm-4.5-flash", web: "glm-4.5-flash" }),
       defaultHeader: "Authorization",
       storageFirstMode: "glm-5.2-storage-first",
       engines: Object.freeze(["openai-compatible", "sglang", "vllm", "ktransformers"]),
@@ -432,7 +437,8 @@ export function getModelRuntimeConfig(modelOrId, env = process.env, profile = "d
     : uniqueKeys(env[`SMEJJ_LLM_${fallbackPrefix}_API_KEY`], env[`SMEJJ_LLM_${fallbackPrefix}_API_KEYS`]);
   const profileKey = `SMEJJ_LLM_${prefix}_MODEL_${String(profile || "default").toUpperCase()}`;
   const baseUrl = trimUrl(env[`SMEJJ_LLM_${prefix}_BASE_URL`] || model.runtime.defaultBaseUrl);
-  const runtimeModel = String(env[profileKey] || env[`SMEJJ_LLM_${prefix}_MODEL`] || model.runtime.defaultModel || "").trim();
+  const profilModell = model.runtime.profileModels?.[String(profile || "default")];
+  const runtimeModel = String(env[profileKey] || env[`SMEJJ_LLM_${prefix}_MODEL`] || profilModell || model.runtime.defaultModel || "").trim();
   const apiKeyHeader = String(env[`SMEJJ_LLM_${prefix}_HEADER`] || model.runtime.defaultHeader).trim();
   return {
     modelId: model.id,

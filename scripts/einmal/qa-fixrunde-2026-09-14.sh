@@ -39,7 +39,10 @@ echo "live: $LIVE_SW"
 
 # Alle Dateien unter public/, die sich seit der Basis geaendert haben (Wurzel,
 # nicht die assets/-Spiegelkopie — die Kaskade schreibt beide Orte im Klon).
-DATEIEN=($(git diff --name-only "$BASIS_VOR_AENDERUNG" HEAD -- public/ | grep -v '^public/assets/' | sed 's|^public/||'))
+# Nur vorhandene Dateien (ACMR): eine im Repo geloeschte Altlast (z. B. die
+# Weiterleitung admin/uebersicht) bleibt im Klon stehen — geloescht wird live nie
+# von hier aus (Daten-Lock).
+DATEIEN=($(git diff --name-only --diff-filter=ACMR "$BASIS_VOR_AENDERUNG" HEAD -- public/ | grep -v '^public/assets/' | sed 's|^public/||'))
 echo "== Dateien (${#DATEIEN[@]}): ${DATEIEN[*]}"
 [ "${#DATEIEN[@]}" -gt 0 ] || { echo "ABBRUCH: nichts zu liefern."; exit 1; }
 

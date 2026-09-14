@@ -20,6 +20,10 @@ import {
 } from "../llm/modelRouter.js";
 
 const ABFRAGE_ABSTAND_MS = 24 * 60 * 60 * 1000;
+// Eine gescheiterte Nachpruefung eines roten Ablage-Stands wird fruehestens
+// nach dieser Frist wiederholt; hoechstens so viele Kleinstanfragen je Tageslauf.
+const NACHPRUEF_ABSTAND_MS = 6 * 60 * 60 * 1000;
+const PROBEN_DECKEL = 5;
 const ABLAGE_ID = "modell-katalog-stand";
 
 let ablageStandard = null;
@@ -111,7 +115,9 @@ export async function bestaetigeModell(backend, modell, { fetchImpl = fetch } = 
       method: "POST",
       headers: { [backend.apiKeyHeader]: `Bearer ${backend.apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({ model: modell, messages: [{ role: "user", content: "ok" }], max_tokens: 1 }),
-      signal: AbortSignal.timeout(20_000)
+      // 8 s reichen fuer ein Token; 20 s je Modell haetten einen Lauf mit
+      // lueckenhaftem Katalog minutenlang aufgehalten (Review 14.09.).
+      signal: AbortSignal.timeout(8_000)
     });
     if (antwort.ok) return { antwortet: true, grund: "" };
     return { antwortet: false, grund: `HTTP ${antwort.status}` };
@@ -149,19 +155,28 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
       // Beispiel-Modell bekommt die Kleinstanfrage. Antwortet es, war der
       // Katalog lueckenhaft (Zhipu 08.–14.09.), und der Stand wird sofort
       // korrigiert — sonst bliebe die Ampel bis zur naechsten Tagesabfrage rot.
+      // Review-Befunde 14.09.: (1) nur bei GENAU EINEM fehlenden Modell — bei
+      // mehreren kennt die Ablage nur das Beispiel, die uebrigen blieben
+      // ungeprueft und wuerden fuer lebendig erklaert; (2) eine gescheiterte
+      // Nachpruefung wird vermerkt und fruehestens nach NACHPRUEF_ABSTAND_MS
+      // wiederholt, statt in jedem Takt das tote Modell anzufragen.
       const beispiel = String(stand.beispiel || "");
       const [anbieterName, ...rest] = beispiel.split(":");
       const modellName = rest.join(":").replace(/ \(.*\)$/, "");
-      if (mitNetz && anbieterName && modellName) {
+      const kennung = `${anbieterName}:${modellName}`;
+      const zuletztMs = Date.parse(stand.nachgeprueft || 0);
+      const wiederFaellig = !Number.isFinite(zuletztMs) || jetztMs - zuletztMs >= NACHPRUEF_ABSTAND_MS;
+      if (mitNetz && stand.fehlend === 1 && anbieterName && modellName && wiederFaellig) {
         const backend = anbieterName === "openrouter" ? openrouterBackendFromEnv(env) : providerBackendFromEnv(anbieterName, env);
         if (backend) {
           const probe = await bestaetigeModell(backend, modellName, { fetchImpl });
           if (probe.antwortet) {
             try {
-              await speicher.schreib({ ...stand, id: ABLAGE_ID, fehlend: 0, beispiel: "", ungelistet: [stand.ungelistet, beispiel].filter(Boolean).join(", "), nachgeprueft: new Date(jetztMs).toISOString() });
+              await speicher.schreib({ ...stand, id: ABLAGE_ID, fehlend: 0, beispiel: "", ungelistet: [stand.ungelistet, kennung].filter(Boolean).join(", "), nachgeprueft: new Date(jetztMs).toISOString() });
             } catch { /* die Meldung unten stimmt auch ohne Ablage */ }
-            return { ok: true, meldung: `Nachgeprüft: ${beispiel} fehlt in /models, antwortet aber (Stand vor ${stunden} h korrigiert)` };
+            return { ok: true, meldung: `Nachgeprüft: ${kennung} fehlt in /models, antwortet aber (Stand vor ${stunden} h korrigiert)` };
           }
+          try { await speicher.schreib({ ...stand, id: ABLAGE_ID, nachgeprueft: new Date(jetztMs).toISOString() }); } catch { /* still */ }
         }
       }
       return { ok: false, meldung: `${stand.fehlend} gewählte(s) Modell(e) beim Anbieter verschwunden — Stand vor ${stunden} h, z. B. ${String(stand.beispiel || "").slice(0, 60)}` };
@@ -183,6 +198,7 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
   const unpruefbar = [];
   const ungelistet = [];
   let geprueft = 0;
+  let proben = 0;
   for (const name of namen) {
     const backend = name === "openrouter" ? openrouterBackendFromEnv(env) : providerBackendFromEnv(name, env);
     const modelle = gewaehlteModelle(name, env);
@@ -194,6 +210,10 @@ export async function laufModellKatalogWache({ mitNetz = true, ablage = null, fe
     geprueft += modelle.length;
     for (const m of fehlendeModelle(modelle, ergebnis.ids)) {
       // Nicht gelistet ist noch nicht tot: erst die echte Anfrage entscheidet.
+      // Deckel je Lauf: liefert ein Anbieter /models leer, sollen nicht alle
+      // gewaehlten Modelle einzeln angefragt werden (Review 14.09.).
+      if (proben >= PROBEN_DECKEL) { fehlend.push(`${name}:${m} (ungeprüft, Deckel ${PROBEN_DECKEL})`); continue; }
+      proben += 1;
       const probe = await bestaetigeModell(backend, m, { fetchImpl });
       if (probe.antwortet) ungelistet.push(`${name}:${m}`);
       else fehlend.push(`${name}:${m} (${probe.grund})`);

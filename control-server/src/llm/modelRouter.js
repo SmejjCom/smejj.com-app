@@ -301,7 +301,14 @@ export function resolveModelRequest(profile = "default", requestedModel = "", en
 
   const legacyChain = resolveChain(safeProfile, env).map((backend) => ({
     ...backend,
-    logicalModelId: backend.name === "zhipu" ? "glm-5-2" : backend.logicalModelId || "provider-fallback"
+    // Zwei zhipu-Glieder, zwei Kennungen (Review-Befund 14.09.): die Laufzeit-
+    // Gesundheit haengt an der logischen Kennung — trug der Zweitversuch
+    // glm-4.5-flash ebenfalls "glm-5-2", setzte sein Erfolg ein leeres
+    // 5.2-Kontingent sofort wieder auf "ready", und jede Frage lief erst gegen
+    // die 429-Wand. Jetzt bleibt 5.2 degradiert, bis es selbst wieder antwortet.
+    logicalModelId: backend.name === "zhipu"
+      ? (backend.model === "glm-4.5-flash" ? "glm-4-5-flash" : "glm-5-2")
+      : backend.logicalModelId || "provider-fallback"
   }));
   const chain = dedupeBackends([...modelChain, ...legacyChain]);
   return { selection, chain };

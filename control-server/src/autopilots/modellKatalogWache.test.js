@@ -151,6 +151,64 @@ test("rotes Ergebnis aus der Ablage bleibt rot, wenn die Nachpruefung scheitert"
   assert.ok(ergebnis.meldung.includes("groq:tot"));
 });
 
+test("rote Ablage mit MEHR als einem fehlenden Modell wird NICHT per Beispiel gruen geredet", async () => {
+  // Review-Befund 14.09.: die Ablage kennt nur das Beispiel; die uebrigen
+  // fehlenden Modelle blieben ungeprueft und wurden fuer lebendig erklaert.
+  const env = { SMEJJ_LLM_GROQ_API_KEY: "k" };
+  const anfragen = [];
+  const ablage = {
+    lies: async () => ({ id: "modell-katalog-stand", createdAt: new Date(Date.now() - 3_600_000).toISOString(), fehlend: 2, beispiel: "groq:openai/gpt-oss-20b (HTTP 404)", geprueft: 2, anbieter: 1 }),
+    schreib: async (d) => { anfragen.push(d); }
+  };
+  const ergebnis = await laufModellKatalogWache({ env, ablage, fetchImpl: async () => { throw new Error("darf nie gerufen werden"); } });
+  assert.equal(ergebnis.ok, false);
+  assert.ok(ergebnis.meldung.includes("2 gewählte(s) Modell(e)"));
+  assert.equal(anfragen.length, 0, "keine Probe, nichts geschrieben");
+});
+
+test("gescheiterte Nachpruefung wird vermerkt und innerhalb von 6 h nicht wiederholt", async () => {
+  const env = { SMEJJ_LLM_GROQ_API_KEY: "k" };
+  const geschrieben = [];
+  let proben = 0;
+  const stand = { id: "modell-katalog-stand", createdAt: new Date(Date.now() - 3_600_000).toISOString(), fehlend: 1, beispiel: "groq:tot (HTTP 404)", geprueft: 2, anbieter: 1 };
+  const ablage = { lies: async () => stand, schreib: async (d) => { geschrieben.push(d); Object.assign(stand, d); } };
+  const fetchImpl = async () => { proben += 1; return { ok: false, status: 404 }; };
+  const erster = await laufModellKatalogWache({ env, ablage, fetchImpl });
+  assert.equal(erster.ok, false);
+  assert.equal(proben, 1, "genau eine Probe im ersten Takt");
+  assert.equal(geschrieben.length, 1);
+  assert.ok(typeof geschrieben[0].nachgeprueft === "string", "der Fehlversuch wird mit Zeitstempel vermerkt");
+  const zweiter = await laufModellKatalogWache({ env, ablage, fetchImpl });
+  assert.equal(zweiter.ok, false);
+  assert.equal(proben, 1, "im naechsten Takt keine zweite Probe (Frist 6 h)");
+});
+
+test("die Kennung in der Gruen-Meldung traegt keinen Grund-Zusatz", async () => {
+  const env = { SMEJJ_LLM_GROQ_API_KEY: "k" };
+  const geschrieben = [];
+  const ablage = {
+    lies: async () => ({ id: "modell-katalog-stand", createdAt: new Date(Date.now() - 3_600_000).toISOString(), fehlend: 1, beispiel: "groq:openai/gpt-oss-20b (HTTP 404)", geprueft: 2, anbieter: 1 }),
+    schreib: async (d) => { geschrieben.push(d); }
+  };
+  const ergebnis = await laufModellKatalogWache({ env, ablage, fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({}) }) });
+  assert.equal(ergebnis.ok, true);
+  assert.ok(ergebnis.meldung.includes("groq:openai/gpt-oss-20b fehlt"), ergebnis.meldung);
+  assert.doesNotMatch(ergebnis.meldung, /\(HTTP 404\)/);
+  assert.equal(geschrieben[0].ungelistet, "groq:openai/gpt-oss-20b");
+});
+
+test("Deckel: hoechstens 5 Kleinstanfragen je Tageslauf", async () => {
+  const env = { SMEJJ_LLM_GROQ_API_KEY: "k", SMEJJ_LLM_GROQ_MODEL_FAST: "m1", SMEJJ_LLM_GROQ_MODEL_DEFAULT: "m2", SMEJJ_LLM_GROQ_MODEL_CODING: "m3", SMEJJ_LLM_GROQ_MODEL_REASONING: "m4", SMEJJ_LLM_GROQ_MODEL_WEB: "m5", SMEJJ_LLM_ZHIPU_API_KEY: "z" };
+  let proben = 0;
+  const ergebnis = await laufModellKatalogWache({
+    env, ablage: leereAblage(),
+    fetchImpl: async (url) => { if (url.endsWith("/chat/completions")) { proben += 1; return { ok: false, status: 404 }; } return modelsAntwort(["nichts-davon"]); }
+  });
+  assert.equal(ergebnis.ok, false);
+  assert.ok(proben <= 5, `zu viele Proben: ${proben}`);
+  assert.ok(ergebnis.meldung.includes("Deckel") || ergebnis.meldung.includes("verschwunden"));
+});
+
 test("ohne Netz: Abfrage faellig, kein Fehler", async () => {
   const ergebnis = await laufModellKatalogWache({ env: { SMEJJ_LLM_GROQ_API_KEY: "k" }, ablage: leereAblage(), mitNetz: false });
   assert.equal(ergebnis.ok, true);
