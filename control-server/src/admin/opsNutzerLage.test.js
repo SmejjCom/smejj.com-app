@@ -19,7 +19,7 @@ const INDEX = {
 const ABRECHNUNG = {
   ok: true, zahlend: 2,
   abos: [
-    { kundenId: "cus_1", konto: "smejjcom@gmail.com", plan: "Gold", zustand: "active", klartext: "laeuft", paidEmail: "7shahnazaryan@gmail.com" },
+    { kundenId: "cus_1", konto: "smejjcom@gmail.com", plan: "Gold", zustand: "active", klartext: "laeuft", paidEmail: "kaeuferin@example.com" },
     { kundenId: "cus_2", konto: "m.keller@web.de", plan: "Silber", zustand: "active", klartext: "laeuft", paidEmail: "m.keller@web.de" },
     { kundenId: "cus_3", konto: null, plan: "Plus", zustand: "active", klartext: "laeuft", zahlendeAdresse: "fremd@example.org", naechsterSchritt: "anschreiben" }
   ]
@@ -40,7 +40,7 @@ function lage(extra = {}) {
 test("'bezahlt als' ist eine eigene Spalte: andere Adresse, dieselbe, oder kein Abo", async () => {
   const u = await lage();
   const je = Object.fromEntries(u.eintraege.map((x) => [x.userId, x]));
-  assert.equal(je.u1.bezahltAls, "7shahnazaryan@gmail.com");
+  assert.equal(je.u1.bezahltAls, "kaeuferin@example.com");
   assert.equal(je.u1.plan, "Gold");
   assert.equal(je.u2.bezahltAls, "dieselbe");
   assert.equal(je.u3.bezahltAls, null);

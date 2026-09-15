@@ -2,7 +2,7 @@
 //
 // DER FALL: Der Kunde hat bezahlt — unter einer anderen Adresse als der, mit
 // der er angemeldet ist (erstes echtes Abo, 14.08.2026: bezahlt als
-// 7shahnazaryan@gmail.com, angemeldet als smejjcom@gmail.com). Die App zeigt
+// kaeuferin@example.com, angemeldet als smejjcom@gmail.com). Die App zeigt
 // ihm "Frei", die Betreiber-Konsole "nicht zugeordnet". Bisher blieb nur:
 // mit der zahlenden Adresse anmelden.
 //

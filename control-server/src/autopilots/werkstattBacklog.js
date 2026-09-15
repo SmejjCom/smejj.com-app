@@ -212,7 +212,17 @@ export function baueBacklog({ ampel, tests, mails, antworten, cve, verbesserunge
   }
 
   aufgaben.sort((a, b) => a.stufe - b.stufe || String(a.betrifft).localeCompare(String(b.betrifft)));
+  // Das Backlog landet in Git (oeffentliches Repo) und im Wissen der Bruecke. Am 14.09.
+  // trug der Befund der Konto-Wache eine private Admin-Adresse im Klartext hinein —
+  // Adressen werden darum hier maskiert, bevor irgendetwas geschrieben wird.
+  for (const a of aufgaben) for (const feld of ["titel", "befund", "betrifft"]) if (typeof a[feld] === "string") a[feld] = maskiereAdressen(a[feld]);
+  for (const s of stummeQuellen) if (typeof s.grund === "string") s.grund = maskiereAdressen(s.grund);
   return { aufgaben, stummeQuellen, gesammeltAus };
+}
+
+/** "anna.muster@example.com" -> "a***@example.com". Rein, fuer Tests exportiert. */
+export function maskiereAdressen(text) {
+  return String(text).replace(/\b([A-Za-z0-9])[A-Za-z0-9._%+-]*@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b/g, "$1***@$2");
 }
 
 /**

@@ -6,7 +6,7 @@ import { aboAufKontoUmhaengen } from "./aboUmhaengen.js";
 import { emailKey } from "../auth/emailUserStore.js";
 
 const INDEX = { ok: true, entries: [{ email: "smejjcom@gmail.com" }, { email: "m@x.de" }] };
-const KUNDE = { ref: emailKey("7shahnazaryan@gmail.com"), paidEmail: "7shahnazaryan@gmail.com", plan: "plus", status: "active", subscriptionId: "sub_1", livemode: true };
+const KUNDE = { ref: emailKey("kaeuferin@example.com"), paidEmail: "kaeuferin@example.com", plan: "plus", status: "active", subscriptionId: "sub_1", livemode: true };
 
 function umgebung(ueber = {}) {
   const geschrieben = { refs: [], kunden: [] };
@@ -26,7 +26,7 @@ test("haengt das Abo auf das Konto: neuer Ref-Datensatz, Kunde zeigt auf die Kon
   const r = await aboAufKontoUmhaengen("SmejjCom@gmail.com", "cus_V4GGvjGpI1hmUh", opts);
   assert.equal(r.ok, true);
   assert.equal(r.after.ref, emailKey("smejjcom@gmail.com"));
-  assert.equal(r.after.paidEmail, "7shahnazaryan@gmail.com", "die Kaufadresse ist der Beleg und wird nie veraendert");
+  assert.equal(r.after.paidEmail, "kaeuferin@example.com", "die Kaufadresse ist der Beleg und wird nie veraendert");
   assert.equal(geschrieben.refs[0].ref, emailKey("smejjcom@gmail.com"));
   assert.equal(geschrieben.refs[0].rec.customerId, "cus_V4GGvjGpI1hmUh");
   assert.equal(geschrieben.kunden[0].rec.ref, emailKey("smejjcom@gmail.com"));
@@ -38,7 +38,7 @@ test("fail-closed: unbekanntes Konto, ungueltige Kunden-ID, kein laufendes Abo, 
   assert.equal((await aboAufKontoUmhaengen("m@x.de", "sub_falsch", umgebung().opts)).error, "billing_customer_id_invalid");
   assert.equal((await aboAufKontoUmhaengen("m@x.de", "cus_1", umgebung({ leseKunde: async () => ({ ...KUNDE, status: "canceled" }) }).opts)).error, "billing_subscription_not_active");
   assert.equal((await aboAufKontoUmhaengen("m@x.de", "cus_1", umgebung({ leseKunde: async () => null }).opts)).error, "billing_customer_not_found");
-  const gleich = await aboAufKontoUmhaengen("7shahnazaryan@gmail.com", "cus_1", umgebung({ leseIndex: async () => ({ ok: true, entries: [{ email: "7shahnazaryan@gmail.com" }] }) }).opts);
+  const gleich = await aboAufKontoUmhaengen("kaeuferin@example.com", "cus_1", umgebung({ leseIndex: async () => ({ ok: true, entries: [{ email: "kaeuferin@example.com" }] }) }).opts);
   assert.equal(gleich.error, "admin_no_change");
   const { opts, geschrieben } = umgebung({ leseIndex: async () => ({ ok: false }) });
   assert.equal((await aboAufKontoUmhaengen("m@x.de", "cus_1", opts)).error, "admin_directory_unavailable");

@@ -2,7 +2,7 @@
 // Seite "Nutzer — und die Zeile, die euch mal Stunden gekostet hat", 2026-08-23).
 //
 // Aus der eigenen Geschichte: Ein Abo war unsichtbar, weil unter einer anderen
-// Adresse bezahlt wurde als angemeldet (7shahnazaryan@… gegen smejjcom@…).
+// Adresse bezahlt wurde als angemeldet (k…@… gegen smejjcom@…).
 // Deshalb steht "bezahlt als" hier als EIGENE SPALTE — nicht versteckt in
 // einem Detailfenster. Und: Konten, zu denen ein Abo nicht passt, stehen als
 // eigene Liste oben, mit der zahlenden Adresse, damit klar ist, WEN man
