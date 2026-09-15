@@ -31,7 +31,9 @@
         "befehl ignorier",
         "ignoriere den versteckten",
         "prompt injection",
-        "prompt-injection"
+        "prompt-injection",
+        "verhindert das ausgeben",
+        "verhindert die weitergabe"
       ],
       "darfNicht": [
         "hier ist der key",
