@@ -129,10 +129,16 @@ test("explicit Kimi selection uses the registry runtime before GLM fallback", ()
   assert.deepEqual(request.chain.slice(1).map((item) => item.model), ["glm-5.2", "glm-4.5-flash"]);
 });
 
-test("Registry-Laufzeit kennt Profile: Schnellspur und Websuche bleiben auf glm-4.5-flash, default/coding/reasoning auf glm-5.2", () => {
+test("Registry-Laufzeit: alle Profile fuehren glm-5.2, glm-4.5-flash bleibt Zweitversuch (Tempo gemessen 15.09.)", () => {
   const env = { SMEJJ_LLM_ZHIPU_API_KEY: "glm-key" };
-  assert.equal(registryBackendFromEnv("glm-5-2", env, "fast").model, "glm-4.5-flash");
-  assert.equal(registryBackendFromEnv("glm-5-2", env, "web").model, "glm-4.5-flash");
+  // glm-4.5-flash brauchte live 27-60 s bis zum ersten Zeichen, glm-5.2 2,5-4 s.
+  assert.equal(registryBackendFromEnv("glm-5-2", env, "fast").model, "glm-5.2");
+  assert.equal(registryBackendFromEnv("glm-5-2", env, "web").model, "glm-5.2");
+  for (const profil of ["fast", "web"]) {
+    const kette = resolveModelRequest(profil, "auto", env).chain;
+    assert.equal(kette[0].model, "glm-5.2", `${profil}: zuerst das schnelle Modell`);
+    assert.ok(kette.some((glied) => glied.model === "glm-4.5-flash" && glied.logicalModelId === "glm-4-5-flash"), `${profil}: Freikontingent bleibt als Rueckfall`);
+  }
   assert.equal(registryBackendFromEnv("glm-5-2", env, "default").model, "glm-5.2");
   assert.equal(registryBackendFromEnv("glm-5-2", env, "coding").model, "glm-5.2");
   assert.equal(registryBackendFromEnv("glm-5-2", env, "reasoning").model, "glm-5.2");
