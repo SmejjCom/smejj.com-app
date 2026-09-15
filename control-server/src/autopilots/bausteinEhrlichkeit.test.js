@@ -123,3 +123,9 @@ test("Wirkungstabelle: vier Umbauten sind 'teilweise', jeder verbliebene Baustei
   for (const id of WIRKUNG.baustein) assert.ok(BAUSTEIN_GRUND[id], `${id}: Grund fehlt`);
   assert.deepEqual(Object.keys(BAUSTEIN_GRUND).sort(), [...WIRKUNG.baustein].sort(), "kein Grund ohne Baustein");
 });
+
+test("Nr. 11: eine knappe, bestandene Antwort ('1,5 s') ist gesund, eine leere nicht (live 15.09.)", () => {
+  assert.equal(E.beurteileEchteAntworten([{ id: "75/budget-lcp-grounding", anfang: "1,5 s", ende: "", bestanden: true }]).ungesund.length, 0);
+  assert.equal(E.beurteileEchteAntworten([{ id: "x", anfang: "  ", ende: "", bestanden: true }]).ungesund.length, 1);
+  assert.equal(E.beurteileEchteAntworten([{ id: "y", anfang: "ok", ende: "", bestanden: false }]).ungesund.length, 1, "knapp UND durchgefallen bleibt ein Befund");
+});
