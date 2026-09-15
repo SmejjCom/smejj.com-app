@@ -361,3 +361,13 @@ test("ANSCHLUSS-BEWEIS Nr. 74-80: Registry, Läufer, Selbstheilung, Bereich, Num
   assert.equal(bereichVon("red-team-probe"), "Sicherheit & Wachdienst");
   assert.equal(bereichVon("tiefe-spur-messung"), "Antwortqualität & Sprache");
 });
+
+test("Rück-Roller: nutzt den von der Bau-Wache abgeleiteten Stand, die Bau-Wache selbst nie (Master-Audit 15.09.)", async () => {
+  const { aktuellerStand, merkeAbgeleitetenStand } = await import("../control-server/src/autopilots/rueckRollerAutopilot.js");
+  merkeAbgeleitetenStand("ffd7b0b4aaaa");
+  assert.equal(aktuellerStand({}), "ffd7b0b4aaaa");
+  assert.equal(aktuellerStand({}, { mitAbleitung: false }), "", "die Bau-Wache darf ihre eigene Ableitung nicht als Messung lesen");
+  assert.equal(aktuellerStand({ ZEABUR_GIT_COMMIT_SHA: "1234567abc" }), "1234567abc", "die Umgebung hat Vorrang");
+  merkeAbgeleitetenStand("kein-hex");
+  assert.equal(aktuellerStand({}), "");
+});
