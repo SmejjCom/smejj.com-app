@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-15T14:15:45.248Z",
-  "confirmation": "Betreiber, 15.09.2026, nach dem A-bis-Z-Livetest per Auswahl: 'Alle beheben (Empfehlung)' — und danach: 'Mach weiter bis alles live und 100 % fertig'. Umgesetzt im Adminbereich: komprimierte Admin-Antworten und Hinweis bei langsamer Antwort (M1), zwischengespeicherte Anmeldepruefung mit Wiederholung (M8), Rollen-Seite ohne Ueberlauf, Rueckfall-Host liefert gate.js/frame-guard.js, Huelle erst nach Bestaetigung, richtiger Menuepunkt waehrend der Pruefung, Control-Center- und Autopiloten-Zaehlung einheitlich, Auslieferungs-Ansicht mit abgeleitetem Commit und internen Dienst-Adressen. Unveraendert: Rollen- und Rechtepruefung, Step-up, Vortuer, schreibende Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis, Impersonation.",
+  "frozenAt": "2026-09-15T22:54:12.610Z",
+  "confirmation": "Betreiber, 16.09.2026, im Chat: \"Ich gebe dir alle rechte von a bis z erledige, alles.\" (Regeln, Tagesmappe, Control Center, Autopiloten) und \"Gib mir den Stempel als .command zum Doppelklicken\", per Doppelklick ausgefuehrt. Geaendert: nur der Regeltext 4 (abgeleitete Commit-Kennung der Bau-Wache) und 5 (Schutz-Echtheit Nr. 82) in views-stage12.js. Unveraendert: Adminzugang, Rollen- und Rechtepruefung, Step-up, Vortuer, schreibende Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis, Impersonation.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -26,7 +26,7 @@
     "control-server/src/admin/opsAutopilotenListeEvolution.js": "703e22dd80cc191460eac3acce7cd133495ac29f5afce27594f3319cfe8213be",
     "control-server/src/admin/opsAutopilotenBereiche.js": "150a00069a0dd70a76d4da70474f36f0f45f3ff333d9880a543d99144b9e72ba",
     "control-server/src/admin/opsAuslieferung.js": "7af1c20a150dd29e01caac403305b0d14311efc9bfdfa7ed3c5bf6feb3a82b63",
-    "control-server/admin-ui/views-stage12.js": "2e9c4b7e6508b68b548805c0f15bac8d0cc5f8be9e625dff3ebf5688db72ecc1",
+    "control-server/admin-ui/views-stage12.js": "58acc0496d59d5bf79e0344ffdb07e3e6eb84266d15ce788725365e530dd57eb",
     "control-server/src/admin/opsSicherheitsLage.js": "cff01378042fbfebdf2ba42543f62024593db024ab06b12822f2a1042d9f875a",
     "control-server/admin-ui/views-stage6.js": "f35903e30d9ff848b4a34fa6baaaecebb764f84f24331b166ce8ad3921270fd3",
     "control-server/src/admin/opsNutzerLage.js": "d6850cbc8da7afead2e500eefbac2f71d3cec5b383ebea3aece0e9f3fc54df4e",
