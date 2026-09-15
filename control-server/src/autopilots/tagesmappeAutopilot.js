@@ -79,8 +79,14 @@ export async function baueTagesmappe({
     const liste = await storeFabrik("admin/rueck-roller", 50).liste({ limit: 20 });
     if (!liste.ok) stumm.push("Rück-Roller-Ablage");
     else {
+      // Master-Audit 15.09.: der Rück-Roller legt je Lauf eine Empfehlung ab — dieselbe
+      // Ziel-Version stand dadurch mehrfach in der Mappe. Eine Entscheidung je Ziel.
+      const gesehen = new Set();
       for (const e of liste.datensaetze) {
         if (e.art === "rueckroll-empfehlung" && jetztMs - Date.parse(e.createdAt || 0) < 3 * 86_400_000) {
+          const ziel = String(e.zuSha).slice(0, 8);
+          if (gesehen.has(ziel)) continue;
+          gesehen.add(ziel);
           entscheiden.push({ art: "rueckrollen", text: `Rückrollen auf ${String(e.zuSha).slice(0, 8)}: ${e.grund}` });
         }
       }

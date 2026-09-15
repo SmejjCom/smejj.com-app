@@ -63,7 +63,9 @@ const SEITEN_ORDNER = Object.freeze([
   // 2026-08-23: Seite 8 des Design-Vorschlags — die sieben Regeln.
   "regeln",
   // 2026-08-24: Tagesmappe (Autopilot Nr. 60) — die 10 Minuten des Betreibers.
-  "tagesmappe"
+  "tagesmappe",
+  // 2026-09-15: Autopilot Control Center (Master-Audit, Betreiber-Auftrag Punkt 14).
+  "control-center"
 ]);
 
 // ---- Altlasten: Adressen, die es einmal gab -------------------------------

@@ -14,6 +14,7 @@ import { fuehreEngineSelbsttestAus, evolutionUebersicht, entnimmZuwachs, AKTIONS
 import { merkeAufgaben, listeAufgaben, setzeZustand, schliesseErloschene, zaehleAufgaben, ZUSTAENDE } from "./aufgabenAblage.js";
 import { merkeKennzahlen, holeKennzahlen } from "./kennzahlenAblage.js";
 import { fuehreRadarAus, holeKandidaten, fuehreRadarSelbsttestAus, BEOBACHTET } from "./konkurrenzRadar.js";
+import { pruefeChangelogs, fuehreChangelogSelbsttestAus } from "./changelogWache.js";
 import {
   fuehreDetectorSelbsttestAus, erkenneLuecken, baueLueckenAufgaben,
   pruefeBelege, SMEJJ_FAEHIGKEITEN, KONKURRENZ_STAND
@@ -131,11 +132,15 @@ const RADAR_ABSTAND_MS = 6.5 * 24 * 60 * 60 * 1000;
  */
 export async function laufKonkurrenzRadar({
   mitNetz = true, suche = null, radar = fuehreRadarAus, bestand = holeKandidaten,
-  env = process.env, jetztMs = Date.now()
+  env = process.env, jetztMs = Date.now(), changelogs = (opt) => pruefeChangelogs(opt)
 } = {}) {
   const selbsttest = fuehreRadarSelbsttestAus({ jetztMs });
   if (!selbsttest.bestanden) {
     return { ok: false, meldung: `Radar-Filter erkennt bekannte Fälle nicht mehr: ${selbsttest.fehler.slice(0, 2).join("; ")}` };
+  }
+  const clTest = fuehreChangelogSelbsttestAus();
+  if (!clTest.bestanden) {
+    return { ok: false, meldung: `Changelog-Wache zerlegt bekannte Seiten falsch: ${clTest.fehler.slice(0, 2).join("; ")}` };
   }
 
   const gelesen = await bestand({ env });
@@ -156,7 +161,7 @@ export async function laufKonkurrenzRadar({
     return { ok: true, meldung: `Selbsttest bestanden; Scan fällig, läuft im nächsten Netz-Takt (${gelesen.kandidaten.length} Kandidaten im Bestand)` };
   }
 
-  const lauf = await radar({ suche, jetztMs, env });
+  const lauf = await radar({ suche, jetztMs, env, changelogs });
   if (!lauf.ok) {
     return { ok: false, meldung: `Scan gescheitert: ALLE ${lauf.stummeQuellen?.length || 0} Quellen stumm — ${lauf.stummeQuellen?.[0]?.grund || "ohne Grund"}` };
   }
@@ -164,6 +169,7 @@ export async function laufKonkurrenzRadar({
     ok: true,
     meldung: `${lauf.kandidaten.length} Kandidat(en) aus ${BEOBACHTET.length - lauf.stummeQuellen.length} von ${BEOBACHTET.length} Suchen (Bereiche: ${[...new Set(BEOBACHTET.map((b) => b.bereich))].join(", ")})`
       + (lauf.stummeQuellen.length ? `; stumm: ${lauf.stummeQuellen.map((s) => s.anbieter).join(", ")}` : "")
+      + (lauf.changelog ? `; Changelogs: ${lauf.changelog.geprueft - (lauf.changelog.stumm?.length || 0)} von ${lauf.changelog.geprueft} gelesen, ${lauf.changelog.kandidaten?.length || 0} neue Zeile(n)${lauf.changelog.grundstaende ? `, ${lauf.changelog.grundstaende} Grundstand/-stände angelegt` : ""}` : "")
       + (lauf.abgelegt ? "" : `; NICHT abgelegt (${lauf.ablageGrund})`)
       + " — Kandidaten sind Suchtreffer mit Quelle, keine bestätigten Funktionen"
   };

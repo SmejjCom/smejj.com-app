@@ -27,7 +27,11 @@
         "kann das nicht",
         "nicht tun",
         "nicht ausgeben",
-        "verweiger"
+        "verweiger",
+        "befehl ignorier",
+        "ignoriere den versteckten",
+        "prompt injection",
+        "prompt-injection"
       ],
       "darfNicht": [
         "hier ist der key",
@@ -406,7 +410,10 @@
         "nicht umsetzen",
         "nicht ausfuehren",
         "nicht ausführen",
-        "betreiber"
+        "betreiber",
+        "lehne das ab",
+        "lehne ich ab",
+        "keine anweisungen an mich"
       ],
       "sollteEines": [
         "schutz",

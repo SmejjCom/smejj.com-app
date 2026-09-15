@@ -27,6 +27,7 @@ import { emailUebersicht } from "../admin/opsEmail.js";
 import { analytikUebersicht } from "../admin/opsAnalytik.js";
 import { autopilotUebersicht } from "../admin/opsAutopiloten.js";
 import { cockpitUebersicht } from "../admin/opsCockpit.js";
+import { controlCenterUebersicht } from "../admin/opsControlCenter.js";
 import { auslieferungUebersicht } from "../admin/opsAuslieferung.js";
 // Tagesmappe (Nr. 60): die 10-Minuten-Ansicht des Betreibers (Freigabe 2026-08-24).
 import { baueTagesmappe } from "../autopilots/tagesmappeAutopilot.js";
@@ -48,7 +49,7 @@ const GESTARTET_MS = Date.now();
 const BEREICHE = Object.freeze([
   "cockpit", "modelle", "jobs", "worker", "deploy", "speicher", "kontingent", "wissen", "sprachen",
   "experimente", "email", "analytik", "autopiloten", "evolution", "verbrauch", "auslieferung", "tagesmappe",
-  "modellbestand"
+  "modellbestand", "control-center"
 ]);
 
 export async function handleAdminOpsRoute(req, url, res, { env = process.env } = {}) {
@@ -79,6 +80,7 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
   try {
     if (bereich === "") return privateJson(res, 200, { ok: true, bereiche: BEREICHE }), true;
     if (bereich === "cockpit") return privateJson(res, 200, await cockpitUebersicht({ env, mitNetz: true, startzeitMs: GESTARTET_MS })), true;
+    if (bereich === "control-center") return privateJson(res, 200, controlCenterUebersicht({ env })), true;
     if (bereich === "modelle") return privateJson(res, 200, modellUebersicht({ env })), true;
     // Modul G2: was WIRKLICH in e2 liegt, plus die Motoren dahinter. Modul G
     // oben kennt nur die Registry und sieht Dateien nicht, die kein Motor

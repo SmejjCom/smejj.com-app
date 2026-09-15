@@ -143,6 +143,23 @@ test("Nr. 60 Tagesmappe: stumme Quellen werden benannt, gesunde Mappe ist vollst
   assert.ok(gesund.entscheiden.some((e) => e.art === "trainings-reife"), "die reife Karte muss unter ENTSCHEIDEN stehen");
 });
 
+test("Nr. 60 Tagesmappe: dieselbe Rückroll-Empfehlung steht nur EINMAL (Master-Audit 15.09.)", async () => {
+  const jetzt = new Date().toISOString();
+  const mappe = await baueTagesmappe({
+    uebersicht: () => ({ autopiloten: [] }),
+    ticketLader: async () => [],
+    storeFabrik: (praefix) => praefix === "admin/rueck-roller"
+      ? { liste: async () => ({ ok: true, datensaetze: [
+        { art: "rueckroll-empfehlung", zuSha: "d8f6bd8c1111", grund: "rot", createdAt: jetzt },
+        { art: "rueckroll-empfehlung", zuSha: "d8f6bd8c1111", grund: "rot", createdAt: jetzt },
+        { art: "rueckroll-empfehlung", zuSha: "aaaaaaaa2222", grund: "rot", createdAt: jetzt }
+      ] }) }
+      : { liste: async () => ({ ok: true, datensaetze: [] }), lies: async () => null }
+  });
+  const rueck = mappe.entscheiden.filter((e) => e.art === "rueckrollen");
+  assert.equal(rueck.length, 2, JSON.stringify(rueck));
+});
+
 test("ANSCHLUSS-BEWEIS: alle in Registry, Taktgeber und Selbstheilung — Nummern eindeutig", () => {
   const registryIds = new Set(AUTOPILOTEN.map((a) => a.id));
   for (const id of SCHUTZ_UND_WACHSTUM_IDS) {

@@ -1,7 +1,7 @@
 {
   "lock": "smejj adminmenue nummern lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-04T11:22:06.861Z",
-  "confirmation": "Adminbereich. Linke Seite Menue-Ueberschriften, auch nummerieren und dann hundert Prozent Schutz drauflegen. (Betreiber, 2026-09-04)",
+  "frozenAt": "2026-09-15T00:17:33.923Z",
+  "confirmation": "Betreiber, Master-Auftrag 2026-09-15, Punkt 14: 'Ich moechte im Adminbereich einen zentralen Bereich sehen: AUTOPILOT CONTROL CENTER. Dort sollen alle Autopiloten mit Status sichtbar sein' — Punkt 13: 'Die Hauptseite soll wie eine professionelle AI Operations Control Center funktionieren.' Umgesetzt: (a) admin-ui/api.js an den live ausgelieferten Stand angeglichen (E2E-Fix 14.09.: ZWEIT_ORIGIN war nie definiert, lag nur im Frontend-Klon); (b) neue rein lesende Seite 1.4 control-center (GET /api/admin/ops/control-center, Registrierung in console.js/index.html/adminUiRoutes.js/sync-Skript); (c) Fixrunde nach Live-Audit des Adminbereichs: Schiene klappt unter 640 px auf die Icon-Spur (84 px Ueberlauf bei 390 px), Audit-Ziel ohne [object Object], 'E-Mail-Konten', keine Ueberfrist bei erledigten Aufgaben, Kosten 'Neuer Lauf zulaessig' beachtet die Reservierungs-Obergrenze. Unveraendert: Adminzugang, Step-up, Vortuer, schreibende Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis, Impersonation.",
   "rule": "Eine vergebene Nummer im Admin-Menue (Gruppe und Bereich) darf ohne ausdrueckliche schriftliche Freigabe des Betreibers nicht wandern, nicht doppelt vergeben und nicht geloescht werden. Neue Nummern fuer neue Bereiche bleiben erlaubt.",
   "quelle": "control-server/admin-ui/console.js (GRUPPEN_NUMMERN, SEITEN_NUMMERN)",
   "gruppen": {
@@ -18,6 +18,7 @@
     "cockpit": "1.1",
     "regeln": "1.2",
     "tagesmappe": "1.3",
+    "control-center": "1.4",
     "nutzer": "2.1",
     "rollen": "2.2",
     "support": "2.3",

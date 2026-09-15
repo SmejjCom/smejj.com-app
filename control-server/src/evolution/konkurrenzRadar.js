@@ -106,7 +106,7 @@ function alsKandidat(anbieter, treffer, jetztMs, bereich = "allgemein") {
  *
  * @param {{suche: Function}} deps `searchWebDetailed`-kompatibel
  */
-export async function fuehreRadarAus({ suche, jetztMs = Date.now(), env = process.env, fetchImpl = fetch, beobachtet = BEOBACHTET } = {}) {
+export async function fuehreRadarAus({ suche, jetztMs = Date.now(), env = process.env, fetchImpl = fetch, beobachtet = BEOBACHTET, changelogs = null } = {}) {
   if (typeof suche !== "function") return { ok: false, grund: "keine Suchfunktion uebergeben" };
 
   const kandidaten = [];
@@ -155,6 +155,19 @@ export async function fuehreRadarAus({ suche, jetztMs = Date.now(), env = proces
     }
   }
 
+  // Changelog-Wache (Master-Audit 15.09.): die offiziellen Release-Notes direkt,
+  // nicht nur Suchtreffer. Ihre Kandidaten stehen VOR den Suchtreffern — sie
+  // sind wörtlich belegt. Ein Ausfall hier macht den Suchteil nicht ungültig.
+  let changelog = null;
+  if (typeof changelogs === "function") {
+    try {
+      changelog = await changelogs({ jetztMs, env });
+      kandidaten.unshift(...(changelog.kandidaten || []));
+    } catch (fehler) {
+      changelog = { geprueft: 0, kandidaten: [], stumm: [], fehler: String(fehler?.message || fehler).slice(0, 100) };
+    }
+  }
+
   const id = `radar-${new Date(jetztMs).toISOString().slice(0, 10)}`;
   let abgelegt = false;
   let ablageGrund = null;
@@ -163,8 +176,9 @@ export async function fuehreRadarAus({ suche, jetztMs = Date.now(), env = proces
       id,
       tag: id.slice(6),
       createdAt: new Date(jetztMs).toISOString(),
-      kandidaten: kandidaten.slice(0, 40),
+      kandidaten: kandidaten.slice(0, 60),
       stummeQuellen,
+      changelog: changelog ? { geprueft: changelog.geprueft, neu: changelog.kandidaten?.length || 0, grundstaende: changelog.grundstaende || 0, unveraendert: changelog.unveraendert || 0, stumm: changelog.stumm || [] } : null,
       hinweis: "Kandidaten sind SUCHTREFFER mit Quelle, keine bestaetigten Funktionen. "
         + "Erst eine Betreiber-Entscheidung traegt eine Funktion in den Konkurrenz-Stand ein."
     }, { env, fetchImpl, timeoutMs: SCHREIB_ZEITLIMIT_MS });
@@ -173,7 +187,8 @@ export async function fuehreRadarAus({ suche, jetztMs = Date.now(), env = proces
     ablageGrund = String(fehler?.message || fehler).slice(0, 120);
   }
 
-  return { ok: stummeQuellen.length < beobachtet.length, kandidaten, stummeQuellen, abgelegt, ablageGrund, tag: id.slice(6) };
+  const changelogLebt = Boolean(changelog && changelog.geprueft > (changelog.stumm?.length || 0));
+  return { ok: stummeQuellen.length < beobachtet.length || changelogLebt, kandidaten, stummeQuellen, changelog, abgelegt, ablageGrund, tag: id.slice(6) };
 }
 
 /** Die zuletzt abgelegten Kandidaten — fuer das Dashboard. */

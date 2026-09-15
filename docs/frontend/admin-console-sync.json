@@ -35,11 +35,13 @@
     "evolution",
     "auslieferung",
     "regeln",
-    "tagesmappe"
+    "tagesmappe",
+    "control-center"
   ],
   "dateien": {
-    "api.js": "3f13275f736d741ce7919519c4068f72ee82647d5ce5c78e2c3cef44c1510162",
+    "api.js": "69f499949ee1dd504ff63ed530ddd287784303443879845d54187681f1f94d84",
     "console-cockpit.js": "6035114b40a3c32a786ab1435bbf231e71ae553b68eb331f061f92fe77079d8b",
+    "console-control-center.js": "09ab785f2567c07759dbec4104b9c4ef2d59b0cfd580bf060dad1bb84f23bdce",
     "console-stage10.js": "de099a501c46b49d7aa6fffb97b26d9bd19bbe20f5f52f4b4fb92a3462bacc36",
     "console-stage11.js": "5c8352d2aa70c2f52bfa00077eb8704ba7211a10dfdc6066eb3dd383e9b21470",
     "console-stage12.js": "04993b73ee961ea108c5f2eaeec53d3110fc70f4fa29703fd0c1d8836f94b553",
@@ -51,13 +53,14 @@
     "console-stage7.js": "1a64ad0126ee46d0557b50086ac042c00089372d9ba9d6e0bd1a1055e9b53b42",
     "console-stage8.js": "778d89b1ec1a071a581f4030acf0dbef72de52aa2b370a4cc3092c38d6d78bfb",
     "console-stage9.js": "86a7baf596f1ce13954489e82aa47e7046ddba2b2a561288d63f6f032af11682",
-    "console.css": "8064644c5588fcea30bce965a123cce97202bb90a263861213b9f5dd58b4b9cf",
-    "console.js": "2abffe013877d359dd7a2e157b6070ed5824330fc7d3067f314eca2a46d53443",
+    "console.css": "d1d0feba16dc504bed8e2c1117827b6409fee5e8f3635720d3430b93f5635256",
+    "console.js": "6c076969cd5700c4371a2c695a1c7b2b36537225dd35b475b5080654a2ed87d6",
     "dialog.js": "e6784e914c7573b6fe9d28bfcebc1c3b3c2e17d4cc2a1b56c4f2f8917f781a5d",
     "gate.js": "eee9cc6f4fcb0afe9467dd8a375b5014aeebb0c86464e87ffbfed1119e4d294c",
-    "index.html": "08091e7581f88a819402d6c13e26611212d7d0507f57002388b730399fc45623",
+    "index.html": "a193a1fd5ae1a20250dcc22be0b9d9b634f62a512fec4e323f13725a4ea36b10",
     "schiene.js": "e316ac8ba8d812c26e82a65891db345f1c9a96ba064c3ec71763fb855b7d3a8f",
     "views-cockpit.js": "e10ffc62485492bf689ec4737965c76ee4a807811daa81341a080b694d27825d",
+    "views-control-center.js": "99273c49113e8090ad07f1c0bc85bf8ab3abc1e240105cbad954802c03509630",
     "views-stage10.js": "a7f4b57f8b5c60611997b31e2ff3d9a5e889856beac0474b24ba5eb67a5728b5",
     "views-stage11.js": "e0a4f3a3c509716eedd1c7e2e1dec131bbfa09e7315a99c46050d3ed7f2409b4",
     "views-stage12.js": "01019f1bdf06f40d87f2b2aa5ca05e901ade9be3b0d7f8536f9d19cc279389df",
@@ -66,9 +69,9 @@
     "views-stage4.js": "eaa42919f0866a3e1ab7a2a252eb97f6f24ab9fac9c5b207b1b2d9509fa346d5",
     "views-stage5.js": "fcffea722ad7b24a1ed85ffc90a63b4f472c833b3a8fc41aa547b22a3847ca27",
     "views-stage6.js": "f35903e30d9ff848b4a34fa6baaaecebb764f84f24331b166ce8ad3921270fd3",
-    "views-stage7.js": "77c675cb48b1801f7b57ccdf8b248b61bc91646d5531124287db51d68fa8150e",
-    "views-stage8.js": "b023606eeac6580b6edae72f12cb4794bc305711dc44bded3fee77b1fc5b92cb",
+    "views-stage7.js": "8eab5b3d3744086202e9fc02a641ef5725829009f6364625e894bec50036a868",
+    "views-stage8.js": "87b945701a426ba1f1b8469c7a3dda0f9da4aff83c176e2a1af24407a3886a68",
     "views-stage9.js": "792ca51453ed313147280d9640c1d3259c095252762a6e1b6b4d419ad5657f74",
-    "views.js": "6b4b905bb989d5db03e10b931be01b7a36ff218381a0e1cd399aacc0993774c1"
+    "views.js": "421593597c17afa9b1c9d6269723726d8820f5b4521421fc8c22e43e0aca7855"
   }
 }
