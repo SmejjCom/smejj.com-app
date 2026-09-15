@@ -96,9 +96,15 @@ export const MODEL_REGISTRY = Object.freeze({
       defaultModel: "glm-5.2",
       // Profil-Laufzeit (Review-Befund 14.09.): die Registry kannte kein Profil,
       // also begann JEDE Kette — auch Schnellspur und Websuche — mit glm-5.2.
-      // Schnell und Web bleiben auf dem Freikontingent; default/coding/reasoning
-      // tragen das Qualitaetsmodell. Env SMEJJ_LLM_ZHIPU_MODEL_<PROFIL> gewinnt.
-      profileModels: Object.freeze({ fast: "glm-4.5-flash", web: "glm-4.5-flash" }),
+      // TEMPO GEMESSEN 15.09.2026 (gleicher Schluessel, gleiche Adresse, thinking aus):
+      //   glm-5.2       2,5-4,1 s bis zum ersten Zeichen (4 Laeufe)
+      //   glm-4.5-flash 27-60 s  (4 Laeufe, einer lief in die 60-s-Grenze)
+      // Das Freikontingent war damit der Grund, warum "Was ist 2+2?" 21-57 s
+      // brauchte und Autopilot Nr. 29 rot stand. Schnell und Web fuehren darum
+      // ebenfalls glm-5.2; glm-4.5-flash bleibt als Zweitversuch hinten in der
+      // Kette (PROVIDER_CATALOG.zhipu.models.default) und faengt ein leeres
+      // Kontingent (429, 0,6 s) auf. Env SMEJJ_LLM_ZHIPU_MODEL_<PROFIL> gewinnt.
+      profileModels: Object.freeze({}),
       defaultHeader: "Authorization",
       storageFirstMode: "glm-5.2-storage-first",
       engines: Object.freeze(["openai-compatible", "sglang", "vllm", "ktransformers"]),
