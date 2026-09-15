@@ -35,7 +35,7 @@ export const WIRKUNG = Object.freeze({
     "missing-function-detector": "Konkurrenz-Stand von Hand gepflegt; Radar-Kandidaten nur als unbestätigte Hinweise",
     "rueck-roller": "empfiehlt nur, nur für den Control-Server",
     "log-wache": "nur Signale des eigenen Prozesses",
-    "kosten-wache": "Zähler nach jedem Neustart leer; Brücken-Verbrauch fehlt",
+    "kosten-wache": "Tagesstand neustartfest (seit 15.09.), aber der Verbrauch der Brücke (Hauptverkehr) wird nicht gemeldet",
     "last-probe": "Last nur auf /health, nicht auf den Chat",
     "experiment-meister": "Rahmen bereit, 0 Experimente",
     "webhook-wache": "Smee ausgeschaltet",
@@ -66,6 +66,6 @@ export const KETTE = Object.freeze([
   { schritt: "Eval", ids: ["qualitaetsmessung", "tiefe-spur-messung", "red-team-probe", "smejj-versions-takt"], luecke: null },
   { schritt: "Release", ids: ["bau-wache", "schutz-echtheit"], luecke: "Auslieferung per Kaskade von Hand; Autopiloten beobachten nur" },
   { schritt: "Live-Check", ids: ["brueckenwaechter", "synthetic-user-watchdog", "tuerwaechter", "web-vitals-wache", "oberflaechenwache"], luecke: null },
-  { schritt: "Messen", ids: ["besucher-puls", "willkommens-wache", "abo-umsatz-wache", "kosten-wache"], luecke: "Kosten nach Neustart blind" },
+  { schritt: "Messen", ids: ["besucher-puls", "willkommens-wache", "abo-umsatz-wache", "kosten-wache"], luecke: "Verbrauch der Brücke (Hauptverkehr) wird nicht gemeldet" },
   { schritt: "Weiter verbessern", ids: ["modell-evolution", "experiment-meister", "rueck-roller"], luecke: "Messwerte fließen nur über rote Ampeln zurück" }
 ]);
