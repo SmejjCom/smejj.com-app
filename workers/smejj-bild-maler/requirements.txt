@@ -16,7 +16,13 @@
 # endete bei 0.36. server.py nutzt nur diffusers.AutoPipelineForText2Image —
 # eine API, die ueber diese Versionen stabil ist. Der Beweis liegt trotzdem
 # erst am laufenden Dienst (erstes echtes Bild nach dem Bau).
+# 0.40.0 (2026-09-15): enable_vae_slicing() an der Pipeline entfallen — server.py nutzt pipe.vae.enable_slicing().
 diffusers==0.40.0
+# 5.17.0 statt 5.5.0 (2026-09-15, Dependabot GHSA-xrqw-3rrv-vx5w; osv.dev: 0 Luecken), zusammen mit
+# diffusers 0.40.0 und torch 2.14.0 (Dockerfile). Zwei fruehere Anlaeufe (597c7cf0, 922d964d) scheiterten
+# live: transformers >=5.10 braucht torch >=2.7, und diffusers zog nicht mit. Diesmal VOR dem Bau bewiesen:
+# .github/workflows/bild-maler-probe.yml baut das Abbild in GitHub Actions, laedt sd-turbo, malt ein Bild
+# (32 s wie vorher) und ein Portraet mit aktivem Gesichtsfix.
 transformers==5.17.0
 # 1.15.0 statt 1.1.1 (2026-09-15, E2E-Pruefung A bis Z): Dependabot meldete Pfad-
 # Traversal/DoS beim Laden geteilter Checkpoints (<=1.14.0). Im Dienst nicht
