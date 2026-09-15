@@ -37,7 +37,9 @@ transformers==5.5.0
 # server.py ruft beide NIE (0 Treffer), laedt ausschliesslich das feste Modell aus
 # SMEJJ_BILD_MODELL (Standard stabilityai/sd-turbo) und nimmt keine Nutzer-Dateien an.
 # CVSS verlangt ohnehin AV:L + UI:R — ein lokaler Angreifer mit Nutzerinteraktion.
-accelerate==1.1.1
+# 1.15.0 statt 1.1.1 (2026-09-15, E2E A bis Z): Dependabot (Pfad-Traversal/DoS <=1.14.0), im
+# Dienst nicht erreichbar; 1.15.0 laut osv.dev sauber, live gebaut und Bild erzeugt (deploy/smejj-bild-maler b1399880).
+accelerate==1.15.0
 # 0.8.0 ist PFLICHT fuer diffusers 0.38: der erste Bau mit 0.4.5 scheiterte an
 # ResolutionImpossible, und ein fehlgeschlagener Bau sieht aus, als waere die
 # Sicherheitsaktualisierung selbst falsch gewesen.
