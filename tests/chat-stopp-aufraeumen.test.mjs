@@ -49,3 +49,54 @@ test("ein Fehler beim Aufraeumen haelt den Abbruch nicht auf", () => {
   assert.match(fn, /\.catch\(\(\) =>/, "der Balken-Import hat keinen Fang");
   assert.match(fn, /try \{ strom\.beendeDenken/, "beendeDenken haengt ohne Fang am Ablauf");
 });
+
+// ---- Livetest 15.09.2026: Stopp in der Wartezeit, nach dem Neuladen war die Antwort weg ----
+
+const { markiereGestoppteLeere } = await import("../public/chat-stopp.js");
+
+function eintrag(klassen, text = "", dataset = {}) {
+  const liste = new Set(klassen);
+  return { classList: { contains: (k) => liste.has(k) }, textContent: text, innerHTML: text, dataset: { ...dataset } };
+}
+function logMit(...eintraege) {
+  return { querySelectorAll: () => eintraege };
+}
+/** Nachbau von readEntries() in chat-store.js: leere und wartende Eintraege werden nicht gespeichert. */
+const gespeichert = (eintraege) => eintraege.filter((e) => e.textContent.trim().length > 0 && e.dataset.thinking !== "true");
+
+test("KAPUTT (v883): eine leere gestoppte Antwort ohne data-thinking fiel beim Speichern weg", () => {
+  const frage = eintrag(["entry", "user"], "Schreibe einen Aufsatz");
+  const antwort = eintrag(["entry", "assistant"], ""); // der Strom hat data-thinking schon entfernt
+  // Die alte Aufraeumschleife traf nur [data-thinking="true"] — hier also nichts.
+  assert.equal(gespeichert([frage, antwort]).length, 1, "nur die Frage bleibt: nach dem Neuladen steht sie ohne Antwort");
+});
+
+test("GESUND: die leere gestoppte Antwort wird zu 'Gestoppt.' und damit gespeichert", () => {
+  const frage = eintrag(["entry", "user"], "Schreibe einen Aufsatz");
+  const antwort = eintrag(["entry", "assistant"], "");
+  assert.equal(markiereGestoppteLeere(logMit(frage, antwort)), true);
+  assert.equal(antwort.textContent, "Gestoppt.");
+  assert.equal(antwort.dataset.gestopptLeer, "an", "Fortsetzen erkennt: das ist keine Teilantwort");
+  assert.equal(gespeichert([frage, antwort]).length, 2, "Frage UND Hinweis ueberstehen das Neuladen");
+});
+
+test("GESUND: auch eine noch wartende Blase wird ehrlich markiert", () => {
+  const antwort = eintrag(["entry", "assistant"], "smejj denkt nach …", { thinking: "true" });
+  assert.equal(markiereGestoppteLeere(logMit(eintrag(["entry", "user"], "?"), antwort)), true);
+  assert.equal(antwort.textContent, "Gestoppt.");
+  assert.equal(antwort.dataset.thinking, undefined);
+});
+
+test("GESUND: eine Teilantwort und eine Frage ohne Antwortblase bleiben unangetastet", () => {
+  const teil = eintrag(["entry", "assistant"], "Vulkane entstehen, wenn");
+  assert.equal(markiereGestoppteLeere(logMit(eintrag(["entry", "user"], "?"), teil)), false);
+  assert.equal(teil.textContent, "Vulkane entstehen, wenn");
+  assert.equal(markiereGestoppteLeere(logMit(eintrag(["entry", "user"], "?"))), false);
+  assert.equal(markiereGestoppteLeere(null), false);
+});
+
+test("Verdrahtung: nach Stromende wird geprueft, Fortsetzen schickt statt 'Gestoppt.' fortzusetzen", () => {
+  assert.match(quelle, /markiereGestoppteLeere\(dok\.getElementById\?\.\("startLog"\)\)/);
+  assert.match(quelle, /if \(istAbgebrochen\(\)\) setTimeout\(\(\) => markiereGestoppteLeere\(/);
+  assert.match(quelle, /output\.dataset\.gestopptLeer === "an"/);
+});

@@ -420,7 +420,7 @@ async function submitTask(task, { target = "#startLog" } = {}) {
 }
 
 function bindSidebarActions() {
-  $("#storage")?.addEventListener("click", () => showJsonInLog(CLIENT_ROUTES.api.storageStatus));
+  $("#storage")?.addEventListener("click", () => showJsonInLog(CLIENT_ROUTES.api.storageStatus, { mitAusweis: true }));
   $("#status")?.addEventListener("click", () => showJsonInLog(CLIENT_ROUTES.api.gitStatus));
   $("#tests")?.addEventListener("click", async () => {
     const result = await postJson(CLIENT_ROUTES.api.terminalRun, { command: UI_COPY.testCommand });
@@ -455,7 +455,7 @@ function bindCodeTools() {
 
 
 function bindStoragePanel() {
-  $("#storagePanelCheck").addEventListener("click", () => showJson("#storagePanelOutput", CLIENT_ROUTES.api.storageStatus));
+  $("#storagePanelCheck").addEventListener("click", () => showJson("#storagePanelOutput", CLIENT_ROUTES.api.storageStatus, { mitAusweis: true }));
   $("#kimiStatusCheck").addEventListener("click", () => refreshKimiVaultStatus());
   $("#glmStatusCheck").addEventListener("click", () => refreshGlmVaultStatus());
   $("#storagePanelLocal").addEventListener("click", () => {
@@ -584,7 +584,7 @@ function updateAiStatus(result) {
 }
 
 async function refreshLiveSystemStatus() {
-  refreshLocalWorkspaceStatus(projektAbhaengigkeiten()); try { const h = await getJson(CLIENT_ROUTES.api.health); if (h) { if (h.storage) setText("#storageStatusText", lesbarerStatus(h.storage)); if (h.idrive) setText("#idriveStatusText", lesbarerStatus(h.idrive)); if (h.aiMode) setText("#aiModeText", lesbarerStatus(h.aiMode)); if (h.cost) setText("#costStatusText", lesbarerStatus(h.cost)); } const s = await getJson(CLIENT_ROUTES.api.storageStatus); if (s?.configured) { setText("#idriveStatusText", `IDrive e2 (${s.bucket || "smejj-app"}) OK`); setText("#idriveStatusChip", "IDrive: e2 OK"); } else { setText("#idriveStatusText", "IDrive e2: nicht eingerichtet"); setText("#idriveStatusChip", "IDrive: nicht eingerichtet"); } } catch { setText("#idriveStatusText", "IDrive e2: Status nicht abrufbar"); setText("#idriveStatusChip", "IDrive: Status offen"); }
+  refreshLocalWorkspaceStatus(projektAbhaengigkeiten()); try { const h = await getJson(CLIENT_ROUTES.api.health); if (h) { if (h.storage) setText("#storageStatusText", lesbarerStatus(h.storage)); if (h.idrive) setText("#idriveStatusText", lesbarerStatus(h.idrive)); if (h.aiMode) setText("#aiModeText", lesbarerStatus(h.aiMode)); if (h.cost) setText("#costStatusText", lesbarerStatus(h.cost)); } const s = await getJson(CLIENT_ROUTES.api.storageStatus, { mitAusweis: true }); if (s?.nurAngemeldet) { setText("#idriveStatusText", "IDrive e2: nur angemeldet sichtbar"); setText("#idriveStatusChip", "IDrive: nur angemeldet"); } else if (s?.configured) { setText("#idriveStatusText", `IDrive e2 (${s.bucket || "smejj-app"}) OK`); setText("#idriveStatusChip", "IDrive: e2 OK"); } else { setText("#idriveStatusText", "IDrive e2: nicht eingerichtet"); setText("#idriveStatusChip", "IDrive: nicht eingerichtet"); } } catch { setText("#idriveStatusText", "IDrive e2: Status nicht abrufbar"); setText("#idriveStatusChip", "IDrive: Status offen"); }
 }
 
 function bindTools() {
@@ -660,7 +660,7 @@ function bindProfile() {
 
   $("#logoutLocal").addEventListener("click", () => {
     state.session = { authenticated: false, mode: PROJECT_ROLES.localOnly };
-    localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(state.session));
+    try { localStorage.removeItem(STORAGE_KEYS.session); } catch {} // Livetest 15.09.: abgemeldet = Eintrag weg
     state.profile = { ...state.profile, email: "" }; localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify({ name: state.profile.name || "" })); $("#profileEmail").value = ""; try { localStorage.removeItem("smejj.entwurf.v1"); } catch {} // Freigabe 1h + Entwurf
     refreshSessionStatus();
     writeOutput("#profileOutput", "Logout abgeschlossen. Lokale Projekte wurden nicht geloescht.");
@@ -744,11 +744,13 @@ async function writeFile(apply) {
   });
 }
 
-async function showJsonInLog(url) {
-  addEntry(JSON.stringify(await getJson(url), null, 2), "assistant");
+async function showJsonInLog(url, optionen) {
+  const daten = await getJson(url, optionen);
+  addEntry(daten?.nurAngemeldet ? daten.hinweis : JSON.stringify(daten, null, 2), "assistant");
 }
 
-async function showJson(target, url) {
-  writeOutput(target, JSON.stringify(await getJson(url), null, 2));
+async function showJson(target, url, optionen) {
+  const daten = await getJson(url, optionen);
+  writeOutput(target, daten?.nurAngemeldet ? daten.hinweis : JSON.stringify(daten, null, 2));
 }
 

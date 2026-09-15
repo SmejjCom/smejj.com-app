@@ -74,7 +74,9 @@ test("rate limit reached blocks presign", async () => {
 test("service worker does not offline-cache API fallback", () => {
   const sw = fs.readFileSync("public/sw.js", "utf8");
   assert.match(sw, /pathname\.startsWith\("\/api\/"\)/);
-  assert.match(sw, /event\.respondWith\(fetch\(request\)\)/);
+  // Livetest 15.09.2026: /api/ wird gar nicht mehr abgefangen (vorher
+  // respondWith(fetch(request))) — damit kann erst recht nichts im Speicher landen.
+  assert.match(sw, /if \(url\.pathname\.startsWith\("\/api\/"\)\) return;/);
 });
 
 test("CSP and CORS stay restrictive", () => {

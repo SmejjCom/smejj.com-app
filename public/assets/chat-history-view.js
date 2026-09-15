@@ -309,7 +309,28 @@ function injectStyles() {
 let alleChats = [];
 let alleProjekte = [];
 
-async function render() {
+// Zusammenfassen (Livetest 15.09., M2): jeder importierte Chat meldet
+// "smejj:chats-changed" — beim Abgleich eines neuen Geraets 368 Mal, und jedes
+// Mal las render() ALLE Chats neu. Laeuft schon ein Lauf, wird genau EIN
+// weiterer vorgemerkt statt hunderte parallel zu starten.
+let renderLauf = null;
+let renderNochmal = false;
+function render() {
+  if (renderLauf) { renderNochmal = true; return renderLauf; }
+  renderLauf = (async () => {
+    try {
+      do {
+        renderNochmal = false;
+        await renderEinmal();
+      } while (renderNochmal);
+    } finally {
+      renderLauf = null;
+    }
+  })();
+  return renderLauf;
+}
+
+async function renderEinmal() {
   await ladeBausteine();
   const target = host();
   if (!target) return;
