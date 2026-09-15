@@ -6,7 +6,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cpu
+# 2026-09-15 (Dependabot transformers GHSA-xrqw, osv.dev): torch 2.5.1 trug 22 bekannte Luecken, 2.14.0 keine;
+# transformers ab 5.10 braucht torch.float8_e8m0fnu (ab torch 2.7). Vorab in GitHub Actions gebaut und
+# mit echtem Bild (sd-turbo, 512 px, 3 Schritte) + Gesichtsfix geprueft: .github/workflows/bild-maler-probe.yml.
+RUN pip install --no-cache-dir torch==2.14.0 torchvision==0.29.0 --index-url https://download.pytorch.org/whl/cpu
 # Gesichts-Reparatur (Augen!): GFPGAN + Abhaengigkeiten — ins ABBILD (Trainer-Lehre).
 RUN pip install --no-cache-dir gfpgan==1.3.8
 

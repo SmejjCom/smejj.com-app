@@ -1,0 +1,70 @@
+# smejj.com — Bild-Maler vorab pruefen, BEVOR Zeabur ihn baut (15.09.2026).
+#
+# Zwei Anlaeufe, transformers anzuheben, legten den Bild-Maler live still ("PreTrainedModel").
+# Der Mac des Betreibers rechnet nicht (Betreiber-Regel). Darum hier, kostenlos auf GitHub:
+# dasselbe Dockerfile bauen, den echten Dienst starten, sd-turbo laden, ein Bild malen,
+# ein Portraet mit Gesichtsfix malen — fuer den alten UND den neuen Stand, damit Tempo und
+# Ergebnis vergleichbar sind. Gruen heisst: der Dienst laeuft wirklich, nicht nur der Import.
+name: Bild-Maler-Probe
+on:
+  push:
+    branches: ["pruef/bild-maler-*"]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        stand: [alt, neu]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Alten Stand herstellen (deploy/smejj-bild-maler 85aa44b5)
+        if: matrix.stand == 'alt'
+        run: git checkout 85aa44b5 -- Dockerfile.smejj-bild-maler workers/smejj-bild-maler/requirements.txt
+      - name: Versionen
+        run: grep -n "torch==" Dockerfile.smejj-bild-maler; grep -v "^#" workers/smejj-bild-maler/requirements.txt | grep -v "^$"
+      - name: Bauen (mit Importprobe im Dockerfile)
+        run: docker build -f Dockerfile.smejj-bild-maler -t bild-maler:${{ matrix.stand }} .
+      - name: Dienst starten und sd-turbo laden
+        run: |
+          docker run -d --name bild -p 8080:8080 -e SMEJJ_BILDER_WORKER_KEY=probe bild-maler:${{ matrix.stand }}
+          for i in $(seq 1 180); do
+            H=$(curl -s -m 10 http://127.0.0.1:8080/health || true)
+            if echo "$H" | grep -q '"bereit":true'; then echo "bereit nach $((i*5)) s: $H"; exit 0; fi
+            if echo "$H" | grep -q '"fehler":"[^"]'; then echo "FEHLER beim Laden: $H"; docker logs bild | tail -40; exit 1; fi
+            sleep 5
+          done
+          echo "nicht bereit nach 15 min"; docker logs bild | tail -40; exit 1
+      - name: Bild malen (ohne Gesichtsfix)
+        run: |
+          S=$(date +%s)
+          curl -s -m 600 -X POST http://127.0.0.1:8080/erzeuge -H "Content-Type: application/json" -H "x-smejj-key: probe" \
+            -d '{"prompt":"a red apple on a wooden table, painting"}' -o bild1.json
+          echo "Dauer $(( $(date +%s) - S )) s"
+          python3 - <<'PY'
+          import json, base64
+          d = json.load(open("bild1.json"))
+          assert d.get("ok") is True, {k: v for k, v in d.items() if k != "bild"}
+          roh = next((v for k, v in d.items() if isinstance(v, str) and len(v) > 1000), "")
+          png = base64.b64decode(roh.split(",")[-1])
+          assert png[:8] == b"\x89PNG\r\n\x1a\n" and len(png) > 50_000, len(png)
+          print("PNG", len(png), "Bytes")
+          PY
+      - name: Portraet malen (mit Gesichtsfix)
+        run: |
+          S=$(date +%s)
+          curl -s -m 900 -X POST http://127.0.0.1:8080/erzeuge -H "Content-Type: application/json" -H "x-smejj-key: probe" \
+            -d '{"prompt":"portrait of a smiling woman looking at the camera"}' -o bild2.json
+          echo "Dauer $(( $(date +%s) - S )) s"
+          python3 -c "import json; d=json.load(open('bild2.json')); assert d.get('ok') is True, {k:v for k,v in d.items() if len(str(v))<400}; print('ok')"
+          H=$(curl -s -m 10 http://127.0.0.1:8080/health); echo "$H"
+          echo "$H" | grep -q '"status":"aktiv"' || { echo "Gesichtsfix nicht aktiv"; docker logs bild | tail -40; exit 1; }
+      - name: Protokoll
+        if: always()
+        run: docker logs bild 2>&1 | tail -30 || true
