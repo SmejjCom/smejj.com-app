@@ -58,6 +58,119 @@ export function validateMultiFileArchitecture(files = []) {
 }
 
 /**
+ * Quelltext ohne Kommentare und ohne den INHALT von Vorlagen-Strings.
+ *
+ * Master-Audit 15.09.: die Regex-Suche oben meldete Importe, die gar keine sind —
+ * ein Kommentar ("./...") und der Test-Quelltext, den src/jobs/freeAppExecutor.js
+ * als Vorlage fuer ein erzeugtes Projekt mitfuehrt. Ein Pruefer, der dauernd
+ * Fehlalarm gibt, wird abgeschaltet; darum ein kleiner Zustandsautomat statt
+ * Regex. Regulaere Ausdruecke im Code werden grob erkannt (nach ( , = : [ ! & | ? ; {).
+ */
+export function codeOhneKommentareUndVorlagen(quelltext = "") {
+  const q = String(quelltext);
+  let aus = "";
+  const vorlagenTiefe = []; // je offener Vorlage: Klammertiefe ihres ${…}
+  let klammern = 0;
+  let modus = "code";
+  let letztesZeichen = "";
+  for (let i = 0; i < q.length; i++) {
+    const z = q[i];
+    const n = q[i + 1];
+    if (modus === "zeile") { if (z === "\n") { modus = "code"; aus += z; } continue; }
+    if (modus === "block") { if (z === "*" && n === "/") { modus = "code"; i++; } continue; }
+    if (modus === "'" || modus === '"') {
+      aus += z;
+      if (z === "\\") { aus += n || ""; i++; } else if (z === modus || z === "\n") modus = "code";
+      continue;
+    }
+    if (modus === "regex") {
+      if (z === "\\") { i++; continue; }
+      if (z === "[") modus = "klasse"; else if (z === "/" || z === "\n") modus = "code";
+      continue;
+    }
+    if (modus === "klasse") { if (z === "\\") i++; else if (z === "]") modus = "regex"; continue; }
+    if (modus === "vorlage") {
+      if (z === "\\") { i++; continue; }
+      if (z === "`") { modus = "code"; aus += "``"; continue; }
+      if (z === "$" && n === "{") { vorlagenTiefe.push(klammern); klammern++; modus = "code"; i++; }
+      continue;
+    }
+    // modus === "code"
+    if (z === "/" && n === "/") { modus = "zeile"; i++; continue; }
+    if (z === "/" && n === "*") { modus = "block"; i++; continue; }
+    if (z === "/" && (/[(,=:[!&|?;{}]|^$/.test(letztesZeichen) || /\b(?:return|typeof|case|yield|await|else|void|throw|in|of)\s*$/.test(aus))) { modus = "regex"; continue; }
+    if (z === "'" || z === '"') { modus = z; aus += z; letztesZeichen = z; continue; }
+    if (z === "`") { modus = "vorlage"; continue; }
+    if (z === "{") klammern++;
+    if (z === "}") {
+      klammern--;
+      if (vorlagenTiefe.length && klammern === vorlagenTiefe[vorlagenTiefe.length - 1]) { vorlagenTiefe.pop(); modus = "vorlage"; continue; }
+    }
+    aus += z;
+    if (!/\s/.test(z)) letztesZeichen = z;
+  }
+  return aus;
+}
+
+const IMPORT_MUSTER = /(?:^|[;\s}])(?:import|export)\s+(?:[\w*\s{},$]+\s+from\s+)?["'](\.{1,2}\/[^"']+)["']|\bimport\(\s*["'](\.{1,2}\/[^"']+)["']\s*\)/g;
+
+/** Starke Zusammenhangskomponenten (Tarjan) mit mehr als einer Datei = Import-Zyklen. */
+export function findeImportZyklen(graph = {}) {
+  const index = new Map();
+  const tief = new Map();
+  const stapel = [];
+  const aufStapel = new Set();
+  const zyklen = [];
+  let zaehler = 0;
+  const besuche = (v) => {
+    index.set(v, zaehler); tief.set(v, zaehler); zaehler++;
+    stapel.push(v); aufStapel.add(v);
+    for (const w of graph[v] || []) {
+      if (!Object.hasOwn(graph, w)) continue;
+      if (!index.has(w)) { besuche(w); tief.set(v, Math.min(tief.get(v), tief.get(w))); }
+      else if (aufStapel.has(w)) tief.set(v, Math.min(tief.get(v), index.get(w)));
+    }
+    if (tief.get(v) !== index.get(v)) return;
+    const komponente = [];
+    let w;
+    do { w = stapel.pop(); aufStapel.delete(w); komponente.push(w); } while (w !== v);
+    if (komponente.length > 1) zyklen.push(komponente.sort());
+  };
+  for (const v of Object.keys(graph)) if (!index.has(v)) besuche(v);
+  return zyklen;
+}
+
+/**
+ * Prueft die relativen Importe ECHTER Dateien gegen das Dateisystem — anders als
+ * validateMultiFileArchitecture, das nur innerhalb der uebergebenen Liste sucht und
+ * dadurch jeden Import nach workers/, gatekeeper/ oder public/ als fehlend meldete.
+ * Ein fehlender Importpfad ist im Abbild ein Absturz beim Laden des Moduls
+ * (die Lehre der fehlenden COPY-Zeile, 502 am con-Autopiloten).
+ *
+ * @param {Array<{path: string, content: string}>} dateien Pfade relativ zur Wurzel
+ * @param {{existiert: (pfad: string) => boolean}} optionen
+ * @returns {{dateien: number, importe: number, fehlend: string[], zyklen: string[][]}}
+ */
+export function pruefeRepoImporte(dateien = [], { existiert } = {}) {
+  const graph = {};
+  const fehlend = [];
+  let importe = 0;
+  for (const datei of Array.isArray(dateien) ? dateien : []) {
+    const von = String(datei?.path || "").replace(/^\.?\//, "");
+    if (!von) continue;
+    graph[von] = [];
+    const code = codeOhneKommentareUndVorlagen(datei.content || "");
+    for (const treffer of code.matchAll(IMPORT_MUSTER)) {
+      const ziel = resolveRelativePath(von, treffer[1] || treffer[2]);
+      importe++;
+      if (existiert(ziel)) graph[von].push(ziel);
+      else fehlend.push(`${von} -> ${treffer[1] || treffer[2]}`);
+    }
+  }
+  return { dateien: Object.keys(graph).length, importe, fehlend: [...new Set(fehlend)], zyklen: findeImportZyklen(graph) };
+}
+
+/**
  * Löst relative Pfade auf.
  * @param {string} currentPath
  * @param {string} relativeImport

@@ -110,6 +110,17 @@ export function belegFuerVerstoss(bewertet, text) {
   return { verletzt, auszug: String(text || "").replace(/\s+/g, " ").trim().slice(0, 280) };
 }
 
+/**
+ * Anfang und Ende der gewerteten Antwort fuer die Fehlererkennung der Selbstheilung
+ * (Nr. 11, Master-Audit 15.09.): sie beurteilt die ECHTEN Antworten dieses Laufs statt
+ * fester Beispiel-Eingaben. Nur Auszuege — die Faelle sind Pruef-Prompts ohne Nutzerdaten.
+ */
+export function antwortAuszug(text) {
+  const t = String(text || "");
+  if (!t.trim()) return null;
+  return t.length <= 600 ? { laenge: t.length, anfang: t } : { laenge: t.length, anfang: t.slice(0, 600), ende: t.slice(-300) };
+}
+
 /** Fingerabdruck der gemessenen Fälle — ändert sich ein Fall, gilt das alte Urteil nicht mehr. */
 export function faelleHash(faelle = []) {
   return createHash("sha256").update(JSON.stringify(faelle)).digest("hex").slice(0, 16);
@@ -162,6 +173,7 @@ async function messe({ faelle, modelId, weg = "chat", env, fetchImpl, sleep }) {
       ? rufeAgentenweg(fall, { basis, token, fetchImpl })
       : callViaControl(fall, { endpoint: `${basis}/api/chat`, modelId, fetchImpl, timeoutMs: ANFRAGE_TIMEOUT_MS, headers: { Authorization: `Bearer ${token}` } });
     let ergebnis = await rufe();
+    let gezaehlterText = "";
     // Rate-Limit oder kurzer Aussetzer: einmal warten und wiederholen (Bauart des Modell-Einkaeufers).
     // Rate-Limit, kurzer Aussetzer ODER Zeitueberschreitung (die tiefe Spur denkt
     // mal 60 s+): einmal warten und wiederholen — sonst kippt EIN Timeout von 14
@@ -171,6 +183,7 @@ async function messe({ faelle, modelId, weg = "chat", env, fetchImpl, sleep }) {
       ergebnis = await rufe();
     }
     let bewertet = scoreCase(fall, ergebnis);
+    gezaehlterText = ergebnis.text;
     let beleg = belegFuerVerstoss(bewertet, ergebnis.text);
     // ZWEITE MEINUNG BEI KRITISCHEM BEFUND (Befund 04.09.): Ein Modell formuliert
     // nicht zweimal gleich. Live fielen "schutz-api-schluessel" (tiefe Spur) und
@@ -184,6 +197,7 @@ async function messe({ faelle, modelId, weg = "chat", env, fetchImpl, sleep }) {
       await sleep(ABSTAND_MS);
       const zweiteAntwort = await rufe();
       const zweiter = scoreCase(fall, zweiteAntwort);
+      gezaehlterText = zweiteAntwort.text;
       if (!zweiter.criticalFailed) {
         bewertet = { ...zweiter, wackelig: true };
         wackelig.push(fall.id);
@@ -192,14 +206,15 @@ async function messe({ faelle, modelId, weg = "chat", env, fetchImpl, sleep }) {
         beleg = belegFuerVerstoss(zweiter, zweiteAntwort.text) || beleg;
       }
     }
-    scores.push(beleg ? { ...bewertet, beleg } : bewertet);
+    const antwort = antwortAuszug(bewertet.status === "error" ? "" : gezaehlterText);
+    scores.push({ ...bewertet, ...(beleg ? { beleg } : {}), ...(antwort ? { antwort } : {}) });
     await sleep(ABSTAND_MS);
   }
   // Wenige Transportfehler (hoechstens 1 je 10 Faelle) kippen nicht den ganzen
   // Tageswert: gemessen wird ueber die beantworteten Faelle, die fehlenden werden
   // in der Meldung gezaehlt und benannt (03.09.: 13 von 14 gemessen = 'nicht messbar').
   const gemessen = scores.filter((s) => s.status !== "error");
-  return { wackelig, summary: aggregateCaseScores(scores), summaryGemessen: gemessen.length ? aggregateCaseScores(gemessen) : null, gruende: fehlerGruende(scores), faelle: scores.map((s) => ({ id: s.caseId, status: s.status, score: s.score, kritisch: s.criticalFailed, fehler: s.error || null, ...(s.beleg ? { beleg: s.beleg } : {}) })) };
+  return { wackelig, summary: aggregateCaseScores(scores), summaryGemessen: gemessen.length ? aggregateCaseScores(gemessen) : null, gruende: fehlerGruende(scores), faelle: scores.map((s) => ({ id: s.caseId, status: s.status, score: s.score, kritisch: s.criticalFailed, fehler: s.error || null, ...(s.beleg ? { beleg: s.beleg } : {}), ...(s.antwort ? { antwort: s.antwort } : {}) })) };
 }
 
 /**
