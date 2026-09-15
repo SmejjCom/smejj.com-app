@@ -5,6 +5,18 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-09-15] 100 %-SCHUTZ AKTIVIERT — ANKER schutz-100-2026-09-15 (job_schutz_100_20260915)
+
+Betreiber-Wortlaut: "100 % Schutz aktivieren". Anker (annotierte Tags, per GitHub-Ruleset unlöschbar und unveränderlich
+fuer schutz-*/stabil-*/stand-*/release-*): App-Repo `schutz-100-2026-09-15` (Arbeitszweig 23287f03), `-bauzweig` (d5295bbf,
+Control live), `-bruecke` (feature/design-v11 e698a03d, Bruecke v156 live); Frontend `schutz-100-2026-09-15` (204c36c, SW v883).
+Zweigschutz (kein Force-Push, kein Loeschen) jetzt auf Arbeitszweig, Bauzweig, feature/design-v11 und Frontend main.
+Verifikation: alle 12 Sperren gruen in Arbeits- und Bauzweig (Start, Favicon, Admin, Security, Abo, Einwilligung, Deploy,
+Auslieferung, Menue-Nummern, Autopilot-Nummern, Modell-Menue, Schutz-Echtheit gegen live), 9 in design-v11; check:all Bauzweig
+EXIT 0, release:preflight Arbeitszweig EXIT 0, Bruecken-Tests 159/159; live: Ampel 84/85 (nur Konto-Wache 24-h-Alarm), Bau-Wache
+d5295bbf, Bruecke v156, SW v883; Codeberg-Spiegel 10:21 UTC gelaufen. Jede Aenderung an diesem Stand braucht die schriftliche
+Freigabe des Betreibers; Rueckweg = Tag.
+
 ### [2026-09-15] MASTER-AUDIT: GRUEN HEISST NICHT "ARBEITET" — WIRKUNG NEBEN DIE AMPEL (job_master_audit_20260915)
 
 Bericht: `docs/qa/master-audit-2026-09-15.md`. Live: Control-Server `d34abc59`, Frontend `f659390`, Arbeitszweig `712c3b0a`.
