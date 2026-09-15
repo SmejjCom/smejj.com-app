@@ -145,11 +145,26 @@ export function einstufung(name, stellen) {
 // ohne es auszufuehren, wird nicht geprueft.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const dienstName = process.argv[2] || "smejj-control";
-  const dienst = await findeDienst(dienstName, zeaburAbfrage);
-  const daten = await zeaburAbfrage(
-    `query($s:ObjectID!,$e:ObjectID!){ service(_id:$s){ variables(environmentID:$e){ key } } }`,
-    { s: dienst.serviceId, e: dienst.environmentId }
-  );
+  let dienst = null;
+  let daten = null;
+  try {
+    dienst = await findeDienst(dienstName, zeaburAbfrage);
+    daten = await zeaburAbfrage(
+      `query($s:ObjectID!,$e:ObjectID!){ service(_id:$s){ variables(environmentID:$e){ key } } }`,
+      { s: dienst.serviceId, e: dienst.environmentId }
+    );
+  } catch (fehler) {
+    // Master-Audit 2026-09-15: abgelaufener Zeabur-Schluessel (401) ist kein
+    // fehlender Pflichtwert. Dann die Wirkung am laufenden Server belegen.
+    if (!/zeabur_(http_40[13]|schluessel_fehlt)/.test(String(fehler?.message || fehler))) throw fehler;
+    const { beurteileErsatz, holeAutopiloten } = await import("./control-umgebung-ersatz.mjs");
+    const urteil = beurteileErsatz(await holeAutopiloten(), { pflicht: PFLICHT.map((p) => p.name) });
+    console.log(`Zeabur-Schluessel abgelaufen (${String(fehler.message).slice(0, 40)}) — Ersatzmessung am laufenden Server.`);
+    console.log(`Pflichtwerte an ihrer Wirkung belegt: ${urteil.belegt.length}/${PFLICHT.length}.`);
+    for (const u of urteil.unbelegt) console.log(`  NICHT BELEGT ${u.name}: ${u.grund}`);
+    console.log("Hinweis: den Zeabur-Schluessel erneuert nur der Betreiber (Zeabur-Portal → Einstellungen → API-Schluessel).");
+    process.exit(urteil.unbelegt.length ? 2 : 0);
+  }
   const vorhanden = new Set((daten?.service?.variables || []).map((v) => v.key));
   const erwartet = erwarteteSchluessel();
   const fehlend = erwartet.filter((k) => !vorhanden.has(k));

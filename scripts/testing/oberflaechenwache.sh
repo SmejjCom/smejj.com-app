@@ -50,18 +50,18 @@ FEHLER=0
 echo ""
 echo "--- 1/3 Responsive (19 Ansichten x 8 Geraeteklassen) ---"
 if node scripts/testing/messe_responsive.mjs --url "$ZIEL"; then
-  echo "[wache] responsive: gruen"
+  echo "[wache] responsive: gruen"; RESPONSIVE="gruen"
 else
-  echo "[wache] responsive: VERSTOESSE (siehe oben)"
+  echo "[wache] responsive: VERSTOESSE (siehe oben)"; RESPONSIVE="rot"
   FEHLER=1
 fi
 
 echo ""
 echo "--- 2/3 Touch-Ziele (375 px, echte Tipps) ---"
 if node scripts/testing/measure_touch_targets_app.mjs --url "$ZIEL"; then
-  echo "[wache] touch: gruen"
+  echo "[wache] touch: gruen"; TOUCH="gruen"
 else
-  echo "[wache] touch: VERSTOESSE (siehe oben)"
+  echo "[wache] touch: VERSTOESSE (siehe oben)"; TOUCH="rot"
   FEHLER=1
 fi
 
@@ -75,14 +75,21 @@ echo "--- 3/3 Betriebswerte des Control-Servers ---"
 # waere ein zweiter Ort, an dem genau das wieder passieren kann.
 # Der Pruefer meldet nur FEHLENDE PFLICHTWERTE als Fehler; die uebrigen
 # Luecken sind Hinweise mit Standard.
-if node scripts/diagnose/control-umgebung-luecken.mjs; then
-  echo "[wache] betriebswerte: gruen"
+BETRIEB_AUSGABE="$(node scripts/diagnose/control-umgebung-luecken.mjs 2>&1)"; BETRIEB_EXIT=$?
+echo "$BETRIEB_AUSGABE"
+if [ "$BETRIEB_EXIT" -eq 0 ]; then
+  if echo "$BETRIEB_AUSGABE" | grep -q "Ersatzmessung"; then BETRIEB="gruen (am laufenden Server belegt, Zeabur-Schluessel abgelaufen)"; else BETRIEB="gruen"; fi
 else
-  echo "[wache] betriebswerte: PFLICHTWERT FEHLT (siehe oben)"
+  BETRIEB="rot (siehe oben)"
   FEHLER=1
 fi
+echo "[wache] betriebswerte: $BETRIEB"
 
 echo ""
+# Die BEFUND-Zeile liest der Zeitgeber (~/.local/share/smejj-oberflaeche/wache.sh) als
+# Ampel-Meldung. Ohne sie stand dort "Responsive+Touch rot", auch wenn nur die
+# Betriebswerte nicht messbar waren (Master-Audit 2026-09-15).
+echo "[wache] BEFUND: responsive ${RESPONSIVE:-?}, touch ${TOUCH:-?}, betriebswerte ${BETRIEB:-?}"
 if [ "$FEHLER" -eq 0 ]; then
   echo "[wache] ALLE DREI GRUEN — die ausgelieferte Oberflaeche haelt Mass, die Betriebswerte sind vollstaendig."
 else

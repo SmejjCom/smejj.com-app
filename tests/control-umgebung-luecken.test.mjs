@@ -99,3 +99,28 @@ test("der Pruefer faellt bei fehlendem Pflichtwert durch, nicht nur bei Hinweise
   assert.match(text, /if \(!kritischFehlend\.length\)[\s\S]{0,120}process\.exit\(0\)/,
     "ohne fehlenden Pflichtwert muss der Pruefer gruen sein");
 });
+
+// Master-Audit 2026-09-15: abgelaufener Zeabur-Schluessel ist kein fehlender
+// Pflichtwert. Die Ersatzmessung belegt die Werte an ihrer Wirkung — kaputt UND gesund.
+test("Ersatzmessung: Wirkung am laufenden Server belegt die Pflichtwerte, fehlende Belege bleiben rot", async () => {
+  const { beurteileErsatz } = await import("../scripts/diagnose/control-umgebung-ersatz.mjs");
+  const jetztMs = Date.parse("2026-09-15T07:00:00Z");
+  const pflicht = PFLICHT.map((p) => p.name);
+  const gesund = [
+    { id: "qualitaetsmessung", letzterLauf: { am: "2026-09-14T19:10:00Z", status: "ok", meldung: "Exit 0" } },
+    { id: "einwilligungs-wache", letzterLauf: { am: "2026-09-15T06:56:00Z", status: "ok", meldung: "Selbsttest 5/5; Einwilligung erteilbar (Schlüssel + Speicher bereit)" } }
+  ];
+  const ok = beurteileErsatz(gesund, { pflicht, jetztMs });
+  assert.equal(ok.unbelegt.length, 0, JSON.stringify(ok.unbelegt));
+  assert.equal(ok.belegt.length, pflicht.length);
+
+  const ohneAusweis = beurteileErsatz(null, { pflicht, jetztMs });
+  assert.ok(ohneAusweis.unbelegt.some((u) => u.name === "SMEJJ_SESSION_SECRET"), "Ausweis abgelehnt = Sitzungsschluessel nicht belegt");
+
+  const kaputt = beurteileErsatz([
+    { id: "qualitaetsmessung", letzterLauf: { am: "2026-09-10T19:10:00Z", status: "ok" } },
+    { id: "einwilligungs-wache", letzterLauf: { am: "2026-09-15T06:56:00Z", status: "fehler", meldung: "503 — Schluessel fehlt" } }
+  ], { pflicht, jetztMs });
+  assert.ok(kaputt.unbelegt.some((u) => u.name === "SMEJJ_AUTOPILOT_KEYS"), "kein Herzschlag von aussen in 48 h");
+  assert.ok(kaputt.unbelegt.some((u) => u.name === "SMEJJ_TRAINING_PRIVACY_NOTICE_SHA256"));
+});
