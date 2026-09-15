@@ -16,31 +16,45 @@
 //
 // EHRLICHKEIT ÜBER DIE KONKURRENZ-QUELLE: KONKURRENZ_STAND unten ist ein
 // HANDGEPFLEGTER Stand mit Datum, keine Live-Messung. Er ist als solcher
-// gekennzeichnet und trägt je Eintrag eine Quelle. Sobald der Konkurrenz-Radar
-// strukturierte Funktionslisten liefert, wird er als Quelle durchgereicht —
-// erkenneLuecken() nimmt jede Liste derselben Form entgegen.
+// gekennzeichnet und trägt je Eintrag eine Quelle.
+//
+// RADAR-KANDIDATEN (Master-Audit 15.09., Kette "Vergleichen"): Der
+// Konkurrenz-Radar (Nr. 04, samt Changelog-Wache) liefert Suchtreffer und neue
+// Release-Notes-Zeilen. Sie kommen hier als HINWEISE an — "Kandidat zur
+// Prüfung", mit Quelle —, NIE als Funktion. Sie ändern weder Lücken noch
+// Gleichstand noch KONKURRENZ_STAND: Messung ist nicht Deutung (Kopfkommentar
+// konkurrenzRadar.js). Erst eine Betreiber-Entscheidung trägt eine Funktion
+// von Hand oben ein.
+//
+// AUGENHÖHE NUR MIT WIRKUNG (Master-Audit 15.09.): Ein Beleg, der nur auf ein
+// Modul mit Selbsttest zeigt (WIRKUNG.baustein in admin/autopilotWirkung.js),
+// beweist, dass ein Baustein rechnet — nicht, dass ein Nutzer die Funktion hat.
+// Solche Einträge stehen unter `nurBaustein`, nie unter `gleichstand` oder
+// `vorteile`.
 
 import { bewerteVerbesserung, prioritaetAus, aufgabenId } from "./aiEvolutionEngine.js";
+import { WIRKUNG } from "../admin/autopilotWirkung.js";
 
 /**
  * Was smejj.com heute kann — jeder Eintrag mit der Datei, die es beweist.
  * `art` verbindet die Fähigkeit mit der Quality-Engine und dem zuständigen
- * Autopiloten.
+ * Autopiloten. `autopilot` steht an jedem Beleg unter control-server/src/autopilots/:
+ * darüber prüft erkenneLuecken(), ob der Beleg nur ein Baustein ist (Test hält das).
  */
 export const SMEJJ_FAEHIGKEITEN = Object.freeze([
   { id: "chat", name: "Text-Chat mit Streaming", art: "text", beleg: "public/chat-bridge.js" },
   { id: "websuche", name: "Websuche mit Quellenangabe", art: "recherche", beleg: "src/search/webSearch.js" },
-  { id: "tiefe-recherche", name: "Mehrstufige Recherche", art: "recherche", beleg: "control-server/src/autopilots/deepResearchAutopilot.js" },
+  { id: "tiefe-recherche", name: "Mehrstufige Recherche", art: "recherche", beleg: "control-server/src/autopilots/deepResearchAutopilot.js", autopilot: "deep-research" },
   { id: "projektwissen", name: "Projektwissen im Prompt (RAG)", art: "recherche", beleg: "control-server/src/rag/agentContext.js" },
   { id: "bilder-malen", name: "Bilder erzeugen", art: "bild", beleg: "public/chat-bridge-bilder.js" },
   { id: "bilder-verstehen", name: "Bilder verstehen", art: "bild", beleg: "public/chat-bridge-vision.js" },
   { id: "video", name: "Video erzeugen (MP4 mit Ton)", art: "video", beleg: "public/chat-bridge-bilder.js" },
   { id: "stimme", name: "Sprachein- und -ausgabe", art: "audio", beleg: "public/voice-realtime.js" },
-  { id: "code-sandkasten", name: "Code ausführen", art: "code", beleg: "control-server/src/autopilots/codeInterpreterAutopilot.js" },
+  { id: "code-sandkasten", name: "Code ausführen", art: "code", beleg: "control-server/src/autopilots/codeInterpreterAutopilot.js", autopilot: "code-interpreter" },
   { id: "werkzeuge", name: "Werkzeugaufrufe im Modell-Kreis", art: "werkzeug", beleg: "control-server/src/llm/toolLoop.js" },
-  { id: "gedaechtnis", name: "Langzeitgedächtnis über Sitzungen", art: "text", beleg: "control-server/src/autopilots/memoryAutopilot.js" },
+  { id: "gedaechtnis", name: "Langzeitgedächtnis über Sitzungen", art: "text", beleg: "control-server/src/autopilots/memoryAutopilot.js", autopilot: "memory-sync" },
   { id: "arbeitsbereich", name: "Dateien im Arbeitsbereich", art: "dokument", beleg: "public/workspace-bridge.js" },
-  { id: "live-vorschau", name: "Sofort-Vorschau im Browser", art: "code", beleg: "control-server/src/autopilots/instantWebContainerAutopilot.js" },
+  { id: "live-vorschau", name: "Sofort-Vorschau im Browser", art: "code", beleg: "control-server/src/autopilots/instantWebContainerAutopilot.js", autopilot: "instant-web-container" },
   { id: "verlauf-suche", name: "Suche über den Verlauf", art: "text", beleg: "public/search.js" }
 ]);
 
@@ -103,28 +117,79 @@ export function pruefeBelege(faehigkeiten = SMEJJ_FAEHIGKEITEN, dateien = []) {
   return { bestaetigt, unbelegt, ungeprueft: false };
 }
 
+/** Zeigt der Beleg nur auf einen Baustein (Selbsttest ohne Live-Wirkung)? */
+export function istNurBaustein(faehigkeit, bausteine = WIRKUNG.baustein) {
+  return Boolean(faehigkeit?.autopilot) && bausteine.includes(faehigkeit.autopilot);
+}
+
+const MAX_HINWEISE = 60;
+
+/**
+ * Radar-Kandidaten als UNBESTÄTIGTE Hinweise. Keine Deutung: kein Abgleich mit
+ * dem Register, kein Eintrag in KONKURRENZ_STAND. Wer ohne Adresse oder Titel
+ * kommt, fällt weg; dieselbe Zeile mit derselben Quelle zählt einmal.
+ * `bestaetigt` ist IMMER false — auch wenn ein Kandidat etwas anderes behauptet.
+ */
+export function radarHinweise(kandidaten = []) {
+  const gesehen = new Set();
+  const hinweise = [];
+  for (const k of Array.isArray(kandidaten) ? kandidaten : []) {
+    const quelle = String(k?.url || "").slice(0, 300);
+    const titel = String(k?.titel || k?.title || "").replace(/\s+/g, " ").trim().slice(0, 200);
+    if (!/^https?:\/\//.test(quelle) || !titel) continue;
+    const schluessel = `${quelle}\n${titel}`;
+    if (gesehen.has(schluessel)) continue;
+    gesehen.add(schluessel);
+    hinweise.push({
+      status: "Kandidat zur Prüfung",
+      titel,
+      anbieter: String(k?.anbieter || "unbekannt").slice(0, 40),
+      bereich: String(k?.bereich || "allgemein").slice(0, 40),
+      quelle,
+      gesehenAm: k?.gesehenAm || null,
+      bestaetigt: false
+    });
+    if (hinweise.length >= MAX_HINWEISE) break;
+  }
+  return hinweise;
+}
+
 /**
  * Der Kern: Konkurrenzfunktionen gegen die eigenen halten.
  *
- * @returns {{luecken: Array, vorteile: Array, gleichstand: Array}}
+ * @returns {{luecken: Array, vorteile: Array, gleichstand: Array, nurBaustein: Array, hinweise: Array}}
  */
-export function erkenneLuecken({ konkurrenz = KONKURRENZ_STAND, faehigkeiten = SMEJJ_FAEHIGKEITEN } = {}) {
+export function erkenneLuecken({
+  konkurrenz = KONKURRENZ_STAND, faehigkeiten = SMEJJ_FAEHIGKEITEN,
+  bausteine = WIRKUNG.baustein, radarKandidaten = []
+} = {}) {
   const eigene = new Map(faehigkeiten.map((f) => [f.id, f]));
   const fremde = new Map((konkurrenz.funktionen || []).map((f) => [f.id, f]));
 
   const luecken = [];
   const gleichstand = [];
+  const nurBaustein = [];
   for (const f of fremde.values()) {
-    if (eigene.has(f.id)) gleichstand.push({ id: f.id, name: f.name, anbieter: f.anbieter });
-    else luecken.push(f);
+    const eigen = eigene.get(f.id);
+    if (!eigen) luecken.push(f);
+    else if (istNurBaustein(eigen, bausteine)) {
+      nurBaustein.push({ id: f.id, name: f.name, anbieter: f.anbieter, autopilot: eigen.autopilot, beleg: eigen.beleg, beiKonkurrenz: true });
+    } else gleichstand.push({ id: f.id, name: f.name, anbieter: f.anbieter });
   }
   // Wo ist smejj VORAUS? Genauso wichtig wie die Lücke — es sagt, was man
-  // nicht kaputtmachen darf.
-  const vorteile = [...eigene.values()]
-    .filter((f) => !fremde.has(f.id))
-    .map((f) => ({ id: f.id, name: f.name, beleg: f.beleg }));
+  // nicht kaputtmachen darf. Ein Baustein ist kein Vorsprung.
+  const vorteile = [];
+  for (const f of eigene.values()) {
+    if (fremde.has(f.id)) continue;
+    if (istNurBaustein(f, bausteine)) nurBaustein.push({ id: f.id, name: f.name, autopilot: f.autopilot, beleg: f.beleg, beiKonkurrenz: false });
+    else vorteile.push({ id: f.id, name: f.name, beleg: f.beleg });
+  }
 
-  return { luecken, vorteile, gleichstand, stand: konkurrenz.stand, herkunft: konkurrenz.herkunft };
+  return {
+    luecken, vorteile, gleichstand, nurBaustein,
+    hinweise: radarHinweise(radarKandidaten),
+    stand: konkurrenz.stand, herkunft: konkurrenz.herkunft
+  };
 }
 
 /**
@@ -202,6 +267,28 @@ export function fuehreDetectorSelbsttestAus() {
   const gefaelscht = [{ id: "phantom", name: "Phantom", art: "text", beleg: "control-server/src/gibt-es-nicht.js" }];
   const { unbelegt } = pruefeBelege(gefaelscht, [{ path: "control-server/src/server.js" }]);
   if (!unbelegt.length) fehler.push("unbelegte Fähigkeit wurde nicht entlarvt");
+
+  // Augenhöhe nur mit Wirkung: kaputte Probe (Baustein) UND gesunde (echt).
+  const probeEigen = [
+    { id: "chat", name: "Chat", art: "text", beleg: "public/chat-bridge.js" },
+    { id: "gibt-es-bei-smejj-nicht", name: "Spielzeug", art: "dokument", beleg: "control-server/src/autopilots/x.js", autopilot: "probe-baustein" }
+  ];
+  const b = erkenneLuecken({ konkurrenz: probeKonkurrenz, faehigkeiten: probeEigen, bausteine: ["probe-baustein"] });
+  if (b.gleichstand.some((g) => g.id === "gibt-es-bei-smejj-nicht")) fehler.push("Baustein ohne Live-Wirkung als Augenhöhe gezählt");
+  if (!b.nurBaustein.some((g) => g.id === "gibt-es-bei-smejj-nicht")) fehler.push("Baustein nicht als solcher ausgewiesen");
+  if (!b.gleichstand.some((g) => g.id === "chat")) fehler.push("echte Fähigkeit nicht mehr als Augenhöhe gezählt");
+
+  // Radar-Kandidaten: Hinweis ja, Deutung nie — auch wenn einer "bestätigt" behauptet.
+  const r = erkenneLuecken({
+    konkurrenz: probeKonkurrenz,
+    radarKandidaten: [
+      { anbieter: "A", bereich: "changelog", titel: "Neue Funktion X", url: "https://example.com/cl", bestaetigt: true },
+      { anbieter: "A", titel: "ohne Adresse", url: "nicht-http" }
+    ]
+  });
+  if (r.hinweise.length !== 1) fehler.push(`Radar-Hinweise falsch gefiltert (${r.hinweise.length} statt 1)`);
+  if (r.hinweise.some((h) => h.bestaetigt !== false)) fehler.push("Radar-Kandidat kam als bestätigt heraus");
+  if (r.luecken.length !== luecken.length || r.gleichstand.length !== gleichstand.length) fehler.push("Radar-Kandidat hat Lücken oder Gleichstand verändert");
 
   return { bestanden: fehler.length === 0, fehler };
 }
