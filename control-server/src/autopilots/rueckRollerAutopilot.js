@@ -36,8 +36,14 @@ function holeAblage(ablage) {
 }
 
 /** Der Stand, den Zeabur diesem Bau mitgegeben hat. Leer = nicht auf Zeabur. */
-export function aktuellerStand(env = process.env) {
-  return String(env.ZEABUR_GIT_COMMIT_SHA || "").slice(0, 40);
+// Seit den Bauten am 15.09.2026 (~07:00 UTC) setzt Zeabur ZEABUR_GIT_COMMIT_SHA nicht
+// mehr. Die Bau-Wache (Nr. 76) leitet den Commit dann aus dem erfolgreichen Check-Run
+// am Prozessstart ab und hinterlegt ihn hier — nur fuer diesen Prozess, nie geraten.
+let abgeleiteterStand = "";
+export function merkeAbgeleitetenStand(sha = "") { abgeleiteterStand = /^[0-9a-f]{7,40}$/i.test(String(sha)) ? String(sha).slice(0, 40) : ""; }
+
+export function aktuellerStand(env = process.env, { mitAbleitung = true } = {}) {
+  return String(env.ZEABUR_GIT_COMMIT_SHA || (mitAbleitung ? abgeleiteterStand : "") || "").slice(0, 40);
 }
 
 /**

@@ -11,7 +11,9 @@
 // (ZEABUR_GIT_COMMIT_SHA, je Bau von Zeabur gesetzt), der jüngste Commit und
 // die Check-Runs aus der öffentlichen GitHub-API (das Repo ist öffentlich,
 // kein Token nötig; 4 Anfragen je Stunde bleiben weit unter dem Limit von 60).
-import { aktuellerStand as laufendenCommit } from "./rueckRollerAutopilot.js";
+import { aktuellerStand, merkeAbgeleitetenStand } from "./rueckRollerAutopilot.js";
+// Die Bau-Wache selbst liest nur die Umgebung — sonst bestaetigte sie ihre eigene Ableitung.
+const laufendenCommit = (env) => aktuellerStand(env, { mitAbleitung: false });
 
 export const REPO = "SmejjCom/smejj.com-app";
 export const BAUZWEIG = "feature/auth-redesign-github-magiclink";
@@ -104,6 +106,7 @@ export async function laufBauWache({ mitNetz = true, env = process.env, fetchImp
   if (!laufend) {
     laufend = leiteCommitAb({ juengster, checkRun, prozessStartMs });
     abgeleitet = Boolean(laufend);
+    if (abgeleitet && env === process.env) merkeAbgeleitetenStand(laufend);
   }
   const urteil = beurteileBau({ laufend, juengster, juengsterAm, checkRun, jetztMs });
   const hinweis = abgeleitet ? " — abgeleitet aus Zeabur-Check-Run und Startzeit (ZEABUR_GIT_COMMIT_SHA fehlt im Container)" : "";
