@@ -169,6 +169,7 @@ test("Wissens-Ernte: ohne Netz wird ehrlich 'faellig' gemeldet, nicht geerntet",
 test("Medien-Qualitaet: bereiter Worker ist gruen, 'laeuft aber nicht bereit' ist ROT", async () => {
   const gruen = await laufMedienQualitaet({
     mitNetz: true,
+    wiederholAbstandMs: 0,
     env: {},
     fetchImpl: async () => ({ ok: true, json: async () => ({ ok: true, bereit: true, engine: "kenburns" }) })
   });
@@ -182,6 +183,7 @@ test("Medien-Qualitaet: bereiter Worker ist gruen, 'laeuft aber nicht bereit' is
 
   const zombie = await laufMedienQualitaet({
     mitNetz: true,
+    wiederholAbstandMs: 0,
     env: {},
     fetchImpl: async () => ({ ok: true, json: async () => ({ ok: true, bereit: false, fehler: "Modell laedt" }) })
   });
@@ -194,12 +196,16 @@ test("Medien-Qualitaet: toter Worker ist ROT mit Grund; Bild-Maler nur bei geset
   const tot = await laufMedienQualitaet({
     mitNetz: true,
     env: { SMEJJ_BILDER_WORKER_URL: "http://bild.intern:8080" },
+    wiederholAbstandMs: 0,
     fetchImpl: async (url) => { gefragt.push(url); throw new Error("connect ECONNREFUSED"); }
   });
   assert.equal(tot.ok, false);
   assert.match(tot.meldung, /Video-Worker: nicht erreichbar/);
   assert.match(tot.meldung, /Bild-Maler: nicht erreichbar/);
-  assert.equal(gefragt.length, 2, "beide Dienste muessen gefragt worden sein");
+  // Seit 15.09. (A-bis-Z-Livetest, M7) fragt die Probe vor "nicht erreichbar" einmal nach:
+  // zwei Dienste x zwei Versuche.
+  assert.equal(new Set(gefragt).size, 2, "beide Dienste muessen gefragt worden sein");
+  assert.equal(gefragt.length, 4, "jeder tote Dienst wird genau einmal nachgefragt");
 
   // GEAENDERT mit dem Fix vom 22.08. ("Medien-Ampel falsches Gruen"): Der
   // Bild-Maler wird auch OHNE gesetzte Variable ueber den Zeabur-internen
@@ -207,6 +213,7 @@ test("Medien-Qualitaet: toter Worker ist ROT mit Grund; Bild-Maler nur bei geset
   const gefragtOhneEnv = [];
   const ohneEnv = await laufMedienQualitaet({
     mitNetz: true,
+    wiederholAbstandMs: 0,
     env: {},
     fetchImpl: async (url) => { gefragtOhneEnv.push(url); return { ok: true, json: async () => ({ bereit: true }) }; }
   });

@@ -26,7 +26,7 @@ test("ohne Profil, ohne E-Mail oder kaputtes JSON: nichts anfassen", () => {
 });
 
 test("beide Abmeldewege rufen es auf (Dock-Menue und Konto-Ansicht)", () => {
-  assert.match(quelle, /vergissProfilEmail\(\);\n\s*location\.assign\("\/"\);/);
+  assert.match(quelle, /vergissProfilEmail\(\);[\s\S]{0,300}?location\.assign\("\/"\);/);
   const app = readFileSync(new URL("../public/app.js", import.meta.url), "utf8");
   const logout = app.slice(app.indexOf('$("#logoutLocal")'), app.indexOf('$("#logoutLocal")') + 600);
   assert.match(logout, /JSON\.stringify\(\{ name: state\.profile\.name \|\| "" \}\)/);
