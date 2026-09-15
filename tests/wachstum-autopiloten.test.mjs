@@ -27,20 +27,73 @@ import { createRecordStore } from "../control-server/src/admin/recordStore.js";
 
 for (const k of ["IDRIVE_E2_ENDPOINT", "IDRIVE_E2_ACCESS_KEY", "IDRIVE_E2_SECRET_KEY", "IDRIVE_E2_BUCKET"]) delete process.env[k];
 
-test("Nr. 55 Kosten-Wache: gerissenes Budget rot, Warnstufe ab 80 %, normaler Tag grün", () => {
+test("Nr. 55 Kosten-Wache: gerissenes Budget rot, Warnstufe ab 80 %, normaler Tag grün", async () => {
   assert.equal(beurteileTag({ kostenUsd: 30 }, { budgetUsd: 25 }).stufe, "rot");
   assert.equal(beurteileTag({ kostenUsd: 21 }, { budgetUsd: 25 }).stufe, "warnung");
   assert.equal(beurteileTag({ kostenUsd: 2 }, { budgetUsd: 25 }).stufe, "ok");
-  const rot = laufKostenWache({
+  const rot = await laufKostenWache({
     env: { SMEJJ_KOSTEN_TAGESBUDGET_USD: "10" },
+    ablage: createRecordStore("test/kosten-rot"),
     berichtLader: () => ({ tage: [{ tag: "x", kostenUsd: 12, anfragen: 5, modelle: [] }] })
   });
   assert.equal(rot.ok, false, "gerissenes Budget muss rot melden");
-  const gruen = laufKostenWache({
+  const gruen = await laufKostenWache({
     env: { SMEJJ_KOSTEN_TAGESBUDGET_USD: "10" },
+    ablage: createRecordStore("test/kosten-gruen"),
     berichtLader: () => ({ tage: [{ tag: "x", kostenUsd: 1.2, anfragen: 5, modelle: [] }] })
   });
   assert.equal(gruen.ok, true, gruen.meldung);
+  assert.match(gruen.meldung, /Brücken-Verbrauch nicht enthalten/);
+});
+
+// WARUM (2026-09-15): nach jedem Neustart meldete die Wache "0.00 USD" als
+// Tagesverbrauch. Kaputte Probe: ohne Ablage-Basis wäre der Neustart genullt;
+// gesunde Probe: Basis vor dem Neustart + seit Start = echter Tageswert.
+test("Nr. 55 Kosten-Wache: Tagesstand überlebt einen Neustart, unlesbare Ablage heißt Untergrenze", async () => {
+  const env = { SMEJJ_KOSTEN_TAGESBUDGET_USD: "10" };
+  const heute = "2026-09-15";
+  const start1 = Date.parse(`${heute}T00:00:00Z`);
+  const ablage = createRecordStore("test/kosten-neustart");
+  const lader = (kosten, anfragen) => () => ({ tage: kosten ? [{ tag: heute, kostenUsd: kosten, anfragen, modelle: [] }] : [] });
+
+  // Prozess 1 zählt 7 USD und legt ab.
+  const vorher = await laufKostenWache({ env, ablage, prozessStartMs: start1, jetztMs: start1 + 3_600_000, berichtLader: lader(7, 40) });
+  assert.equal(vorher.ok, true, vorher.meldung);
+  assert.match(vorher.meldung, /7\.00 von 10 USD/);
+  // Letzte Ablage kurz vor dem Neustart.
+  const letzteAblage = start1 + 7_200_000;
+  await laufKostenWache({ env, ablage, prozessStartMs: start1, jetztMs: letzteAblage, berichtLader: lader(7.5, 42) });
+
+  // Neustart: Token-Messer leer bis auf 1 USD — der Tag steht trotzdem bei 8,50 → Warnung.
+  const start2 = letzteAblage;
+  const nachher = await laufKostenWache({ env, ablage, prozessStartMs: start2, jetztMs: start2 + 600_000, berichtLader: lader(1, 3) });
+  assert.equal(nachher.ok, false, `8,50 von 10 USD muss warnen: ${nachher.meldung}`);
+  assert.match(nachher.meldung, /8\.50 von 10 USD/);
+  assert.match(nachher.meldung, /davon 7\.50 USD vor dem letzten Neustart/);
+  assert.doesNotMatch(nachher.meldung, /Untergrenze/, "lückenloser Neustart ist genau");
+
+  // Zweiter Lauf im selben neuen Prozess: Basis bleibt, nicht doppelt gezählt.
+  const weiter = await laufKostenWache({ env, ablage, prozessStartMs: start2, jetztMs: start2 + 1_200_000, berichtLader: lader(1.2, 4) });
+  assert.match(weiter.meldung, /8\.70 von 10 USD/);
+
+  // Kaputte Probe: Ablage nicht lesbar → nur seit Neustart, ehrlich als Untergrenze.
+  const kaputt = {
+    lies: async () => { throw new Error("e2 weg"); },
+    liste: async () => ({ ok: false }),
+    schreib: async () => { throw new Error("darf nicht schreiben"); }
+  };
+  const blind = await laufKostenWache({ env, ablage: kaputt, prozessStartMs: start2, jetztMs: start2 + 600_000, berichtLader: lader(1, 3) });
+  assert.equal(blind.ok, true, blind.meldung);
+  assert.match(blind.meldung, /1\.00 von 10 USD/);
+  assert.match(blind.meldung, /Untergrenze: Tagesstand-Ablage nicht lesbar/);
+
+  // Lücke zwischen letzter Ablage und Neustart wird benannt.
+  const spaeterStart = letzteAblage + 30 * 60_000;
+  const ablage2 = createRecordStore("test/kosten-luecke");
+  await laufKostenWache({ env, ablage: ablage2, prozessStartMs: start1, jetztMs: letzteAblage, berichtLader: lader(2, 5) });
+  const mitLuecke = await laufKostenWache({ env, ablage: ablage2, prozessStartMs: spaeterStart, jetztMs: spaeterStart + 60_000, berichtLader: lader(0.5, 1) });
+  assert.match(mitLuecke.meldung, /2\.50 von 10 USD/);
+  assert.match(mitLuecke.meldung, /Untergrenze: 30 min vor dem Neustart nicht erfasst/);
 });
 
 test("Nr. 56 Last-Probe: Fehlerquote und träges p95 rot, gesunde Messreihe grün — samt Lauf", async () => {
