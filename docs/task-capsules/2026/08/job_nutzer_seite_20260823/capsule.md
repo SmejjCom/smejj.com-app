@@ -12,12 +12,12 @@
 - Admin-Lock 26 Dateien.
 
 ## Live-Beweis (06:53Z, Hard-Reload, keine Konsolenfehler)
-2 Konten · zahlend 1 · **„1 bezahlte Abo(s) passen zu keinem Konto — plus, bezahlt als 7shahnazaryan@gmail.com"** —
+2 Konten · zahlend 1 · **„1 bezahlte Abo(s) passen zu keinem Konto — plus, bezahlt als [privates Gmail-Konto]"** —
 genau der Fall aus der Geschichte, jetzt als erste Zeile sichtbar. Spalten Konto · Angemeldet mit (Google) ·
 Bezahlt als · Plan · Verbrauch seit Neustart · Zuletzt.
 
 ## Offen
 - „Zuletzt"/„heute aktiv" füllen sich erst nach dem nächsten Index-Neubau (Feld neu).
-- Abo „plus" hängt an 7shahnazaryan@gmail.com statt smejjcom@gmail.com — Betreiber-Entscheidung: Abo umhängen oder mit der Adresse anmelden.
+- Abo „plus" hängt an [privates Gmail-Konto] statt smejjcom@gmail.com — Betreiber-Entscheidung: Abo umhängen oder mit der Adresse anmelden.
 
 - NACHTRAG 06:58Z: Index neu gebaut — »zuletzt« blieb leer: Google/GitHub/Passkey-Sitzungen hinterlassen keine Spur im Datensatz (sessionRegistry kennt nur die sid). Seite sagt jetzt „nicht messbar"/„nur E-Mail-Konten" statt „—".

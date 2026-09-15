@@ -681,7 +681,7 @@ export function newChat() {
     // niemand mehr schreibt. Jeder "Neue Chat" stellte die Wahl darum still auf
     // "smejj 1.0" zurueck, egal ob 1.3, Auto oder smejj 1 gewaehlt war (live
     // gesehen: Chip "smejj 1.0", Speicher "smejj 1").
-    const currentModel = localStorage.getItem("smejj.model.selected.v2") || localStorage.getItem("smejj.model.v1") || "smejj 1.0";
+    const currentModel = localStorage.getItem("smejj.model.selected.v2") || localStorage.getItem("smejj.model.v1") || "Auto"; // Freigabe 3: Standard = Auto
     window.smejjApplyModel(currentModel, { persist: false, quiet: true });
   }
 }

@@ -14,6 +14,12 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..", "..");
 const publicDir = join(repoRoot, "public");
 const data = JSON.parse(readFileSync(join(here, "locales.json"), "utf8"));
+// Betreiber-Freigabe 1d (15.09.2026): "generate-language-pages.mjs mit korrigierter CSP
+// (api.smejj.com statt Salad) und aktueller Marke". Die Marke von voice-landing.js stand
+// hier fest und hinkte der handgepflegten deutschen Seite jedes Mal hinterher — ein
+// Generatorlauf setzte die 14 Sprachseiten dann auf eine alte Fassung zurueck (E2E-Test
+// 14.09.). Jetzt liest der Generator sie aus public/de/index.html: eine Quelle.
+const VOICE_LANDING_MARKE = readFileSync(join(publicDir, "de", "index.html"), "utf8").match(/voice-landing\.js\?v=([^"]+)"/)?.[1] || "emojifrei-20260825x";
 
 const { origin, rootLang, xDefault, themeColor, logo, favicon, appleTouchIcon, socialImage, allLanguageNames } = data.site;
 
@@ -111,7 +117,7 @@ function renderPage(locale) {
          beides trug. Merkregel: Schutz, der an EINER Seite haengt, ist keine
          Richtlinie. Wortlaut bewusst identisch zur Startseite — eine Quelle,
          kein zweiter Sicherheitsstand, der auseinanderlaufen kann. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; connect-src 'self' blob: data: https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud https://smejj-control.zeabur.app https://starfruit-thyme-cblgn6u06ca2z9d5.salad.cloud https://loganberry-fruit-e3n6k5n10h68cawn.salad.cloud https://smejj-chat-bridge.zeabur.app https://api.openai.com https://api.moonshot.ai https://api.mistral.ai http://localhost:* http://127.0.0.1:*">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; connect-src 'self' blob: data: https://api.smejj.com https://smejj-control.zeabur.app https://smejj-chat-bridge.zeabur.app https://api.openai.com https://api.moonshot.ai https://api.mistral.ai http://localhost:* http://127.0.0.1:*">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="theme-color" content="${themeColor}">
     <meta name="description" content="${escapeHtml(locale.description)}">
@@ -175,7 +181,7 @@ ${faq}
         <a href="/datenschutz.html">${escapeHtml(locale.privacy)}</a>
       </footer>
     </div>
-    <script src="/assets/voice-landing.js?v=emojifrei-20260825x" type="module"></script>
+    <script src="/assets/voice-landing.js?v=${VOICE_LANDING_MARKE}" type="module"></script>
   </body>
 </html>
 `;

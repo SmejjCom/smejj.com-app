@@ -79,7 +79,13 @@ function sorgeFuerStil(doc) {
     + `.${KLASSE} .es-karte{display:flex;flex-direction:column;gap:4px;min-height:44px;padding:14px;border:1px solid rgba(127,127,127,.4);border-radius:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}`
     + `.${KLASSE} .es-karte strong{font-size:15px;font-weight:600}`
     + `.${KLASSE} .es-karte span{font-size:14px;line-height:1.35;opacity:.75}`
-    + `@media (max-width:600px){.${KLASSE} .es-raster{grid-template-columns:1fr}}`;
+    + `@media (max-width:600px){.${KLASSE} .es-raster{grid-template-columns:1fr}}`
+    // Betreiber-Freigabe 1c (15.09.2026): "nur bei Bildschirmhoehe unter 600 px die
+    // Erste-Schritte-Karten verkleinern, damit das Eingabefeld sichtbar ist".
+    // Gemessen im E2E-Test 14.09. bei 320x568: Kasten 304 px hoch, Eingabefeld bei
+    // 645-689 px — unter dem Rand. Kompakt: nur die Titel, nebeneinander, Tippziel 44 px.
+    + `@media (max-height:600px){.${KLASSE}{margin-top:8px}.${KLASSE} header{margin:0 0 4px}.${KLASSE} .es-raster{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}`
+    + `.${KLASSE} .es-karte{padding:4px 8px;justify-content:center;text-align:center}.${KLASSE} .es-karte strong{font-size:14px;line-height:1.2}.${KLASSE} .es-karte span{display:none}}`;
   doc.head.appendChild(stil);
 }
 

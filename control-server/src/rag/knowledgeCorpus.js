@@ -51,6 +51,15 @@ export const HISTORY_DIRECTORIES = Object.freeze([
   "werkstatt"
 ]);
 
+/**
+ * Betriebsinterne Ordner, die NIE in den Korpus gehoeren — nicht wegen Aktualitaet,
+ * sondern wegen Inhalt: Postfach-Einrichtung mit privaten Adressen und Zugangswegen.
+ * Betreiber-Freigabe 1b (15.09.2026): "docs/mail aus dem RAG-Korpus der Chat-Bruecke
+ * nehmen". Gemessen am 14.09.: das oeffentliche Bruecken-Buendel trug eine private
+ * Gmail-Adresse dreimal im Wissensartefakt (Quelle docs/mail/MAIL_SETUP_smejj.md).
+ */
+export const PRIVATE_DIRECTORIES = Object.freeze(["mail"]);
+
 /** Dateiname mit ISO-Datum = Momentaufnahme, kein geltendes Regeldokument. */
 export const DATED_FILE_PATTERN = /\d{4}-\d{2}-\d{2}/;
 
@@ -86,7 +95,7 @@ export function isKnowledgeFile(relativePath) {
   if (ROOT_KNOWLEDGE_FILES.includes(normalized)) return true;
   if (!normalized.startsWith("docs/")) return false;
   const segments = normalized.split("/");
-  if (segments.slice(1, -1).some((segment) => HISTORY_DIRECTORIES.includes(segment))) return false;
+  if (segments.slice(1, -1).some((segment) => HISTORY_DIRECTORIES.includes(segment) || PRIVATE_DIRECTORIES.includes(segment))) return false;
   const dateiname = segments[segments.length - 1];
   if (CHANGELOG_FILE_PATTERN.test(dateiname)) return false;
   return !DATED_FILE_PATTERN.test(dateiname);
@@ -113,7 +122,7 @@ export async function listKnowledgeFiles(projectRoot) {
       const absolute = path.join(absoluteDir, entry.name);
       const relative = path.relative(projectRoot, absolute).replace(/\\/g, "/");
       if (entry.isDirectory()) {
-        if (!HISTORY_DIRECTORIES.includes(entry.name)) await walk(absolute);
+        if (!HISTORY_DIRECTORIES.includes(entry.name) && !PRIVATE_DIRECTORIES.includes(entry.name)) await walk(absolute);
         continue;
       }
       if (!entry.name.endsWith(".md")) continue;

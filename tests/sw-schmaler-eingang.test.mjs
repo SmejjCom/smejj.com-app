@@ -85,7 +85,9 @@ function ladeServiceWorker(skriptAdresse, { online = true } = {}) {
     return { ok: true, status: 200, body: `netz:${new URL(typeof anfrage === "string" ? anfrage : anfrage.url, "https://smejj.com").pathname}`, clone() { return this; } };
   };
   class Request { constructor(url, init = {}) { this.url = new URL(url, "https://smejj.com").href; Object.assign(this, init); } }
-  const kontext = vm.createContext({ self, caches, fetch, Request, URL, Response: { redirect: () => ({}) }, Promise, Set, Map, console });
+  // setTimeout/clearTimeout gibt es in jedem echten Service Worker — seit den Zeitgrenzen
+  // (Freigabe 1g, 15.09.2026) nutzt sw.js sie; die Attrappe muss sie darum auch haben.
+  const kontext = vm.createContext({ self, caches, fetch, Request, URL, Response: { redirect: () => ({}) }, Promise, Set, Map, console, setTimeout, clearTimeout });
   vm.runInContext(QUELLE, kontext);
 
   const warteAuf = async (ereignisTyp, daten = {}) => {

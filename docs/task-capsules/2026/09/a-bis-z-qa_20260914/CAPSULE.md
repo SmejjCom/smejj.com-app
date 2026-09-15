@@ -64,6 +64,6 @@ und Abo-Lock einmal gestempelt; Zweigschutz
 - Fixrunde 7: Katalog-Wache (Netz-Aussetzer ≠ verschwunden), Kernsuite 1.2.0 (drei belegte Weitungen, Prüfsumme neu), Sicherheitscheck grün (`.gitignore` für Store-Bilder), Play-Keystore nach `~/.config/smejj.com/keys/` gesichert, Memory_Bank-Eintrag.
 - Release: `release:preflight` Arbeitszweig EXIT 0 (2.403), `check:all` Bauzweig EXIT 0 (2.328); Qualitätsmessung Kernsuite 1.2.0 100 %, 0 kritisch; Benchmarks `docs/benchmarks/*_v873_2026-09-14.json`.
 - Betreiber (Zugangsdaten/Apple): Zeabur-API-Schlüssel für die Betriebswerte der Oberflächenwache, Apple-Freigabe X29W6DM972.
-- **Betreiber (Sicherheit):** neue Adresse `smyst247@gmail.com` in `SMEJJ_ADMIN_OWNER_EMAILS` (Konto-Wache rot seit 17:47 UTC) — nicht von dieser Sitzung; bestätigen oder entfernen.
+- **Betreiber (Sicherheit):** neue Adresse `[private Admin-Adresse]` in `SMEJJ_ADMIN_OWNER_EMAILS` (Konto-Wache rot seit 17:47 UTC) — nicht von dieser Sitzung; bestätigen oder entfernen.
 - Betreiber-Handgriff: Zeabur-Schlüssel, `CODEBERG_TOKEN`, Apple-Freigabe (TestFlight), Keystore sichern.
 - Klein: nichts mehr offen (Fixrunde 5).

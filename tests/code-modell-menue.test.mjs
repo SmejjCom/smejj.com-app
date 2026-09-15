@@ -119,9 +119,10 @@ function umgebungAufbauen({ fetchAntwort, mitChip = true } = {}) {
 const { MODELL_KEY, AUTO_WAHL, migriereAlteWahl, modellAnzeige, oeffneModellMenue } =
   await (async () => { umgebungAufbauen(); return import("../public/code-modell-menue.js"); })();
 
-test("modellAnzeige nimmt den Haustext, solange Auto nicht gewaehlt ist", () => {
+test("modellAnzeige: ohne Wahl Auto (Freigabe 3, 15.09.), eine Stufe zeigt den Haustext", () => {
   umgebungAufbauen();
-  assert.equal(modellAnzeige("Schnell"), "Schnell");
+  // Betreiber-Freigabe 3: "Standard soll ehrlich ‚Auto' anzeigen und Auto senden."
+  assert.equal(modellAnzeige("Schnell"), "Auto");
   // Gesunde Probe: mit Auto steht "Auto" da, nicht der Haustext.
   localStorage.setItem(MODELL_KEY, AUTO_WAHL);
   assert.equal(modellAnzeige("Schnell"), "Auto");

@@ -14,4 +14,4 @@
 - Seite E heißt jetzt „Abos & Umsatz" (views-stage7); Vorgänge-Tabelle bleibt. Admin-Lock 27 Dateien.
 
 ## Live-Beweis (07:05Z, keine Konsolenfehler)
-MRR 9,00 € (1 aktives Abo bei Stripe gemessen) · Aufladungen 0,00 USD (Guthaben 1,00) · Kosten 6,00 USD/Monat, Modelle seit Neustart 0,00 · Bleibt übrig 3,00 (Währungen 1:1, so beschriftet) · Je Plan: plus 1/1 zu 9,00 € · Zahlung: Schlüssel + Webhook-Geheimnis gesetzt, 0 offene Rechnungen, 1 Vorgang mit Handlungsbedarf (plus-Abo ohne Konto, bezahlt als 7shahnazaryan@gmail.com).
+MRR 9,00 € (1 aktives Abo bei Stripe gemessen) · Aufladungen 0,00 USD (Guthaben 1,00) · Kosten 6,00 USD/Monat, Modelle seit Neustart 0,00 · Bleibt übrig 3,00 (Währungen 1:1, so beschriftet) · Je Plan: plus 1/1 zu 9,00 € · Zahlung: Schlüssel + Webhook-Geheimnis gesetzt, 0 offene Rechnungen, 1 Vorgang mit Handlungsbedarf (plus-Abo ohne Konto, bezahlt als [privates Gmail-Konto]).
