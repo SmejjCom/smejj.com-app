@@ -8,41 +8,32 @@
 # Jahre aelteres diffusers gegen transformers 5 zu stellen waere die eigentlich
 # riskante Kombination gewesen. Beide verlangen huggingface-hub <2.0 — kein
 # Versionskonflikt.
-# NACHTRAG 2026-08-14, 02:00 Pazifik — die Zeile darunter ist ueberholt:
-# frisch gegen api.osv.dev gemessen, Version fuer Version:
-#   0.36.0 -> 5 Luecken, 0.37.0 -> 5, 0.38.0 -> 0, 0.39.0 -> 0.
-# Es gibt also sehr wohl eine saubere Fassung; die urspruengliche Pruefung
-# endete bei 0.36. NICHT blind anheben: server.py haengt an
-# diffusers.AutoPipelineForText2Image, und ein Sprung ueber zwei
-# Nebenversionen laesst sich nur am laufenden Dienst beweisen, nicht lokal.
-# Als Aufgabe im Werkstatt-Backlog (Stufe 2) hinterlegt.
-#
-# [ueberholt] diffusers bleibt auch auf 0.36.0 bei 5 gemeldeten Luecken: es
-# [ueberholt] existiert derzeit KEINE saubere Fassung (0.32/0.33/0.35/0.36).
-diffusers==0.38.0
-# 2026-09-03: 5.5.0 traegt GHSA-xrqw-3rrv-vx5w (save_pretrained-Pfadueberschreitung ueber Chat-Template-
-# Namen; server.py ruft save_pretrained NIE — nicht erreichbar). ZWEI LIVE-ANLAEUFE auf 5.10.4 SCHEITERTEN:
-#   1. 597c7cf0 (nur Pin): Dienst bereit:false, diffusers 0.38 meldet "PreTrainedModel" nicht importierbar.
-#      Lokal (uv, Python 3.11, torch 2.5.1) exakt reproduziert: transformers 5.10 nutzt torch.float8_e8m0fnu.
-#   2. 922d964d (Pin + torch 2.7.1/torchvision 0.22.1 im Dockerfile): lokal importiert alles sauber,
-#      live derselbe Fehler — die Ursache steckt tiefer im Abbild (gfpgan-Kette vor den Requirements?).
-# Beide per Revert zurueck (0eaafe5f, 06260151). Diese Datei spiegelt den GEBAUTEN Stand; der
-# CVE-Waechter darf hier nicht falsch gruen sein. Naechster Anlauf nur mit Ursachenkette aus dem Abbild.
-transformers==5.5.0
-# 2026-09-12 gemessen (api.osv.dev, Version fuer Version 1.1.1 bis 1.10.1): JEDE Fassung
-# traegt GHSA-4j2p-28q2-5m79 + PYSEC-2026-3804, betroffen ist alles bis 1.14.0 — es gibt
-# KEINE saubere Version. Anheben bringt hier also nichts, das ist kein Versaeumnis.
-# Der Angriffsweg ist bei uns zudem zu: die Luecke sitzt in load_checkpoint_in_model /
-# load_checkpoint_and_dispatch (manipulierte weight_map in fremden sharded checkpoints).
-# server.py ruft beide NIE (0 Treffer), laedt ausschliesslich das feste Modell aus
-# SMEJJ_BILD_MODELL (Standard stabilityai/sd-turbo) und nimmt keine Nutzer-Dateien an.
-# CVSS verlangt ohnehin AV:L + UI:R — ein lokaler Angreifer mit Nutzerinteraktion.
-# 1.15.0 statt 1.1.1 (2026-09-15, E2E A bis Z): Dependabot (Pfad-Traversal/DoS <=1.14.0), im
-# Dienst nicht erreichbar; 1.15.0 laut osv.dev sauber, live gebaut und Bild erzeugt (deploy/smejj-bild-maler b1399880).
+# 0.38.0 statt 0.36.0 (2026-08-14, Betreiber-Karte "Ganzes Paket, jetzt"):
+# Version fuer Version gegen api.osv.dev gemessen —
+#   0.31.0 (bisher hier) und 0.36.0 -> 5 Luecken, 0.37.0 -> 5,
+#   **0.38.0 -> 0**, 0.39.0 -> 0.
+# Eine aeltere Notiz sagte, es gebe KEINE saubere Fassung; diese Pruefung
+# endete bei 0.36. server.py nutzt nur diffusers.AutoPipelineForText2Image —
+# eine API, die ueber diese Versionen stabil ist. Der Beweis liegt trotzdem
+# erst am laufenden Dienst (erstes echtes Bild nach dem Bau).
+# 0.40.0 (2026-09-15): enable_vae_slicing() an der Pipeline entfallen — server.py nutzt pipe.vae.enable_slicing().
+diffusers==0.40.0
+# 5.17.0 statt 5.5.0 (2026-09-15, Dependabot GHSA-xrqw-3rrv-vx5w; osv.dev: 0 Luecken), zusammen mit
+# diffusers 0.40.0 und torch 2.14.0 (Dockerfile). Zwei fruehere Anlaeufe (597c7cf0, 922d964d) scheiterten
+# live: transformers >=5.10 braucht torch >=2.7, und diffusers zog nicht mit. Diesmal VOR dem Bau bewiesen:
+# .github/workflows/bild-maler-probe.yml baut das Abbild in GitHub Actions, laedt sd-turbo, malt ein Bild
+# (32 s wie vorher) und ein Portraet mit aktivem Gesichtsfix.
+transformers==5.17.0
+# 1.15.0 statt 1.1.1 (2026-09-15, E2E-Pruefung A bis Z): Dependabot meldete Pfad-
+# Traversal/DoS beim Laden geteilter Checkpoints (<=1.14.0). Im Dienst nicht
+# erreichbar (kein load_checkpoint_*, keine Uploads), aber 1.15.0 ist laut
+# osv.dev sauber und passt zu torch>=2.0, safetensors>=0.4.3, diffusers 0.38.
 accelerate==1.15.0
-# 0.8.0 ist PFLICHT fuer diffusers 0.38: der erste Bau mit 0.4.5 scheiterte an
-# ResolutionImpossible, und ein fehlgeschlagener Bau sieht aus, als waere die
-# Sicherheitsaktualisierung selbst falsch gewesen.
+# 0.8.0 statt 0.4.5 (2026-08-14): NICHT wegen Luecken — beide Fassungen sind
+# sauber (osv.dev: je 0). Reiner Vertraeglichkeitszwang: diffusers 0.38.0
+# verlangt safetensors>=0.8.0, mit dem alten Pin brach der Bau mit
+# "ResolutionImpossible" ab. transformers 5.5.0 fordert nur >=0.4.3 und
+# traegt die neuere Fassung mit.
 safetensors==0.8.0
 fastapi==0.115.5
 uvicorn==0.32.1
