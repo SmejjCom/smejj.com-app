@@ -79,7 +79,7 @@ abwehrte (Prüfwortliste kannte „verhindert die Weitergabe" nicht; Suite smejj
 auf dem Mac brach ab, weil die Xcode-Lizenz git blockierte (Skript nutzt jetzt die Command Line Tools) — nachgeholt: 100 %.
 
 **Stand danach (15.09., 21:19 UTC):** smejj.com SW `smejj-shell-v888`, Control `654a184f`, Brücke v157, alle Dienste
-„gleich"; Autopiloten 84 grün, 0 gelb, 0 rot (Nr. 34 meldet sich 3 min nach jedem Neustart). Alle Sperren grün,
+„gleich"; Autopiloten 85 von 85 grün, 0 gelb, 0 rot (21:22 UTC). Alle Sperren grün,
 check:all grün in Arbeits- und Bauzweig.
 
 **Bewusst nicht angehoben (Dependabot):** `pipecat-ai` 0.0.67 (kritisch, Pickle-RCE über LiveKit) — der Sprachdienst wird
