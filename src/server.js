@@ -516,6 +516,13 @@ async function handleAuthMe(req, res) { // noStoreJson: Identitaet nie cachen (F
 function handleAuthSessionToken(req, res) {
   const user = readSession(req);
   if (!user) return noStoreJson(res, 401, { authenticated: false, error: "authentication_required" });
+  // Freigabe 1a (2026-09-15): dauerhafte Sitzungen laufen 30 Tage — das Cookie
+  // wird hier gleitend erneuert (die App ruft diese Route mit Cookie beim Start
+  // jedes Tabs). Ohne das verfiele das Cookie nach 30 Tagen trotz Nutzung, und
+  // reine Cookie-Wege (API-Bereich, Maus-Ausweis) bekaemen 401.
+  if ((user.permanent === "true" || user.permanent === true || user.method === "google") && user.kind !== "access") {
+    res.setHeader("Set-Cookie", serializeSessionCookie(user));
+  }
   return noStoreJson(res, 200, {
     authenticated: true,
     user,

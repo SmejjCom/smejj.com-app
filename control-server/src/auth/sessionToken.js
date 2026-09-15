@@ -1,8 +1,14 @@
 import crypto from "node:crypto";
 
-// 180 Tage Standard-TTL, 10 Jahre fuer dauerhafte Sitzungen (Google/Permanent,
-// Freigabe Betreiber 2026-08-11: "dauerhaft fuer immer eingeloggt bleiben").
-const PERMANENT_TTL_MS = 10 * 365 * 24 * 60 * 60 * 1000;
+// 180 Tage Standard-TTL; dauerhafte Sitzungen (Google/Permanent) 30 Tage mit
+// GLEITENDER Verlaengerung. Vorher 10 Jahre (Freigabe 2026-08-11 "dauerhaft
+// eingeloggt bleiben"); Betreiber-Freigabe 1a, 2026-09-15: "Laufzeit des
+// Google-Login-Tokens von 10 Jahren auf 30 Tage mit automatischer Verlaengerung".
+// Wer die App nutzt, bleibt angemeldet: /api/auth/me gibt bei jedem Start ein
+// frisches Token, /api/auth/session-token erneuert das Cookie. Ein entwendetes
+// Token verfaellt nach spaetestens 30 Tagen statt nach 10 Jahren. Aeltere
+// 10-Jahres-Token bleiben gueltig und werden beim naechsten Start ersetzt.
+const PERMANENT_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_TTL_MS = 180 * 24 * 60 * 60 * 1000;
 
 // Kurzlebiges, eng gescoptes Access-Token fuer Cross-Origin-Bridge-Aufrufe

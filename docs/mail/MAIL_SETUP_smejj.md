@@ -54,7 +54,7 @@ Gmail-UI plus `smtp.gmail.com` plus App-Passwort.
 
 ### Externer Sendetest (2026-07-03, 20:49 CEST)
 
-- Von `s@smejj.com` an externes Konto `alanbestus@gmail.com` gesendet.
+- Von `s@smejj.com` an externes Konto `[privates Gmail-Konto]` gesendet.
 - Betreff: `smejj.com send-as test 2026-07-03T18-49-08-639Z`.
 - Extern angekommen nach ca. 13 Sekunden.
 - Gmail-Originalnachricht:
@@ -73,7 +73,7 @@ besteht nicht, weil freies Gmail keinen `smejj.com`-DKIM signiert und der Envelo
 
 ### Antwort-Test (2026-07-03, 20:53 CEST)
 
-- Externes Konto `alanbestus@gmail.com` antwortete auf die Testmail.
+- Externes Konto `[privates Gmail-Konto]` antwortete auf die Testmail.
 - Reply-Token: `reply-2026-07-03T18-51-54-597Z`.
 - Antwort wurde in `smejjcom@gmail.com` gefunden und lag im Posteingang in derselben
   Konversation. Damit ist der Rueckweg `s@smejj.com` → Spaceship Email Forwarding Free →
@@ -139,7 +139,7 @@ kein Rollback.
 - [x] Externer Sendetest als `s@smejj.com` — **bestanden am 2026-07-03**
       (`From: "smejj.com" <s@smejj.com>`, externe Zustellung, SPF PASS fuer Google-IP).
 - [x] Antwort-Test — **bestanden am 2026-07-03**
-      (Reply von `alanbestus@gmail.com` kam ueber `s@smejj.com` in `smejjcom@gmail.com`
+      (Reply von `[privates Gmail-Konto]` kam ueber `s@smejj.com` in `smejjcom@gmail.com`
       an).
 - [ ] DMARC bleibt vorerst `p=none`; **nicht** auf `p=quarantine`/`p=reject`
       verschaerfen, solange Gmail-Send-as ohne aligned `smejj.com`-DKIM genutzt wird.

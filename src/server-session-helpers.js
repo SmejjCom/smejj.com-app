@@ -67,7 +67,8 @@ export function createSessionHelpers({ sessionSecret, SESSION_COOKIE_SAMESITE, S
     // bekommt eine Nicht-E-Mail-Sitzung ihre sid und einen Registry-Eintrag —
     // damit auch Google/Passkey/GitHub/Magic fern-widerrufbar werden.
     ensureRegistrySid(user);
-    const maxAge = user?.permanent || user?.method === "google" ? 315360000 : 604800;
+    // Freigabe 1a (2026-09-15): dauerhaft = 30 Tage (vorher 10 Jahre), gleitend erneuert.
+    const maxAge = user?.permanent || user?.method === "google" ? 2592000 : 604800;
     return `smejj_session=${serializeSessionToken(user)}; Path=/; HttpOnly; Secure; SameSite=${SESSION_COOKIE_SAMESITE}; Max-Age=${maxAge}`;
   }
 

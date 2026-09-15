@@ -11,13 +11,17 @@ test("session token is signed, expiring and carries only normalized user data", 
   assert.equal(bearerSessionToken({ authorization: `Bearer ${token}` }), token);
 });
 
-test("Google and permanent session tokens have 10-year permanent lifespan", () => {
+test("Google and permanent session tokens live 30 days (Freigabe 1a, 2026-09-15), gleitend erneuert", () => {
   const token = issueSessionToken({ secret: "secret", user: { email: "user@gmail.com", method: "google", permanent: "true" }, nowMs: 1_000 });
-  const fiveYearsMs = 5 * 365 * 24 * 60 * 60 * 1000;
-  const verified = verifySessionToken(token, { secret: "secret", nowMs: 1_000 + fiveYearsMs });
+  const tag = 24 * 60 * 60 * 1000;
+  const verified = verifySessionToken(token, { secret: "secret", nowMs: 1_000 + 29 * tag });
   assert.equal(verified?.email, "user@gmail.com");
   assert.equal(verified?.method, "google");
   assert.equal(verified?.permanent, "true");
+  assert.equal(verifySessionToken(token, { secret: "secret", nowMs: 1_000 + 30 * tag + 1 }), null, "nach 30 Tagen ohne Erneuerung ungueltig");
+  // Gleitend: ein am Tag 29 neu ausgestelltes Token traegt wieder volle 30 Tage.
+  const erneuert = issueSessionToken({ secret: "secret", user: verified, nowMs: 1_000 + 29 * tag });
+  assert.equal(verifySessionToken(erneuert, { secret: "secret", nowMs: 1_000 + 58 * tag })?.email, "user@gmail.com");
 });
 
 test("Google auth state remains signed, expiring and tamper-evident after modularization", () => {
