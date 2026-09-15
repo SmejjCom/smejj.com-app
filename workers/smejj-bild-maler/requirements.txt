@@ -18,7 +18,11 @@
 # erst am laufenden Dienst (erstes echtes Bild nach dem Bau).
 diffusers==0.38.0
 transformers==5.5.0
-accelerate==1.1.1
+# 1.15.0 statt 1.1.1 (2026-09-15, E2E-Pruefung A bis Z): Dependabot meldete Pfad-
+# Traversal/DoS beim Laden geteilter Checkpoints (<=1.14.0). Im Dienst nicht
+# erreichbar (kein load_checkpoint_*, keine Uploads), aber 1.15.0 ist laut
+# osv.dev sauber und passt zu torch>=2.0, safetensors>=0.4.3, diffusers 0.38.
+accelerate==1.15.0
 # 0.8.0 statt 0.4.5 (2026-08-14): NICHT wegen Luecken — beide Fassungen sind
 # sauber (osv.dev: je 0). Reiner Vertraeglichkeitszwang: diffusers 0.38.0
 # verlangt safetensors>=0.8.0, mit dem alten Pin brach der Bau mit

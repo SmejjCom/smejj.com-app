@@ -12,6 +12,9 @@ RUN pip install --no-cache-dir gfpgan==1.3.8
 
 COPY workers/smejj-bild-maler/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+# Importprobe (2026-09-15): bricht eine Paketkombination, scheitert der BAU —
+# nicht der laufende Dienst (zwei transformers-Anlaeufe scheiterten erst live).
+RUN python -c "import torch, transformers, accelerate, diffusers; from diffusers import AutoPipelineForText2Image; from diffusers.utils import is_accelerate_available; assert is_accelerate_available(); print('importprobe ok', torch.__version__, transformers.__version__, accelerate.__version__, diffusers.__version__)"
 
 COPY workers/smejj-bild-maler/server.py ./server.py
 
