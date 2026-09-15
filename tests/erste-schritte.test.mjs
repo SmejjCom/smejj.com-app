@@ -103,3 +103,15 @@ test("M5 kaputt-Probe: am Handy (Feld unten, nicht zentriert) bleibt alles wie b
   assert.equal(halteEingabeRuhig(block, {}, fenster), 0);
   assert.equal(block.style.marginBottom, "");
 });
+
+test("M5 kaputt-Probe 2: am Handy (schmal) gibt es keinen Ausgleich, selbst wenn der Halter zentriert", async () => {
+  const { halteEingabeRuhig } = await ladeModul();
+  const halter = {};
+  const block = { parentElement: halter, isConnected: true, offsetHeight: 304, style: {} };
+  const fenster = {
+    matchMedia: (q) => ({ matches: !/min-width: 601px/.test(q) }),
+    getComputedStyle: (el) => (el === halter ? { display: "flex", flexDirection: "column", justifyContent: "center", rowGap: "18px" } : { marginTop: "2px" })
+  };
+  assert.equal(halteEingabeRuhig(block, {}, fenster), 0);
+  assert.equal(block.style.marginBottom, "");
+});
