@@ -226,7 +226,12 @@ export function nurAbgleichsfelder(chat) {
     ...(chat?.ownerId ? { ownerId: chat.ownerId } : {}),
     // Grabstein mitnennen (15.09.2026): sonst holte der Client geloeschte Chats bei
     // jedem Laden einzeln nach (chat-sync-auswahl.js grabsteinWeg).
-    ...(chat?.geloescht === true ? { geloescht: true } : {})
+    ...(chat?.geloescht === true ? { geloescht: true } : {}),
+    // Papierkorb mitnennen (Live-Nachtest 15.09.2026, M2): auf einem neuen Geraet holte
+    // der Client die juengsten Chats zuerst — und das waren 200 gerade in den Papierkorb
+    // gelegte. Die Verlaufsliste blieb 90 s leer. Mit dieser Angabe holt er die
+    // sichtbaren zuerst (chat-sync-auswahl.js neuesteZuerst). Nur ein Zeitstempel.
+    ...(chat?.deletedAt ? { deletedAt: chat.deletedAt } : {})
   };
 }
 

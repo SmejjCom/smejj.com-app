@@ -25,3 +25,9 @@ test("pull() prueft den Grabstein NACH der Besitzerpruefung und VOR dem Einzelab
   const abruf = q.indexOf("await holeVollstaendig(fern.id, kopf)");
   assert.ok(besitzer > 0 && grab > besitzer && abruf > grab);
 });
+
+test("Nachtest 15.09. (M2): der Abgleich nennt den Papierkorb, damit sichtbare Chats zuerst kommen", () => {
+  assert.deepEqual(nurAbgleichsfelder({ id: "c", updatedAt: "t", deletedAt: "2026-09-15T13:37:39.498Z", messages: [1] }),
+    { id: "c", updatedAt: "t", deletedAt: "2026-09-15T13:37:39.498Z" });
+  assert.deepEqual(nurAbgleichsfelder({ id: "d", updatedAt: "t", deletedAt: "", messages: [] }), { id: "d", updatedAt: "t" }, "leerer Wert = nicht im Papierkorb, kein Feld");
+});
