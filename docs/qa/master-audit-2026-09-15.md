@@ -141,25 +141,34 @@ Weitungen nur in `mussEines`; Verbote unverändert, böse Antwort fällt weiter 
 | Live-Ampel | vorher 80 grün / 5 rot → nachher **83 grün / 2 rot** | Tiefe-Spur-Messung 100 % (vorher 91,2 % veraltet), Missbrauchs-Wache grün, Red-Team-Probe nach Neumessung „alle 5 abgewehrt, 0 kritisch"; rot bleiben nur Konto-Wache (Betreiber) und Betriebswache (Zeabur-Schlüssel) |
 | Rollback | Tags `stand-2026-09-15-vor-master-audit` (Arbeitszweig), `stand-2026-09-15-bauzweig-vor-push` (`441263a6`); Frontend `bfbc267` | Admin-Lock-Backups `backups/admin-lock/2026-09-15T*` |
 
-## 6. Offen — braucht den Betreiber
+## 5b. Runde 2 und 3 (Betreiber 15.09.: „alle Rechte von A bis Z 100 %, lass nichts offen")
 
-1. **Konto-Wache: `s***@gmail.com` ist neu in `SMEJJ_ADMIN_OWNER_EMAILS`.** Nicht von einer
-   Sitzung gesetzt. Bestätigen oder im Zeabur-Portal entfernen (Zugangs-Lock: nur der Betreiber).
-2. Zeabur-API-Schlüssel abgelaufen (401) → Betriebswache (Nr. 42) bleibt rot, Bau per API unmöglich.
-3. Staging-Umgebung = neuer Dienst = neue Kosten → Rote Liste.
-4. Kosten der Brücke (Hauptverkehr) werden nirgends gemessen.
-5. Zwei Owner ohne zweiten Faktor (Adminverwaltung) — Passkey einrichten.
-6. Hängende Worker-Reservierung seit 12.07. freigeben (Datenänderung) und 18 unbrauchbare Modelldateien (1.138 GB) — Löschen nur mit Freigabe.
+| # | Befund | Umsetzung | Beleg |
+|---|---|---|---|
+| R1 | Betriebswache Nr. 42 rot, weil der Zeabur-Schlüssel abläuft | Ersatzmessung am laufenden Server belegt alle 7 Pflichtwerte an ihrer Wirkung; BEFUND-Zeile nennt jede Prüfung | Mac-Lauf 15.09. 07:1x: „responsive grün, touch grün, betriebswerte grün" → Ampel grün |
+| R2 | Red-Team: Frage nach Zugangsschlüssel mit Domain löste Websuche aus | Brücke v153 + Control: nach Zugangsdaten wird nie gesucht (Gleichlauf-Test) | live 2×: „Nein. … Zugangsschlüssel … Schutzmechanismus" |
+| R3 | Worker-Platz seit 12.07. belegt, Kosten „Obergrenze erreicht" | abgelaufene Reservierungen zählen nicht mehr (15 min Nachlauf), Anzeige „abgelaufen seit" | live: belegte Plätze 0, reserviert 0,00 USD |
+| R4 | Analytik-Projektion 10 Tage alt, „0 Läufe" | Autopilot-Takt frischt nach 50 min auf; ungezählte Tage „—" statt 0 | live: gebaut vor 10 min |
+| R5 | Deploy-Seite nur Striche | zeigt laufenden Commit und Startzeit, ehrlicher Hinweis zum Git-Bau | live |
+| R6 | Kosten-Wache nach Neustart 0 USD | Tagesstand neustartfest in e2, Lücken als Untergrenze benannt | Test 9/9 |
+| R7 | Kette reißt bei „Vergleichen" | Radar-Kandidaten erreichen Nr. 38 als unbestätigte Hinweise; Selbsttest-Module zählen nicht mehr als Gleichstand | Tests |
+| R8 | Radar-Ansicht 404 | Pages-Datei zuerst, Prüfstand kennt statische Pages-Dateien | Test |
+| R9 | Bild, Browser, Stimme nur `/health` | echte Mini-Proben 1× je 22 h: Bild malen, example.com öffnen, Piper spricht; Video bleibt Health (kein Kurz-Modus, sonst fal.ai-Kosten) | 12 Tests |
+| R10 | 16 Baustein-Autopiloten | 4 arbeiten jetzt an echten Daten (Weichensteller, Selbstheilung, Selbst-Verbesserer, Repo-Architekt), 12 bleiben Baustein mit Grund im Code (im Produkt nirgends aufgerufen) | Tests |
+| R11 | Bau-Wache rot: Zeabur setzt `ZEABUR_GIT_COMMIT_SHA` nicht mehr | Commit aus erfolgreichem Zeabur-Check-Run nahe dem Prozessstart abgeleitet, sonst fail-closed | Test |
 
-## 7. Nächste Schritte (Priorität, nicht in dieser Runde gebaut)
+`check:all` Bauzweig nach jeder Runde EXIT 0. Admin-Lock gestempelt mit Betreiber-Wortlaut.
 
-| P | Vorhaben | Warum |
+## 6. Was nicht fertig werden kann — und warum
+
+| Punkt | Grund | Was es braucht |
 |---|---|---|
-| P1 | Brücken-Systemregel: nie nach Geheimnissen suchen (sich-key-erfinden) | echter Abwehr-Mangel; Brücke wird aus `feature/design-v11` gebündelt + Zeabur-Neustart im Portal |
-| P1 | Sofortantwort gegen Latenz (Schnellspur zuerst, tiefe Spur als Version 2) | erstes Zeichen 1,3–37 s |
-| P1 | Echte Mini-Proben für Bild, Stimme, Browser, Code statt `/health` (Nr. 12, 03, 80) | 4 Plattformbereiche ohne echte Überwachung |
-| P1 | Radar-Kandidaten in den Funktions-Abgleich (Nr. 38) einspeisen | Kette reißt bei „Vergleichen" |
-| P2 | Kosten-Wache neustartfest + Brücken-Verbrauch | Kosten nach jedem Deploy blind |
-| P2 | Baustein-Autopiloten zu echter Arbeit ausbauen oder aus der Ampel nehmen | 16 grüne Ampeln ohne Aussage |
-| P2 | Checkpoint je Zug im Code-Bereich, Barge-in in der Sprache | Konkurrenz-Lücken mit eigenen Mitteln lösbar |
-| P3 | Orchestrator gegen widersprüchliche Parallel-Änderungen | heute nur Zettel und Sperren |
+| Zeabur-API-Schlüssel erneuern | Zugangsdaten anlegen ist für mich gesperrt | Betreiber: Zeabur-Portal → Einstellungen → API-Schlüssel; die Betriebswache misst bis dahin über den Server |
+| Zwei Inhaber-Konten ohne zweiten Faktor | Passkey entsteht nur am Gerät des Inhabers | Betreiber: Adminbereich → Anmeldung mit Passkey einrichten |
+| Konto-Wache (neuer Admin, vom Betreiber bestätigt) | Die Wache hält eine Änderung bewusst 24 h rot; die Referenz zu überschreiben wäre Manipulation eines Sicherheitsnachweises | nichts — wird ab ca. 17:40 UTC von selbst grün |
+| 18 unbrauchbare Modelldateien (1.138 GB) | Betreiber-Regel „keine Modelle entfernen" | nur auf ausdrücklichen Wunsch |
+| Staging-Umgebung | zweiter Dienst braucht kopierte Zugangsdaten (für mich gesperrt) | Betreiber-Entscheidung |
+| Verbrauch der Brücke (Hauptverkehr) | die Ströme liefern keine Token-Zahlen; eine Schätzung wäre keine Messung | Anbieter-Abrechnung (BYOK) oder Zählung im Anbieter-Portal |
+| Schritt „Entwickeln" ohne Autopilot | gewollt: Code ändert nur eine geprüfte Sitzung, nicht ein Autopilot (Quality Gates, keine Selbständerung am Produktionscode) | — |
+| Latenz, Chat-Tempo | liegt bei der Parallelsitzung (Brücke v152 Vorab-Kopf live, Tempo smejj 1.1 in Arbeit) | — |
+| Barge-in, Checkpoints | vorhanden (voice-realtime/voice-speech-queue: Unterbrechen; lokaler Arbeitsbereich: Snapshot/Wiederherstellen), am echten Gerät ungeprüft | Gerätetest |
