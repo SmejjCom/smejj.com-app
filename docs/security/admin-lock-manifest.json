@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-15T00:17:33.894Z",
-  "confirmation": "Betreiber, Master-Auftrag 2026-09-15, Punkt 14: 'Ich moechte im Adminbereich einen zentralen Bereich sehen: AUTOPILOT CONTROL CENTER. Dort sollen alle Autopiloten mit Status sichtbar sein' — Punkt 13: 'Die Hauptseite soll wie eine professionelle AI Operations Control Center funktionieren.' Umgesetzt: (a) admin-ui/api.js an den live ausgelieferten Stand angeglichen (E2E-Fix 14.09.: ZWEIT_ORIGIN war nie definiert, lag nur im Frontend-Klon); (b) neue rein lesende Seite 1.4 control-center (GET /api/admin/ops/control-center, Registrierung in console.js/index.html/adminUiRoutes.js/sync-Skript); (c) Fixrunde nach Live-Audit des Adminbereichs: Schiene klappt unter 640 px auf die Icon-Spur (84 px Ueberlauf bei 390 px), Audit-Ziel ohne [object Object], 'E-Mail-Konten', keine Ueberfrist bei erledigten Aufgaben, Kosten 'Neuer Lauf zulaessig' beachtet die Reservierungs-Obergrenze. Unveraendert: Adminzugang, Step-up, Vortuer, schreibende Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis, Impersonation.",
+  "frozenAt": "2026-09-15T06:54:38.712Z",
+  "confirmation": "Betreiber, 2026-09-15 (schriftlich): 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' — control-server/src/admin/opsNutzerLage.js und billing/aboUmhaengen.js: nur die echte Kaufadresse eines Kunden in Kommentar und Testdaten durch Beispieladressen ersetzt (oeffentliches Repo, Datenschutz); keine Logikaenderung.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -29,7 +29,7 @@
     "control-server/admin-ui/views-stage12.js": "01019f1bdf06f40d87f2b2aa5ca05e901ade9be3b0d7f8536f9d19cc279389df",
     "control-server/src/admin/opsSicherheitsLage.js": "cff01378042fbfebdf2ba42543f62024593db024ab06b12822f2a1042d9f875a",
     "control-server/admin-ui/views-stage6.js": "f35903e30d9ff848b4a34fa6baaaecebb764f84f24331b166ce8ad3921270fd3",
-    "control-server/src/admin/opsNutzerLage.js": "fd612c56594614bc48e20304effaa232d980cb93999e803759a078b07ae4f39f",
+    "control-server/src/admin/opsNutzerLage.js": "d6850cbc8da7afead2e500eefbac2f71d3cec5b383ebea3aece0e9f3fc54df4e",
     "control-server/src/admin/opsUmsatz.js": "63b88ce20ade6c4b0c9670d4f1aff6b819d30d63c57f488ec5b972eaa4d7a989",
     "control-server/src/admin/opsCockpit.js": "2c485eb065457978faddf372dc9ec4e7369579ae27005acc5a456c7af82d555a",
     "control-server/admin-ui/views-cockpit.js": "e10ffc62485492bf689ec4737965c76ee4a807811daa81341a080b694d27825d",
@@ -47,7 +47,7 @@
     "control-server/src/admin/opsAbrechnung.js": "cd35180f12612e0348d7b68ed5d3c232e1a1a343bb51da289f72c2cb9dc5f2d2",
     "control-server/src/admin/userActions.js": "544a1988b601b235905308c1f93a994ae7e72437bee261de1bfca37f920f4268",
     "control-server/src/admin/userIndex.js": "8cca94949db97af3ba6031086f4938f917fe29a06fc2e6144c5f344d3ac645f9",
-    "control-server/src/billing/aboUmhaengen.js": "a2b1f395cc528031b01466ae85b987c6d67dfb282e3c08387cf0400aec52dcbf",
+    "control-server/src/billing/aboUmhaengen.js": "cdde0bc800fba5ad6e0ab347127e3b9847afc8a010928aaac1d6e59c76e89abc",
     "control-server/src/routes/adminRoutes.js": "d15425a554ae95ff974c687fad588bf8acf1e0fce49317b3b1cc8dc778a050e1",
     "control-server/src/routes/adminGeldRoutes.js": "2e4debc7ecc1e225d5a919cc0e342d633bec28823dd84e9e1887b91f85c53b22",
     "control-server/src/routes/adminSicherheitRoutes.js": "56f4aaada4a90cd38ab529257f38a74b13dca9116dfce9dfcd2aebd644ac2ba1",

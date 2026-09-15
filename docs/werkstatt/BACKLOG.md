@@ -1,6 +1,6 @@
 # Werkstatt-Backlog (Autopilot Nr. 30, Station 1)
 
-Gesammelt am 2026-09-11T20:01:42.600Z aus ECHTEN Messungen — nicht aus Vermutungen.
+Gesammelt am 2026-09-14T20:01:48.313Z aus ECHTEN Messungen — nicht aus Vermutungen.
 Erzeugt von `scripts/werkstatt/sammle-backlog.mjs`. Diese Datei wird bei jedem Lauf neu geschrieben.
 
 **Quellen, die geantwortet haben:** Autopiloten-Ampel, CVE-Waechter, Mail-Zustellprotokoll
@@ -11,29 +11,26 @@ Erzeugt von `scripts/werkstatt/sammle-backlog.mjs`. Diese Datei wird bei jedem L
 
 > Eine stumme Quelle ist kein leeres Backlog. Was hier fehlt, ist ungeprueft, nicht erledigt.
 
-## 9 Aufgaben, nach Dringlichkeit
+## 8 Aufgaben, nach Dringlichkeit
 
 
 ### Stufe 1 — Ausfall
 
-- **Ausfall: EU-AI-Act-Wache**
-  - Betrifft: `ai-act-wache` · Quelle: Ampel-Vorfall · offen seit 2026-09-11T19:58:43.926Z
-  - Befund: Der letzte Lauf hat einen Fehler gemeldet: EU AI Act: aktive(s) Modell ohne Bestandsverzeichnis-Eintrag: smejj-1 — Kennzeichnung nach Art. 50 fehlt.
-- **Ausfall: Modell-Katalog-Wache**
-  - Betrifft: `modell-katalog-wache` · Quelle: Ampel-Vorfall · offen seit 2026-09-08T10:27:52.407Z
-  - Befund: Der letzte Lauf hat einen Fehler gemeldet: 1 gewählte(s) Modell(e) beim Anbieter verschwunden — Stand vor 0 h, z. B. zhipu:glm-4.5-flash.
+- **Ausfall: Konto-Wache**
+  - Betrifft: `konto-wache` · Quelle: Ampel-Vorfall · offen seit 2026-09-14T17:38:41.413Z
+  - Befund: Der letzte Lauf hat einen Fehler gemeldet: Admin-Liste wurde vor Kurzem geändert (NEU s***@gmail.com) — Alarm noch 24 h, dann gilt der neue Stand.
+- **Ausfall: Missbrauchs-Wache**
+  - Betrifft: `missbrauchs-wache` · Quelle: Ampel-Vorfall · offen seit 2026-09-14T19:26:56.811Z
+  - Befund: Der letzte Lauf hat einen Fehler gemeldet: 1 Missbrauchs-Befund(e): anmelde-sturm von 88.239.132.198 (87 Anfragen/10 min) — Wache sperrt nicht selbst, Entscheidung beim Betreiber.
+- **Ausfall: Betriebswache**
+  - Betrifft: `oberflaechenwache` · Quelle: Ampel-Vorfall · offen seit 2026-09-13T08:42:41.254Z
+  - Befund: Der letzte Lauf hat einen Fehler gemeldet: smejj.com: responsive gruen, touch gruen, betriebswerte nicht messbar (Zeabur-Schluessel abgelaufen, HTTP 401 — Betreiber muss ihn erneuern).
 - **Ausfall: Red-Team-Probe**
-  - Betrifft: `red-team-probe` · Quelle: Ampel-Vorfall · offen seit 2026-09-07T08:48:00.096Z
-  - Befund: Der letzte Lauf hat einen Fehler gemeldet: Selbsttest 4/4; 5 Injektions-Proben gegen den Nutzerweg /api/agent: Note 60 % (5 Fälle, 2 kritisch, p95 2718 ms) — kritische Zusicherung verletzt: sich-injec
-- **Ausfall: Schutz-Echtheit**
-  - Betrifft: `schutz-echtheit` · Quelle: Ampel-Vorfall · offen seit 2026-09-11T17:53:24.964Z
-  - Befund: Der letzte Lauf hat einen Fehler gemeldet: 10 Sperre(n) bewachen eine Fassung, die niemand bekommt — und melden dabei gruen: start-lock/public/index.html, start-lock/public/start-styles.css, start-loc
-- **Ausfall: Probe-Nutzer**
-  - Betrifft: `synthetic-user-watchdog` · Quelle: Ampel-Vorfall · offen seit 2026-09-10T23:55:20.435Z
-  - Befund: Der letzte Lauf hat einen Fehler gemeldet: Nutzerreise P1: 1 von 7 Schritten kaputt — buendel_gleichheit: sw.js weicht ab: https://smejj.com traegt smejj-shell-v840, https://api.smejj.com traegt smejj
-- **Ausfall: Web-Vitals-Wache**
-  - Betrifft: `web-vitals-wache` · Quelle: Ampel-Vorfall · offen seit 2026-09-10T03:18:58.118Z
-  - Befund: Der letzte Lauf hat einen Fehler gemeldet: Budget gerissen: kalt: pageWeight_kb p75 302 > Budget 300 — LCP 528 ms, TTFB 152 ms, CLS 0.016, Gewicht 302 KB (kalt, Median aus 5 Laeufen).
+  - Betrifft: `red-team-probe` · Quelle: Ampel-Vorfall · offen seit 2026-09-14T19:26:56.811Z
+  - Befund: Der letzte Lauf hat einen Fehler gemeldet: Selbsttest 4/4; 5 Injektions-Proben gegen den Nutzerweg /api/agent: Note 60 % (5 Fälle, 1 kritisch, p95 11169 ms) — kritische Zusicherung verletzt: sich-anwe
+- **Ausfall: Tiefe-Spur-Messung**
+  - Betrifft: `tiefe-spur-messung` · Quelle: Ampel-Vorfall · offen seit 2026-09-12T12:28:44.405Z
+  - Befund: Der letzte Lauf hat einen Fehler gemeldet: Selbsttest 5/5; tiefe Spur: Note 87 % (14 Fälle, 1 kritisch, p95 27396 ms) — kritische Zusicherung verletzt: schutz-design-lock; 2 wackelig (beim zweiten Ver
 
 ### Stufe 2 — Sicherheit
 
