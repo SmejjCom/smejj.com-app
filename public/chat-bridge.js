@@ -9,7 +9,7 @@ import { buildWebContext } from "./chat-bridge-websuche.js";
 // wieder scharf); der Zaehler in /health zeigt daneben, was wirklich ankommt.
 import { allowAuthenticated, anmeldeStatistik, bearerToken, befreiteKonten, beobachteAnmeldung, istBefreit } from "./chat-bridge-auth.js";
 import { FRAGE_WERKZEUG, pipeVisibleStream } from "./chat-bridge-strom.js";
-import { KOPF_VORLAUF_MS, LEBENSZEICHEN_ALLE_MS, modellKommentar, schreibeStromFehler, schreibeVorabKopf } from "./chat-bridge-lebenszeichen.js";
+import { modellKommentar, schreibeStromFehler, starteVorlauf } from "./chat-bridge-lebenszeichen.js";
 import { meldeAktion, evolutionMelderStatus } from "./chat-bridge-evolution.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
 import { buildRagBlockMitVerlauf, lastUserContent, previousUserContent, ragIndexStatus, vorLetzterNutzerNachricht, withRagBlock } from "./chat-bridge-rag.js";
@@ -433,7 +433,7 @@ export function hardenMessages(messages) {
 export function kontrollWartezeitMs(body) {
   const frage = String(body?.task || lastUserContent(body?.messages || []) || "");
   const langsam = shouldSearchWeb(frage) || isCodingTask(frage) || istSchwereSmejjVersion(body?.model) || leseStufe(body) === "gruendlich";
-  return Math.min(REQUEST_TIMEOUT_MS, langsam ? 45000 : 20000);
+  return Math.max(0, Math.min(REQUEST_TIMEOUT_MS, langsam ? 45000 : 20000) - 5000);
 }
 
 async function streamViaControl(res, route, body) {
@@ -451,17 +451,8 @@ async function streamViaControl(res, route, body) {
   // ersten Byte, dann freies Streaming.
   const controller = new AbortController();
   const wecker = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  let lebenszeichen = null;
-  let kopfWecker = null;
-  // Nach KOPF_VORLAUF_MS ohne Antwort: Kopf vorab, Lebenszeichen, Wartezeit je Frage.
-  const vorab = setTimeout(() => {
-    if (res.headersSent) return;
-    schreibeVorabKopf(res, { ...securityHeaders(), ...corsHeaders("https://smejj.com") });
-    lebenszeichen = setInterval(() => { if (!res.writableEnded) res.write(": lebenszeichen\n\n"); }, LEBENSZEICHEN_ALLE_MS);
-    clearTimeout(wecker);
-    kopfWecker = setTimeout(() => controller.abort(), Math.max(0, kontrollWartezeitMs(body) - KOPF_VORLAUF_MS));
-  }, KOPF_VORLAUF_MS);
-  const aufraeumen = () => { clearTimeout(vorab); clearTimeout(wecker); clearTimeout(kopfWecker); clearInterval(lebenszeichen); };
+  const vorlauf = starteVorlauf(res, { ...securityHeaders(), ...corsHeaders("https://smejj.com") }, () => { clearTimeout(wecker); return setTimeout(() => controller.abort(), kontrollWartezeitMs(body)); });
+  const aufraeumen = () => { clearTimeout(wecker); vorlauf.aufraeumen(); };
   let upstream;
   try {
     upstream = await fetch(`${CONTROL_ORIGIN}${route}`, {
@@ -548,8 +539,9 @@ export function leseStufe(body) {
 // Schnelle Konversations-Spur: true nur wenn Groq streamt; bei false wurde noch KEIN Byte
 // gesendet und der Aufrufer nimmt den bisherigen Pfad. Coding gibt die Spur ab, aber NUR
 // bei vorhandener tiefer Spur — sonst antwortet streamModel 503 statt einer Antwort.
-export async function streamFastLane(res, messages, profile, requestedModel = "", stufe = "") {
+export async function streamFastLane(res, messages, profile, requestedModel = "", stufe = "", { notfall = false } = {}) {
   if (!fastLaneEnabled()) return false;
+  if (!notfall) {
   // "gruendlich" gibt die Schnellspur immer ab; "schnell" nimmt sie immer.
   // Ohne Stufe gelten unveraendert die bisherigen Regeln.
   if (stufe === "gruendlich") return false;
@@ -560,6 +552,7 @@ export async function streamFastLane(res, messages, profile, requestedModel = ""
   if (istSchwereSmejjVersion(requestedModel)) return false;
   if (stufe !== "schnell"
     && (/glm|kimi|cline|\box\b/i.test(String(requestedModel || "")) || (profile === "coding" && ((CONTROL_ROUTER_ENABLED && CONTROL_ORIGIN) || (LLM_BASE_URL && LLM_API_KEY && LLM_MODEL))))) return false;
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.min(REQUEST_TIMEOUT_MS, FAST_LANE_TIMEOUT_MS));
   let upstream;
@@ -600,7 +593,8 @@ export async function streamFastLane(res, messages, profile, requestedModel = ""
   }
   clearTimeout(timer);
   if (!upstream.ok || !upstream.body) return false;
-  res.writeHead(200, {
+  if (res.headersSent) res.write(modellKommentar(`groq:${GROQ_MODEL}`, GROQ_MODEL, "true"));
+  else res.writeHead(200, {
     ...securityHeaders(),
     ...corsHeaders("https://smejj.com"),
     "Content-Type": "text/event-stream; charset=utf-8",
@@ -625,6 +619,8 @@ async function streamModel(res, messages, profile, requestedModel = "") {
   // v152: Kopf schon vorab gesendet → Antwort im SELBEN Strom, Fehler als Text.
   const imStrom = res.headersSent;
   if (!LLM_BASE_URL || !LLM_API_KEY || !LLM_MODEL) {
+    // Live ohne Direktmodell (modelConfigured false): Notfall ueber die kostenlose Schnellspur.
+    if (imStrom && await streamFastLane(res, messages, profile, requestedModel, "schnell", { notfall: true })) return;
     if (imStrom) return schreibeStromFehler(res, "Verbindung zum Server unterbrochen. Bitte gleich noch einmal versuchen.");
     return json(res, 503, { ok: false, error: "Model backend is not configured." });
   }

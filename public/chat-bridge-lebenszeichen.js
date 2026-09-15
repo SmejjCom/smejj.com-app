@@ -40,6 +40,22 @@ export function schreibeVorabKopf(res, basisKopf = {}) {
   res.write(": lebenszeichen\n\n");
 }
 
+/**
+ * Plant den Vorab-Kopf: nach KOPF_VORLAUF_MS ohne Antwort Kopf + Lebenszeichen alle
+ * LEBENSZEICHEN_ALLE_MS; beiVorab() setzt die restliche Wartezeit und liefert deren Wecker.
+ */
+export function starteVorlauf(res, basisKopf, beiVorab) {
+  let lebenszeichen = null;
+  let restWecker = null;
+  const vorab = setTimeout(() => {
+    if (res.headersSent) return;
+    schreibeVorabKopf(res, basisKopf);
+    lebenszeichen = setInterval(() => { if (!res.writableEnded) res.write(": lebenszeichen\n\n"); }, LEBENSZEICHEN_ALLE_MS);
+    restWecker = beiVorab?.() ?? null;
+  }, KOPF_VORLAUF_MS);
+  return { aufraeumen: () => { clearTimeout(vorab); clearTimeout(restWecker); clearInterval(lebenszeichen); } };
+}
+
 /** Fehler, nachdem der Kopf schon draussen ist: als lesbarer Antworttext im Strom. */
 export function schreibeStromFehler(res, text) {
   if (res.writableEnded) return;
