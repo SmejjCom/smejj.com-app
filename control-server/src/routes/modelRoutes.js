@@ -16,6 +16,8 @@ import {
   refreshModelRuntimeHealth
 } from "../llm/modelRuntimeHealth.js";
 import { parseS3Keys, signedS3List } from "../storage/s3Signer.js";
+import { maskiereModellStatusFuerAnonyme } from "../http/anonymMaske.js";
+const maske = (angemeldet) => (angemeldet ? (wert) => wert : maskiereModellStatusFuerAnonyme);
 
 // Vault-Stand 30 s halten (F26, 2026-09-14).
 //
@@ -47,23 +49,23 @@ async function laufzeitGesundheitAuffrischen(env) {
   if (Object.keys(getModelRuntimeHealthSnapshot()).length === 0) await lauf;
 }
 
-export async function handleModelStatus(res, modelId, { env = process.env } = {}) {
+export async function handleModelStatus(res, modelId, { env = process.env, angemeldet = false } = {}) {
   const model = resolveVaultStatus(modelId);
   if (!model) return json(res, 404, { ok: false, error: "Unknown model" });
   await laufzeitGesundheitAuffrischen(env);
   const result = await readModelStatus(model, env);
   const registry = getPublicModelRegistry(env, getModelRuntimeHealthSnapshot());
-  return json(res, 200, {
+  return json(res, 200, maske(angemeldet)({
     ...result,
     runtime: registry.models.find((item) => item.id === getModelDefinition(modelId)?.id) || null
-  });
+  }));
 }
 
-export async function handleModelsStatus(res, { env = process.env } = {}) {
+export async function handleModelsStatus(res, { env = process.env, angemeldet = false } = {}) {
   const results = await Promise.all(Object.values(MODEL_STATUSES).map((model) => readModelStatus(model, env)));
   await laufzeitGesundheitAuffrischen(env);
   const registry = getPublicModelRegistry(env, getModelRuntimeHealthSnapshot());
-  return json(res, 200, {
+  return json(res, 200, maske(angemeldet)({
     ok: results.every((result) => result.ok),
     configured: results.some((result) => result.configured),
     models: results,
@@ -75,7 +77,7 @@ export async function handleModelsStatus(res, { env = process.env } = {}) {
       auto: registry.auto,
       fallback: DEFAULT_MODEL_ID
     }
-  });
+  }));
 }
 
 export async function handleWorkerPreflight(url, res, { env = process.env, live = false } = {}) {
@@ -116,7 +118,8 @@ export async function handleWorkerPreflight(url, res, { env = process.env, live 
       quotaRemainingReplicas: Number(env.SALAD_QUOTA_REMAINING_REPLICAS || 10)
     }
   });
-  return json(res, preflight.ok ? 200 : 409, { ok: preflight.ok, modelStatus, preflight });
+  // Anonyme: gleiche Entscheidung, ohne Bucket/Praefix/Worker-Fakten (S6, 15.09.2026).
+  return json(res, preflight.ok ? 200 : 409, maske(live)({ ok: preflight.ok, modelStatus, preflight }));
 }
 
 export async function readModelStatus(model, env = process.env, { frisch = false, jetztMs = Date.now(), fetchImpl = fetch } = {}) {

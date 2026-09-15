@@ -35,6 +35,7 @@ import { handleVoiceRoute } from "../control-server/src/routes/voiceWorkerRoutes
 // voiceOhrRoutes.js erklaert die Lage.
 import { handleOhrRoute } from "../control-server/src/routes/voiceOhrRoutes.js";
 import { handleModelStatus, handleModelsStatus, handleWorkerPreflight } from "../control-server/src/routes/modelRoutes.js";
+import { maskiereHealthFuerAnonyme } from "../control-server/src/http/anonymMaske.js";
 import { handleWorkerModelAction, handleWorkerValidate } from "../control-server/src/routes/workerModelRoutes.js";
 import { refreshModelRuntimeHealth } from "../control-server/src/llm/modelRuntimeHealth.js";
 import { buildRagContextBlock, searchKnowledge } from "../control-server/src/rag/agentContext.js";
@@ -230,7 +231,7 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && isPublicAsset(url.pathname)) return serveFile(res, url.pathname.slice(1));
     if (readMethod && url.pathname === "/impressum") return serveFile(res, "impressum.html");
     if (readMethod && url.pathname === "/datenschutz") return serveFile(res, "datenschutz.html");
-    if (readMethod && url.pathname === ROUTES.api.health) return handleHealth(res);
+    if (readMethod && url.pathname === ROUTES.api.health) return handleHealth(res, Boolean(readSession(req)));
     if (readMethod && url.pathname === ROUTES.api.capabilities) return handleCapabilities(res);
     if (readMethod && url.pathname === ROUTES.api.authConfig) return handleAuthConfig(res);
     if (readMethod && url.pathname === ROUTES.api.authMe) return handleAuthMe(req, res);
@@ -330,9 +331,9 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && url.pathname === ROUTES.api.storageStatus) return await handleStorageStatus(res);
     if (url.pathname.startsWith(ROUTES.api.trainingConsent)) return await handleTrainingConsentRoute(req, url, res);
     if (url.pathname === ROUTES.api.trainingCapture) return await handleTrainingCaptureRoute(req, url, res);
-    if (readMethod && url.pathname === ROUTES.api.modelStatus) return await handleModelStatus(res, "kimi-k2-7");
-    if (readMethod && url.pathname === ROUTES.api.glmModelStatus) return await handleModelStatus(res, "glm-5-2");
-    if (readMethod && url.pathname === ROUTES.api.modelsStatus) return await handleModelsStatus(res);
+    if (readMethod && url.pathname === ROUTES.api.modelStatus) return await handleModelStatus(res, "kimi-k2-7", { angemeldet: Boolean(readSession(req)) });
+    if (readMethod && url.pathname === ROUTES.api.glmModelStatus) return await handleModelStatus(res, "glm-5-2", { angemeldet: Boolean(readSession(req)) });
+    if (readMethod && url.pathname === ROUTES.api.modelsStatus) return await handleModelsStatus(res, { angemeldet: Boolean(readSession(req)) });
     if (readMethod && url.pathname === ROUTES.api.workerPreflight) return await handleWorkerPreflight(url, res, { live: Boolean(readSession(req)) });
     if (req.method === "POST" && url.pathname === ROUTES.api.workerValidate) return await handleWorkerValidate(req, res);
     if (req.method === "POST" && url.pathname === ROUTES.api.workerModelAction) return await handleWorkerModelAction(req, res);
@@ -449,13 +450,13 @@ async function handleChat(req, res) {
 // den Neubau zu bestaetigen — /api/health hatte keine Zeit- oder Versionsmarke).
 const GESTARTET_AM = new Date().toISOString();
 
-async function handleHealth(res) {
+async function handleHealth(res, angemeldet = false) { // anonym ohne Innenleben (S6, anonymMaske.js)
   // ai spiegelt den echten Router-Zustand: Gate + Budget + Provider-Kette (fail-closed).
   //
   // Proben im Hintergrund: ein ausgelastetes Hausmodell liess sonst Zeabur diesen Server ungesund melden (13.09.).
   void refreshModelRuntimeHealth(process.env).catch(() => {});
   const aiStatus = evaluateAiAvailability(process.env);
-  json(res, 200, {
+  json(res, 200, (angemeldet ? (wert) => wert : maskiereHealthFuerAnonyme)({
     ok: true,
     app: APP_INFO.name,
     gestartetAm: GESTARTET_AM,
@@ -475,7 +476,7 @@ async function handleHealth(res) {
     // am 2026-09-02 ohne diese Zeile nicht zu unterscheiden (Konfiguration?
     // Verweis? 403?). Nie ein Wert, nur Stufe und Code.
     trainingsSpeicher: await trainingsSpeicherStand(process.env)
-  });
+  }));
 }
 
 async function handleCapabilities(res) {
@@ -799,7 +800,7 @@ async function streamLLM(res, messages, { profile = "default", requestedModel = 
     "x-smejj-model-backend": `${result.backend}:${result.model}`,
     "x-smejj-model-id": result.logicalModelId,
     "x-smejj-requested-model-id": selection.requestedModelId,
-    "x-smejj-model-fallback": String(result.logicalModelId !== selection.requestedModelId)
+    "x-smejj-model-fallback": String(result.attempts.length > 0 || result.logicalModelId !== selection.requestedModelId)
   });
   const sichtbar = await streamWithTools({ result, chain, messages, res, options: modelOptions, executeWithFallback, authUser, spur });
   res.end();

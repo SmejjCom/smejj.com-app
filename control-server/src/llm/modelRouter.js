@@ -229,7 +229,10 @@ export function registryBackendFromEnv(modelId, env = process.env, profile = "de
   if (!definition || !runtime?.configured) return null;
   return {
     name: runtime.provider,
-    logicalModelId: definition.id,
+    // Ehrliche Kennung (15.09.2026): das Profilmodell glm-4.5-flash meldete sich als
+    // "glm-5-2" — die Kopfzeile x-smejj-model-fallback stand dadurch auf "false",
+    // obwohl ein anderes Modell antwortete. Gleiche Zuordnung wie in der Legacy-Kette.
+    logicalModelId: runtime.provider === "zhipu" && runtime.runtimeModel === "glm-4.5-flash" ? "glm-4-5-flash" : definition.id,
     baseUrl: runtime.baseUrl,
     apiKey: runtime.apiKeys[0],
     keyIndex: 1,
