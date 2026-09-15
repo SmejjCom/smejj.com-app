@@ -13,7 +13,7 @@
     "weitere": "platform 7/7, favicon-lock, json, security, architecture, users, syntax OK"
   },
   "livebeweis": {
-    "avatarMenue": "Kopf 'Alan Best / alanbestus@gmail.com'; Eintraege Konto, Einstellungen, Ausloggen; Breite 232px; vollstaendig sichtbar; Deckungstest: Menue liegt oben",
+    "avatarMenue": "Kopf 'Alan Best / [privates Gmail-Konto]'; Eintraege Konto, Einstellungen, Ausloggen; Breite 232px; vollstaendig sichtbar; Deckungstest: Menue liegt oben",
     "kontoseite": "authState=authenticated; sichtbare Knoepfe im Security-Tab von 6 auf 1 ('Ausloggen'); Anmelde-Knoepfe und Server-Sitzungen ausgeblendet",
     "kontobild": "Mit eigenem Bild: unveraendert (Vorrang). Ohne: data:image/webp, 20 KB uebernommen. Bild des Betreibers gesichert und exakt wiederhergestellt.",
     "konsolenfehler": 0
