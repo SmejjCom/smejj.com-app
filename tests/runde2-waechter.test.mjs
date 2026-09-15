@@ -415,3 +415,13 @@ test("Rück-Roller: nutzt den von der Bau-Wache abgeleiteten Stand, die Bau-Wach
   merkeAbgeleitetenStand("kein-hex");
   assert.equal(aktuellerStand({}), "");
 });
+
+test("Nr. 77: weist sich an der Brücke v157 aus (anonym gibt es kein projektwissen mehr)", async () => {
+  const { waechterKoepfe } = await import("../control-server/src/autopilots/projektwissenFrischeAutopilot.js");
+  const leer = waechterKoepfe({});
+  assert.equal(leer.Authorization, undefined);
+  assert.equal(leer["x-smejj-evolution-token"], undefined);
+  const voll = waechterKoepfe({ SMEJJ_SESSION_SECRET: "x".repeat(40), SMEJJ_EVOLUTION_TOKEN: "waechter-test" });
+  assert.match(voll.Authorization, /^Bearer \S{20,}/);
+  assert.equal(voll["x-smejj-evolution-token"], "waechter-test");
+});
