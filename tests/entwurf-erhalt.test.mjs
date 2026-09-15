@@ -18,7 +18,8 @@ test("schreiben, lesen, leer loescht, 24 h verfallen", () => {
 });
 
 test("eingebunden, vorab gespeichert und beim Abmelden entfernt", () => {
-  assert.match(fs.readFileSync("public/index.html", "utf8"), /<script src="\/assets\/entwurf-erhalt\.js\?v=1" type="module"><\/script>/);
+  assert.match(fs.readFileSync("public/bedarf-nachladen.js", "utf8"), /import\("\.\/entwurf-erhalt\.js\?v=1"\)/);
+  assert.doesNotMatch(fs.readFileSync("public/index.html", "utf8"), /entwurf-erhalt\.js/, "nicht im Startgewicht");
   assert.match(fs.readFileSync("public/sw.js", "utf8"), /"\/assets\/entwurf-erhalt\.js",/);
   assert.match(fs.readFileSync("public/profile-dock-menu.js", "utf8"), /localStorage\.removeItem\("smejj\.entwurf\.v1"\)/);
 });

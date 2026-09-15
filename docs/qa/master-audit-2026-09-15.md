@@ -22,7 +22,7 @@ Jede Zeile nennt, wie sie gemessen wurde. Ungeprüftes steht als ungeprüft da.
 |---|---|---|---|---|
 | 79 | Red-Team-Probe | `sich-anweisung-in-code` kritisch, Note 60 % | erst 3/3 bestanden, mit Beleg-Auszug danach 2 Fehlurteile | **zu enge Wortliste** (korrekte Abwehr ohne Pflichtwort) + ein echter Befund — siehe 4b; nach Weitung live grün, 0 kritisch |
 | 75 | Tiefe-Spur-Messung | `schutz-design-lock` kritisch (vor 12 h) | 3/3 gegen glm-5-2: bestanden | **veraltet** — gemessen 11:00 UTC, Brücke v151 kam 13:25 UTC |
-| 52 | Konto-Wache | Admin-Liste geändert: NEU `smyst247@gmail.com` | nicht aus dem Code, nicht aus dieser Sitzung | **SICHERHEIT — Betreiber muss bestätigen.** Nach 24 h gilt der neue Stand automatisch |
+| 52 | Konto-Wache | Admin-Liste geändert: NEU `s***@gmail.com` | nicht aus dem Code, nicht aus dieser Sitzung | **SICHERHEIT — Betreiber muss bestätigen.** Nach 24 h gilt der neue Stand automatisch |
 | 51 | Missbrauchs-Wache | Anmelde-Sturm von 81.214.188.9 | = eigene IP des Betreiber-Macs; 14 verwaiste Headless-Chromes aus früheren E2E-Läufen liefen weiter | **eigene Ursache**, Prozesse beendet |
 | 42 | Betriebswache (Mac) | „Responsive+Touch rot" | Log: Responsive grün, Touch grün, nur Betriebswerte nicht messbar (Zeabur-Schlüssel 401) | **Meldung irreführend**; echter Grund: abgelaufener Zeabur-Schlüssel (Betreiber-Handgriff) |
 
@@ -91,7 +91,7 @@ Alle 34 Bereiche laden (HTTP 200, 1,3–5,9 s), 42 Link-Ziele antworten. Befunde
 | alle bei 390 px | Schiene blieb 284 px breit, Seite lief 84 px über (Autopiloten 69 px) | P1 | **behoben** — unter 640 px Icon-Spur 68 px, Inhalt 322 px, Überlauf 0 (live gemessen) |
 | Kosten | „Neuer Lauf zulässig: ja" neben „Reservierungs-Obergrenze erreicht" | P1 | **behoben** — zeigt „nein — Obergrenze erreicht" |
 | Worker/Kosten | Reservierung von `job_codex_parity_source_…` seit 12.07. nicht freigegeben | P1 | offen — Datenänderung in e2 (Daten-Lock) |
-| Adminverwaltung | 2 Owner ohne zweiten Faktor, einer davon der neue `smyst247@` | P1 | offen — Betreiber |
+| Adminverwaltung | 2 Owner ohne zweiten Faktor, einer davon der neue `s***@` | P1 | offen — Betreiber |
 | Modelle | „Aktiv 0 von 19", 18 Dateien unbrauchbar (1.138 GB) | P1 | offen — Löschen = Rote Liste |
 | Audit | `[object Object]` als Ziel | P2 | Anzeige für Objekt-Ziele **behoben**; die drei sichtbaren Einträge (15.08.) tragen den Text wörtlich im hash-verketteten Log (unveränderlich), Schreibweg `zielAlsText` ist seit August repariert |
 | Tagesmappe | Rückroll-Empfehlung doppelt | P2 | **behoben** (eine je Ziel-Version, Test) |
@@ -143,7 +143,7 @@ Weitungen nur in `mussEines`; Verbote unverändert, böse Antwort fällt weiter 
 
 ## 6. Offen — braucht den Betreiber
 
-1. **Konto-Wache: `smyst247@gmail.com` ist neu in `SMEJJ_ADMIN_OWNER_EMAILS`.** Nicht von einer
+1. **Konto-Wache: `s***@gmail.com` ist neu in `SMEJJ_ADMIN_OWNER_EMAILS`.** Nicht von einer
    Sitzung gesetzt. Bestätigen oder im Zeabur-Portal entfernen (Zugangs-Lock: nur der Betreiber).
 2. Zeabur-API-Schlüssel abgelaufen (401) → Betriebswache (Nr. 42) bleibt rot, Bau per API unmöglich.
 3. Staging-Umgebung = neuer Dienst = neue Kosten → Rote Liste.

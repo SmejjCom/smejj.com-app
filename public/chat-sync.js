@@ -18,7 +18,7 @@ import { OWNER_KEY, gehoertNutzer, kontoAliase, merkeKontoKennung, sessionUserId
 import {
   abgleichsKarte, teileAuf, erzeugeVorfahrt, erzeugeAbgleichsSpeicher,
   istUeberschreibKonflikt, konfliktKopie, geraeteKurzname, neueKonfliktId, ohneAbgleichsmarke, nachzutragen, grabsteinWeg
-} from "./chat-sync-auswahl.js?v=4";
+} from "./chat-sync-auswahl.js?v=5";
 
 const TOKEN_KEY = "smejj.auth.accessToken.v1";
 const PUSH_ENTPRELLUNG_MS = 4000;
