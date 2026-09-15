@@ -86,3 +86,21 @@ check:all grün in Arbeits- und Bauzweig.
 nicht gebaut und nutzt LiveKit nicht; sauber erst ab 1.4.0 mit API-Umbau. `transformers` 5.5.0 (hoch, Pfad-Traversal in
 `save_pretrained`) — der Bild-Maler ruft `save_pretrained` nie auf; zwei frühere Anhebungen legten ihn live still.
 Beide sind im Betrieb nicht erreichbar; ein ungetesteter Umbau würde eine laufende Funktion gefährden.
+
+## Nachtrag 15.09. abends — Sicherheitsmeldungen geschlossen
+Betreiber: „Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen."
+
+- **transformers (hoch) — behoben und live.** Bild-Maler auf transformers 5.17.0, diffusers 0.40.0, torch 2.14.0
+  (osv.dev: 0 Lücken; torch 2.5.1 trug 22). Vorher in GitHub Actions bewiesen (Zweig `pruef/bild-maler-2026-09-15`,
+  kostenlos, öffentliches Repo): Abbild gebaut, sd-turbo geladen, Bild in 32 s wie vorher, Porträt mit aktivem
+  Gesichtsfix. Die Probe fand dabei einen **Live-Fehler**: der Gesichtsfix scheiterte bei jedem Porträt an fehlendem
+  `libxcb.so.1` (Porträts kamen unrepariert) — Systembibliotheken ergänzt. Zweite Anpassung: `pipe.vae.enable_slicing()`
+  statt des entfallenen `enable_vae_slicing()`. Live nach dem Bau (deploy/smejj-bild-maler b8def9f5): Apfel und Porträt
+  als echtes PNG in 53–58 s über die Brücke (vorher 136 s). Dependabot #1: *fixed*.
+- **pipecat-ai (kritisch) — begründet geschlossen.** `workers/smejj-voice` wird nirgends gebaut oder betrieben (war für
+  Salad, abgeschaltet); die Live-Stimme läuft über smejj-voice-piper ohne pipecat; `LivekitFrameSerializer` ungenutzt.
+  Sauber erst ab pipecat 1.x mit API-Umbau (Transport- und Kontextpfade) — Pflicht vor jedem künftigen Bau.
+  Dependabot #3: *dismissed (not_used)* mit dieser Begründung.
+- **Offen beim Betreiber:** Doppelklick auf „smejj.com Admin-Regeltext stempeln und ausliefern.command" (Admin-Lock-Stempel
+  darf keine Sitzung selbst setzen). Die GitHub-Action „Code-Sicherung nach Codeberg" braucht ein Codeberg-Token als
+  Secret `CODEBERG_TOKEN` — die tägliche Codeberg-Spiegelung vom Mac läuft unabhängig davon (zuletzt 15.09. 10:21 UTC, OK).
