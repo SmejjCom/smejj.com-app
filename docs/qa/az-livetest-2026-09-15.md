@@ -46,7 +46,7 @@ Messwerkzeug: `(?i)` im Muster wird still als „trifft nicht" gewertet.
 ### Einordnung „Kernsuite 61,8 % auf dem Nutzerweg"
 Die Kernsuite-Fälle bringen ihr Wissen im **System-Prompt** mit (z. B. „LCP unter 1,5 s"). `/api/agent` nimmt keinen
 fremden System-Prompt an — die vier kritischen Fälle (budget-lcp-grounding, regel-800-zeilen, schutz-design-lock,
-naming-schreibweise) fehlen deshalb vor allem Kontext, nicht Können. Echter Anteil: die Antwort schrieb einmal „Smejj"
+naming-schreibweise) fehlen deshalb vor allem Kontext, nicht Können. Echter Anteil: die Antwort schrieb den Namen einmal mit großem Anfangsbuchstaben und ohne „.com"
 (Schreibregel). Die Qualitätsmessung Nr. 01 misst weiterhin `/api/chat` mit Suite-Kontext (97,1 %).
 
 ## Zwischenfall während des Tests
