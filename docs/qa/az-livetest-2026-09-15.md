@@ -58,5 +58,31 @@ Aufräumen der Test-Chats übernimmt die Parallelsitzung mit Betreiber-Freigabe.
 Video senden (Kosten), Magic-Link/Registrierung/Passkey anlegen/Konto löschen (Außenwirkung), Abmelden am Server,
 Barge-in und Spracherkennungs-Genauigkeit am echten Gerät, iOS-Querformat und iOS-Offline (Simulator-Grenzen).
 
-## Nächster Schritt
-Wegen des 100 %-Schutzes wurde nichts repariert. Jede Korrektur braucht die schriftliche Freigabe des Betreibers.
+## Freigabe und Umsetzung
+Betreiber am 15.09.2026 per Auswahl: „Alle beheben (Empfehlung)", danach „Mach weiter bis alles live und 100 % fertig"
+und „Mach weiter bis alles fertig". Umgesetzt, ausgeliefert und live nachgetestet:
+
+| Nr | Korrektur | Live-Beleg nach der Auslieferung |
+|---|---|---|
+| M1 | Admin-APIs komprimiert (brotli/gzip ab 1 KB) | Autopiloten-API 592 KB → 50 KB, 1,0–1,7 s; am Handy (390 px) Seite in 2,0 s |
+| M2 | Verlauf auf neuem Gerät: 4 parallele Abrufe mit Zeitgrenze, zweite Runde; zuerst sichtbare Chats, dann Papierkorb (Server nennt `deletedAt`, Index-Fassung 2) | erste Seite (30 Chats) nach 10 s voll statt 40–90 s ein Eintrag; 368 Abrufe, alle 200, nie mehr als 4 gleichzeitig |
+| M3 | Bild verstehen fällt nie still an ein Textmodell; Wiederholung, sichtbare Meldung | 6 von 7 richtig beschrieben (qwen3.8-27b), 1× sichtbare Meldung „konnte gerade nicht ausgewertet werden" |
+| M4 | Service-Worker: Hülle für App-Routen aus dem Netz zuerst, `/api/` nie abgefangen | /chat-history und /settings direkt aufgerufen: nie die Landeseite |
+| M5 | Modell-Menü vorladen; Erste-Schritte-Karten verschieben das Eingabefeld nicht mehr (Ursache der verlorenen Klicks: Sprung um 95 px) | 10 von 10 frühen Klicks öffnen das Menü (vorher 8 von 10), Knopf bleibt stehen; Handy-Layout unverändert (Sichtprüfung 390×844) |
+| M6 | Brücke: 15-s-Grenze für Websuche und Anmeldeprüfung, Textarbeit mit Vorsatz ohne Websuche | „Übersetze …" 3× ohne Websuche, erstes Zeichen 4,9–9,1 s (Netz des Test-Macs gestört) |
+| M7 | Autopilot Nr. 12 wertet „beschäftigt"/429 nicht als Ausfall, 10-s-Wiederholung; Bild-Maler meldet `beschaeftigt` | Nr. 12 grün, Bild-Maler neu gebaut (deploy/smejj-bild-maler 85aa44b5) |
+| M8 | Admin-Anmeldeprüfung mit 30-s-Zwischenspeicher und Wiederholung | Hülle 1–4 ms nach /api/admin/me, vorher nur Ladehinweis |
+| niedrig | alle 17 Punkte (Überläufe, Touch-Ziele 44 px, „Gestoppt." bleibt, Abmelden räumt `smejj.session.v1` auch auf der Kontoseite ab, Projekt-Doppelklick, Querformat, Header, Rückfall-Host, Control-Center-Zählung, befristeter Konto-Wache-Alarm, Auslieferungs-Ansicht, Messwerkzeug `(?i)`) | Oberflächen-Nachtest 12 Punkte bestanden; Startseite 230 KB gzip (Budget 300) |
+
+Zusätzlich im Nachtest gefunden und behoben: Autopilot Nr. 79 stand rot, obwohl `/api/agent` den Angriff dreimal
+abwehrte (Prüfwortliste kannte „verhindert die Weitergabe" nicht; Suite smejj-chat-breit 1.3.0). Der Qualitäts-Messlauf
+auf dem Mac brach ab, weil die Xcode-Lizenz git blockierte (Skript nutzt jetzt die Command Line Tools) — nachgeholt: 100 %.
+
+**Stand danach (15.09., 21:19 UTC):** smejj.com SW `smejj-shell-v888`, Control `654a184f`, Brücke v157, alle Dienste
+„gleich"; Autopiloten 84 grün, 0 gelb, 0 rot (Nr. 34 meldet sich 3 min nach jedem Neustart). Alle Sperren grün,
+check:all grün in Arbeits- und Bauzweig.
+
+**Bewusst nicht angehoben (Dependabot):** `pipecat-ai` 0.0.67 (kritisch, Pickle-RCE über LiveKit) — der Sprachdienst wird
+nicht gebaut und nutzt LiveKit nicht; sauber erst ab 1.4.0 mit API-Umbau. `transformers` 5.5.0 (hoch, Pfad-Traversal in
+`save_pretrained`) — der Bild-Maler ruft `save_pretrained` nie auf; zwei frühere Anhebungen legten ihn live still.
+Beide sind im Betrieb nicht erreichbar; ein ungetesteter Umbau würde eine laufende Funktion gefährden.
