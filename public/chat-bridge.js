@@ -87,7 +87,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260915-v153-keine-suche-nach-geheimnissen";
+const BRIDGE_VERSION = "20260915-v154-textarbeit-health";
 
 // Premium-Stimme: ausgelagerte Handler (siehe chat-bridge-voice-tts.js).
 // Funktionsdeklarationen unten sind gehoben — der Aufruf hier oben ist sicher.
@@ -161,19 +161,15 @@ function healthPayload() {
     multiModelRouterEnabled: CONTROL_ROUTER_ENABLED,
     fastLaneEnabled: fastLaneEnabled(),
     antwortstufenEnabled: true,
-    fastLaneModel: fastLaneEnabled() ? `groq:${GROQ_MODEL}` : "",
+    fastLaneModel: fastLaneEnabled() ? "groq" : "", // v154: kein Modellname fuer Anonyme
     projektwissen: ragIndexStatus(),
     role: "stateless-chat-stream-bridge",
     costProfile: "cpu-only-no-gpu-no-storage",
     premiumVoiceConfigured: Boolean(trimUrl(process.env.SMEJJ_VOICE_TTS_ORIGIN || "")),
     earConfigured: Boolean(GROQ_API_KEY),
-    // Anzahl statt Kontonamen: /health ist oeffentlich. Sichtbar bleibt nur,
-    // OB eine Befreiung aktiv ist — nicht, fuer wen.
-    publicRateLimit: { perClientPerMinute: RATE_PER_CLIENT, globalPerMinute: RATE_GLOBAL, befreiteKonten: befreiteKonten().length },
+    publicRateLimit: { perClientPerMinute: RATE_PER_CLIENT, globalPerMinute: RATE_GLOBAL }, // v154: ohne befreiteKonten (oeffentlich)
     anmeldung: anmeldeStatistik(),
-    // Sichtbar machen, ob die Qualitaetsmessung ueberhaupt meldet: eine stille
-    // Messung sieht sonst wie "alles gemessen" aus.
-    evolutionMelder: evolutionMelderStatus(),
+    evolutionMelder: { aktiv: evolutionMelderStatus().aktiv }, // v154: ohne Ziel-Host und Env-Namen (S6)
     startedAt: STARTED_AT.toISOString()
   };
 }
@@ -718,8 +714,10 @@ export function shouldSearchWeb(task) {
   // (Befund 2026-07-28, "Lies https://imild.com/ und nenne den Titel").
   if (mentionsWebAddress(roh)) return true;
   const text = normalizeForIntent(roh);
-  return WENDUNG.test(text) || STAMM.test(text) || WORT.test(text);
+  return !TEXTARBEIT.test(text) && (WENDUNG.test(text) || STAMM.test(text) || WORT.test(text));
 }
+// Textarbeit hinter Doppelpunkt ist Material, keine Suche (v154, gleich src/search/searchIntent.js TEXTARBEIT_PATTERN).
+const TEXTARBEIT = /^\s*(bitte\s+)?(uebersetz\w*|translate|korrigier\w*|verbesser\w*|umformulier\w*|kuerz\w*|formulier\w*)\b[^:\n]{0,60}:/i;
 
 // Adresse mit oder ohne Schema. Fail-closed ueber eine Endungsliste, damit
 // Dateinamen ("app.js") und Satzreste ("morgen.Danach") nicht faelschlich
