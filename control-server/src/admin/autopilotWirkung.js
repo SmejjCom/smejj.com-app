@@ -17,14 +17,19 @@
 
 export const WIRKUNG = Object.freeze({
   baustein: Object.freeze([
-    "deep-research", "code-interpreter", "memory-sync", "self-healing", "task-orchestrator", "self-improvement",
-    "smart-router", "model-lifecycle", "process-reward", "knowledge-distiller", "evolutionary-mutation",
-    "multi-file-repo-architect", "live-arena-leaderboard", "instant-web-container", "realtime-voice-pair", "autonomous-git-bot"
+    "deep-research", "code-interpreter", "memory-sync", "task-orchestrator",
+    "model-lifecycle", "process-reward", "knowledge-distiller", "evolutionary-mutation",
+    "live-arena-leaderboard", "instant-web-container", "realtime-voice-pair", "autonomous-git-bot"
   ]),
   teilweise: Object.freeze({
-    "voice-region-check": "fragt nur das Freigabe-Flag ab, erzeugt keine Sprache",
-    "multimodal-engine": "nur /health von Bild- und Video-Dienst, kein erzeugtes Bild",
-    "agenten-sonde": "nur /health, der Browser erledigt keine Aufgabe",
+    // voice-region-check und agenten-sonde sind seit 15.09. "echt": Piper spricht,
+    // Maus-Engine und Fern-Browser öffnen example.com (echteProben.js, 1× je 22 h).
+    "multimodal-engine": "Bild-Maler malt 1× je 22 h ein echtes Probebild; Video-Worker nur /health (kein Kurz-Modus — jeder Auftrag malt erst ein Bild)",
+    // Runde 3 (15.09.): vom Baustein zu Arbeit an echten Daten, ohne neue Kosten.
+    "smart-router": "stellt die echte Chat-Weiche (classifyProfile + resolveModelRequest) mit Kernsuite-Prompts und Live-Konfiguration, ruft aber kein Modell auf",
+    "self-healing": "beurteilt die echten Antworten der Messläufe Nr. 75/79, repariert aber nichts (Reparatur im Produkt nicht verdrahtet)",
+    "self-improvement": "prüft die echten DPO-Paare der Ablage auf Tauglichkeit; Training ruht per Beschluss",
+    "multi-file-repo-architect": "echte Importprüfung des Abbilds (fehlende Pfade, Zyklen), Ergebnis abgelegt, aber nicht weiterverwendet",
     "knowledge-graph": "echter Scan, Ergebnis wird nicht weiterverwendet",
     "bug-predictor": "echter Scan, Befunde werden nicht gespeichert",
     "user-feedback-flywheel": "zählt echte Daumen, erzeugt keine Trainingspaare",
@@ -32,10 +37,10 @@ export const WIRKUNG = Object.freeze({
     "angelina-autopilot": "prüft die Texte im Abbild, nicht live smejj.com",
     "selbstheilung": "wiederholt nur den Messdurchgang",
     "ai-evolution-engine": "misst meist die Autopiloten selbst; Aufgaben bleiben liegen",
-    "missing-function-detector": "Konkurrenz-Stand von Hand gepflegt",
+    "missing-function-detector": "Konkurrenz-Stand von Hand gepflegt; Radar-Kandidaten nur als unbestätigte Hinweise",
     "rueck-roller": "empfiehlt nur, nur für den Control-Server",
     "log-wache": "nur Signale des eigenen Prozesses",
-    "kosten-wache": "Zähler nach jedem Neustart leer; Brücken-Verbrauch fehlt",
+    "kosten-wache": "Tagesstand neustartfest (seit 15.09.), aber der Verbrauch der Brücke (Hauptverkehr) wird nicht gemeldet",
     "last-probe": "Last nur auf /health, nicht auf den Chat",
     "experiment-meister": "Rahmen bereit, 0 Experimente",
     "webhook-wache": "Smee ausgeschaltet",
@@ -43,9 +48,29 @@ export const WIRKUNG = Object.freeze({
   })
 });
 
+/**
+ * Warum die übrigen Bausteine Bausteine BLEIBEN (geprüft 15.09., grep außerhalb
+ * autopilots/ und Tests): keiner wird im Produkt aufgerufen, oder sein echter Weg
+ * ist schon von einem anderen Autopiloten gemessen, oder echte Arbeit kostete Geld.
+ */
+export const BAUSTEIN_GRUND = Object.freeze({
+  "deep-research": "echter Weg (runDeepResearch) läuft nur in der Wissens-Ernte (Nr. 23) und wird dort gemessen; ein eigener Lauf verbrauchte das Suchkontingent doppelt",
+  "code-interpreter": "kein Chat- oder Coding-Weg führt Code durch diese Sandbox; node:vm ist keine Sicherheitsgrenze (Ausbruch zu process belegt)",
+  "memory-sync": "Faktenextraktion wird im Produkt nirgends aufgerufen",
+  "task-orchestrator": "Aufgabengraph wird im Produkt nirgends aufgerufen",
+  "model-lifecycle": "Schatten-Bewertung wird im Produkt nirgends aufgerufen; echte Versionswechsel misst Nr. 83",
+  "process-reward": "Schrittprüfung wird im Produkt nirgends aufgerufen",
+  "knowledge-distiller": "Destillation wird im Produkt nirgends aufgerufen; Training ruht per Beschluss",
+  "evolutionary-mutation": "Mutationstest wird im Produkt nirgends aufgerufen",
+  "live-arena-leaderboard": "ELO-Rechnung wird im Produkt nirgends aufgerufen; die echte Arena misst der Modell-Einkäufer (Nr. 34)",
+  "instant-web-container": "Vorschau-Erzeugung wird im Produkt nirgends aufgerufen",
+  "realtime-voice-pair": "Sprachsitzung wird im Produkt nirgends aufgerufen",
+  "autonomous-git-bot": "Diff-Prüfung wird im Produkt nirgends aufgerufen; im Abbild gibt es kein Git, Geheimnisse im Quelltext sucht Nr. 48"
+});
+
 export function wirkungVon(id) {
   const kennung = String(id || "");
-  if (WIRKUNG.baustein.includes(kennung)) return { stufe: "baustein", grund: "nur Selbsttest mit festen Eingaben, keine Live-Wirkung" };
+  if (WIRKUNG.baustein.includes(kennung)) return { stufe: "baustein", grund: `nur Selbsttest mit festen Eingaben, keine Live-Wirkung — ${BAUSTEIN_GRUND[kennung] || "ohne Grund"}` };
   if (Object.hasOwn(WIRKUNG.teilweise, kennung)) return { stufe: "teilweise", grund: WIRKUNG.teilweise[kennung] };
   return { stufe: "echt", grund: "arbeitet an Live-System oder echten Daten" };
 }
@@ -56,7 +81,7 @@ export function wirkungVon(id) {
  */
 export const KETTE = Object.freeze([
   { schritt: "Beobachten", ids: ["konkurrenz-radar", "realtime-internet-harvester", "fehler-faenger", "besucher-puls", "qualitaetsmessung"], luecke: null },
-  { schritt: "Vergleichen", ids: ["missing-function-detector", "modell-einkaeufer"], luecke: "Radar-Kandidaten erreichen den Funktions-Abgleich nicht; Konkurrenz-Stand von Hand" },
+  { schritt: "Vergleichen", ids: ["missing-function-detector", "modell-einkaeufer"], luecke: "Radar-Kandidaten kommen nur als unbestätigte Hinweise an; bestätigt wird von Hand (Konkurrenz-Stand)" },
   { schritt: "Idee finden", ids: ["ai-evolution-engine", "modell-evolution"], luecke: "Ideen entstehen nur aus Qualitätsmängeln, nicht aus Nutzerproblemen" },
   { schritt: "Planen", ids: ["werkstatt-autopilot"], luecke: "nur Sortieren nach Dringlichkeit, kein Plan je Aufgabe" },
   { schritt: "Entwickeln", ids: [], luecke: "kein Autopilot baut — Werkstatt Station 3 läuft von Hand (Sitzung)" },
@@ -66,6 +91,6 @@ export const KETTE = Object.freeze([
   { schritt: "Eval", ids: ["qualitaetsmessung", "tiefe-spur-messung", "red-team-probe", "smejj-versions-takt"], luecke: null },
   { schritt: "Release", ids: ["bau-wache", "schutz-echtheit"], luecke: "Auslieferung per Kaskade von Hand; Autopiloten beobachten nur" },
   { schritt: "Live-Check", ids: ["brueckenwaechter", "synthetic-user-watchdog", "tuerwaechter", "web-vitals-wache", "oberflaechenwache"], luecke: null },
-  { schritt: "Messen", ids: ["besucher-puls", "willkommens-wache", "abo-umsatz-wache", "kosten-wache"], luecke: "Kosten nach Neustart blind" },
+  { schritt: "Messen", ids: ["besucher-puls", "willkommens-wache", "abo-umsatz-wache", "kosten-wache"], luecke: "Verbrauch der Brücke (Hauptverkehr) wird nicht gemeldet" },
   { schritt: "Weiter verbessern", ids: ["modell-evolution", "experiment-meister", "rueck-roller"], luecke: "Messwerte fließen nur über rote Ampeln zurück" }
 ]);

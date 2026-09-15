@@ -16,8 +16,11 @@ import {
   prioritaetAus, evolutionUebersicht, fuehreEngineSelbsttestAus, _leereFuerTest
 } from "./aiEvolutionEngine.js";
 import {
-  erkenneLuecken, baueLueckenAufgaben, pruefeBelege, fuehreDetectorSelbsttestAus, SMEJJ_FAEHIGKEITEN
+  erkenneLuecken, baueLueckenAufgaben, pruefeBelege, fuehreDetectorSelbsttestAus, SMEJJ_FAEHIGKEITEN,
+  KONKURRENZ_STAND, radarHinweise
 } from "./missingFunctionDetector.js";
+import { laufMissingFunctionDetector } from "./evolutionLaeufe.js";
+import { WIRKUNG } from "../admin/autopilotWirkung.js";
 import { pruefeAbnahme, fuehreSupervisorSelbsttestAus } from "./autopilotSupervisor.js";
 
 // ── Quality-Engine ──────────────────────────────────────────────────────────
@@ -176,6 +179,76 @@ test("Detector: ohne Dateiliste wird NICHT geurteilt", () => {
   const r = pruefeBelege(SMEJJ_FAEHIGKEITEN, []);
   assert.equal(r.ungeprueft, true, "eine leere Dateiliste sagt etwas über den Scan, nicht über smejj");
   assert.equal(r.unbelegt.length, 0);
+});
+
+test("Detector: ein Beleg auf ein Autopilot-Modul nennt seinen Autopiloten", () => {
+  // Ohne `autopilot` könnte ein Spielzeug-Modul still wieder als Augenhöhe zählen.
+  for (const f of SMEJJ_FAEHIGKEITEN.filter((x) => x.beleg.startsWith("control-server/src/autopilots/"))) {
+    assert.ok(f.autopilot, `${f.id}: Beleg ${f.beleg} ohne autopilot-Kennung`);
+  }
+});
+
+test("Detector: Bausteine mit nur einem Selbsttest zählen NICHT als Augenhöhe", () => {
+  const { gleichstand, nurBaustein, vorteile } = erkenneLuecken({});
+  const bausteinIds = SMEJJ_FAEHIGKEITEN.filter((f) => WIRKUNG.baustein.includes(f.autopilot)).map((f) => f.id);
+  assert.ok(bausteinIds.length >= 4, "tiefe-recherche, code-sandkasten, gedaechtnis, live-vorschau sind heute Bausteine");
+  for (const id of bausteinIds) {
+    assert.ok(!gleichstand.some((g) => g.id === id), `${id} darf nicht auf Augenhöhe stehen`);
+    assert.ok(!vorteile.some((v) => v.id === id), `${id} darf kein Vorteil sein`);
+    assert.ok(nurBaustein.some((b) => b.id === id), `${id} muss als Baustein ausgewiesen sein`);
+  }
+  // Gesunde Probe: eine echte Fähigkeit bleibt auf Augenhöhe.
+  assert.ok(gleichstand.some((g) => g.id === "chat"));
+  // Gesunde Probe: ohne Baustein-Liste wäre derselbe Eintrag Gleichstand.
+  assert.ok(erkenneLuecken({ bausteine: [] }).gleichstand.some((g) => g.id === "tiefe-recherche"));
+});
+
+test("Detector: Radar-Kandidaten werden Hinweise, nie Funktionen", () => {
+  const vorher = JSON.stringify(KONKURRENZ_STAND);
+  const ohne = erkenneLuecken({});
+  const mit = erkenneLuecken({
+    radarKandidaten: [
+      { anbieter: "ChatGPT", bereich: "changelog", titel: "Projects now support voice", url: "https://help.openai.com/rn", bestaetigt: true },
+      { anbieter: "ChatGPT", bereich: "changelog", titel: "Projects now support voice", url: "https://help.openai.com/rn" },
+      { anbieter: "ChatGPT", bereich: "changelog", titel: "Second line", url: "https://help.openai.com/rn" },
+      { anbieter: "X", titel: "kaputt", url: "ftp://nein" },
+      { anbieter: "X", titel: "", url: "https://example.com/leer" }
+    ]
+  });
+  assert.equal(mit.hinweise.length, 2, "Doppel und Kaputtes fallen weg, zwei Zeilen derselben Seite bleiben");
+  for (const h of mit.hinweise) {
+    assert.equal(h.bestaetigt, false);
+    assert.equal(h.status, "Kandidat zur Prüfung");
+    assert.match(h.quelle, /^https:\/\//);
+  }
+  assert.deepEqual(mit.luecken.map((l) => l.id), ohne.luecken.map((l) => l.id));
+  assert.equal(mit.gleichstand.length, ohne.gleichstand.length);
+  assert.equal(JSON.stringify(KONKURRENZ_STAND), vorher, "der Konkurrenz-Stand bleibt handgepflegt");
+  assert.deepEqual(radarHinweise("kein-array"), []);
+});
+
+test("Nr. 38: Meldung nennt die Zahl offener Radar-Kandidaten", async () => {
+  const bestand = async () => ({
+    ok: true, letzterLauf: "2026-09-15T06:00:00.000Z",
+    kandidaten: [
+      { anbieter: "Gemini", bereich: "changelog", titel: "Neu A", url: "https://example.com/a", bestaetigt: false },
+      { anbieter: "Claude", bereich: "allgemein", titel: "Neu B", url: "https://example.com/b", bestaetigt: false }
+    ]
+  });
+  const r = await laufMissingFunctionDetector({ radarBestand: bestand });
+  assert.equal(r.ok, true, r.meldung);
+  assert.equal(r.offeneKandidaten, 2);
+  assert.match(r.meldung, /2 offene Radar-Kandidaten zur Prüfung \(unbestätigt, Scan 2026-09-15\)/);
+  assert.match(r.meldung, /nur als Baustein ohne Live-Wirkung/);
+});
+
+test("Nr. 38: stumme Radar-Ablage ist NICHT 0 Kandidaten", async () => {
+  const r = await laufMissingFunctionDetector({ radarBestand: async () => ({ ok: false, grund: "Ablage weg" }) });
+  assert.equal(r.offeneKandidaten, null);
+  assert.match(r.meldung, /Radar-Kandidaten nicht lesbar \(Ablage weg\)/);
+  assert.doesNotMatch(r.meldung, /0 offene/);
+  const geworfen = await laufMissingFunctionDetector({ radarBestand: async () => { throw new Error("Netz"); } });
+  assert.match(geworfen.meldung, /nicht lesbar \(Netz\)/);
 });
 
 // ── Supervisor ──────────────────────────────────────────────────────────────

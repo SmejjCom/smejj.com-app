@@ -14,7 +14,9 @@
 // genau das, was die Skalierungsregel verbietet.
 //
 // Deshalb liegt das Ergebnis als EIN kleines Objekt auf IDrive e2. Lesen kostet
-// einen GET; das Zaehlen passiert im Hintergrund und nur, wenn jemand hinsieht.
+// einen GET; das Zaehlen passiert im Hintergrund. Bis 15.09. NUR, wenn jemand
+// hinsah — seitdem haelt der Autopilot-Takt sie zusaetzlich frisch
+// (analytikAuffrischen.js), damit ein Neubau nicht an einem Seitenbesuch haengt.
 //
 // DIE PROJEKTION IST NIEMALS DIE WAHRHEIT.
 //
@@ -40,6 +42,16 @@ const MAX_TAGE = 90;
 export const AUFFRISCHEN_AB_SEKUNDEN = 600;
 
 let neubauLaeuft = false;
+// Seit wann der Hintergrund-Neubau laeuft. Ein Neubau, der nie zurueckkehrt,
+// darf den Merker nicht fuer immer festhalten — sonst wird nie wieder gezaehlt.
+let neubauSeitMs = 0;
+export const NEUBAU_HAENGT_AB_MS = 5 * 60 * 1000;
+
+// Wie der LETZTE Neubau dieser Instanz ausging. Befund 15.09.: die Projektion
+// war zehn Tage alt, und der Grund war nirgends zu sehen — ein gescheiterter
+// Hintergrund-Neubau lieferte `ok:false` an niemanden. Das ist KEIN Zaehlstand
+// (gerechnet wird nichts), sondern die Diagnose, warum der Stand alt ist.
+let letzterNeubau = null; // { am, ok, error }
 
 // Lesedurchgriff auf DASSELBE Objekt, 20 Sekunden. Das ist ausdruecklich KEIN
 // Zaehlstand im Arbeitsspeicher: gerechnet wird nichts, gemerkt wird nur die
@@ -92,7 +104,27 @@ export async function leseProjektion({
  * @param {object} p
  * @param {() => Promise<object>} p.zaehleAlles Liefert `{ [reihe]: {erreichbar, nachTag: Map|Objekt, …} }`.
  */
-export async function baueProjektion({
+export async function baueProjektion(p = {}) {
+  const jetztMs = p.jetztMs ?? Date.now();
+  const ergebnis = await baueProjektionOhneVermerk({ ...p, jetztMs });
+  letzterNeubau = {
+    am: new Date(jetztMs).toISOString(),
+    ok: ergebnis.ok === true,
+    error: ergebnis.ok ? null : String(ergebnis.error || "unbekannt").slice(0, 120)
+  };
+  // Ein gescheiterter Neubau wird HOERBAR: im Log und in der Antwort.
+  if (!ergebnis.ok && ergebnis.error !== "speicher_nicht_eingerichtet") {
+    console.warn(`[analytik] Tagesprojektion nicht erneuert: ${letzterNeubau.error}`);
+  }
+  return ergebnis;
+}
+
+/** Wie der letzte Neubau dieser Instanz ausging — oder null, wenn keiner lief. */
+export function letzterNeubauStand() {
+  return letzterNeubau ? { ...letzterNeubau } : null;
+}
+
+async function baueProjektionOhneVermerk({
   env = process.env, fetchImpl = fetch, jetztMs = Date.now(), zaehleAlles
 } = {}) {
   const cfg = idriveConfig(env);
@@ -168,21 +200,45 @@ export async function projektionFrisch({
   }
 
   const veraltet = Number(vorhanden.alterSekunden) >= auffrischenAbSekunden;
-  if (!veraltet || neubauLaeuft) return { ...vorhanden, wirdAufgefrischt: neubauLaeuft };
+  const fehler = neubauFehlerSeit(vorhanden.gebautAm);
+  const haengt = neubauLaeuft && jetztMs - neubauSeitMs >= NEUBAU_HAENGT_AB_MS;
+  if (!veraltet || (neubauLaeuft && !haengt)) {
+    return { ...vorhanden, wirdAufgefrischt: neubauLaeuft, ...fehler };
+  }
 
   neubauLaeuft = true;
+  neubauSeitMs = jetztMs;
+  const meinStart = neubauSeitMs;
   // Bewusst ohne await: der Aufrufer bekommt den vorhandenen Stand sofort.
   Promise.resolve()
     .then(() => baueProjektion({ env, fetchImpl, zaehleAlles }))
-    .catch(() => { /* ein gescheiterter Neubau darf die Ansicht nicht kippen */ })
-    .finally(() => { neubauLaeuft = false; });
+    .catch((error) => {
+      // Ein gescheiterter Neubau darf die Ansicht nicht kippen — aber er wird
+      // vermerkt, damit die Ansicht sagt, WARUM der Stand alt bleibt.
+      letzterNeubau = { am: new Date().toISOString(), ok: false, error: String(error?.message || "ausnahme").slice(0, 120) };
+      console.warn(`[analytik] Tagesprojektion nicht erneuert: ${letzterNeubau.error}`);
+    })
+    .finally(() => { if (neubauSeitMs === meinStart) neubauLaeuft = false; });
 
-  return { ...vorhanden, wirdAufgefrischt: true };
+  return { ...vorhanden, wirdAufgefrischt: true, ...fehler };
+}
+
+/**
+ * Nur ein Fehlschlag, der NACH dem Bau der gelieferten Projektion kam, erklaert
+ * deren Alter. Ein alter Fehlschlag vor einem spaeteren Erfolg ist erledigt.
+ */
+function neubauFehlerSeit(gebautAm) {
+  if (!letzterNeubau || letzterNeubau.ok) return {};
+  const gebautMs = Date.parse(String(gebautAm || ""));
+  if (Number.isFinite(gebautMs) && Date.parse(letzterNeubau.am) <= gebautMs) return {};
+  return { neubauFehler: { am: letzterNeubau.am, grund: letzterNeubau.error } };
 }
 
 /** Nur fuer Tests: der Hintergrund-Merker darf nicht zwischen Faellen durchschlagen. */
 export function __neubauMerkerLeeren() {
   neubauLaeuft = false;
+  neubauSeitMs = 0;
+  letzterNeubau = null;
   leseCache = null;
 }
 

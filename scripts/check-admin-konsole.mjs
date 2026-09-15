@@ -33,6 +33,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
+import { statischePagesDatei, STATISCHE_PAGES_DATEIEN } from "./lib/pages-statisch.mjs";
 import { __clearMemoryStoreForTests, createUserRecord, putUser } from "../control-server/src/auth/emailUserStore.js";
 
 const KONSOLE = path.resolve(fileURLToPath(new URL("../control-server/admin-ui/", import.meta.url)));
@@ -345,6 +346,24 @@ async function main() {
     process.exit(1);
   }
 
+  // Selbstprobe der statischen Pages-Dateien (15.09.): eine gelistete Adresse
+  // ohne Repo-Datei muss auffallen, eine ungelistete oder ein POST darf NICHT als
+  // statisch durchgehen — und jede gelistete Datei muss es wirklich geben.
+  const probeListe = { "/probe/statisch.json": "public/probe/statisch.json" };
+  const statFehlt = statischePagesDatei("GET", "/probe/statisch.json", { liste: probeListe, existiert: () => false });
+  const statDa = statischePagesDatei("GET", "/probe/statisch.json?v=1", { liste: probeListe, existiert: () => true });
+  const statFremd = statischePagesDatei("GET", "/probe/gibt-es-nicht.json", { liste: probeListe, existiert: () => true });
+  const statPost = statischePagesDatei("POST", "/probe/statisch.json", { liste: probeListe, existiert: () => true });
+  const statEcht = Object.keys(STATISCHE_PAGES_DATEIEN).filter((a) => !statischePagesDatei("GET", a)?.vorhanden);
+  if (statFehlt?.vorhanden !== false || statDa?.vorhanden !== true || statFremd !== null || statPost !== null) {
+    console.error("admin-konsole KAPUTT — die Selbstprobe der statischen Pages-Dateien schlug nicht an.");
+    process.exit(1);
+  }
+  if (statEcht.length) {
+    console.error(`admin-konsole VERLETZT — als statisch gelistet, aber ohne Repo-Datei: ${statEcht.join(", ")}`);
+    process.exit(1);
+  }
+
   const { seiten, kern } = await adressenDerKonsole();
   const alle = [...kern, ...seiten];
   const befunde = [];
@@ -357,14 +376,21 @@ async function main() {
     }
     // Je SEITE bewerten, nicht je Adresse. Eine Seite darf mehrere Quellen der
     // Reihe nach versuchen — die Radar-Ansicht holt ihre Berichte auf dem
-    // Pages-Weg unter /radar/berichte.json und auf dem Control-Weg unter
-    // /admin/radar-berichte.json. Bewertete man jede Adresse einzeln, meldete
+    // Pages-Weg zuerst unter /radar/berichte.json (statisch) und auf dem
+    // Control-Weg zuerst unter /admin/radar-berichte.json. Bewertete man jede Adresse einzeln, meldete
     // der Pruefer bei JEDEM Lauf einen Fehlalarm — und ein Pruefer, dem man
     // seine Fehlalarme abgewoehnt, indem man ihn ignoriert, ist keiner mehr.
     // Ein Befund entsteht erst, wenn KEINE der Quellen ankommt.
     const schlecht = [];
     for (const { methode, pfad } of adressen) {
       geprueft += 1;
+      // Statische Pages-Datei (scripts/lib/pages-statisch.mjs): kein Handler
+      // zuständig ist hier richtig — sie kommt an, wenn die Repo-Datei existiert.
+      const statisch = statischePagesDatei(methode, pfad);
+      if (statisch) {
+        if (!statisch.vorhanden) schlecht.push({ pfad: `${methode} ${pfad}`, grund: `statische Pages-Datei fehlt im Repo (${statisch.quelle})` });
+        continue;
+      }
       const antwort = await frage(methode, pfad);
       if (!antwort.behandelt) {
         schlecht.push({ pfad: `${methode} ${pfad}`, grund: "kein Handler zustaendig" });
@@ -388,7 +414,8 @@ async function main() {
     console.error("Eine Adresse, die die Konsole ruft, muss beim Server ankommen — und ein Knopf, an den sie bindet, muss gezeichnet werden.");
     process.exit(1);
   }
-  console.log(`admin-konsole OK — ${geprueft} Adressen aus ${alle.length} Ansichten kommen beim Server an;`
+  console.log(`admin-konsole OK — ${geprueft} Adressen aus ${alle.length} Ansichten kommen beim Server`
+    + ` oder als statische Pages-Datei (${Object.keys(STATISCHE_PAGES_DATEIEN).length} gelistet) an;`
     + ` ${haengerZiele().length} Bedienelemente werden auch gezeichnet.`);
 }
 

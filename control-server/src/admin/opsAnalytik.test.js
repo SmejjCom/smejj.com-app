@@ -408,3 +408,57 @@ test("eintraegeMitDatum liest Schluessel und Zeitstempel paarweise", () => {
   // als 1999/1970 und ist KEIN gueltiger Zeitpunkt.
   assert.equal(treffer[2].zeit, "", "ein Datum vor 2020 gilt als unbrauchbar");
 });
+
+test("BEFUND 15.09. kaputt: eine zehn Tage alte Projektion zeigt fuer die Tage danach '—', nicht 0", async () => {
+  // Live: "0 Laeufe, 0 Mails", obwohl gelaufen und gemailt wurde — die Tage
+  // nach dem Bau waren schlicht nicht gezaehlt.
+  const e = await analytikUebersicht({
+    jetztMs: JETZT, tage: 14, leseIndex: INDEX_FRISCH,
+    holeProjektion: async () => ({
+      ok: true, gebautAm: "2026-07-19T06:00:00.000Z", alterSekunden: 10 * 86400,
+      reihen: {
+        verwaltung: { erreichbar: true, tage: { "2026-07-18": 2 } },
+        mails: { erreichbar: true, tage: {} },
+        laeufe: { erreichbar: true, tage: {} }
+      }
+    })
+  });
+  const tag = (t) => e.tage.find((x) => x.tag === t);
+  assert.equal(tag("2026-07-29").laeufe, null, "nach dem Bautag nicht gezaehlt");
+  assert.equal(tag("2026-07-20").mails, null);
+  assert.equal(tag("2026-07-19").mails, 0, "der Bautag selbst ist gezaehlt");
+  assert.equal(tag("2026-07-18").verwaltung, 2);
+  assert.equal(e.reihen.laeufe.unvollstaendig, true);
+  assert.equal(e.reihen.laeufe.grundUnvollstaendig.includes("2026-07-19"), true);
+  assert.equal(e.bewertung.includes("kein neuer Lauf angelegt"), false, "keine Entwarnung aus einer Luecke");
+});
+
+test("BEFUND 15.09. gesund: eine heute gebaute Projektion zeigt echte Nullen und ist vollstaendig", async () => {
+  const e = await analytikUebersicht({
+    jetztMs: JETZT, tage: 14, leseIndex: INDEX_FRISCH,
+    holeProjektion: async ({ jetztMs }) => ({
+      ok: true, gebautAm: new Date(jetztMs - 60_000).toISOString(), alterSekunden: 60,
+      reihen: {
+        verwaltung: { erreichbar: true, tage: {} },
+        mails: { erreichbar: true, tage: { "2026-07-29": 5 } },
+        laeufe: { erreichbar: true, tage: {} }
+      }
+    })
+  });
+  assert.equal(e.tage[0].mails, 5);
+  assert.equal(e.tage[0].laeufe, 0, "gemessen und leer");
+  assert.equal(e.reihen.laeufe.unvollstaendig, false);
+  assert.equal(e.projektion.neubauFehler, null);
+});
+
+test("der Fehlervermerk eines gescheiterten Neubaus reist bis in die Antwort", async () => {
+  const e = await analytikUebersicht({
+    jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
+    holeProjektion: async ({ jetztMs }) => ({
+      ok: true, gebautAm: new Date(jetztMs).toISOString(), alterSekunden: 0,
+      neubauFehler: { am: "2026-07-29T12:00:00.000Z", grund: "keine_quelle_lesbar" },
+      reihen: { verwaltung: { erreichbar: true, tage: {} }, mails: { erreichbar: true, tage: {} }, laeufe: { erreichbar: true, tage: {} } }
+    })
+  });
+  assert.equal(e.projektion.neubauFehler.grund, "keine_quelle_lesbar");
+});

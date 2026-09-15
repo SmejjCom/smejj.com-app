@@ -65,15 +65,15 @@ const MIT_ECHTER_MESSUNG = new Set([
   "webhook-wache",            // fragt den Smee-Dienst und klopft am eigenen Eingang (Nr. 84)
   "bug-predictor",            // scannt die echten Quelldateien des Containers
   "knowledge-graph",          // baut den Symbolgraphen ueber dieselben Dateien
-  "multi-file-repo-architect",// prueft die echte Architektur des Containers
+  "multi-file-repo-architect",// fehlende Importpfade + Zyklen im echten Quelltext (seit 15.09.)
   "code-interpreter",         // Rechnung mit pruefbarem Ergebnis (Summe 1..100)
-  "smart-router",             // Prompts mit bekannter Soll-Zuordnung
-  "self-healing",             // muss kaputte UND gesunde Antworten erkennen
+  "smart-router",             // echte Chat-Weiche mit Kernsuite-Prompts + Live-Konfiguration (seit 15.09.)
+  "self-healing",             // Fehlererkennung ueber echte Messlauf-Antworten Nr. 75/79 (seit 15.09.)
   "deep-research",            // Rechercheplan zu einem Thema
   "memory-sync",              // Faktenextraktion aus einem Gespraech
   "multimodal-engine",        // seit 2026-08-13: fragt Video-Worker (+Bild-Maler) nach /health
   "task-orchestrator",        // Aufgabengraph aus einem Ziel
-  "self-improvement",         // gute Antwort muss schlechte schlagen
+  "self-improvement",         // echte DPO-Paare der Ablage auf Tauglichkeit (seit 15.09.)
   "model-lifecycle",          // langsamer Schatten darf nicht befoerdert werden
   "user-feedback-flywheel",   // seit 2026-08-13: echte Daumen-Signale (POST /api/feedback) + PII-Filter
   "antwort-tuev",             // seit 2026-08-14: Selbsttest mit den woertlich gemessenen Fehlantworten + echte Daumen-runter-Antworten

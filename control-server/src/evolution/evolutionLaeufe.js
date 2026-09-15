@@ -182,16 +182,33 @@ export async function laufKonkurrenzRadar({
  * die Datei noch im Quelltext?), und was können die anderen, das smejj nicht
  * kann? Eine verschwundene Beleg-Datei ist der ernstere Fund — dann hat sich
  * eine Fähigkeit still verabschiedet.
+ *
+ * Seit 15.09. liest er zusätzlich die jüngsten Radar-Kandidaten (Nr. 04) und
+ * nennt sie als OFFENE Kandidaten zur Prüfung — unbestätigt, mit Quelle, ohne
+ * Einfluss auf Lücken, Gleichstand oder den Konkurrenz-Stand. Ist die
+ * Radar-Ablage stumm, steht das in der Meldung (stumm ist nicht "0"); die Ampel
+ * bleibt davon unberührt, der Radar hat seine eigene.
  */
-export function laufMissingFunctionDetector({ dateien = [] } = {}) {
+export async function laufMissingFunctionDetector({ dateien = [], radarBestand = holeKandidaten, env = process.env } = {}) {
   const selbsttest = fuehreDetectorSelbsttestAus();
   if (!selbsttest.bestanden) {
     return { ok: false, meldung: `Detector erkennt bekannte Lücken nicht mehr: ${selbsttest.fehler.slice(0, 2).join("; ")}` };
   }
+  const radar = await Promise.resolve()
+    .then(() => radarBestand({ env }))
+    .catch((f) => ({ ok: false, grund: String(f?.message || f).slice(0, 80) }));
   const belege = pruefeBelege(SMEJJ_FAEHIGKEITEN, dateien);
-  const { luecken, vorteile, gleichstand } = erkenneLuecken({});
+  const { luecken, vorteile, gleichstand, nurBaustein, hinweise } = erkenneLuecken({
+    radarKandidaten: radar?.ok ? radar.kandidaten : []
+  });
   const aufgaben = baueLueckenAufgaben(luecken);
   const oben = aufgaben[0];
+  const kandidatenText = radar?.ok
+    ? `${hinweise.length} offene Radar-Kandidaten zur Prüfung (unbestätigt${radar.letzterLauf ? `, Scan ${String(radar.letzterLauf).slice(0, 10)}` : ""})`
+    : `Radar-Kandidaten nicht lesbar (${radar?.grund || "ohne Grund"})`;
+  const bausteinText = nurBaustein.length
+    ? `, ${nurBaustein.length} nur als Baustein ohne Live-Wirkung (${nurBaustein.map((f) => f.id).join(", ")})`
+    : "";
 
   if (!belege.ungeprueft && belege.unbelegt.length) {
     // Fail-closed: Eine Fähigkeit, deren Code verschwunden ist, ist keine
@@ -200,15 +217,16 @@ export function laufMissingFunctionDetector({ dateien = [] } = {}) {
       ok: false,
       meldung: `${belege.unbelegt.length} Fähigkeit(en) ohne Beleg im Quelltext: `
         + belege.unbelegt.map((f) => f.id).slice(0, 3).join(", ")
-        + ` — Stand ${KONKURRENZ_STAND.stand}, ${luecken.length} Lücken gegenüber der Konkurrenz`
+        + ` — Stand ${KONKURRENZ_STAND.stand}, ${luecken.length} Lücken gegenüber der Konkurrenz; ${kandidatenText}`
     };
   }
   return {
     ok: true,
-    meldung: `Selbsttest bestanden; ${gleichstand.length} Funktionen auf Augenhöhe, ${vorteile.length} eigene Vorteile, `
-      + `${luecken.length} Lücken (Stand ${KONKURRENZ_STAND.stand}, handgepflegt)`
+    meldung: `Selbsttest bestanden; ${gleichstand.length} Funktionen auf Augenhöhe${bausteinText}, ${vorteile.length} eigene Vorteile, `
+      + `${luecken.length} Lücken (Stand ${KONKURRENZ_STAND.stand}, handgepflegt); ${kandidatenText}`
       + (oben ? ` — wichtigste: "${oben.titel}" (Score ${oben.score}, ${oben.prioritaet})` : "")
-      + (belege.ungeprueft ? "; Beleg-Prüfung übersprungen (kein Quelltext gescannt)" : "")
+      + (belege.ungeprueft ? "; Beleg-Prüfung übersprungen (kein Quelltext gescannt)" : ""),
+    offeneKandidaten: radar?.ok ? hinweise.length : null
   };
 }
 

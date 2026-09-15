@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
-import { createWorkerCapacityStore } from "../control-server/src/budget/workerCapacityStore.js";
+import { EXPIRED_SLOT_GRACE_MS, createWorkerCapacityStore } from "../control-server/src/budget/workerCapacityStore.js";
 
 test("global capacity atomically enforces durable worker and reserved-dollar limits", async () => {
   const storage = memoryCasStore();
@@ -87,6 +87,70 @@ test("restart recovery releases the matching durable slot only after verified st
   assert.equal((await store.releaseRecovered(lease, stopProof(Date.now()))).idempotent, true);
 });
 
+// Befund 15.09. (Live-Audit Adminbereich): der einzige Platz war seit 12.07. von
+// einem Lauf belegt, dessen Frist laengst vorbei war — Salad ist abgeschaltet,
+// der Stopp-Nachweis fuer die Freigabe kann nie mehr kommen. Nachgestellt mit
+// den Live-Grenzen (1 Platz, 0,10 USD).
+test("kaputte Probe: eine abgelaufene Reservierung zaehlt nicht mehr gegen Plaetze und Obergrenze", async () => {
+  const storage = memoryCasStore();
+  const env = capacityEnv({ SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS: "1", SMEJJ_BUDGET_MAX_GLOBAL_RESERVED_USD: "0.1" });
+  const claimedAt = Date.parse("2026-07-12T17:58:01.086Z");
+  const deadlineAt = "2026-07-12T18:28:01.086Z";
+  let now = claimedAt;
+  const store = createWorkerCapacityStore({ env, ...storage.dependencies, nowMs: () => now });
+  const stale = watchdogLease("stale-slot", "lease-stale-slot", 0.1, deadlineAt);
+  assert.equal((await store.acquire(job("job_codex_parity_source", "44"), stale)).ok, true);
+
+  now = Date.parse("2026-09-15T06:56:16.536Z");
+  const seen = (await store.snapshot()).snapshot;
+  assert.equal(seen.activeSlots, 0, "abgelaufener Platz ist nicht belegt");
+  assert.equal(seen.reservedUsd, 0, "abgelaufene Reservierung zaehlt nicht gegen die Obergrenze");
+  assert.equal(seen.expiredSlots, 1, "der Datensatz bleibt sichtbar");
+  assert.equal(seen.expiredReservedUsd, 0.1);
+  assert.equal(seen.jobs[0].expired, true);
+  assert.equal(seen.jobs[0].expiredSince, deadlineAt);
+
+  const fresh = watchdogLease("fresh-slot", "lease-fresh-slot", 0.1, "2026-09-15T07:26:16.536Z");
+  const admitted = await store.acquire(job("job_after_audit", "55"), fresh);
+  assert.equal(admitted.ok, true, "ein neuer Lauf wartet nicht mehr auf den Toten");
+  assert.equal(admitted.snapshot.activeSlots, 1);
+  assert.equal(admitted.snapshot.expiredSlots, 1);
+  assert.equal(admitted.snapshot.reservedUsd, 0.1);
+
+  // Kein neuer Loeschweg: der abgelaufene Platz geht weiter nur ueber den
+  // vorhandenen Aufraeumweg mit Stopp-Nachweis.
+  const cleanup = await store.releaseRecovered(stale, stopProof(now));
+  assert.equal(cleanup.ok, true);
+  assert.equal(cleanup.snapshot.expiredSlots, 0);
+  assert.equal(cleanup.snapshot.activeSlots, 1);
+});
+
+test("gesunde Probe: eine laufende Reservierung zaehlt weiter — auch im Nachlauf nach der Frist", async () => {
+  const storage = memoryCasStore();
+  const env = capacityEnv({ SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS: "1", SMEJJ_BUDGET_MAX_GLOBAL_RESERVED_USD: "0.1" });
+  const deadlineMs = Date.parse("2026-09-15T07:30:00.000Z");
+  let now = deadlineMs - 20 * 60_000;
+  const store = createWorkerCapacityStore({ env, ...storage.dependencies, nowMs: () => now });
+  const running = watchdogLease("running-slot", "lease-running-slot", 0.1, new Date(deadlineMs).toISOString());
+  assert.equal((await store.acquire(job("job_running", "66"), running)).ok, true);
+
+  const second = () => store.acquire(job("job_second", "77"), watchdogLease("second-slot", "lease-second-slot", 0.1, "2026-09-15T09:00:00.000Z"));
+  now = deadlineMs - 60_000;
+  const blocked = await second();
+  assert.equal(blocked.reason, "global_worker_capacity_slots_exhausted", "laufender Platz bleibt belegt");
+  assert.equal(blocked.snapshot.reservedUsd, 0.1);
+  assert.equal(blocked.snapshot.jobs[0].expired, false);
+  assert.equal(blocked.snapshot.jobs[0].expiredSince, null);
+
+  now = deadlineMs + EXPIRED_SLOT_GRACE_MS - 1;
+  const inGrace = await second();
+  assert.equal(inGrace.reason, "global_worker_capacity_slots_exhausted", "waehrend der Stopp-Wiederholungen bleibt es fail-closed");
+  assert.equal((await store.snapshot()).snapshot.activeSlots, 1);
+
+  now = deadlineMs + EXPIRED_SLOT_GRACE_MS;
+  assert.equal((await store.snapshot()).snapshot.activeSlots, 0);
+});
+
 function capacityEnv(extra = {}) {
   return {
     IDRIVE_E2_ENDPOINT: "https://storage.example",
@@ -108,11 +172,13 @@ function job(id, shard) {
   };
 }
 
-function watchdogLease(suffix, leaseId, budgetUsd) {
+// Ohne ausdrueckliche Frist ein Lauf, der noch laeuft — die Tests oben nutzen
+// teils die echte Uhr, eine feste Juli-Frist waere dort laengst abgelaufen.
+function watchdogLease(suffix, leaseId, budgetUsd, deadlineAt = "2099-07-11T13:00:00.000Z") {
   return {
     leaseId,
     groupName: `smejj-${suffix}`,
-    deadlineAt: "2026-07-11T13:00:00.000Z",
+    deadlineAt,
     budgetUsd
   };
 }

@@ -17,7 +17,6 @@ import { decomposeReasoningSteps, verifyReasoningTracePRM } from "./processRewar
 import { distillOptimalReasoning } from "./knowledgeDistillerAutopilot.js";
 import { runEvolutionaryStressTest } from "./evolutionaryMutationAutopilot.js";
 import { extractHarvestedFacts } from "./realtimeInternetHarvesterAutopilot.js";
-import { validateMultiFileArchitecture } from "./multiFileRepoArchitectAutopilot.js";
 import { updateEloRatings, calculateExpectedScore } from "./liveArenaLeaderboardAutopilot.js";
 import { buildInstantWebContainerPreview, analyzeWebContainerSnippet } from "./instantWebContainerAutopilot.js";
 import { createVoicePairSession, processRealtimePairFrame } from "./realtimeVoicePairAutopilot.js";
@@ -155,14 +154,7 @@ export function laufEvolutionaryMutation() {
 }
 
 
-/** Prueft die ECHTE Architektur dieses Containers, kein Beispielprojekt. */
-export function laufRepoArchitect(dateien = []) {
-  if (!dateien.length) return { ok: false, meldung: "Kein Quelltext geladen — Architekturpruefung ohne Aussage" };
-  const bericht = validateMultiFileArchitecture(dateien.slice(0, 120));
-  return auswerten(`Architekturpruefung (${Math.min(dateien.length, 120)} Dateien)`, [
-    { was: "Bericht entsteht", erfuellt: Boolean(bericht) && typeof bericht === "object" }
-  ]);
-}
+// laufRepoArchitect arbeitet seit dem Master-Audit 15.09. an echten Importen: bausteinEchtLaeufe.js.
 
 export function laufLiveArena() {
   // Reine Mathematik, exakt pruefbar: Bei gleicher Wertung ist die Erwartung

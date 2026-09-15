@@ -6,9 +6,11 @@
 // ueber der 800-Zeilen-Regel, und der Nachweis-Waechter haette sie weiter
 // wachsen lassen.
 //
-// Bewusst ohne weitere Importe: beide Laeufe brauchen nur `fetch` und ihre
-// Umgebung. Alles, was sie ueber die Aussenwelt sagen, haben sie selbst
-// gemessen.
+// Seit dem Master-Audit 2026-09-15 lassen beide Laeufe zusaetzlich EINE echte
+// Mini-Arbeit tun (echteProben.js): der Bild-Maler malt ein Probebild, die
+// Stimme spricht zwei Woerter — hoechstens einmal je 22 h, Stand neustartfest.
+// Alles, was sie ueber die Aussenwelt sagen, haben sie selbst gemessen.
+import { piperAdresse, probeBild, probeImTakt, probeStimme } from "./echteProben.js";
 
 /**
  * Bild/Video-Qualitaet (Nr. 8 multimodal-engine), seit 2026-08-13 echt:
@@ -21,7 +23,7 @@
  * der Bild-Maler nur, wenn seine Adresse gesetzt ist — einen nie
  * ausgerollten Dienst rot zu malen waere keine Messung, sondern Laerm.
  */
-export async function laufMedienQualitaet({ mitNetz = true, env = process.env, fetchImpl = fetch } = {}) {
+export async function laufMedienQualitaet({ mitNetz = true, env = process.env, fetchImpl = fetch, mitProbe = fetchImpl === fetch, ablage = null, sofortMs } = {}) {
   if (!mitNetz) {
     return { ok: true, meldung: "Netz-Takt abgewartet — Worker-Zustand wird im naechsten Lauf gemessen" };
   }
@@ -43,6 +45,7 @@ export async function laufMedienQualitaet({ mitNetz = true, env = process.env, f
     || "http://smejj-bild-maler.zeabur.internal:8080"
   ).trim();
   ziele.push({ name: "Bild-Maler", url: bildMalerUrl });
+  let bildMalerBereit = false;
   const befunde = [];
   let allesOk = true;
   for (const ziel of ziele) {
@@ -70,12 +73,35 @@ export async function laufMedienQualitaet({ mitNetz = true, env = process.env, f
         befunde.push(`${ziel.name}: laeuft, aber NICHT bereit nach ${dauerMs} ms${daten.fehler ? ` (${String(daten.fehler).slice(0, 40)})` : ""}`);
       } else {
         befunde.push(`${ziel.name}: bereit in ${dauerMs} ms${daten.engine ? ` (${daten.engine})` : ""}`);
+        if (ziel.name === "Bild-Maler") bildMalerBereit = true;
       }
     } catch (fehler) {
       allesOk = false;
       befunde.push(`${ziel.name}: nicht erreichbar (${String(fehler?.name === "TimeoutError" ? "Zeitlimit 10 s" : fehler?.message || fehler).slice(0, 50)})`);
     }
   }
+  // ECHTE PROBE (Master-Audit 2026-09-15): /health sagt nur "Prozess lebt". Ob
+  // wirklich ein Bild herauskommt, zeigt allein ein gemaltes Bild. Gemalt wird
+  // nur, wenn der Maler sich bereit meldet — sonst ist er schon oben rot.
+  //
+  // Der Video-Worker bleibt bewusst bei /health: er hat KEINEN guenstigen
+  // Kurz-Modus. POST /erzeuge nimmt nur einen Prompt (kein Standbild), malt
+  // dafuer IMMER erst ein Bild beim Bild-Maler (40-120 s CPU) und rendert dann
+  // Tiefe + MP4 — und mit gesetztem SMEJJ_VIDEO_EXTERN_KEY ginge jede Probe an
+  // den bezahlten Fremd-Anbieter (fal.ai). Das Probebild oben deckt die
+  // Bildquelle des Videos bereits ab; ein Probevideo waere Last ohne neue Aussage.
+  if (mitProbe && bildMalerBereit) {
+    const bild = await probeImTakt({
+      kennung: "multimodal-engine-bildprobe",
+      mitNetz,
+      ablage,
+      sofortMs,
+      probe: () => probeBild({ url: bildMalerUrl, schluessel: String(env.SMEJJ_BILDER_WORKER_KEY || "").trim(), fetchImpl })
+    });
+    if (bild.ok === false) allesOk = false;
+    befunde.push(bild.text);
+  }
+  befunde.push("Video: nur /health (kein Kurz-Modus ohne Bildmalen)");
   return { ok: allesOk, meldung: befunde.join("; ") };
 }
 
@@ -96,7 +122,22 @@ export async function laufMedienQualitaet({ mitNetz = true, env = process.env, f
  * POST statt GET ist Absicht: die Bruecke beantwortet jedes GET ausser /health
  * mit 404 — ein GET haette hier "Endpunkt tot" gemeldet, obwohl er lebt.
  */
-export async function laufVoiceRegion({ env = process.env, fetchImpl = fetch } = {}) {
+export async function laufVoiceRegion({ env = process.env, fetchImpl = fetch, mitProbe = fetchImpl === fetch, ablage = null, sofortMs } = {}) {
+  const status = await frageSprachStatus({ env, fetchImpl });
+  if (!mitProbe) return status;
+  // ECHTE PROBE (Master-Audit 2026-09-15): das Flag sagt nur, ob die Bruecke
+  // eine Stimme anbieten WILL. Ob smejj-voice-piper wirklich Ton erzeugt, zeigt
+  // erst ein synthetisierter Satz mit gueltigem WAV/OGG-Kopf.
+  const stimme = await probeImTakt({
+    kennung: "voice-region-check-stimmprobe",
+    ablage,
+    sofortMs,
+    probe: () => probeStimme({ url: piperAdresse(env), fetchImpl })
+  });
+  return { ok: status.ok && stimme.ok !== false, meldung: `${status.meldung}; ${stimme.text}` };
+}
+
+async function frageSprachStatus({ env, fetchImpl }) {
   const basis = String(env.SMEJJ_BRUECKE_URL || "https://smejj-chat-bridge.zeabur.app").replace(/\/+$/, "");
   try {
     const antwort = await fetchImpl(`${basis}/api/voice/status`, {
