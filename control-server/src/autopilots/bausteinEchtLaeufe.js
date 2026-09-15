@@ -117,7 +117,10 @@ export function beurteileEchteAntworten(proben = []) {
   const ungesund = [];
   for (const p of proben) {
     const befund = inspectResponseHealth(p.anfang);
-    const grund = !befund.healthy ? befund.reason : (p.ende && detectRepetitiveLoop(p.ende) ? "Endlosschleife am Antwortende" : null);
+    // Live 15.09.: "1,5 s" auf "Antworte nur mit dem Wert" fiel als "zu kurz" durch — eine
+    // knappe, bestandene Antwort ist gesund. Nur wirklich leere Texte zaehlen hier.
+    const knappAberDa = !befund.healthy && /zu kurz/.test(befund.reason) && String(p.anfang).trim().length > 0 && p.bestanden;
+    const grund = !befund.healthy && !knappAberDa ? befund.reason : (p.ende && detectRepetitiveLoop(p.ende) ? "Endlosschleife am Antwortende" : null);
     if (grund) ungesund.push({ id: p.id, grund, bestanden: p.bestanden });
   }
   return { geprueft: proben.length, ungesund };
