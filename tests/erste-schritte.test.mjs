@@ -83,3 +83,23 @@ test("alle Texte der Karten stehen in allen 14 Sprachdateien", () => {
     }
   }
 });
+
+// M5 (Live-Nachtest 15.09.2026): die Erste-Schritte-Karten schoben das zentrierte
+// Eingabefeld 95 px nach oben; 2 von 10 fruehen Klicks auf den Modell-Knopf gingen ins Leere.
+test("M5 gesund: im senkrecht zentrierten Halter gleichen die Karten ihre eigene Hoehe samt Luecke aus", async () => {
+  const { halteEingabeRuhig } = await ladeModul();
+  const halter = {};
+  const block = { parentElement: halter, isConnected: true, offsetHeight: 164, style: {} };
+  const fenster = { getComputedStyle: (el) => (el === halter ? { display: "flex", flexDirection: "column", justifyContent: "center", rowGap: "26px" } : { marginTop: "18px" }) };
+  assert.equal(halteEingabeRuhig(block, {}, fenster), 208);
+  assert.equal(block.style.marginBottom, "-208px");
+});
+
+test("M5 kaputt-Probe: am Handy (Feld unten, nicht zentriert) bleibt alles wie bisher", async () => {
+  const { halteEingabeRuhig } = await ladeModul();
+  const halter = {};
+  const block = { parentElement: halter, isConnected: true, offsetHeight: 164, style: { marginBottom: "-5px" } };
+  const fenster = { getComputedStyle: (el) => (el === halter ? { display: "grid", flexDirection: "row", justifyContent: "normal", rowGap: "8px" } : { marginTop: "2px" }) };
+  assert.equal(halteEingabeRuhig(block, {}, fenster), 0);
+  assert.equal(block.style.marginBottom, "");
+});

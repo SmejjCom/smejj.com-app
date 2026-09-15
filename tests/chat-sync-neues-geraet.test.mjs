@@ -60,7 +60,8 @@ test("GESUND: Fehlschlaege bekommen eine zweite Runde, danach ist Schluss", asyn
 test("Verdrahtung: pull() sammelt die Abrufe und holt sie mit Grenze und Zeitgrenze", () => {
   const q = readFileSync("public/chat-sync.js", "utf8");
   const pull = q.slice(q.indexOf("async function pull()"), q.indexOf("async function rette("));
-  assert.match(pull, /await abarbeitenMitGrenze\(abrufe, \{ grenze: EINZELABRUF_GRENZE, runden: 2 \}\);/);
+  // Nachtest 15.09.: neueste zuerst (tests/nachtest-abmelden-verlauf-20260915.test.mjs).
+  assert.match(pull, /await abarbeitenMitGrenze\(neuesteZuerst\(abrufe\), \{ grenze: EINZELABRUF_GRENZE, runden: 2 \}\);/);
   assert.doesNotMatch(pull.slice(0, pull.indexOf("abrufe.push")), /await holeVollstaendig/, "kein Einzelabruf mehr in der Entscheidungsschleife");
   assert.match(q, /signal: AbortSignal|headers: kopf, signal \}/, "der Einzelabruf traegt eine Zeitgrenze");
   assert.match(q, /const EINZELABRUF_ZEITGRENZE_MS = 20_000;/);
