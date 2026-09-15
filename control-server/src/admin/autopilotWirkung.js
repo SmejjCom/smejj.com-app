@@ -32,7 +32,7 @@ export const WIRKUNG = Object.freeze({
     "angelina-autopilot": "prüft die Texte im Abbild, nicht live smejj.com",
     "selbstheilung": "wiederholt nur den Messdurchgang",
     "ai-evolution-engine": "misst meist die Autopiloten selbst; Aufgaben bleiben liegen",
-    "missing-function-detector": "Konkurrenz-Stand von Hand gepflegt",
+    "missing-function-detector": "Konkurrenz-Stand von Hand gepflegt; Radar-Kandidaten nur als unbestätigte Hinweise",
     "rueck-roller": "empfiehlt nur, nur für den Control-Server",
     "log-wache": "nur Signale des eigenen Prozesses",
     "kosten-wache": "Zähler nach jedem Neustart leer; Brücken-Verbrauch fehlt",
@@ -56,7 +56,7 @@ export function wirkungVon(id) {
  */
 export const KETTE = Object.freeze([
   { schritt: "Beobachten", ids: ["konkurrenz-radar", "realtime-internet-harvester", "fehler-faenger", "besucher-puls", "qualitaetsmessung"], luecke: null },
-  { schritt: "Vergleichen", ids: ["missing-function-detector", "modell-einkaeufer"], luecke: "Radar-Kandidaten erreichen den Funktions-Abgleich nicht; Konkurrenz-Stand von Hand" },
+  { schritt: "Vergleichen", ids: ["missing-function-detector", "modell-einkaeufer"], luecke: "Radar-Kandidaten kommen nur als unbestätigte Hinweise an; bestätigt wird von Hand (Konkurrenz-Stand)" },
   { schritt: "Idee finden", ids: ["ai-evolution-engine", "modell-evolution"], luecke: "Ideen entstehen nur aus Qualitätsmängeln, nicht aus Nutzerproblemen" },
   { schritt: "Planen", ids: ["werkstatt-autopilot"], luecke: "nur Sortieren nach Dringlichkeit, kein Plan je Aufgabe" },
   { schritt: "Entwickeln", ids: [], luecke: "kein Autopilot baut — Werkstatt Station 3 läuft von Hand (Sitzung)" },

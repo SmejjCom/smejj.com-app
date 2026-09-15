@@ -70,9 +70,11 @@ export async function evolutionDashboard({ jetztMs = Date.now(), uebersicht = au
 
   const radar = await radarBestand({ env }).catch((f) => ({ ok: false, grund: String(f?.message || f).slice(0, 120) }));
 
-  const { luecken, vorteile, gleichstand } = erkenneLuecken({});
+  // Radar-Kandidaten gehen als unbestätigte Hinweise mit (zählen nirgends mit);
+  // Bausteine ohne Live-Wirkung zählen zur Konkurrenz, aber NICHT als Parität.
+  const { luecken, vorteile, gleichstand, nurBaustein, hinweise } = erkenneLuecken({ radarKandidaten: radar.ok ? radar.kandidaten : [] });
   const lueckenAufgaben = baueLueckenAufgaben(luecken);
-  const konkurrenzGesamt = luecken.length + gleichstand.length;
+  const konkurrenzGesamt = luecken.length + gleichstand.length + nurBaustein.filter((f) => f.beiKonkurrenz).length;
   const paritaet = konkurrenzGesamt ? Math.round((gleichstand.length / konkurrenzGesamt) * 100) : null;
 
   const typen = medientypen();
@@ -157,6 +159,8 @@ export async function evolutionDashboard({ jetztMs = Date.now(), uebersicht = au
       luecken: luecken.map((l) => ({ id: l.id, name: l.name, anbieter: l.anbieter })),
       vorteile,
       gleichstand: gleichstand.length,
+      nurBaustein: nurBaustein.map((f) => ({ id: f.id, name: f.name, autopilot: f.autopilot })),
+      offeneKandidaten: radar.ok ? hinweise.length : null,
       // Frische Suchtreffer des Radars — KANDIDATEN, keine bestaetigten
       // Funktionen. Sie stehen getrennt von den Luecken, damit niemand einen
       // Zeitungstitel fuer eine gemessene Funktionsluecke haelt.
