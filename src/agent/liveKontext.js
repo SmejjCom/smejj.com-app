@@ -21,7 +21,8 @@ export async function holeLiveKontext(task, {
   erkenneAbsicht,
   beantworteLive,
   sollSuchen,
-  baueSuchkontext
+  baueSuchkontext,
+  suchFristMs = SUCH_FRIST_MS
 }) {
   if (codingTask) return "";
   // Wetter direkt ueber Open-Meteo (echte API, ~0,2s) statt Suchmaschinen-Scraping (~9,5s).
@@ -32,6 +33,20 @@ export async function holeLiveKontext(task, {
   }
   // Intent-Gate: nur bei Aktualitaet/URL/Quellenbitte suchen. Suchbegriff und
   // Markt baut buildAgentWebContext (src/search/webSearchRoute.js).
-  if (sollSuchen(task)) return await baueSuchkontext(task);
+  // GESAMTFRIST (15.09.2026, live gemessen): die Suche fragt ihre Quellen nacheinander
+  // mit je 8 s — bei themenfremden Treffern liefen 33 bis 84 s ohne ein Byte. Nach
+  // SUCH_FRIST_MS antwortet das Modell ohne Web-Kontext; die Suche selbst laeuft im
+  // Hintergrund zu Ende und fuellt den 10-Minuten-Haltespeicher fuer die naechste Frage.
+  if (sollSuchen(task)) return await mitFrist(baueSuchkontext(task), suchFristMs);
   return "";
+}
+
+export const SUCH_FRIST_MS = 15_000;
+
+/** Ergebnis des Versprechens oder "" nach `ms` — nie ein Fehler nach aussen. */
+export function mitFrist(versprechen, ms = SUCH_FRIST_MS) {
+  let uhr;
+  const frist = new Promise((resolve) => { uhr = setTimeout(() => resolve(""), ms); });
+  const ergebnis = Promise.resolve(versprechen).then((wert) => wert, () => "");
+  return Promise.race([ergebnis, frist]).finally(() => clearTimeout(uhr));
 }

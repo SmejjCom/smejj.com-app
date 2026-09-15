@@ -51,6 +51,10 @@ const GEMEINSAME_FAELLE = [
   "Nenne mir bitte eine Quelle dafuer",
   "Suche mir ein gutes Restaurant",
   "Fasse mir das zusammen",
+  // Textarbeit hinter Doppelpunkt: Material, keine Suche (15.09.2026) — beide nein.
+  "Übersetze ins Englische: Guten Morgen, wie geht es dir?",
+  "Verbessere diesen Text: ich habe gestern keine zeit gehabt",
+  "Korrigiere bitte: Die aktuellen Preise sind gestiegen",
   // Statisches Allgemeinwissen — beide muessen nein sagen.
   "Was ist die Hauptstadt von Australien?",
   "Was ergibt sieben mal acht?",

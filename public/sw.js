@@ -202,6 +202,7 @@ const SHELL = [
   "/assets/free-coding-fallback.js",
   "/assets/uploads-surface.js",
   "/assets/projects-surface.js",
+  "/assets/entwurf-erhalt.js",
   "/assets/panel-layout.js",
   "/assets/local-workspace-surface.js",
   "/assets/maus-panel.js",

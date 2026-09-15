@@ -645,6 +645,8 @@ export function shouldSearchWeb(task) {
   // (Befund 2026-07-28, "Lies https://imild.com/ und nenne den Titel").
   if (mentionsWebAddress(roh)) return true;
   const text = normalizeForIntent(roh);
+  // Textarbeit hinter Doppelpunkt ist Material, keine Suche (15.09.2026, gleiche Regel wie src/search/searchIntent.js).
+  if (/^\s*(bitte\s+)?(uebersetz\w*|translate|korrigier\w*|verbesser\w*|umformulier\w*|kuerz\w*|formulier\w*)\b[^:\n]{0,60}:/i.test(text)) return false;
   return WENDUNG.test(text) || STAMM.test(text) || WORT.test(text);
 }
 

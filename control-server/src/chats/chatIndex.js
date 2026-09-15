@@ -116,7 +116,8 @@ function abgleichsfelder(chat) {
   return {
     id: String(chat?.id || ""),
     updatedAt: String(chat?.updatedAt || ""),
-    ...(chat?.ownerId ? { ownerId: String(chat.ownerId) } : {})
+    ...(chat?.ownerId ? { ownerId: String(chat.ownerId) } : {}),
+    ...(chat?.geloescht === true ? { geloescht: true } : {}) // Grabstein fuer den Client (15.09.2026)
   };
 }
 

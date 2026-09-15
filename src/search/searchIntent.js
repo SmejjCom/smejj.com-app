@@ -90,6 +90,12 @@ const EXAKTE_RECHERCHE = ["link", "links", "url", "web", "online", "source", "so
 
 // Reine Smalltalk-/Begruessungs-Eingaben brauchen keine Websuche.
 const SMALLTALK_PATTERN = /^(hi|hallo|hey|servus|moin|hey smejj|danke|dankeschoen|merci|ok|okay|alles klar|tschuess|bye|ciao|gute nacht|guten morgen|guten tag)\b[\s!.?]*$/i;
+// TEXTARBEIT (15.09.2026, live gemessen): "Übersetze ins Englische: Guten Morgen, wie
+// geht es dir?" loeste ueber "morgen" eine Websuche aus — fuenf Quellen nacheinander,
+// 33 bis 84 s bis zur Antwort. Wer einen Text zum Uebersetzen, Verbessern, Korrigieren,
+// Umformulieren oder Kuerzen hinter einen Doppelpunkt stellt, gibt MATERIAL, keine
+// Frage an das Internet. Gleiche Regel in public/chat-bridge.js (Gleichlauf-Test).
+export const TEXTARBEIT_PATTERN = /^\s*(bitte\s+)?(uebersetz\w*|translate|korrigier\w*|verbesser\w*|umformulier\w*|kuerz\w*|formulier\w*)\b[^:\n]{0,60}:/i;
 // Klare Coding-Absicht wird separat behandelt und braucht keine Websuche.
 const CODING_SKIP_PATTERN = /unified diff|\bpatch\b|\brefactor|\bdebug\b|\bstack ?trace\b/i;
 // Deutsche Suchverben; bewusst als Vollform, weil englisch "such" ein anderes
@@ -130,6 +136,7 @@ export function shouldSearchWeb(task) {
   if (URL_IN_TEXT_PATTERN.test(text)) return true;
 
   const normalisiert = normalizeForIntent(text);
+  if (TEXTARBEIT_PATTERN.test(normalisiert)) return false;
   if (SUCHVERB_PATTERN.test(normalisiert)) return true;
   if (ZUSTANDSFRAGE_PATTERN.test(normalisiert)) return true;
   if (stammTreffer(normalisiert, RECHERCHE_STAEMME)) return true;

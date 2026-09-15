@@ -661,7 +661,7 @@ function bindProfile() {
   $("#logoutLocal").addEventListener("click", () => {
     state.session = { authenticated: false, mode: PROJECT_ROLES.localOnly };
     localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(state.session));
-    state.profile = { ...state.profile, email: "" }; localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify({ name: state.profile.name || "" })); $("#profileEmail").value = ""; // Freigabe 1h
+    state.profile = { ...state.profile, email: "" }; localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify({ name: state.profile.name || "" })); $("#profileEmail").value = ""; try { localStorage.removeItem("smejj.entwurf.v1"); } catch {} // Freigabe 1h + Entwurf
     refreshSessionStatus();
     writeOutput("#profileOutput", "Logout abgeschlossen. Lokale Projekte wurden nicht geloescht.");
   });
