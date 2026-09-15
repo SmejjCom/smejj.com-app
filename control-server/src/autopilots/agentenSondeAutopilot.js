@@ -10,8 +10,15 @@
 // (…_ENABLED=YES), muss antworten — sonst rot. Ein bewusst ausgeschalteter
 // Dienst ist grün mit Hinweis, nie stumm. Gemessen wird GET /health beider
 // Worker (ohne Auth, ohne Auftrag, ohne Kosten).
+//
+// Seit dem Master-Audit 2026-09-15 zusätzlich EINE echte Aufgabe je Worker
+// (echteProben.js): beide öffnen https://example.com und müssen „Example
+// Domain" zurückliefern — höchstens einmal je 22 h, Stand neustartfest, mit
+// demselben Bearer-Token wie im Produktbetrieb. Ein Worker, der gerade einen
+// Nutzerauftrag fährt, wird nicht zusätzlich belastet.
 import { readMausEngineConfig } from "../routes/mausEngineRoutes.js";
 import { readRemoteBrowserConfig } from "../routes/browserRemoteRoutes.js";
+import { probeFernBrowser, probeImTakt, probeMaus } from "./echteProben.js";
 
 const HEALTH_TIMEOUT_MS = 8_000;
 
@@ -48,12 +55,12 @@ async function holeHealth(url, fetchImpl) {
 }
 
 /** Der Lauf im Takt: Selbsttest, Konfiguration, mit Netz beide Health-Endpunkte. */
-export async function laufAgentenSonde({ mitNetz = true, env = process.env, fetchImpl = fetch } = {}) {
+export async function laufAgentenSonde({ mitNetz = true, env = process.env, fetchImpl = fetch, mitProbe = fetchImpl === fetch, ablagen = {}, sofortMs } = {}) {
   const probe = fuehreSelbsttestAus();
   if (!probe.bestanden) return { ok: false, meldung: `Agenten-Sonde beurteilt bekannte Lagen falsch: ${probe.fehler.join("; ")}` };
   const dienste = [
-    { name: "Maus-Engine", konfig: readMausEngineConfig(env) },
-    { name: "Fern-Browser", konfig: readRemoteBrowserConfig(env) }
+    { name: "Maus-Engine", kennung: "agenten-sonde-mausprobe", konfig: readMausEngineConfig(env), belegt: (d) => d?.running === true || Number(d?.sitzungen) > 0, probe: probeMaus },
+    { name: "Fern-Browser", kennung: "agenten-sonde-fernbrowserprobe", konfig: readRemoteBrowserConfig(env), belegt: (d) => d?.activeCodingRun === true, probe: probeFernBrowser }
   ];
   if (!mitNetz) {
     const an = dienste.filter((d) => d.konfig?.enabled).map((d) => d.name);
@@ -62,7 +69,17 @@ export async function laufAgentenSonde({ mitNetz = true, env = process.env, fetc
   const urteile = [];
   for (const d of dienste) {
     const health = d.konfig?.enabled && d.konfig?.configured ? await holeHealth(d.konfig.workerUrl, fetchImpl) : null;
-    urteile.push(beurteileDienst(d.name, d.konfig, health));
+    const urteil = beurteileDienst(d.name, d.konfig, health);
+    if (mitProbe && urteil.ok && health) {
+      if (d.belegt(health.daten)) {
+        urteil.text += "; Probe verschoben (Nutzerauftrag läuft)";
+      } else {
+        const probe = await probeImTakt({ kennung: d.kennung, ablage: ablagen[d.kennung] || null, sofortMs, probe: () => d.probe({ konfig: d.konfig, fetchImpl }) });
+        if (probe.ok === false) urteil.ok = false;
+        urteil.text += `; ${probe.text}`;
+      }
+    }
+    urteile.push(urteil);
   }
   const rot = urteile.filter((u) => !u.ok);
   return {

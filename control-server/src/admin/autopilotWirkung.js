@@ -22,9 +22,9 @@ export const WIRKUNG = Object.freeze({
     "multi-file-repo-architect", "live-arena-leaderboard", "instant-web-container", "realtime-voice-pair", "autonomous-git-bot"
   ]),
   teilweise: Object.freeze({
-    "voice-region-check": "fragt nur das Freigabe-Flag ab, erzeugt keine Sprache",
-    "multimodal-engine": "nur /health von Bild- und Video-Dienst, kein erzeugtes Bild",
-    "agenten-sonde": "nur /health, der Browser erledigt keine Aufgabe",
+    // voice-region-check und agenten-sonde sind seit 15.09. "echt": Piper spricht,
+    // Maus-Engine und Fern-Browser öffnen example.com (echteProben.js, 1× je 22 h).
+    "multimodal-engine": "Bild-Maler malt 1× je 22 h ein echtes Probebild; Video-Worker nur /health (kein Kurz-Modus — jeder Auftrag malt erst ein Bild)",
     "knowledge-graph": "echter Scan, Ergebnis wird nicht weiterverwendet",
     "bug-predictor": "echter Scan, Befunde werden nicht gespeichert",
     "user-feedback-flywheel": "zählt echte Daumen, erzeugt keine Trainingspaare",
