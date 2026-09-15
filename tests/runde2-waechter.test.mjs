@@ -9,7 +9,7 @@ import { beurteileEinwilligung, leseEinwilligungsLage, laufEinwilligungsWache, f
 import { messlaufImTakt, kritischeFaelle, beurteileMessung, warteAufMessung, leseBrueckenVersion, faelleHash, ABLAGE_ID, ABLAGE_VERSION } from "../control-server/src/autopilots/brueckenMesslauf.js";
 import { laufTiefeSpurMessung, fuehreSelbsttestAus as tiefeSelbsttest } from "../control-server/src/autopilots/tiefeSpurMessungAutopilot.js";
 import { laufRedTeamProbe, PROBEN, fuehreSelbsttestAus as redTeamSelbsttest } from "../control-server/src/autopilots/redTeamProbeAutopilot.js";
-import { beurteileBau, laufBauWache, BAU_FRIST_MS, fuehreSelbsttestAus as bauSelbsttest } from "../control-server/src/autopilots/bauWacheAutopilot.js";
+import { beurteileBau, laufBauWache, leiteCommitAb, BAU_FRIST_MS, fuehreSelbsttestAus as bauSelbsttest } from "../control-server/src/autopilots/bauWacheAutopilot.js";
 import { beurteileProjektwissen, laufProjektwissenFrische, fuehreSelbsttestAus as frischeSelbsttest } from "../control-server/src/autopilots/projektwissenFrischeAutopilot.js";
 import { pruefeSprachseite, laufSprachseitenWache, SPRACHEN, fuehreSelbsttestAus as sprachSelbsttest } from "../control-server/src/autopilots/sprachseitenWacheAutopilot.js";
 import { beurteileDienst, laufAgentenSonde, fuehreSelbsttestAus as sondeSelbsttest } from "../control-server/src/autopilots/agentenSondeAutopilot.js";
@@ -279,6 +279,19 @@ test("Nr. 76 Bau-Wache: alter Push ohne Bau rot, gleicher Commit grün, GitHub-M
   const kaputt = await laufBauWache({ env: { ZEABUR_GIT_COMMIT_SHA: "d17743a5ffff" }, fetchImpl: async () => antwort(403, "rate limit") });
   assert.equal(kaputt.ok, false);
   assert.match(kaputt.meldung, /GitHub nicht lesbar/);
+
+  // Master-Audit 15.09.: Zeabur setzt ZEABUR_GIT_COMMIT_SHA nicht mehr. Ableitung nur,
+  // wenn der Check-Run erfolgreich ist UND nahe am Prozessstart fertig wurde.
+  const start = Date.parse("2026-09-15T07:57:46Z");
+  const mitZeit = (fertig) => async (url) => url.includes("/check-runs")
+    ? antwort(200, { check_runs: [{ name: "Zeabur", status: "completed", conclusion: "success", completed_at: fertig }] })
+    : antwort(200, { sha: "f1f7811bffff", commit: { committer: { date: "2026-09-15T07:50:00Z" } } });
+  const abgeleitet = await laufBauWache({ env: {}, fetchImpl: mitZeit("2026-09-15T07:58:30Z"), prozessStartMs: start, jetztMs: start + 120_000 });
+  assert.equal(abgeleitet.ok, true, abgeleitet.meldung);
+  assert.match(abgeleitet.meldung, /jüngsten Commit f1f7811b .*abgeleitet aus Zeabur-Check-Run/);
+  const altContainer = await laufBauWache({ env: {}, fetchImpl: mitZeit("2026-09-15T09:30:00Z"), prozessStartMs: start, jetztMs: Date.parse("2026-09-15T09:31:00Z") });
+  assert.equal(altContainer.ok, false, "Bau fertig lange NACH dem Start = dieser Container ist nicht der Bau");
+  assert.equal(leiteCommitAb({ juengster: "abc", checkRun: { status: "completed", conclusion: "failure", completed_at: "2026-09-15T07:58:30Z" }, prozessStartMs: start }), "");
 });
 
 // ---------------------------------------------------------------- Nr. 77

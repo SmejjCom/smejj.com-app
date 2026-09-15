@@ -65,11 +65,26 @@ async function github(pfad, fetchImpl) {
   return antwort.json();
 }
 
+/**
+ * Leitet den laufenden Commit ab, wenn Zeabur ZEABUR_GIT_COMMIT_SHA nicht mehr setzt.
+ * BEFUND 2026-09-15 (Master-Audit Runde 3): seit den Bauten ab ca. 07:00 UTC fehlt die
+ * Variable im Container, die Bau-Wache stand rot "nicht messbar", obwohl der Bau des
+ * jüngsten Commits erfolgreich war. Abgeleitet wird nur, wenn der Zeabur-Check-Run des
+ * jüngsten Commits erfolgreich ist UND höchstens 10 min vom Start dieses Prozesses
+ * entfernt fertig wurde — sonst bleibt der Commit unbekannt (fail-closed).
+ */
+export function leiteCommitAb({ juengster = "", checkRun = null, prozessStartMs = 0 } = {}) {
+  if (!juengster || checkRun?.status !== "completed" || checkRun?.conclusion !== "success") return "";
+  const fertigMs = Date.parse(checkRun.completed_at || "");
+  if (!Number.isFinite(fertigMs) || !Number.isFinite(prozessStartMs) || prozessStartMs <= 0) return "";
+  return Math.abs(fertigMs - prozessStartMs) <= 10 * 60_000 ? juengster : "";
+}
+
 /** Der Lauf im Takt: Selbsttest, dann Umgebung + GitHub. */
-export async function laufBauWache({ mitNetz = true, env = process.env, fetchImpl = fetch, jetztMs = Date.now() } = {}) {
+export async function laufBauWache({ mitNetz = true, env = process.env, fetchImpl = fetch, jetztMs = Date.now(), prozessStartMs = Date.now() - process.uptime() * 1000 } = {}) {
   const probe = fuehreSelbsttestAus();
   if (!probe.bestanden) return { ok: false, meldung: `Bau-Wache beurteilt bekannte Lagen falsch: ${probe.fehler.join("; ")}` };
-  const laufend = laufendenCommit(env);
+  let laufend = laufendenCommit(env);
   if (!mitNetz) return { ok: true, meldung: `Netz-Takt abgewartet — Container trägt ${laufend ? laufend.slice(0, 8) : "unbekannt"}` };
   let juengster = "";
   let juengsterAm = 0;
@@ -85,6 +100,12 @@ export async function laufBauWache({ mitNetz = true, env = process.env, fetchImp
   } catch (f) {
     return { ok: false, meldung: `GitHub nicht lesbar (${String(f?.message || f).slice(0, 50)}) — Bau-Lage nicht messbar; Container trägt ${laufend ? laufend.slice(0, 8) : "unbekannt"}` };
   }
+  let abgeleitet = false;
+  if (!laufend) {
+    laufend = leiteCommitAb({ juengster, checkRun, prozessStartMs });
+    abgeleitet = Boolean(laufend);
+  }
   const urteil = beurteileBau({ laufend, juengster, juengsterAm, checkRun, jetztMs });
-  return { ok: urteil.ok, meldung: `Selbsttest ${probe.geprueft}/${probe.geprueft}; ${urteil.grund}` };
+  const hinweis = abgeleitet ? " — abgeleitet aus Zeabur-Check-Run und Startzeit (ZEABUR_GIT_COMMIT_SHA fehlt im Container)" : "";
+  return { ok: urteil.ok, meldung: `Selbsttest ${probe.geprueft}/${probe.geprueft}; ${urteil.grund}${hinweis}` };
 }
