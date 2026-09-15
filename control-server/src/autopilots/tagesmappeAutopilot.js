@@ -22,6 +22,7 @@ import { DSGVO_FRISTEN_ABLAGE } from "./dsgvoFristenAutopilot.js";
 import { FLAGGEN_ABLAGE } from "./flaggenAutopilot.js";
 import { MODELL_EVOLUTION_ABLAGE, LETZTER_ZYKLUS_ID } from "./modellEvolutionAutopilot.js";
 import { listeAusgestellt } from "../publicapi/publicApiAdminKeys.js";
+import { KERN_AMPELN, ROT_SCHWELLE } from "./rueckRollerAutopilot.js";
 
 /** Offene Punkte, die nur der Betreiber entscheiden kann. Gepflegt im Code,
  *  damit jeder Eintrag mit seinem Grund im Review steht — KEINE Messwerte. */
@@ -63,8 +64,10 @@ export async function baueTagesmappe({
   const wartenAufDich = [];
 
   // 1. Ampel: rote Autopiloten mit ihrer letzten Meldung.
+  let roteKerneJetzt = null;
   try {
     const ampel = uebersicht({ jetztMs });
+    roteKerneJetzt = (ampel.autopiloten || []).filter((a) => KERN_AMPELN.includes(a.id) && a.ampel === "rot").length;
     for (const a of ampel.autopiloten || []) {
       if (a.ampel === "rot") {
         roteAmpeln.push({ id: a.id, name: a.name, meldung: a.letzterLauf?.meldung || "ohne Meldung" });
@@ -81,8 +84,13 @@ export async function baueTagesmappe({
     else {
       // Master-Audit 15.09.: der Rück-Roller legt je Lauf eine Empfehlung ab — dieselbe
       // Ziel-Version stand dadurch mehrfach in der Mappe. Eine Entscheidung je Ziel.
+      // Admin-A-bis-Z 16.09.: eine Empfehlung von gestern ("2 rote Kern-Ampeln auf
+      // Stand 1eeb337b") stand noch in der Mappe, während alle Kerne längst wieder
+      // grün waren und ein neuer Stand lief. Empfohlen wird nur, solange die Lage
+      // JETZT noch trägt — sonst hieße die Mappe, einen gesunden Stand zurückzurollen.
+      const lageErledigt = roteKerneJetzt !== null && roteKerneJetzt < ROT_SCHWELLE;
       const gesehen = new Set();
-      for (const e of liste.datensaetze) {
+      for (const e of lageErledigt ? [] : liste.datensaetze) {
         if (e.art === "rueckroll-empfehlung" && jetztMs - Date.parse(e.createdAt || 0) < 3 * 86_400_000) {
           const ziel = String(e.zuSha).slice(0, 8);
           if (gesehen.has(ziel)) continue;
