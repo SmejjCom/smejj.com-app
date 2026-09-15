@@ -54,9 +54,13 @@ async function holeKapazitaet(env, leseKapazitaet) {
       freiePlaetze: Math.max(0, maximal - belegt),
       reserviertUsd: Number(s.reservedUsd || 0),
       obergrenzeUsd: Number(s.maxGlobalReservedUsd || 0),
+      // Abgelaufene Reservierungen zaehlt der Kapazitaetsspeicher nicht mehr mit
+      // (Befund 15.09.: ein Platz vom 12.07. blockierte zwei Monate lang).
+      abgelaufenePlaetze: Number(s.expiredSlots || 0),
       // Nur Job-Kennungen und Fristen — keine Auftragsinhalte.
       laeufe: (Array.isArray(s.jobs) ? s.jobs : []).map((j) => ({
-        jobId: j.jobId, gruppe: j.groupName || null, fristAm: j.deadlineAt || null
+        jobId: j.jobId, gruppe: j.groupName || null, fristAm: j.deadlineAt || null,
+        abgelaufenSeit: j.expired === true ? (j.expiredSince || j.deadlineAt || null) : null
       }))
     };
   } catch (error) {
@@ -103,7 +107,8 @@ function bewerte(kapazitaet, container) {
   // Eine stillgelegte Quelle zaehlt nicht als Ausfall — sonst stuende hier
   // dauerhaft ein Alarm fuer etwas, das absichtlich weg ist.
   if (container.stillgelegt) {
-    return kapazitaet.erreichbar ? "unauffaellig" : "Kapazitaet nicht erreichbar";
+    if (!kapazitaet.erreichbar) return "Kapazitaet nicht erreichbar";
+    return abgelaufenHinweis(kapazitaet) || "unauffaellig";
   }
   if (!kapazitaet.erreichbar && !container.erreichbar) return "keine Quelle erreichbar";
   if (kapazitaet.erreichbar && kapazitaet.freiePlaetze === 0 && kapazitaet.maximalePlaetze > 0) {
@@ -114,5 +119,26 @@ function bewerte(kapazitaet, container) {
   }
   if (!container.erreichbar) return "Kapazitaet bekannt, Maschine nicht erreichbar";
   if (!kapazitaet.erreichbar) return "Maschine bekannt, Kapazitaet nicht erreichbar";
-  return "unauffaellig";
+  return abgelaufenHinweis(kapazitaet) || "unauffaellig";
+}
+
+// Ein abgelaufener Platz blockiert nichts mehr, liegt aber noch im Speicher,
+// bis der Wiederanlauf ihn mit Stopp-Nachweis freigibt. Das soll man lesen,
+// nicht erraten.
+function abgelaufenHinweis(kapazitaet) {
+  const abgelaufen = (kapazitaet.laeufe || []).filter((l) => l.abgelaufenSeit);
+  if (!abgelaufen.length) return "";
+  const aeltester = abgelaufen.map((l) => l.abgelaufenSeit).sort()[0];
+  return (abgelaufen.length === 1 ? "1 Reservierung" : abgelaufen.length + " Reservierungen")
+    + " abgelaufen seit " + lesbareZeit(aeltester) + " — zaehlt nicht mehr gegen die Plaetze";
+}
+
+// "2026-07-12T18:28:01.086Z" -> "12.07.2026 18:28 UTC" (die Tabelle ist gesperrt,
+// deshalb muss der Satz selbst lesbar sein).
+function lesbareZeit(iso) {
+  const t = new Date(iso);
+  if (Number.isNaN(t.getTime())) return String(iso);
+  const z = (n) => String(n).padStart(2, "0");
+  return z(t.getUTCDate()) + "." + z(t.getUTCMonth() + 1) + "." + t.getUTCFullYear()
+    + " " + z(t.getUTCHours()) + ":" + z(t.getUTCMinutes()) + " UTC";
 }

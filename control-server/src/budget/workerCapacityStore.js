@@ -5,6 +5,18 @@ const HEAD_KEY = "jobs/capacity/salad-ephemeral.json";
 const JSON_TYPE = "application/json; charset=utf-8";
 const RECORD_TYPE = "smejj.com-global-worker-capacity";
 const MAX_CAS_ATTEMPTS = 8;
+// Befund 15.09.: Ein Platz vom 12.07. blieb zwei Monate belegt. Freigegeben wird
+// ein Platz nur mit Stopp-Nachweis des Anbieters (release/releaseRecovered) —
+// seit Salad abgeschaltet ist, kann dieser Nachweis nie mehr kommen. Gezaehlt
+// wurde aber JEDER gespeicherte Platz, auch einer, dessen Frist laengst vorbei
+// war. Jetzt zaehlt ein Platz nur bis Frist + Nachlauf. Der Nachlauf deckt die
+// Stopp-Wiederholungen des Waechters (5 s, 15 s, 30 s, 60 s …) ab: solange ein
+// Stopp noch laufen koennte, bleibt der Platz fail-closed belegt.
+export const EXPIRED_SLOT_GRACE_MS = 15 * 60_000;
+// Abgelaufene Plaetze bleiben gespeichert, bis der vorhandene Aufraeumweg
+// (Wiederanlauf mit Stopp-Nachweis) sie freigibt. Diese Grenze haelt den
+// Kopfdatensatz trotzdem endlich; ist sie erreicht, startet nichts mehr.
+export const MAX_STORED_SLOTS = 64;
 
 export function createWorkerCapacityStore({
   env = process.env,
@@ -26,23 +38,27 @@ export function createWorkerCapacityStore({
     }
     const at = nowMs();
     for (let attempt = 1; attempt <= MAX_CAS_ATTEMPTS; attempt += 1) {
-      const current = await readHead(reader);
+      const current = await readHead(reader, at);
       if (!current.ok) return current;
       if (current.value && !samePolicy(current.value, policy)) return failure("global_worker_capacity_policy_mismatch");
       const existing = current.value?.slots.find((slot) => slot.jobId === job.id && slot.watchdogLeaseId === watchdogLease.leaseId);
       if (existing) {
         const audit = await appendAudit(writer, reader, job, existing);
         return audit.ok
-          ? { ok: true, idempotent: true, lease: publicLease(existing), audit, snapshot: publicSnapshot(current.value) }
+          ? { ok: true, idempotent: true, lease: publicLease(existing), audit, snapshot: publicSnapshot(current.value, at) }
           : audit;
       }
       const state = current.value || emptyState(policy, at);
-      const reservedUsd = state.slots.reduce((sum, slot) => sum + slot.budgetUsd, 0);
-      if (state.slots.length >= policy.maxConcurrentWorkers) {
-        return failure("global_worker_capacity_slots_exhausted", { snapshot: publicSnapshot(state) });
+      const counted = countedSlots(state, at);
+      const reservedUsd = counted.reduce((sum, slot) => sum + slot.budgetUsd, 0);
+      if (counted.length >= policy.maxConcurrentWorkers) {
+        return failure("global_worker_capacity_slots_exhausted", { snapshot: publicSnapshot(state, at) });
       }
       if (reservedUsd + Number(watchdogLease.budgetUsd) > policy.maxGlobalReservedUsd + Number.EPSILON) {
-        return failure("global_worker_capacity_budget_exhausted", { snapshot: publicSnapshot(state) });
+        return failure("global_worker_capacity_budget_exhausted", { snapshot: publicSnapshot(state, at) });
+      }
+      if (state.slots.length >= MAX_STORED_SLOTS) {
+        return failure("global_worker_capacity_expired_slots_unreleased", { snapshot: publicSnapshot(state, at) });
       }
       const slot = Object.freeze({
         capacityId: `capacity_${crypto.randomUUID()}`,
@@ -55,16 +71,16 @@ export function createWorkerCapacityStore({
         claimedAt: new Date(at).toISOString(),
         deadlineAt: new Date(watchdogLease.deadlineAt).toISOString(),
         acquiredRevision: state.revision + 1,
-        activeSlotsAfterAcquire: state.slots.length + 1,
+        activeSlotsAfterAcquire: counted.length + 1,
         reservedUsdAfterAcquire: Number((reservedUsd + Number(watchdogLease.budgetUsd)).toFixed(8))
       });
       const next = nextState(state, [...state.slots, slot], at);
-      const written = await compareAndWrite(writer, reader, next, current);
+      const written = await compareAndWrite(writer, reader, next, current, at);
       if (written.reason === "global_worker_capacity_race_lost") continue;
       if (!written.ok) return written;
       const audit = await appendAudit(writer, reader, job, slot);
       if (!audit.ok) return audit;
-      return { ok: true, idempotent: false, lease: publicLease(slot), audit, snapshot: publicSnapshot(next) };
+      return { ok: true, idempotent: false, lease: publicLease(slot), audit, snapshot: publicSnapshot(next, at) };
     }
     return failure("global_worker_capacity_contention");
   }
@@ -77,36 +93,37 @@ export function createWorkerCapacityStore({
     if (!proof) return failure("global_worker_capacity_stop_proof_required");
     const at = nowMs();
     for (let attempt = 1; attempt <= MAX_CAS_ATTEMPTS; attempt += 1) {
-      const current = await readHead(reader);
+      const current = await readHead(reader, at);
       if (!current.ok) return current;
       const slot = current.value?.slots.find((item) => item.capacityId === lease.capacityId);
-      if (!slot) return { ok: true, idempotent: true, lease, snapshot: publicSnapshot(current.value || emptyState(policy, at)) };
+      if (!slot) return { ok: true, idempotent: true, lease, snapshot: publicSnapshot(current.value || emptyState(policy, at), at) };
       if (!matchingLease(slot, lease) || slot.jobId !== job.id || slot.ownerId !== job.userId) {
         return failure("global_worker_capacity_lease_lost");
       }
       const audit = await appendReleaseAuthorization(writer, reader, job, slot, proof);
       if (!audit.ok) return audit;
       const next = nextState(current.value, current.value.slots.filter((item) => item.capacityId !== slot.capacityId), at);
-      const written = await compareAndWrite(writer, reader, next, current);
+      const written = await compareAndWrite(writer, reader, next, current, at);
       if (written.reason === "global_worker_capacity_race_lost") continue;
       if (!written.ok) return written;
-      return { ok: true, idempotent: false, lease: publicLease(slot), audit, snapshot: publicSnapshot(next) };
+      return { ok: true, idempotent: false, lease: publicLease(slot), audit, snapshot: publicSnapshot(next, at) };
     }
     return failure("global_worker_capacity_contention");
   }
 
   async function snapshot() {
     if (!config.ok || !policy.ok) return failure("global_worker_capacity_configuration_invalid");
-    const current = await readHead(reader);
+    const at = nowMs();
+    const current = await readHead(reader, at);
     if (!current.ok) return current;
-    return { ok: true, snapshot: publicSnapshot(current.value || emptyState(policy, nowMs())) };
+    return { ok: true, snapshot: publicSnapshot(current.value || emptyState(policy, at), at) };
   }
 
   async function releaseRecovered(watchdogLease, stopEvidence) {
     if (!config.ok || !validWatchdogLease(watchdogLease)) {
       return failure("global_worker_capacity_configuration_invalid");
     }
-    const current = await readHead(reader);
+    const current = await readHead(reader, nowMs());
     if (!current.ok) return current;
     const slot = current.value?.slots.find((item) => item.watchdogLeaseId === watchdogLease.leaseId
       && item.groupName === watchdogLease.groupName);
@@ -121,20 +138,20 @@ export function createWorkerCapacityStore({
   return { acquire, release, releaseRecovered, snapshot, policy };
 }
 
-async function readHead(reader) {
+async function readHead(reader, at) {
   try {
     const result = await reader(HEAD_KEY);
     if (result?.status === 404) return { ok: true, value: null, etag: "" };
     if (result?.ok !== true || !result.etag) return failure("global_worker_capacity_head_read_failed");
     const value = JSON.parse(String(result.body || ""));
-    if (!validState(value)) return failure("global_worker_capacity_head_invalid");
+    if (!validState(value, at)) return failure("global_worker_capacity_head_invalid");
     return { ok: true, value, etag: result.etag };
   } catch {
     return failure("global_worker_capacity_head_read_failed");
   }
 }
 
-async function compareAndWrite(writer, reader, state, current) {
+async function compareAndWrite(writer, reader, state, current, at) {
   const body = `${JSON.stringify(state, null, 2)}\n`;
   const object = {
     key: HEAD_KEY,
@@ -152,7 +169,7 @@ async function compareAndWrite(writer, reader, state, current) {
   if (result?.ok !== true || result?.conditionEnforced !== true) {
     return failure("global_worker_capacity_cas_not_enforced");
   }
-  const readback = await readHead(reader);
+  const readback = await readHead(reader, at);
   if (!readback.ok || JSON.stringify(readback.value) !== JSON.stringify(state)) {
     return failure("global_worker_capacity_readback_mismatch");
   }
@@ -258,7 +275,9 @@ function nextState(current, slots, at) {
   };
 }
 
-function validState(value) {
+// Zeitabhaengig, aber nur in eine Richtung: ein Zustand, der beim Schreiben
+// gueltig war, bleibt gueltig — mit der Zeit werden Plaetze nur frei, nie belegt.
+function validState(value, at) {
   return value?.schemaVersion === 1
     && value.recordType === RECORD_TYPE
     && Number.isInteger(value.revision)
@@ -269,10 +288,11 @@ function validState(value) {
     && Number.isFinite(value.maxGlobalReservedUsd)
     && value.maxGlobalReservedUsd > 0
     && Array.isArray(value.slots)
-    && value.slots.length <= value.maxConcurrentWorkers
+    && value.slots.length <= MAX_STORED_SLOTS
     && value.slots.every(validSlot)
+    && countedSlots(value, at).length <= value.maxConcurrentWorkers
     && new Set(value.slots.map((slot) => slot.capacityId)).size === value.slots.length
-    && reservedUsd(value) <= value.maxGlobalReservedUsd + Number.EPSILON
+    && reservedUsd(value, at) <= value.maxGlobalReservedUsd + Number.EPSILON
     && Number.isFinite(Date.parse(value.updatedAt));
 }
 
@@ -344,8 +364,24 @@ function samePolicy(state, policy) {
     && state.maxGlobalReservedUsd === policy.maxGlobalReservedUsd;
 }
 
-function reservedUsd(state) {
-  return Number(state.slots.reduce((sum, slot) => sum + Number(slot.budgetUsd), 0).toFixed(8));
+// Abgelaufen = Frist plus Nachlauf vorbei. Eine unlesbare Frist gilt NICHT als
+// abgelaufen (fail-closed: im Zweifel bleibt der Platz belegt).
+export function isExpiredSlot(slot, at) {
+  const deadlineMs = Date.parse(slot?.deadlineAt);
+  const nowMs = Number(at);
+  return Number.isFinite(deadlineMs) && Number.isFinite(nowMs) && nowMs >= deadlineMs + EXPIRED_SLOT_GRACE_MS;
+}
+
+function countedSlots(state, at) {
+  return state.slots.filter((slot) => !isExpiredSlot(slot, at));
+}
+
+function sumUsd(slots) {
+  return Number(slots.reduce((sum, slot) => sum + Number(slot.budgetUsd), 0).toFixed(8));
+}
+
+function reservedUsd(state, at) {
+  return sumUsd(countedSlots(state, at));
 }
 
 function publicLease(slot) {
@@ -358,14 +394,26 @@ function publicLease(slot) {
   };
 }
 
-function publicSnapshot(state) {
+function publicSnapshot(state, at) {
+  const expired = state.slots.filter((slot) => isExpiredSlot(slot, at));
   return {
     revision: state.revision,
-    activeSlots: state.slots.length,
+    activeSlots: state.slots.length - expired.length,
+    expiredSlots: expired.length,
     maxConcurrentWorkers: state.maxConcurrentWorkers,
-    reservedUsd: reservedUsd(state),
+    reservedUsd: reservedUsd(state, at),
+    expiredReservedUsd: sumUsd(expired),
     maxGlobalReservedUsd: state.maxGlobalReservedUsd,
-    jobs: state.slots.map((slot) => ({ jobId: slot.jobId, groupName: slot.groupName, deadlineAt: slot.deadlineAt }))
+    jobs: state.slots.map((slot) => {
+      const abgelaufen = isExpiredSlot(slot, at);
+      return {
+        jobId: slot.jobId,
+        groupName: slot.groupName,
+        deadlineAt: slot.deadlineAt,
+        expired: abgelaufen,
+        expiredSince: abgelaufen ? slot.deadlineAt : null
+      };
+    })
   };
 }
 

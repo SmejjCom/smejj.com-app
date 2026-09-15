@@ -84,7 +84,34 @@ test("aus den Laeufen kommen nur Kennung und Frist", async () => {
       jobs: [{ jobId: "job_1", groupName: "smejj-glm", deadlineAt: "2026-07-28T13:00:00.000Z" }]
     } })
   });
-  assert.deepEqual(Object.keys(e.gemessen.reservierung.laeufe[0]).sort(), ["fristAm", "jobId"]);
+  assert.deepEqual(Object.keys(e.gemessen.reservierung.laeufe[0]).sort(), ["abgelaufenSeit", "fristAm", "jobId"]);
+});
+
+// Befund 15.09.: "Reservierungs-Obergrenze erreicht" wegen eines Laufs vom 12.07.
+test("kaputte Probe: eine abgelaufene Reservierung meldet keine volle Obergrenze", async () => {
+  const e = await kostenUebersicht({
+    env: SCHARF, jetztMs: JETZT, zaehleWorker: () => 0,
+    leseKapazitaet: async () => ({ ok: true, snapshot: {
+      reservedUsd: 0, expiredReservedUsd: 20, maxGlobalReservedUsd: 20, activeSlots: 0, expiredSlots: 2, maxConcurrentWorkers: 2,
+      jobs: [{ jobId: "job_alt", deadlineAt: "2026-07-12T18:28:01.086Z", expired: true, expiredSince: "2026-07-12T18:28:01.086Z" }]
+    } })
+  });
+  assert.equal(e.bewertung.includes("Obergrenze erreicht"), false);
+  assert.match(e.bewertung, /abgelaufen seit 12\.07\.2026 18:28 UTC/);
+  assert.equal(e.gemessen.reservierung.abgelaufenUsd, 20);
+  assert.equal(e.gemessen.reservierung.laeufe[0].abgelaufenSeit, "2026-07-12T18:28:01.086Z");
+});
+
+test("gesunde Probe: eine laufende Reservierung haelt die Obergrenze weiter voll", async () => {
+  const e = await kostenUebersicht({
+    env: SCHARF, jetztMs: JETZT, zaehleWorker: () => 0,
+    leseKapazitaet: async () => ({ ok: true, snapshot: {
+      reservedUsd: 20, expiredReservedUsd: 0, maxGlobalReservedUsd: 20, activeSlots: 2, expiredSlots: 0, maxConcurrentWorkers: 2,
+      jobs: [{ jobId: "job_neu", deadlineAt: "2026-07-28T13:00:00.000Z", expired: false, expiredSince: null }]
+    } })
+  });
+  assert.equal(e.bewertung.includes("Obergrenze erreicht"), true);
+  assert.equal(e.gemessen.reservierung.laeufe[0].abgelaufenSeit, null);
 });
 
 test("ein Fehler beim Worker-Zaehlen kippt die Ansicht nicht", async () => {

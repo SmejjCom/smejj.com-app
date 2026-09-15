@@ -73,7 +73,30 @@ test("alle Plaetze belegt wird benannt, nicht nur gezaehlt", async () => {
 
 test("aus den Laeufen kommen nur Kennungen und Fristen, keine Inhalte", async () => {
   const e = await workerUebersicht({ env: {}, jetztMs: JETZT, leseKapazitaet: KAPAZITAET_OK, leseContainer: CONTAINER_OK });
-  assert.deepEqual(Object.keys(e.kapazitaet.laeufe[0]).sort(), ["fristAm", "gruppe", "jobId"]);
+  assert.deepEqual(Object.keys(e.kapazitaet.laeufe[0]).sort(), ["abgelaufenSeit", "fristAm", "gruppe", "jobId"]);
+});
+
+// Befund 15.09.: Platz seit 12.07. belegt, Salad abgeschaltet, Seite sagte "unauffaellig".
+test("kaputte Probe: eine abgelaufene Reservierung sagt 'abgelaufen seit' und belegt keinen Platz", async () => {
+  const e = await workerUebersicht({
+    env: {}, jetztMs: Date.parse("2026-09-15T06:56:16.536Z"),
+    leseKapazitaet: async () => ({ ok: true, snapshot: {
+      activeSlots: 0, expiredSlots: 1, maxConcurrentWorkers: 1, reservedUsd: 0, expiredReservedUsd: 0.1, maxGlobalReservedUsd: 0.1,
+      jobs: [{ jobId: "job_codex_parity_source_x", groupName: "smejj-job-1", deadlineAt: "2026-07-12T18:28:01.086Z", expired: true, expiredSince: "2026-07-12T18:28:01.086Z" }]
+    } }),
+    leseContainer: async () => ({ ok: false, reason: "salad_api_not_configured" })
+  });
+  assert.equal(e.kapazitaet.freiePlaetze, 1);
+  assert.equal(e.kapazitaet.abgelaufenePlaetze, 1);
+  assert.equal(e.kapazitaet.laeufe[0].abgelaufenSeit, "2026-07-12T18:28:01.086Z");
+  assert.match(e.bewertung, /1 Reservierung abgelaufen seit 12\.07\.2026 18:28 UTC/);
+});
+
+test("gesunde Probe: ein laufender Lauf hat kein 'abgelaufen seit'", async () => {
+  const e = await workerUebersicht({ env: {}, jetztMs: JETZT, leseKapazitaet: KAPAZITAET_OK, leseContainer: CONTAINER_OK });
+  assert.equal(e.kapazitaet.laeufe[0].abgelaufenSeit, null);
+  assert.equal(e.kapazitaet.abgelaufenePlaetze, 0);
+  assert.equal(e.bewertung, "unauffaellig");
 });
 
 // ---- Stillgelegte Quelle ist kein Ausfall (2026-08-14) ----------------------

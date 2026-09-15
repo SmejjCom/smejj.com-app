@@ -119,8 +119,12 @@ async function holeKapazitaet(env, leseKapazitaet) {
       obergrenzeUsd: Number(s.maxGlobalReservedUsd || 0),
       belegtePlaetze: Number(s.activeSlots || 0),
       maximalePlaetze: Number(s.maxConcurrentWorkers || 0),
+      // Abgelaufene Reservierungen stecken NICHT in reserviertUsd (Befund 15.09.:
+      // ein Lauf vom 12.07. hielt die Obergrenze zwei Monate lang voll).
+      abgelaufenUsd: Number(s.expiredReservedUsd || 0),
       laeufe: (Array.isArray(s.jobs) ? s.jobs : []).map((j) => ({
-        jobId: j.jobId, fristAm: j.deadlineAt || null
+        jobId: j.jobId, fristAm: j.deadlineAt || null,
+        abgelaufenSeit: j.expired === true ? (j.expiredSince || j.deadlineAt || null) : null
       }))
     };
   } catch (error) {
@@ -137,10 +141,25 @@ function bewerte(grenzen, gate, kapazitaet) {
     && kapazitaet.reserviertUsd >= kapazitaet.obergrenzeUsd) {
     return "Reservierungs-Obergrenze erreicht — neue Laeufe warten.";
   }
+  const abgelaufen = (kapazitaet.laeufe || []).filter((l) => l.abgelaufenSeit);
+  if (kapazitaet.erreichbar && abgelaufen.length) {
+    const seit = abgelaufen.map((l) => l.abgelaufenSeit).sort()[0];
+    return "Reservierung abgelaufen seit " + lesbareZeit(seit) + " — zaehlt nicht mehr gegen die Obergrenze"
+      + (gate.approved ? "; ein neuer Lauf waere zulaessig." : ".");
+  }
   if (!gate.approved) {
     return "Ein neuer Lauf wuerde gerade abgelehnt: " + (gate.reasons[0] || "unbekannter Grund") + ".";
   }
   return "Budget-Gate scharf, ein neuer Lauf waere zulaessig.";
+}
+
+// "2026-07-12T18:28:01.086Z" -> "12.07.2026 18:28 UTC".
+function lesbareZeit(iso) {
+  const t = new Date(iso);
+  if (Number.isNaN(t.getTime())) return String(iso);
+  const z = (n) => String(n).padStart(2, "0");
+  return z(t.getUTCDate()) + "." + z(t.getUTCMonth() + 1) + "." + t.getUTCFullYear()
+    + " " + z(t.getUTCHours()) + ":" + z(t.getUTCMinutes()) + " UTC";
 }
 
 function sicherZaehlen(zaehleWorker) {
