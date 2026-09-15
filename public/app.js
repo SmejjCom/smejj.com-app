@@ -3,7 +3,7 @@ import { PROJECT_ROLES, createLocalWorkspace } from "/assets/storage/index.js";
 import { AI_MODES, createAiRouter } from "/assets/ai/index.js";
 import { Icons, closeModal, openModal, renderChatMarkdown, renderEmptyState, setButtonIcon, showToast } from "./components.js?v=b48";
 import { bindPasteAttach, composePastedTask } from "./composer-paste-attach.js?v=4";
-import { bindeSuchNachlader, holeSuche, ladeSucheFuerAnsicht } from "./such-nachladen.js?v=13";
+import { bindeSuchNachlader, holeSuche, ladeSucheFuerAnsicht } from "./such-nachladen.js?v=14";
 import { initWorkspaceBridge } from "./workspace-bridge.js";
 import { ladeBeiAnsicht, ladeBeiKlick } from "./nachladen.js?v=2";
 import { holeSendepfad } from "./sendepfad-nachladen.js?v=23";
@@ -12,7 +12,7 @@ import { initPanelBackdrop } from "./panel-backdrop.js?v=panel-backdrop-20260803
 import { buildChatTargets, buildRequestHistory } from "./chat-history-context.js";
 import { lesbarerStatus } from "./system-status-text.js";
 import { afterFirstPaint } from "./deferred-start.js";
-import { bindUploads, validateBrowserUpload } from "./uploads-surface.js?v=b39u-2";
+import { bindUploads, validateBrowserUpload } from "./uploads-surface.js?v=b39u-3";
 import { bindProjects, refreshProjectList, selectedProjectId } from "./projects-surface.js";
 import { PANEL_WIDTHS, bindPanelResize, getPanelWidth, restorePanelWidths, setPanelOpen, setPanelWidth } from "./panel-layout.js?v=4";
 import { bindLocalWorkspace, ensureProject, refreshLocalWorkspaceStatus } from "./local-workspace-surface.js";

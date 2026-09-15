@@ -19,7 +19,7 @@ import {
   abgleichsKarte, teileAuf, erzeugeVorfahrt, erzeugeAbgleichsSpeicher,
   istUeberschreibKonflikt, konfliktKopie, geraeteKurzname, neueKonfliktId, ohneAbgleichsmarke, nachzutragen, grabsteinWeg,
   abarbeitenMitGrenze
-} from "./chat-sync-auswahl.js?v=6";
+} from "./chat-sync-auswahl.js?v=7";
 
 const TOKEN_KEY = "smejj.auth.accessToken.v1";
 const PUSH_ENTPRELLUNG_MS = 4000;

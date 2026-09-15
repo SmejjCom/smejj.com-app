@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
   "suiteId": "smejj-1-0-phase1-foundation",
-  "version": "2026-09-09.1",
+  "version": "2026-09-15.1",
   "createdAt": "2026-08-14T06:00:09.591Z",
-  "description": "Immutable smejj.com Phase 1 foundation, safety, non-regression and cost benchmark suite. (Version 2026-09-09.1: Pruefsummen von check-no-paid-services.mjs (03.09.) und check-guidelines.mjs (07.09.) nachgezogen; Betreiber-Freigabe 2026-09-09. Suite-Inhalt und Erwartungen sonst unveraendert.) und check-guidelines.mjs (07.09.) nachgezogen; Betreiber-Freigabe 2026-09-09. Suite-Inhalt und Erwartungen sonst unveraendert.)",
+  "description": "Immutable smejj.com Phase 1 foundation, safety, non-regression and cost benchmark suite. (Version 2026-09-15.1: Pruefsumme von tests/security-abuse.test.mjs nachgezogen — der Service-Worker faengt /api/ nicht mehr ab (A-bis-Z-Livetest 15.09., Firefox-SW-Fehler); Erwartung unveraendert: nichts von /api/ landet im Offline-Speicher. Betreiber-Freigabe 2026-09-15 \"Alle beheben\". Suite-Inhalt sonst unveraendert.)",
   "immutable": true,
   "eligibleForTraining": false,
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "b58e0a4e743b997685d97285ea30b4e32d349f9b0d685f6cb185e4ebfa262178"
+    "contentSha256": "815fe94b84b12c560e086593dd8ebdd6cb8109dad1e6c387e3a736de5372bd73"
   },
   "protection": {
     "versionedObjectKey": "evaluations/suites/smejj-1-0-phase1-foundation/2026-07-28.5/manifest.json",
@@ -139,7 +139,7 @@
       },
       {
         "path": "tests/security-abuse.test.mjs",
-        "sha256": "81746bc18ae966dcab0d0f19261a52f612c838459551ac5eae4abb92ebf835c4"
+        "sha256": "342772d57bfad8195b9afaced5955a9365941c6f44515c874ba243bbe1f53317"
       },
       {
         "path": "tests/gatekeeper.policy.test.mjs",
