@@ -108,7 +108,8 @@ async function main() {
   console.log("\nBruecke: der Schluessel ist gesetzt, aber sie meldet erst nach dem Ausrollen ihres Buendels.");
   console.log("Stand der Bruecke (Feld evolutionMelder erscheint erst mit dem neuen Buendel):");
   try {
-    const antwort = await fetch(BRUECKE_GESUNDHEIT, { signal: AbortSignal.timeout(20_000) });
+    // Seit Bruecke v157 zeigt /health evolutionMelder nur mit Waechter-Ausweis.
+    const antwort = await fetch(BRUECKE_GESUNDHEIT, { headers: { "x-smejj-evolution-token": wert }, signal: AbortSignal.timeout(20_000) });
     const daten = await antwort.json();
     console.log(`  version=${daten.version} evolutionMelder=${JSON.stringify(daten.evolutionMelder || null)}`);
   } catch (fehler) {

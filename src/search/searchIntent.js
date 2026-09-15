@@ -92,8 +92,12 @@ const EXAKTE_RECHERCHE = ["link", "links", "url", "web", "online", "source", "so
 const SMALLTALK_PATTERN = /^(hi|hallo|hey|servus|moin|hey smejj|danke|dankeschoen|merci|ok|okay|alles klar|tschuess|bye|ciao|gute nacht|guten morgen|guten tag)\b[\s!.?]*$/i;
 // TEXTARBEIT (15.09.2026, live gemessen): "Übersetze ins Englische: Guten Morgen, wie
 // geht es dir?" loeste ueber "morgen" eine Websuche aus — 33 bis 84 s. Text hinter
-// Doppelpunkt zum Uebersetzen/Verbessern/Korrigieren/Umformulieren/Kuerzen ist Material.
-export const TEXTARBEIT_PATTERN = /^\s*(bitte\s+)?(uebersetz\w*|translate|korrigier\w*|verbesser\w*|umformulier\w*|kuerz\w*|formulier\w*)\b[^:\n]{0,60}:/i;
+// Doppelpunkt zum Uebersetzen/Verbessern/Korrigieren/Umformulieren/Kuerzen/
+// Zusammenfassen ist Material. v157 (A-bis-Z 15.09.): auch hinter einem kurzen Vorsatz
+// ("AZ15-Modell: Übersetze …:") — 1-3 Woerter je hoechstens 30 Zeichen ohne Doppelpunkt,
+// abgeschlossen mit ":" "," ";" "-" oder "–" und Leerraum; danach mindestens ein Zeichen
+// Material. Spiegel: public/chat-bridge-websuche.js TEXTARBEIT (Quelltext identisch).
+export const TEXTARBEIT_PATTERN = /^\s*(?:[^\s:]{1,30}(?:\s+[^\s:]{1,30}){0,2}\s*[:,;–-]\s+)?(?:bitte\s+)?(?:uebersetz\w*|translate|korrigier\w*|verbesser\w*|umformulier\w*|kuerz\w*|formulier\w*|fass\w*\s+(?:[^:\n]{0,40}\s)?zusammen)\b[^:\n]{0,60}:\s*\S/i;
 // Klare Coding-Absicht wird separat behandelt und braucht keine Websuche.
 const CODING_SKIP_PATTERN = /unified diff|\bpatch\b|\brefactor|\bdebug\b|\bstack ?trace\b/i;
 // Deutsche Suchverben; bewusst als Vollform, weil englisch "such" ein anderes

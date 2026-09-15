@@ -28,11 +28,12 @@ test("404 fuer das alte Modell: der Nachfolger antwortet, Kopfzeile nennt ihn", 
   assert.equal(res.kopf["x-smejj-model-id"], "qwen/qwen3.8-27b");
 });
 
-test("429 (Anbieter-Lage) wechselt NICHT das Modell, sondern gibt an den Text-Weg ab", async () => {
+test("v157: 429 (Anbieter-Lage) gibt NICHT mehr an den Text-Weg ab — Neuversuch, dann naechstes Modell, dann ehrliche Meldung", async () => {
   const gefragt = [];
   globalThis.fetch = async (_url, init) => { gefragt.push(JSON.parse(init.body).model); return new Response("{}", { status: 429 }); };
   const res = antwort();
-  assert.equal(await streamVisionLane(res, { preferences: { bildDataUrl: BILD } }, "Frage", deps), false);
-  assert.deepEqual(gefragt, ["qwen/qwen3.6-27b"]);
-  assert.equal(res.kopf, null, "kein Byte gesendet");
+  assert.equal(await streamVisionLane(res, { preferences: { bildDataUrl: BILD } }, "Frage", { ...deps, wartenMs: 5 }), true);
+  assert.deepEqual(gefragt, ["qwen/qwen3.6-27b", "qwen/qwen3.6-27b", "qwen/qwen3.8-27b"]);
+  assert.equal(res.status, 200);
+  assert.match(res.teile.join(""), /Das Bild konnte gerade nicht ausgewertet werden/);
 });

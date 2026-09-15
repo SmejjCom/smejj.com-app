@@ -72,6 +72,35 @@ export async function pruefeToken(token, { jetzt = Date.now(), fetchFn = fetch, 
   const schluessel = createHash("sha256").update(token).digest("hex");
   const gemerkt = cacheLesen(schluessel, jetzt);
   if (gemerkt !== null) return gemerkt ? "ja" : "nein";
+  // v157 (A-bis-Z-Befund M6, Erste-Zeichen-Zeit): Stand der Control Server eben NICHT
+  // zur Verfuegung (Netzfehler/Zeitueberschreitung), wartete bisher JEDE weitere Anfrage
+  // mit diesem Token erneut bis zu 5 s — obwohl sie danach ohnehin durchgelassen wurde.
+  // Jetzt gilt dieses "unbekannt" STILLE_PAUSE_MS lang ohne neuen Rundlauf. 5xx bleibt
+  // ungemerkt (schnell, also kein Zeitverlust). Ein laufender Rundlauf wird geteilt:
+  // beobachteAnmeldung und allowAuthenticated fragten bisher zweimal parallel.
+  if ((stillePause.get(schluessel) || 0) > jetzt) return "unbekannt";
+  if (laufend.has(schluessel)) return laufend.get(schluessel);
+  const rundlauf = frageControl(token, schluessel, { jetzt, fetchFn, controlOrigin });
+  laufend.set(schluessel, rundlauf);
+  try {
+    return await rundlauf;
+  } finally {
+    laufend.delete(schluessel);
+  }
+}
+
+const STILLE_PAUSE_MS = 15_000;
+const stillePause = new Map();
+const laufend = new Map();
+
+/** Merktes Urteil ohne Netz: "ja" | "nein" | null (unbekannt oder abgelaufen). */
+export function gemerktesUrteil(token, jetzt = Date.now()) {
+  if (!token) return null;
+  const gemerkt = cacheLesen(createHash("sha256").update(token).digest("hex"), jetzt);
+  return gemerkt === null ? null : gemerkt ? "ja" : "nein";
+}
+
+async function frageControl(token, schluessel, { jetzt, fetchFn, controlOrigin }) {
   let urteil = "unbekannt";
   let epost = "";
   try {
@@ -91,6 +120,8 @@ export async function pruefeToken(token, { jetzt = Date.now(), fetchFn = fetch, 
     }
   } catch {
     urteil = "unbekannt"; // Netzfehler oder Zeitueberschreitung
+    if (stillePause.size >= AUTH_CACHE_MAX) stillePause.clear();
+    stillePause.set(schluessel, jetzt + STILLE_PAUSE_MS);
   }
   // Nur eindeutige Urteile werden gemerkt — ein "unbekannt" darf sich nicht
   // festsetzen und die naechsten zehn Minuten mitbestimmen.
@@ -148,6 +179,7 @@ export function istBefreit(token, { jetzt = Date.now(), env = process.env } = {}
 /** Nur fuer Tests: leert den Zwischenspeicher der Anmeldepruefung. */
 export function _leereAuthCache() {
   authCache.clear();
+  stillePause.clear();
 }
 
 /** Boolesche Kurzform fuer die Zaehler: gilt das Token sicher? */

@@ -4,12 +4,13 @@ import { streamVisionLane } from "./chat-bridge-vision.js";
 import { streamBilderLane } from "./chat-bridge-bilder.js";
 // Rechnen statt schaetzen: Modelle koennen Potenzen nicht (Befund 2026-08-05).
 import { baueRechenKontext } from "./chat-bridge-rechner.js";
-import { buildWebContext } from "./chat-bridge-websuche.js";
+import { TEXTARBEIT, buildWebContext } from "./chat-bridge-websuche.js";
 // Wer fragen darf: Anmeldepflicht vor den modellkostenden Routen (seit 2026-08-05
 // wieder scharf); der Zaehler in /health zeigt daneben, was wirklich ankommt.
 import { allowAuthenticated, anmeldeStatistik, bearerToken, befreiteKonten, beobachteAnmeldung, istBefreit } from "./chat-bridge-auth.js";
-import { FRAGE_WERKZEUG, pipeVisibleStream } from "./chat-bridge-strom.js";
-import { modellKommentar, schreibeStromFehler, starteVorlauf } from "./chat-bridge-lebenszeichen.js";
+import { FRAGE_WERKZEUG, pipeMitInhalt, pipeVisibleStream } from "./chat-bridge-strom.js";
+import { KOPF_VORLAUF_MS, modellKommentar, schreibeStromFehler, starteVorlauf } from "./chat-bridge-lebenszeichen.js";
+import { gesundheitFuer, securityHeaders } from "./chat-bridge-sicherheit.js";
 import { meldeAktion, evolutionMelderStatus } from "./chat-bridge-evolution.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
 import { buildRagBlockMitVerlauf, lastUserContent, previousUserContent, ragIndexStatus, vorLetzterNutzerNachricht, withRagBlock } from "./chat-bridge-rag.js";
@@ -87,7 +88,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260915-v156-reserve-frist";
+const BRIDGE_VERSION = "20260915-v157-az-befunde";
 
 // Premium-Stimme: ausgelagerte Handler (siehe chat-bridge-voice-tts.js).
 // Funktionsdeklarationen unten sind gehoben — der Aufruf hier oben ist sicher.
@@ -103,7 +104,7 @@ export function createChatBridgeServer() {
       if (req.method === "OPTIONS") return preflight(req, res);
       const cors = corsHeaders(req.headers.origin);
       for (const [key, value] of Object.entries(cors)) res.setHeader(key, value);
-      if (url.pathname === "/health") return json(res, 200, healthPayload());
+      if (url.pathname === "/health") return json(res, 200, await gesundheitFuer(req, healthPayload(), { controlOrigin: CONTROL_ORIGIN })); // v157: anonym nur ok/app/version
       if (req.method !== "POST") return json(res, 404, { ok: false, error: "Not found" });
       if (!cors["Access-Control-Allow-Origin"]) return json(res, 403, { ok: false, error: "Origin not allowed" });
       const kostetModell = url.pathname === "/api/chat" || url.pathname === "/api/agent"
@@ -227,10 +228,9 @@ async function handleChat(req, res) {
   const body = await readJson(req);
   const messages = Array.isArray(body.messages) ? body.messages : [{ role: "user", content: String(body.message || "") }];
   const task = String(messages[messages.length - 1]?.content || "").trim();
-  if (task) {
-    if (await streamVisionLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS, maxBodyBytes: MAX_BODY_BYTES })) return;
-    if (await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS })) return;
-  }
+  // v157: ein Bild geht IMMER an die Vision-Spur — auch ohne Begleittext (vorher fiel es dann still ans Textmodell).
+  if (await streamVisionLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS, maxBodyBytes: MAX_BODY_BYTES })) return;
+  if (task && await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS })) return;
   // Anschlussfragen tragen ihr Thema nicht selbst — dann zaehlt die Frage davor.
   const wissen = buildRagBlockMitVerlauf(lastUserContent(messages), previousUserContent(messages));
   // Wechselndes ans Ende: der Wissensblock aendert sich mit jeder Frage und
@@ -589,8 +589,9 @@ export async function streamFastLane(res, messages, profile, requestedModel = ""
   }
   clearTimeout(timer);
   if (!upstream.ok || !upstream.body) return false;
-  if (res.headersSent) res.write(modellKommentar(`groq:${GROQ_MODEL}`, GROQ_MODEL, "true"));
-  else res.writeHead(200, {
+  // v157: leere Antwort ist kein Erfolg — Kopf erst mit Inhalt (spaetestens nach KOPF_VORLAUF_MS), sonst false.
+  const imStrom = res.headersSent;
+  const { text: antwortText, inhalt } = await pipeMitInhalt(upstream.body, res, () => imStrom ? res.write(modellKommentar(`groq:${GROQ_MODEL}`, GROQ_MODEL, "true")) : res.writeHead(200, {
     ...securityHeaders(),
     ...corsHeaders("https://smejj.com"),
     "Content-Type": "text/event-stream; charset=utf-8",
@@ -602,10 +603,9 @@ export async function streamFastLane(res, messages, profile, requestedModel = ""
     "x-smejj-model-id": GROQ_MODEL,
     "x-smejj-requested-model": String(requestedModel || ""),
     "x-smejj-model-fallback": "false"
-  });
-  const antwortText = await pipeVisibleStream(upstream.body, res);
-  // AI Evolution Engine: die eigene Antwort messen (Urteil geht an Control,
-  // der Text bleibt hier). Nie erwartet, nie werfend.
+  }), { festlegenNachMs: KOPF_VORLAUF_MS });
+  if (!inhalt) return false; // nichts Sichtbares gesendet: der naechste Weg antwortet (im selben Strom, falls der Kopf schon draussen ist)
+  // AI Evolution Engine: die eigene Antwort messen. Nie erwartet, nie werfend.
   meldeAktion({ art: "text", prompt: lastUserContent(messages), ergebnis: antwortText, quelle: "bruecke-chat", betrifft: "chat-antwort" });
   res.end();
   return true;
@@ -716,8 +716,6 @@ export function shouldSearchWeb(task) {
   const text = normalizeForIntent(roh);
   return !TEXTARBEIT.test(text) && (WENDUNG.test(text) || STAMM.test(text) || WORT.test(text));
 }
-// Textarbeit hinter Doppelpunkt ist Material, keine Suche (v154, gleich src/search/searchIntent.js TEXTARBEIT_PATTERN).
-const TEXTARBEIT = /^\s*(bitte\s+)?(uebersetz\w*|translate|korrigier\w*|verbesser\w*|umformulier\w*|kuerz\w*|formulier\w*)\b[^:\n]{0,60}:/i;
 
 // Adresse mit oder ohne Schema. Fail-closed ueber eine Endungsliste, damit
 // Dateinamen ("app.js") und Satzreste ("morgen.Danach") nicht faelschlich
@@ -770,14 +768,6 @@ function corsHeaders(origin) {
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Expose-Headers": "x-smejj-model-backend, x-smejj-model-id, x-smejj-model-fallback, Retry-After",
     Vary: "Origin"
-  };
-}
-
-function securityHeaders() {
-  return {
-    "X-Content-Type-Options": "nosniff",
-    "Referrer-Policy": "no-referrer",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
   };
 }
 

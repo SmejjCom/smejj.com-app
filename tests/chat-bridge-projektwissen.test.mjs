@@ -278,7 +278,11 @@ test("gebuendelte bridge reicht projektwissen an das modell durch", async (t) =>
   assert.ok(agent.filter((m) => m.role === "system").some((m) => m.content.startsWith("Internes Projektwissen")));
   assert.deepEqual(agent.map((m) => m.role), ["system", "system", "user"]);
 
-  const gesund = await (await fetch(`http://127.0.0.1:${port}/health`)).json();
+  // v157: anonym nur ok/app/version — die Kennzahlen bekommt ein angemeldetes Konto.
+  const anonym = await (await fetch(`http://127.0.0.1:${port}/health`)).json();
+  assert.deepEqual(Object.keys(anonym).sort(), ["app", "ok", "version"]);
+  assert.equal(anonym.version, artefakt.version);
+  const gesund = await (await fetch(`http://127.0.0.1:${port}/health`, { headers: { Authorization: "Bearer test-token" } })).json();
   assert.equal(gesund.projektwissen.enabled, true);
   assert.equal(gesund.version, artefakt.version);
 });

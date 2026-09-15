@@ -46,6 +46,45 @@ export async function pipeVisibleStream(body, res) {
 }
 
 /**
+ * v157 (A-bis-Z-Befund M3, 15.09.2026): Eine LEERE Modellantwort ist kein Erfolg.
+ * Live antwortete ein Modell mit "data: [DONE]" ohne ein sichtbares Zeichen — die
+ * Bruecke schickte Kopf und [DONE], der Nutzer sah eine leere Blase.
+ *
+ * Wie pipeVisibleStream, aber `beiStart()` (Antwortkopf oder Modell-Kommentar) laeuft
+ * erst mit dem ersten ECHTEN Inhalt (Text, Arbeitsschritt oder Rueckfrage-Karte) —
+ * oder, falls `festlegenNachMs` gesetzt ist, spaetestens dann (der Browser braucht
+ * seinen Antwortkopf rechtzeitig). Ohne Inhalt wird weder [DONE] geschrieben noch
+ * res beendet: `{ inhalt: false }` heisst, der Aufrufer darf den naechsten Weg nehmen.
+ *
+ * @returns {Promise<{text: string, inhalt: boolean}>}
+ */
+export async function pipeMitInhalt(body, res, beiStart, { festlegenNachMs = 0, beiErstemInhalt } = {}) {
+  let gestartet = false;
+  let inhalt = false;
+  const starte = () => { if (!gestartet) { gestartet = true; beiStart(); } };
+  const wecker = festlegenNachMs > 0 ? setTimeout(starte, festlegenNachMs) : null;
+  const ziel = {
+    write(stueck) {
+      const zeile = String(stueck);
+      if (!inhalt) {
+        if (zeile.startsWith("data: [DONE]")) return true;
+        inhalt = true;
+        clearTimeout(wecker);
+        starte();
+        beiErstemInhalt?.();
+      }
+      return res.write(zeile);
+    }
+  };
+  try {
+    const text = await pipeVisibleStream(body, ziel);
+    return { text, inhalt };
+  } finally {
+    clearTimeout(wecker);
+  }
+}
+
+/**
  * Das eine Werkzeug der Schnellspur: die Rueckfrage-Karte. Dieselbe Form wie
  * im Control-Server (toolLoop.js), damit das Modell auf beiden Wegen dasselbe
  * lernt. Bewusst NUR dieses Werkzeug — Suche und Lesen bleiben beim Control.

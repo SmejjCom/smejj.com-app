@@ -55,6 +55,16 @@ const GEMEINSAME_FAELLE = [
   "Übersetze ins Englische: Guten Morgen, wie geht es dir?",
   "Verbessere diesen Text: ich habe gestern keine zeit gehabt",
   "Korrigiere bitte: Die aktuellen Preise sind gestiegen",
+  // v157 (A-bis-Z 15.09.2026): dieselbe Textarbeit hinter einem kurzen Vorsatz — beide nein.
+  "AZ15-Modell: Übersetze ins Englische: Guten Morgen, wie geht es dir?",
+  "Hallo smejj, verbessere diesen Text: ich war gestern da",
+  "Test M3 – Korrigiere bitte: Die aktuellen Preise sind gestiegen",
+  "Aufgabe 3: Fasse diesen Text kurz zusammen: Heute war die Wahl in Berlin",
+  // Gegenproben: Vorsatz ohne Textarbeit, Textarbeit ohne Material, Suche vor dem Verb — beide ja.
+  "AZ15-Modell: Wetter heute in Berlin",
+  "Fasse die aktuellen Nachrichten zusammen",
+  "Suche aktuelle Preise und übersetze sie: iPhone",
+  "Die aktuellen Nachrichten von heute: fasse sie zusammen",
   // Statisches Allgemeinwissen — beide muessen nein sagen.
   "Was ist die Hauptstadt von Australien?",
   "Was ergibt sieben mal acht?",
@@ -121,4 +131,18 @@ test("Master-Audit 15.09.: nach Zugangsdaten wird in BEIDEN Weichen nie gesucht 
   // Gegenprobe: normale Aktualitaets- und Adressfragen suchen weiter.
   assert.equal(bridgeGate("Lies https://imild.com/ und nenne den Titel"), true);
   assert.equal(controlGate("Wetter heute in Berlin"), true);
+});
+
+test("v157: Textarbeit mit Vorsatz — Regel in Bruecke und Control-Server-Quelle ist Zeichen fuer Zeichen gleich", async () => {
+  const { TEXTARBEIT_PATTERN } = await import("../src/search/searchIntent.js");
+  const { TEXTARBEIT } = await import("../public/chat-bridge-websuche.js");
+  assert.equal(TEXTARBEIT.source, TEXTARBEIT_PATTERN.source);
+  assert.equal(TEXTARBEIT.flags, TEXTARBEIT_PATTERN.flags);
+  // Der Live-Befund: mit Vorsatz suchte die Bruecke, ohne nicht.
+  for (const frage of ["AZ15-Modell: Übersetze ins Englische: Guten Morgen, wie geht es dir?", "Übersetze ins Englische: Guten Morgen, wie geht es dir?"]) {
+    assert.equal(bridgeGate(frage), false, `Bruecke: ${frage}`);
+    assert.equal(controlGate(frage), false, `Control: ${frage}`);
+  }
+  // Vorsatz hoechstens drei Woerter: ein ganzer Satz davor ist kein Vorsatz mehr.
+  assert.equal(bridgeGate("Was waren heute die wichtigsten Nachrichten, uebersetze sie: bitte"), true);
 });
