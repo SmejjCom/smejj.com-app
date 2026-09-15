@@ -24,7 +24,8 @@ test("F14: Spur-Eintraege sind bei grobem Zeiger oder Handy-Breite 44 px hoch", 
 });
 
 test("F18: unter 430 px zwei Spalten ohne Silbentrennung — leere Startseite UND laufender Chat", () => {
-  const block = chat.match(/@media \(max-width: 430px\) \{([\s\S]*)\n\}\s*$/);
+  // Seit 15.09. folgt der 360-px-Nachtrag (Kachel "Programmieren") — der 430-Block endet davor.
+  const block = chat.match(/@media \(max-width: 430px\) \{([\s\S]*?)\n\}\n\n\/\* 320-px/) || chat.match(/@media \(max-width: 430px\) \{([\s\S]*)\n\}\s*$/);
   assert.ok(block, "der 430-px-Block fehlt in design-v12-chat.css");
   assert.match(block[1], /#start:not\(\.has-start-chat\) \.start-chips\.start-chipreihe,\s*\n\s*#start\.has-start-chat \.start-chips\.start-chipreihe \{\s*\n\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
   // Beide Knopf-Regeln schalten die Trennung ab und verbieten den Umbruch.
@@ -37,6 +38,15 @@ test("F18: unter 430 px zwei Spalten ohne Silbentrennung — leere Startseite UN
   }
   // Der 430-Block steht nach dem 600-Block (gleiche Spezifitaet, spaeter gewinnt).
   assert.ok(chat.indexOf("@media (max-width: 600px)") < chat.indexOf("@media (max-width: 430px)"));
+});
+
+test("360-px-Nachtrag: nur Innenabstand/Schrift, steht nach dem 430-Block und im Buendel", () => {
+  const nachtrag = chat.match(/@media \(max-width: 360px\) \{([\s\S]*?)\n\}/);
+  assert.ok(nachtrag, "360-px-Block fehlt");
+  assert.match(nachtrag[1], /padding: 0 6px;/);
+  assert.doesNotMatch(nachtrag[1], /white-space|min-height/, "Umbruch und Zielhoehe bleiben wie in F18");
+  assert.ok(chat.indexOf("@media (max-width: 430px)") < chat.indexOf("@media (max-width: 360px)"));
+  assert.ok(buendel.includes("@media (max-width: 360px)"));
 });
 
 test("das Buendel start-styles.css traegt beide Bloecke (bundle-start-styles.mjs gelaufen)", () => {
