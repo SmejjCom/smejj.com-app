@@ -5,6 +5,20 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-09-15] MASTER-AUDIT: GRUEN HEISST NICHT "ARBEITET" — WIRKUNG NEBEN DIE AMPEL (job_master_audit_20260915)
+
+Bericht: `docs/qa/master-audit-2026-09-15.md`. Live: Control-Server `d34abc59`, Frontend `f659390`, Arbeitszweig `712c3b0a`.
+Entscheidung: (1) 16 Autopiloten pruefen nur feste Beispiel-Eingaben — ihre Meldung traegt jetzt "Baustein-Selbsttest,
+keine Live-Wirkung", die Einstufung echt/teilweise/baustein steht in `control-server/src/admin/autopilotWirkung.js` und
+im neuen Autopilot Control Center (Admin 1.4, `GET /api/admin/ops/control-center`). (2) Ein Mess-Urteil der Bruecke
+(Nr. 75/79) gilt nur fuer die Bruecken-Version UND die Faelle, gegen die gemessen wurde (`brueckenVersion`, `faelleHash`);
+jeder kritische Verstoss legt einen Beleg-Auszug ab. (3) Der Konkurrenz-Radar liest 14 offizielle Release-Notes-Seiten
+direkt (`changelogWache.js`), Kandidaten bleiben unbestaetigt.
+Begruendung: Tiefe-Spur-Messung stand 12 h rot mit einem Urteil von VOR dem Fix; Red-Team-Rot war zu enge Wortliste
+(korrekte Abwehr ohne Pflichtwort) plus ein echter Befund (Websuche nach Geheimnis); zwei Selbsttests konnten nie scheitern.
+Verifikation: `check:all` Bauzweig EXIT 0, `release:preflight` EXIT 0, Live-Ampel 80→83 gruen (Red-Team 0 kritisch nach Neumessung), Tiefe Spur 100 %,
+Admin-Live-Test 6 Seiten × 1440/390 px ohne Ueberlauf und Konsolenfehler.
+
 ### [2026-09-14] A-BIS-Z-QA: SECHS FIXRUNDEN LIVE — UND DIE BRUECKE KOMMT AUS EINEM ANDEREN ZWEIG (job_a_bis_z_qa_20260914)
 
 Capsule: `docs/task-capsules/2026/09/a-bis-z-qa_20260914/CAPSULE.md`, Befunde `docs/qa/befunde-2026-09-14.md`,
