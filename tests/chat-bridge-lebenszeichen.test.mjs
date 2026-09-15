@@ -53,7 +53,7 @@ test("Lebenszeichen: Vorab-Kopf nach 5 s, Absage behaelt Status, Ausfall → eig
     const kopfMs = Date.now() - t0;
     assert.equal(r.status, 200);
     assert.equal(r.headers.get("x-smejj-kopf"), "vorab");
-    assert.ok(kopfMs >= 4500 && kopfMs < 6400, `Kopf nach ${kopfMs} ms`);
+    assert.ok(kopfMs >= 3000 && kopfMs < 5000, `Kopf nach ${kopfMs} ms`);
     let text = await r.text();
     assert.match(text, /^: lebenszeichen/m);
     assert.match(text, /: smejj-modell backend=zhipu:glm-5\.2 id=glm-5-2 fallback=false/);
@@ -108,6 +108,44 @@ test("Notfall ohne Direktmodell: Groq-Schnellspur antwortet im Strom nach dem Vo
     const text = await r.text();
     assert.match(text, /: smejj-modell backend=groq:[^ ]+ id=[^ ]+ fallback=true/);
     assert.match(text, /NOTFALL_SCHNELLSPUR_OK/);
+  } finally {
+    bridge.kill("SIGTERM");
+    for (const res of offen) res.destroy();
+    await close(upstream);
+  }
+});
+
+test("Reserve im Strom: scheitern Control UND Schnellspur, antwortet der Control-Chat (frueherer Browser-Reserveweg)", { timeout: 60_000 }, async () => {
+  const offen = new Set(); const lage = { agent: 0, chat: 0 };
+  const upstream = http.createServer(async (req, res) => {
+    let raw = ""; for await (const c of req) raw += c;
+    if (req.url === "/api/auth/me") { res.writeHead(200, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ authenticated: true, user: { email: "test@smejj.com" } })); }
+    if (req.url.startsWith("/groq")) { res.writeHead(429, { "Content-Type": "application/json" }); return res.end('{"error":"rate"}'); }
+    if (req.url === "/api/agent") { lage.agent += 1; offen.add(res); return; }
+    if (req.url === "/api/chat") {
+      lage.chat += 1;
+      res.writeHead(200, { "Content-Type": "text/event-stream", "x-smejj-model-backend": "zhipu:glm-4.5-flash", "x-smejj-model-id": "glm-4.5-flash", "x-smejj-model-fallback": "true" });
+      return res.end(`data: ${JSON.stringify({ choices: [{ delta: { content: "RESERVE_CHAT_OK" } }] })}\n\ndata: [DONE]\n\n`);
+    }
+    res.writeHead(404); res.end();
+  });
+  await listen(upstream);
+  const up = upstream.address().port;
+  const port = await freePort();
+  const env = { ...process.env, PORT: String(port), SMEJJ_HOST: "127.0.0.1", SMEJJ_MULTI_MODEL_ROUTER_ENABLED: "YES", SMEJJ_CONTROL_ORIGIN: `http://127.0.0.1:${up}`, SMEJJ_CHAT_BRIDGE_TIMEOUT_MS: "8000" };
+  for (const k of Object.keys(env)) if (/^SMEJJ_LLM_/.test(k)) delete env[k];
+  Object.assign(env, { SMEJJ_LLM_GROQ_API_KEY: "g", SMEJJ_LLM_GROQ_BASE_URL: `http://127.0.0.1:${up}/groq` });
+  const bridge = spawn(process.execPath, ["public/chat-bridge.js"], { env, stdio: ["ignore", "pipe", "pipe"] });
+  try {
+    await waitForBridge(bridge);
+    const r = await fetch(`http://127.0.0.1:${port}/api/agent`, { method: "POST", headers: { "Content-Type": "application/json", Origin: "https://smejj.com", Authorization: "Bearer t" }, body: JSON.stringify({ model: "smejj 1.2", task: "Erklaere kurz Photosynthese.", history: [] }) });
+    assert.equal(r.status, 200);
+    const text = await r.text();
+    assert.equal(lage.agent, 1);
+    assert.equal(lage.chat, 1, "Reserve genau einmal");
+    assert.match(text, /: smejj-modell backend=zhipu:glm-4\.5-flash id=glm-4\.5-flash fallback=true/);
+    assert.match(text, /RESERVE_CHAT_OK/);
+    assert.doesNotMatch(text, /Verbindung zum Server unterbrochen/);
   } finally {
     bridge.kill("SIGTERM");
     for (const res of offen) res.destroy();

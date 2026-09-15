@@ -13,15 +13,16 @@
 // Server zu spaet oder gar nicht, antwortet die Bruecke im selben Strom ueber ihr
 // eigenes Modell.
 //
-// WARUM ERST NACH 5 s und nicht sofort: schnelle Absagen (401 abgelaufen, 402/429
+// WARUM ERST NACH 3,5 s und nicht sofort (live 15.09.: Control-Antworten kamen oft bei
+// 5,7 s — ein Vorab-Kopf bei 5 s laege dann nur 0,7 s vor dem 6,5-s-Budget des Browsers): schnelle Absagen (401 abgelaufen, 402/429
 // Kostenschutz/Limit) muessen ihren echten Status behalten — der Browser reagiert
 // darauf (neu anmelden, Limit-Hinweis). Solche Absagen kommen in Millisekunden,
-// und 5 s liegen unter dem kuerzesten Erstes-Byte-Budget des Browsers (6,5 s).
+// und 3,5 s liegen mit Abstand unter dem kuerzesten Erstes-Byte-Budget des Browsers (6,5 s).
 // Die Diagnose-Kopfzeilen (welches Modell) gehen im Vorab-Fall als Kommentar
 // ": smejj-modell backend=… id=… fallback=…" in den Strom — der Beleg, welches
 // Modell geantwortet hat, bleibt damit lesbar.
 
-export const KOPF_VORLAUF_MS = 5000;
+export const KOPF_VORLAUF_MS = 3500;
 export const LEBENSZEICHEN_ALLE_MS = 4000;
 
 /** Schreibt den Antwortkopf vorab und das erste Lebenszeichen. */

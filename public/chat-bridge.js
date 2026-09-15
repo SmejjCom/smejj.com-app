@@ -433,7 +433,7 @@ export function hardenMessages(messages) {
 export function kontrollWartezeitMs(body) {
   const frage = String(body?.task || lastUserContent(body?.messages || []) || "");
   const langsam = shouldSearchWeb(frage) || isCodingTask(frage) || istSchwereSmejjVersion(body?.model) || leseStufe(body) === "gruendlich";
-  return Math.max(0, Math.min(REQUEST_TIMEOUT_MS, langsam ? 45000 : 20000) - 5000);
+  return Math.max(0, Math.min(REQUEST_TIMEOUT_MS, langsam ? 45000 : 20000) - 3500);
 }
 
 async function streamViaControl(res, route, body) {
@@ -621,6 +621,8 @@ async function streamModel(res, messages, profile, requestedModel = "") {
   if (!LLM_BASE_URL || !LLM_API_KEY || !LLM_MODEL) {
     // Live ohne Direktmodell (modelConfigured false): Notfall ueber die kostenlose Schnellspur.
     if (imStrom && await streamFastLane(res, messages, profile, requestedModel, "schnell", { notfall: true })) return;
+    // Letzter Anlauf = der fruehere Reserveweg des Browsers (api.smejj.com/api/chat), jetzt im Strom.
+    if (imStrom && await streamViaControl(res, "/api/chat", { model: requestedModel, messages })) return;
     if (imStrom) return schreibeStromFehler(res, "Verbindung zum Server unterbrochen. Bitte gleich noch einmal versuchen.");
     return json(res, 503, { ok: false, error: "Model backend is not configured." });
   }
