@@ -223,7 +223,10 @@ export function nurAbgleichsfelder(chat) {
   return {
     id: chat?.id,
     updatedAt: chat?.updatedAt,
-    ...(chat?.ownerId ? { ownerId: chat.ownerId } : {})
+    ...(chat?.ownerId ? { ownerId: chat.ownerId } : {}),
+    // Grabstein mitnennen (15.09.2026): sonst holte der Client geloeschte Chats bei
+    // jedem Laden einzeln nach (chat-sync-auswahl.js grabsteinWeg).
+    ...(chat?.geloescht === true ? { geloescht: true } : {})
   };
 }
 
