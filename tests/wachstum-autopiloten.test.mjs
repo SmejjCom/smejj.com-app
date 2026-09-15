@@ -198,19 +198,34 @@ test("Nr. 60 Tagesmappe: stumme Quellen werden benannt, gesunde Mappe ist vollst
 
 test("Nr. 60 Tagesmappe: dieselbe Rückroll-Empfehlung steht nur EINMAL (Master-Audit 15.09.)", async () => {
   const jetzt = new Date().toISOString();
+  const ablage = (praefix) => praefix === "admin/rueck-roller"
+    ? { liste: async () => ({ ok: true, datensaetze: [
+      { art: "rueckroll-empfehlung", zuSha: "d8f6bd8c1111", grund: "rot", createdAt: jetzt },
+      { art: "rueckroll-empfehlung", zuSha: "d8f6bd8c1111", grund: "rot", createdAt: jetzt },
+      { art: "rueckroll-empfehlung", zuSha: "aaaaaaaa2222", grund: "rot", createdAt: jetzt }
+    ] }) }
+    : { liste: async () => ({ ok: true, datensaetze: [] }), lies: async () => null };
   const mappe = await baueTagesmappe({
-    uebersicht: () => ({ autopiloten: [] }),
+    uebersicht: () => ({ autopiloten: [
+      { id: "synthetic-user-watchdog", ampel: "rot" },
+      { id: "nachweis-kette", ampel: "rot" }
+    ] }),
     ticketLader: async () => [],
-    storeFabrik: (praefix) => praefix === "admin/rueck-roller"
-      ? { liste: async () => ({ ok: true, datensaetze: [
-        { art: "rueckroll-empfehlung", zuSha: "d8f6bd8c1111", grund: "rot", createdAt: jetzt },
-        { art: "rueckroll-empfehlung", zuSha: "d8f6bd8c1111", grund: "rot", createdAt: jetzt },
-        { art: "rueckroll-empfehlung", zuSha: "aaaaaaaa2222", grund: "rot", createdAt: jetzt }
-      ] }) }
-      : { liste: async () => ({ ok: true, datensaetze: [] }), lies: async () => null }
+    storeFabrik: ablage
   });
   const rueck = mappe.entscheiden.filter((e) => e.art === "rueckrollen");
   assert.equal(rueck.length, 2, JSON.stringify(rueck));
+
+  // Admin-A-bis-Z 16.09.: sind die Kerne wieder grün, ist die alte Empfehlung erledigt.
+  const erholt = await baueTagesmappe({
+    uebersicht: () => ({ autopiloten: [
+      { id: "synthetic-user-watchdog", ampel: "gruen" },
+      { id: "nachweis-kette", ampel: "gruen" }
+    ] }),
+    ticketLader: async () => [],
+    storeFabrik: ablage
+  });
+  assert.equal(erholt.entscheiden.filter((e) => e.art === "rueckrollen").length, 0);
 });
 
 test("ANSCHLUSS-BEWEIS: alle in Registry, Taktgeber und Selbstheilung — Nummern eindeutig", () => {

@@ -21,7 +21,7 @@ import { starteModellEinkaeufer } from "./modellEinkaeufer.js";
 import { starteNutzerreiseTakt } from "./nutzerreiseWaechter.js";
 // Log-Wache (Nr. 45): die Prozess-Haken muessen VOR dem ersten Fehler haengen.
 import { registriereProzessWache } from "./logWacheAutopilot.js";
-import { interneMeldung } from "../admin/opsAutopiloten.js";
+import { interneMeldung, persistiereHerzschlag } from "../admin/opsAutopiloten.js";
 import { sendAuthMail } from "../auth/mailer.js";
 
 /** Startet alle Autopilot-Hintergrunddienste. Wirft nie; unref ueberall.
@@ -60,7 +60,17 @@ export function starteAutopiloten({ env = process.env } = {}) {
   // haette auch seine Wochen-Arena nie gefahren. Der Test
   // "start.js ruft jeden importierten starte*-Dienst auch auf" haelt die
   // ganze Fehlerklasse seitdem fest.
-  sicher("modellEinkaeufer", () => starteModellEinkaeufer({ env, melde: interneMeldung }));
+  //
+  // Admin-A-bis-Z 16.09.2026: interneMeldung legt nur die Tage ab — der Einkäufer
+  // (Takt 7 Tage, erster Check 3 min nach dem Start) stand darum nach jedem
+  // Neustart grau ("Seit dem 15.09. kein Herzschlag"). Sein Lauf wird jetzt ganz
+  // abgelegt und behält den echten Zeitpunkt; die Ampel lässt ihn ehrlich altern.
+  const meldeEinkauf = (id, ergebnis) => {
+    const ok = interneMeldung(id, ergebnis);
+    if (ok) persistiereHerzschlag(id, { env }).catch(() => {});
+    return ok;
+  };
+  sicher("modellEinkaeufer", () => starteModellEinkaeufer({ env, melde: meldeEinkauf }));
   // Probe-Nutzer (Nr. 29) im dichten Takt: alle 15 Minuten die ganze App als
   // Nutzer — Startseite, Buendel-Gleichheit, Nachlade-Kette, API-Kernpfade,
   // Anmeldung, Chat, Speicher. Der 30-Minuten-Durchgang bleibt unveraendert.

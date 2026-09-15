@@ -121,9 +121,11 @@ export async function bestaetigeModell(backend, modell, { fetchImpl = fetch } = 
       method: "POST",
       headers: { [backend.apiKeyHeader]: `Bearer ${backend.apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({ model: modell, messages: [{ role: "user", content: "ok" }], max_tokens: 1 }),
-      // 8 s reichen fuer ein Token; 20 s je Modell haetten einen Lauf mit
-      // lueckenhaftem Katalog minutenlang aufgehalten (Review 14.09.).
-      signal: AbortSignal.timeout(8_000)
+      // Bis 16.09. 8 s ("reicht fuer ein Token"). Gemessen 15.09.: glm-4.5-flash
+      // (Freikontingent) braucht 27-60 s bis zum ersten Zeichen — die Wache meldete
+      // es darum jeden Tag "nicht prüfbar (timeout)". Die Bestätigung läuft nur
+      // einmal täglich und nur für Modelle, die in /models fehlen (heute eins).
+      signal: AbortSignal.timeout(60_000)
     });
     if (antwort.ok) return { antwortet: true, grund: "" };
     return { antwortet: false, grund: `HTTP ${antwort.status}` };

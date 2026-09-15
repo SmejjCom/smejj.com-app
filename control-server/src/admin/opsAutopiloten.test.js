@@ -12,6 +12,7 @@ import {
   autopilotUebersicht,
   frageWaechterAb,
   heartbeatAnnehmen,
+  interneMeldung,
   ladeHerzschlaege,
   persistiereHerzschlag,
   pruefeAlarm,
@@ -541,5 +542,20 @@ test("Neustart-Festigkeit: ALLE Autopiloten-Herzschlaege ueberleben das Laden �
   const ohneLauf = (u.autopiloten || []).filter((a) => ids.includes(a.id) && !a.letzterLauf).map((a) => a.id);
   assert.deepEqual(ohneLauf, [],
     "diese Autopiloten verlieren ihren Herzschlag beim Neustart — die Ablage-Grenze (maximal) ist kleiner als die Registry");
+  _herzschlaegeZuruecksetzen(); _ablageLeeren();
+});
+
+test("Neustart-Festigkeit: der Modell-Einkäufer (Nr. 34, Takt 7 Tage) behält seinen letzten Lauf (Admin-A-bis-Z 16.09.)", async () => {
+  // Live 16.09.: Nr. 34 stand nach jedem Neustart grau ("Seit dem 15.09. kein
+  // Herzschlag"), weil interneMeldung nur die Tage ablegt. start.js legt seinen
+  // Lauf darum zusätzlich mit persistiereHerzschlag ab — genau diese Kette hier.
+  _herzschlaegeZuruecksetzen(); _ablageLeeren();
+  assert.equal(interneMeldung("modell-einkaeufer", { status: "ok", meldung: "Takt geprueft: letzter Einkauf vor 2 Tag(en)", jetztMs: JETZT }), true);
+  assert.equal(await persistiereHerzschlag("modell-einkaeufer", { env: {} }), true);
+  _herzschlaegeZuruecksetzen();
+  await ladeHerzschlaege({ env: {} });
+  const einkaeufer = autopilotUebersicht({ jetztMs: JETZT + 5 * 60_000 }).autopiloten.find((a) => a.id === "modell-einkaeufer");
+  assert.equal(einkaeufer.ampel, "gruen", einkaeufer.ampelGrund);
+  assert.equal(einkaeufer.letzterLauf.am, new Date(JETZT).toISOString(), "der Lauf behält seinen echten Zeitpunkt");
   _herzschlaegeZuruecksetzen(); _ablageLeeren();
 });
