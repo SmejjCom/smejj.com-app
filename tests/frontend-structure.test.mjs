@@ -96,7 +96,8 @@ test("smejj start design lock v1 stays protected", () => {
   assert.match(css, /DESIGN LOCK: smejj start design lock v1/);
   assert.match(css, /END DESIGN LOCK: smejj start design lock v1/);
   assert.match(html, /<textarea id="startMessage" rows="1"/);
-  assert.match(html, /id="modelPickerButton"[^>]*>smejj 1\.0<\/button>/);
+  // Betreiber-Freigabe 3 (15.09.2026): "Standard soll ehrlich ‚Auto' anzeigen und Auto senden."
+  assert.match(html, /id="modelPickerButton"[^>]*>Auto<\/button>/);
   assert.match(css, /\.home-feed[\s\S]*background: linear-gradient\(180deg, rgba\(15, 17, 18, 0\.86\) 0%, #090a0c 72%, #050608 100%\)/);
   assert.match(css, /\.prompt-glass[\s\S]*background: #050608/);
   assert.match(css, /\.prompt-glass textarea[\s\S]*height: 48px/);
