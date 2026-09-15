@@ -68,5 +68,16 @@ test("M2: chat-sync.js reicht die Abrufe sortiert an abarbeitenMitGrenze", async
   const { readFileSync } = await import("node:fs");
   const quelle = readFileSync("public/chat-sync.js", "utf8");
   assert.match(quelle, /abarbeitenMitGrenze\(neuesteZuerst\(abrufe\)/);
-  assert.match(quelle, /abrufe\.push\(\{ stand: fernStand, aufgabe: async \(\) => \{/);
+  assert.match(quelle, /abrufe\.push\(\{ stand: fernStand, papierkorb: Boolean\(fern\.deletedAt\), aufgabe: async \(\) => \{/);
+});
+
+test("M2 (zweiter Nachtest): sichtbare Chats vor dem Papierkorb, auch wenn der Papierkorb juenger ist", () => {
+  const f = (n) => () => n;
+  const reihe = neuesteZuerst([
+    { stand: 900, papierkorb: true, aufgabe: f("papierkorb-neu") },
+    { stand: 100, aufgabe: f("sichtbar-alt") },
+    { stand: 500, papierkorb: false, aufgabe: f("sichtbar-neu") },
+    { stand: 800, papierkorb: true, aufgabe: f("papierkorb-alt") }
+  ]);
+  assert.deepEqual(reihe.map((a) => a()), ["sichtbar-neu", "sichtbar-alt", "papierkorb-neu", "papierkorb-alt"]);
 });
