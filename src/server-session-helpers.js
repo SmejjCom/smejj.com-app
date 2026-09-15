@@ -123,8 +123,19 @@ export function createSessionHelpers({ sessionSecret, SESSION_COOKIE_SAMESITE, S
     return verifySessionToken(token, { secret: sessionSecret });
   }
 
+  // Freigabe 1a (2026-09-15): dauerhafte Sitzungen laufen 30 Tage — das Cookie wird
+  // in /api/auth/session-token gleitend erneuert (die App ruft die Route mit Cookie
+  // beim Start jedes Tabs). Ohne das verfiele es nach 30 Tagen trotz Nutzung, und
+  // reine Cookie-Wege (API-Bereich, Maus-Ausweis) bekaemen 401. Kurzzeit-Token nie.
+  function erneuereDauerCookie(res, user) {
+    if (!user || user.kind === "access") return false;
+    if (!(user.permanent === "true" || user.permanent === true || user.method === "google")) return false;
+    res.setHeader("Set-Cookie", serializeSessionCookie(user));
+    return true;
+  }
+
   return {
-    ensureRegistrySid, readSession, serializeAccessToken,
+    ensureRegistrySid, erneuereDauerCookie, readSession, serializeAccessToken,
     serializeSessionCookie, serializeSessionToken, sessionStillValid
   };
 }

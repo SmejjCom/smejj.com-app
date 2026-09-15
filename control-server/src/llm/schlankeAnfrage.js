@@ -24,7 +24,8 @@ export const MAX_FRAGE_ZEICHEN = 1_500;
 export const MAX_ANTWORT_TOKENS = 512;
 
 export const SCHLANKE_ROLLE = "Du bist smejj, der KI-Assistent von smejj.com. "
-  + "Antworte auf Deutsch, kurz und sachlich richtig. "
+  // Freigabe 1f (15.09.2026): Sprache des Nutzers statt fest Deutsch (gleiche Regel wie Bruecke und Agent).
+  + "Antworte in der Sprache des Nutzers, kurz und sachlich richtig. "
   + "Wenn du etwas nicht sicher weisst, sag das offen, statt etwas zu erfinden.";
 
 /** Braucht dieses Backend die schlanke Fassung? Nur bei bekannt kleinem Fenster. */

@@ -145,7 +145,7 @@ const SESSION_COOKIE_SAMESITE = SHORT_ACCESS_TOKEN ? "None; Partitioned" : "Lax"
 // Ein zweiter Nachbau haette Sitzungen mit einem anderen Geheimnis
 // signiert — alle Anmeldungen waeren still ungueltig geworden.
 const {
-  ensureRegistrySid, readSession, serializeAccessToken,
+  ensureRegistrySid, erneuereDauerCookie, readSession, serializeAccessToken,
   serializeSessionCookie, serializeSessionToken, sessionStillValid
 } = createSessionHelpers({
   sessionSecret: config.sessionSecret, SESSION_COOKIE_SAMESITE, SHORT_ACCESS_TOKEN
@@ -176,10 +176,8 @@ const bildExternRoutes = createBildExternRoutes({ env: process.env, readSession,
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host}`);
-    // HSTS (E2E-Sicherheitspruefung 14.09.2026): api.smejj.com lieferte keine
-    // Strict-Transport-Security — ein erster Aufruf ueber http:// waere abhoerbar.
-    // Nur hinter dem HTTPS-Proxy setzen (x-forwarded-proto), damit lokale
-    // http-Tests nicht betroffen sind; ohne includeSubDomains, nur dieser Host.
+    // HSTS (E2E 14.09.2026): nur hinter dem HTTPS-Proxy (x-forwarded-proto), damit lokale
+    // http-Tests unberuehrt bleiben; ohne includeSubDomains, nur dieser Host.
     if (String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim() === "https") res.setHeader("Strict-Transport-Security", "max-age=15552000");
     if (await handlePublicApiRoute(req, url, res)) return; // /v1: Bearer statt Sitzung, muss VOR allem stehen (Grund dort)
     if (url.pathname.startsWith("/api/")) {
@@ -516,13 +514,7 @@ async function handleAuthMe(req, res) { // noStoreJson: Identitaet nie cachen (F
 function handleAuthSessionToken(req, res) {
   const user = readSession(req);
   if (!user) return noStoreJson(res, 401, { authenticated: false, error: "authentication_required" });
-  // Freigabe 1a (2026-09-15): dauerhafte Sitzungen laufen 30 Tage — das Cookie
-  // wird hier gleitend erneuert (die App ruft diese Route mit Cookie beim Start
-  // jedes Tabs). Ohne das verfiele das Cookie nach 30 Tagen trotz Nutzung, und
-  // reine Cookie-Wege (API-Bereich, Maus-Ausweis) bekaemen 401.
-  if ((user.permanent === "true" || user.permanent === true || user.method === "google") && user.kind !== "access") {
-    res.setHeader("Set-Cookie", serializeSessionCookie(user));
-  }
+  erneuereDauerCookie(res, user); // Freigabe 1a: 30-Tage-Cookie gleitend (Begruendung im Helfer)
   return noStoreJson(res, 200, {
     authenticated: true,
     user,

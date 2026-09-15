@@ -103,9 +103,10 @@ test("service worker caches only small app shell assets and has offline fallback
   // vom Netz ("reload"), und fuer die App ist die Liste weiterhin SHELL.
   // Das Verhalten beider Groessen pruefen tests/sw-schmaler-eingang.test.mjs
   // am ECHTEN sw.js.
-  assert.match(sw, /cache\.addAll\(INSTALL_LISTE\.map\(\(url\) => new Request\(url, \{ cache: "reload" \}\)\)\)/);
+  // Freigabe 1g (15.09.2026): die Install-Anfragen tragen zusaetzlich eine Zeitgrenze.
+  assert.match(sw, /cache\.addAll\(INSTALL_LISTE\.map\(\(url\) => new Request\(url, \{ cache: "reload", signal: installSignal\(\) \}\)\)\)/);
   assert.match(sw, /const INSTALL_LISTE = SCHMAL \? WILLKOMMEN_SHELL : SHELL;/, "ohne Zusatz muss weiterhin die volle App-Liste gelten");
-  assert.match(sw, /fetch\(request\)\.catch/);
+  assert.match(sw, /(fetch\(request\)|antwort)\.catch\(\(\) => caches\.match\(request\)/);
   assert.match(sw, /caches\.match\("\/"\)/);
   // v159 -> v160 (QA-Welle 1, F-24): Precache-Dateien cache-first, HTML und
   // /api/ network-first. Drei Zusicherungen: (1) der cache-first-Zweig existiert

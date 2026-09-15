@@ -13,9 +13,12 @@ test("Cookie dauerhafter Sitzungen: Max-Age 30 Tage", () => {
 
 test("session-token erneuert das Cookie dauerhafter Sitzungen, /me das Token", () => {
   const q = lies("src/server.js");
-  const st = q.slice(q.indexOf("function handleAuthSessionToken"), q.indexOf("function handleAuthSessionToken") + 900);
-  assert.match(st, /res\.setHeader\("Set-Cookie", serializeSessionCookie\(user\)\)/);
-  assert.match(st, /user\.kind !== "access"/, "Kurzzeit-Token erneuert kein Cookie");
+  const st = q.slice(q.indexOf("function handleAuthSessionToken"), q.indexOf("function handleAuthSessionToken") + 600);
+  assert.match(st, /erneuereDauerCookie\(res, user\);/);
+  const h = lies("src/server-session-helpers.js");
+  const f = h.slice(h.indexOf("function erneuereDauerCookie"), h.indexOf("function erneuereDauerCookie") + 400);
+  assert.match(f, /user\.kind === "access"\) return false/, "Kurzzeit-Token erneuert kein Cookie");
+  assert.match(f, /res\.setHeader\("Set-Cookie", serializeSessionCookie\(user\)\)/);
   const me = q.slice(q.indexOf("async function handleAuthMe"), q.indexOf("async function handleAuthMe") + 800);
   assert.match(me, /accessToken: serializeAccessToken\(user\)/);
 });
