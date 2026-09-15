@@ -30,6 +30,7 @@ import { signedS3List, signedS3Put, signedS3Delete } from "../storage/s3Signer.j
 import { mapMitGrenze } from "../shared/parallelFetch.js";
 import { modellbestandUebersicht } from "../admin/opsModellbestand.js";
 import { putProviderCredential } from "../providers/providerCredentialVault.js";
+import { handleAdminEntscheidungenRoute } from "./adminEntscheidungenRoutes.js";
 
 const PREFIX = "/api/admin/modelle";
 const gate = createRateLimiter({ capacity: 20, refillPerSec: 0.3, maxKeys: 5_000 });
@@ -45,6 +46,15 @@ const GRUND_MIN_LOESCHEN = 20;
 const LOESCH_GRENZE = 2000;
 
 export async function handleAdminModellRoute(req, url, res, { env = process.env } = {}) {
+  // MITBEWOHNER, kein Zufall: /api/admin/entscheidungen haengt hier mit drin,
+  // weil adminSurfaceRoutes.js und adminOpsRoutes.js im Admin-Lock stehen
+  // (docs/security/admin-lock-manifest.json). Diese Route ist die einzige
+  // schreibende Admin-Route ausserhalb des Locks; von hier aus gilt fuer die
+  // Entscheidungen dieselbe Vortuer und dieselbe Sitzungspruefung wie fuer
+  // alles andere im Adminbereich. Wer den Lock einmal mit Betreiber-Stempel
+  // oeffnet, verschiebt die Zeile nach adminSurfaceRoutes.js — dort gehoert sie hin.
+  if (await handleAdminEntscheidungenRoute(req, url, res, { env })) return true;
+
   if (url.pathname !== PREFIX && !url.pathname.startsWith(`${PREFIX}/`)) return false;
 
   const aktion = url.pathname.slice(PREFIX.length).replace(/^\//, "");
