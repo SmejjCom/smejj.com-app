@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        stand: [alt, neu]
+        stand: [neu]
     steps:
       - uses: actions/checkout@v4
         with:

@@ -162,7 +162,13 @@ def lade_modell():
         # obendrauf; scheibenweise dekodieren senkt sie ohne Qualitaetsverlust
         # und laesst mehr Luft fuer den Gesichtsfixer (der bei <2000 MB frei
         # aussetzt).
-        pipe.enable_vae_slicing()
+        # diffusers 0.40 (15.09.2026): enable_vae_slicing() an der Pipeline ist entfallen,
+        # dieselbe Wirkung liegt jetzt am VAE selbst. Beide Wege, damit ein Rueckbau
+        # auf eine aeltere Fassung nicht wieder am Startbildschirm scheitert.
+        if hasattr(pipe, "vae") and hasattr(pipe.vae, "enable_slicing"):
+            pipe.vae.enable_slicing()
+        else:
+            pipe.enable_vae_slicing()
         pipeline = pipe
         zustand["bereit"] = True
     except Exception as fehler:  # noqa: BLE001 — /health soll die Ursache zeigen

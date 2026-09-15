@@ -11,12 +11,17 @@ WORKDIR /app
 # mit echtem Bild (sd-turbo, 512 px, 3 Schritte) + Gesichtsfix geprueft: .github/workflows/bild-maler-probe.yml.
 RUN pip install --no-cache-dir torch==2.14.0 torchvision==0.29.0 --index-url https://download.pytorch.org/whl/cpu
 # Gesichts-Reparatur (Augen!): GFPGAN + Abhaengigkeiten — ins ABBILD (Trainer-Lehre).
+# System-Bibliotheken fuer OpenCV (kommt mit gfpgan/basicsr): ohne libxcb/libGL scheiterte der
+# Gesichtsfix bei JEDEM Portraet still mit "ImportError: libxcb.so.1" — gefunden in der
+# Vorabprobe 15.09.2026 (GitHub Actions), live seit unbekannt; der Dienst gab dann das Original zurueck.
+RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 libxcb1 && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir gfpgan==1.3.8
 
 COPY workers/smejj-bild-maler/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 # Importprobe (2026-09-15): bricht eine Paketkombination, scheitert der BAU —
 # nicht der laufende Dienst (zwei transformers-Anlaeufe scheiterten erst live).
+RUN python -c "import cv2; print('opencv', cv2.__version__)"
 RUN python -c "import torch, transformers, accelerate, diffusers; from diffusers import AutoPipelineForText2Image; from diffusers.utils import is_accelerate_available; assert is_accelerate_available(); print('importprobe ok', torch.__version__, transformers.__version__, accelerate.__version__, diffusers.__version__)"
 
 COPY workers/smejj-bild-maler/server.py ./server.py
