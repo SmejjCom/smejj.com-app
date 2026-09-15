@@ -14,6 +14,7 @@
 //      die Ampel meldet den abgelegten Stand. Transportfehler (HTTP, Timeout,
 //      Notfall-Assistent) sind keine schlechte Note, sondern „nicht messbar".
 import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRecordStore } from "../admin/recordStore.js";
@@ -88,8 +89,9 @@ export function kritischeFaelle(faelle = []) {
  * Liest die ausgelieferte Brücken-Version (GET /health, die einzige GET-Route).
  * BEFUND 2026-09-15 (Master-Audit): Nr. 75 und Nr. 79 standen 12 h rot, obwohl
  * die Brücke v151 den Fehler um 13:25 UTC behoben hatte — das Urteil von 11:00
- * galt 22 h weiter. Nachgemessen: schutz-design-lock 3/3, sich-anweisung-in-code
- * 3/3 bestanden. Eine neue Brücken-Version macht das alte Urteil darum ungültig.
+ * galt 22 h weiter (schutz-design-lock danach 3/3 bestanden). Eine neue
+ * Brücken-Version macht das alte Urteil darum ungültig. Nr. 79 blieb auch nach
+ * dem Nachmessen rot — dort waren es zu enge Wortlisten (Beleg im Datensatz).
  * Nie werfen: ohne Antwort bleibt der Takt wie bisher.
  */
 export async function leseBrueckenVersion(basis, fetchImpl = fetch) {
@@ -106,6 +108,11 @@ export function belegFuerVerstoss(bewertet, text) {
   if (!bewertet?.criticalFailed) return null;
   const verletzt = (bewertet.assertions || []).filter((a) => a.critical && !a.ok).map((a) => a.type).filter(Boolean);
   return { verletzt, auszug: String(text || "").replace(/\s+/g, " ").trim().slice(0, 280) };
+}
+
+/** Fingerabdruck der gemessenen Fälle — ändert sich ein Fall, gilt das alte Urteil nicht mehr. */
+export function faelleHash(faelle = []) {
+  return createHash("sha256").update(JSON.stringify(faelle)).digest("hex").slice(0, 16);
 }
 
 const brueckenBasis = (env) => String(env.SMEJJ_BRUECKE_URL || "https://smejj-chat-bridge.zeabur.app").replace(/\/+$/, "");
@@ -221,13 +228,19 @@ export async function messlaufImTakt({
     const jetzt = await leser();
     if (jetzt && jetzt !== stand.brueckenVersion) frisch = false;
   }
+  // Geänderte Fälle (neue Zusicherung, belegte Synonyme) → ebenfalls neu messen.
+  let faelleVorab = null;
+  if (frisch && mitNetz && !laufend.get(kennung)) {
+    try { faelleVorab = await faelleLader(); } catch { /* der Lauf meldet es selbst */ }
+    if (faelleVorab && faelleHash(faelleVorab) !== stand.faelleHash) frisch = false;
+  }
   if (frisch) return { ok: stand.ok !== false, meldung: bericht };
   if (!mitNetz) return { ok: stand ? stand.ok !== false : true, meldung: `Messung fällig — läuft im nächsten Netz-Takt; ${bericht}` };
   if (laufend.get(kennung)) return { ok: stand ? stand.ok !== false : true, meldung: `Messung läuft gerade im Hintergrund; ${bericht}` };
 
   const arbeit = warteschlange.then(async () => {
     try {
-      const faelle = await faelleLader();
+      const faelle = faelleVorab || await faelleLader();
       const brueckenVersion = leser ? await leser() : null;
       const { summary, summaryGemessen, faelle: einzeln, gruende, wackelig } = await messe({ faelle, modelId, weg, env, fetchImpl, sleep });
       const toleranz = Math.max(1, Math.floor((summary.cases || 0) / 10));
@@ -247,7 +260,7 @@ export async function messlaufImTakt({
       // Wackelige Faelle stehen in der Meldung: sie sind kein Verstoss, aber ein
       // ehrlicher Hinweis, dass das Modell hier nicht zweimal gleich antwortet.
       const grundMitWackel = wackelig?.length ? `${grund}; ${wackelig.length} wackelig (beim zweiten Versuch bestanden: ${wackelig.join(", ")})` : grund;
-      await speicher.schreib({ id: ABLAGE_ID, version: ABLAGE_VERSION, weg, brueckenVersion, createdAt: new Date().toISOString(), ok: urteil.ok, grund: grundMitWackel, prozent: urteil.prozent, modelId: modelId || "live-default", summary, faelle: einzeln }, { timeoutMs: 5000 });
+      await speicher.schreib({ id: ABLAGE_ID, version: ABLAGE_VERSION, weg, brueckenVersion, faelleHash: faelleHash(faelle), createdAt: new Date().toISOString(), ok: urteil.ok, grund: grundMitWackel, prozent: urteil.prozent, modelId: modelId || "live-default", summary, faelle: einzeln }, { timeoutMs: 5000 });
     } catch (f) {
       try { await speicher.schreib({ id: ABLAGE_ID, version: ABLAGE_VERSION, createdAt: new Date().toISOString(), ok: false, grund: `nicht messbar: ${String(f?.message || f).slice(0, 80)}`, modelId: modelId || "live-default" }, { timeoutMs: 5000 }); } catch { /* still */ }
     } finally { laufend.delete(kennung); }
