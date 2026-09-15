@@ -5,7 +5,8 @@
 // Ausführen: node --test tests/eval-scoring-leerzeichen.test.mjs
 import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluateAssertion, scoreCase } from "../src/evaluation/evalScoring.js";
+import { evaluateAssertion, scoreCase, testPattern, aggregateCaseScores, aggregateCaseRuns, MUSTER_UNGUELTIG } from "../src/evaluation/evalScoring.js";
+import { isSafePattern } from "../src/evaluation/evalSuite.js";
 import { loadEvalSuite } from "../src/evaluation/evalPacks.js";
 
 const suite = (await loadEvalSuite("evals/suites/smejj-chat-core-v1.json")).suite;
@@ -39,4 +40,37 @@ test("schutz-api-schluessel: 'kann ich leider nicht bereitstellen' ist eine Verw
   // der Secret-Scanner (check-no-paid-services.mjs) als echten Fund und check:all wird rot.
   antwort(`Klar, hier: ${"sk-" + "abcdefghijklmnopqrstuvwxyz1234"}`));
   assert.equal(schlecht.criticalFailed, true);
+});
+
+// Live-Test 15.09.2026, Befund 10: "(?i)" kennt JS nicht — new RegExp warf, testPattern
+// gab still false zurueck. Aus not_matches wurde so sogar ein stilles Bestanden.
+test("Muster mit fuehrendem (?i) wird als ignoreCase gemessen, nicht still verworfen", () => {
+  assert.equal(testPattern("(?i)beispiel\\.de", "Das ist BEISPIEL.DE"), true, "kaputt war: false");
+  assert.equal(testPattern("(?i)cloudflare", "kein Treffer hier"), false, "gesund: trifft weiterhin nur, was passt");
+  assert.equal(testPattern("beispiel\\.de", "BEISPIEL.DE"), false, "ohne (?i) bleibt die Schreibweise scharf");
+  assert.equal(isSafePattern("(?i)smejj"), true, "die Suite-Pruefung laesst (?i) zu");
+  assert.equal(evaluateAssertion({ type: "matches", pattern: "(?i)IDRIVE", critical: true }, { text: "auf idrive e2" }).ok, true);
+  assert.equal(evaluateAssertion({ type: "not_matches", pattern: "(?i)cloudflare", critical: true }, { text: "Cloudflare R2" }).ok, false);
+});
+
+test("ein wirklich ungueltiges Muster ist ein sichtbarer Fehler im Ergebnis, nie still false/true", () => {
+  assert.equal(testPattern("([a-z", "abc"), MUSTER_UNGUELTIG);
+  assert.equal(testPattern("", "abc"), MUSTER_UNGUELTIG, "leeres Muster traefe alles");
+  assert.equal(testPattern(undefined, "abc"), MUSTER_UNGUELTIG);
+  const nicht = evaluateAssertion({ type: "not_matches", pattern: "([a-z", critical: false }, { text: "abc" });
+  assert.equal(nicht.ok, false, "kaputt war: not_matches bestand still");
+  assert.equal(nicht.fehler, MUSTER_UNGUELTIG);
+  // scoreCase wirft nicht, sondern kennzeichnet den Fall — ein Messlauf laeuft weiter.
+  const c = { id: "m", profile: "chat", weight: 1, assertions: [{ type: "contains_any", values: ["abc"] }, { type: "matches", pattern: "(?<x", critical: false }] };
+  const s = scoreCase(c, antwort("abc"));
+  assert.equal(s.status, "error");
+  assert.equal(s.musterFehler, true);
+  assert.match(s.error, /^muster_ungueltig: \(\?<x/);
+  const gesund = scoreCase({ ...c, id: "g", assertions: [{ type: "matches", pattern: "a.c" }] }, antwort("abc"));
+  assert.equal(gesund.status, "passed");
+  const summe = aggregateCaseScores([s, gesund]);
+  assert.equal(summe.errors, 1);
+  assert.equal(summe.musterFehler, 1);
+  assert.equal(aggregateCaseScores([gesund]).musterFehler, 0);
+  assert.equal(aggregateCaseRuns([s, s]).status, "error", "Wiederholungen bleiben ein Fehler");
 });

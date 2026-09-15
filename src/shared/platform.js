@@ -173,6 +173,11 @@ export const ROUTES = {
   // Englische Hoeflichkeitsfassungen (verbindlich bleibt der deutsche Text).
   legalNoticeEn: "/en/legal-notice.html",
   privacyEn: "/en/privacy.html",
+  // Klickjacking-Schutz, den index.html, Anmeldeseiten und die Admin-Konsole
+  // laden. Live liefert GitHub Pages ihn aus, der Control-Server kannte ihn
+  // nicht: auf dem Rueckfall-Host smejj-control.zeabur.app/admin/ endete
+  // /frame-guard.js?v=1 in 404 (A-bis-Z-Livetest 15.09.2026, Befund 4).
+  frameGuard: "/frame-guard.js",
   api: {
     health: "/api/health",
     capabilities: "/api/capabilities",

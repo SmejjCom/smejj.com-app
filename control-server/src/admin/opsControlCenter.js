@@ -82,6 +82,14 @@ export function controlCenterUebersicht({ jetztMs = Date.now(), env = process.en
 
   const zaehler = { aktiv: 0, arbeitet: 0, wartet: 0, fehler: 0, blockiert: 0, test: 0 };
   for (const a of autopiloten) zaehler[a.status] = (zaehler[a.status] || 0) + 1;
+  // Live-Test 15.09.: die Autopiloten-Seite zeigte "Läuft 83", hier standen "Aktiv 71" und
+  // "Nur Test 12" — zwei Zahlen für dieselbe Lage, keine erklärte die andere. "Läuft" zählt
+  // dort jede GRÜNE Ampel; dieselbe Regel steht jetzt hier, mit der Aufteilung dazu, damit
+  // beide Seiten dieselbe Summe nennen (83 laufen, davon 12 nur Baustein).
+  const gruene = autopiloten.filter((a) => a.ampel === "gruen");
+  zaehler.laeuft = gruene.length;
+  zaehler.laeuftBaustein = gruene.filter((a) => a.wirkung === "baustein").length;
+  zaehler.laeuftLive = zaehler.laeuft - zaehler.laeuftBaustein;
   const echtGruen = autopiloten.filter((a) => a.ampel === "gruen" && a.wirkung === "echt").length;
   const teilGruen = autopiloten.filter((a) => a.ampel === "gruen" && a.wirkung === "teilweise").length;
   const rote = autopiloten.filter((a) => a.ampel === "rot");
@@ -90,11 +98,14 @@ export function controlCenterUebersicht({ jetztMs = Date.now(), env = process.en
   const modell = modellSatz(env);
 
   const antworten = [
-    antwort("Was läuft?", `${echtGruen} Automatiken arbeiten nachweislich am echten System, ${teilGruen} mit engem Blick, ${zaehler.test} sind nur Bausteine im Selbsttest.`, [], rote.length ? "gelb" : "gruen"),
+    // Belege der drei Lage-Fragen: der Taktgeber (Nr. 32) bezeugt, dass die Läufe überhaupt
+    // stattfinden, der Container-Puls (Nr. 07), dass der Prozess lebt — ohne sie wäre jede Zahl
+    // hier eine Behauptung aus der Konfiguration. Live-Test 15.09.: diese Fragen hatten KEINEN Beleg.
+    antwort("Was läuft?", `${zaehler.laeuft} Automatiken laufen (grüne Ampel, wie „Läuft“ auf der Autopiloten-Seite): ${echtGruen} nachweislich am echten System, ${teilGruen} mit engem Blick, ${zaehler.laeuftBaustein} nur Bausteine im Selbsttest.`, hol("autopilot-laeufer", "container-puls"), rote.length ? "gelb" : "gruen"),
     antwort("Was ist kaputt?", rote.length ? `${rote.length} ${rote.length === 1 ? "Automatik meldet" : "Automatiken melden"} einen Fehler: ${rote.map((a) => a.name).join(", ")}.` : "Keine Automatik meldet einen Fehler.", rote.map((a) => beleg(nach.get(a.id))), rote.length ? "rot" : "gruen"),
-    antwort("Was arbeitet gerade?", arbeitend.length ? `${arbeitend.map((a) => a.name).join(", ")} ${arbeitend.length === 1 ? "misst" : "messen"} gerade im Hintergrund.` : "Gerade läuft keine Hintergrund-Messung; der Läufer taktet alle 30 Minuten.", arbeitend.map((a) => beleg(nach.get(a.id))), "gruen"),
+    antwort("Was arbeitet gerade?", arbeitend.length ? `${arbeitend.map((a) => a.name).join(", ")} ${arbeitend.length === 1 ? "misst" : "messen"} gerade im Hintergrund.` : "Gerade läuft keine Hintergrund-Messung; der Läufer taktet alle 30 Minuten.", [...arbeitend.map((a) => beleg(nach.get(a.id))), ...hol("autopilot-laeufer")], "gruen"),
     antwort("Welches Modell wird benutzt?", modell.satz, hol("modell-katalog-wache", "umgebungs-wache"), modell.ampel),
-    antwort("Welche Autopiloten laufen?", `${zaehler.aktiv} aktiv, ${zaehler.arbeitet} arbeiten, ${zaehler.wartet} warten, ${zaehler.fehler} mit Fehler, ${zaehler.blockiert} blockiert (Wartung), ${zaehler.test} nur Test — ${autopiloten.length} gesamt.`, [], rote.length ? "gelb" : "gruen"),
+    antwort("Welche Autopiloten laufen?", `${zaehler.laeuft} von ${autopiloten.length} laufen, davon ${zaehler.laeuftBaustein} nur Baustein. Nach Status: ${zaehler.aktiv} aktiv, ${zaehler.arbeitet} arbeiten, ${zaehler.wartet} warten, ${zaehler.fehler} mit Fehler, ${zaehler.blockiert} blockiert (Wartung), ${zaehler.test} nur Test.`, hol("autopilot-laeufer", "selbstheilung"), rote.length ? "gelb" : "gruen"),
     antwort("Welche Verbesserungen wurden gefunden?", "Werkstatt-Backlog, Konkurrenz-Radar (mit Release-Notes) und Funktions-Abgleich — Kandidaten sind Messungen, erst deine Entscheidung macht daraus eine Aufgabe.", hol("werkstatt-autopilot", "konkurrenz-radar", "missing-function-detector", "ai-evolution-engine")),
     antwort("Welche Änderungen wurden gemacht?", "Der Control-Server läuft mit dem Commit, den die Bau-Wache nennt; die Schutz-Echtheit vergleicht die ausgelieferten Dateien mit ihren Freigaben.", hol("bau-wache", "schutz-echtheit", "code-sicherung")),
     antwort("Welche Tests bestanden?", "Unit-Tests, Nutzerreise, Antwortqualität (Schnell- und Tiefspur) und Angriffsproben — je mit letzter Messung.", hol("test-waechter", "synthetic-user-watchdog", "qualitaetsmessung", "tiefe-spur-messung", "red-team-probe")),

@@ -11,6 +11,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { auslieferungUebersicht, sperrenImAbbild, _cacheLeeren } from "./opsAuslieferung.js";
+import { merkeAbgeleitetenStand } from "../autopilots/rueckRollerAutopilot.js";
 
 const JETZT = Date.parse("2026-08-23T06:00:00.000Z");
 
@@ -42,7 +43,7 @@ const GESUND = [
   ["bild-maler", () => { throw new Error("fetch failed"); }]
 ];
 
-test("gesunde Kette: Frontend und Bruecke gleich, Control abgeleitet gleich, 404-Dienst ist erreichbar ohne Version", async () => {
+test("gesunde Kette: Frontend und Bruecke gleich, Control abgeleitet gleich, 404-Dienst gilt NICHT als erreichbar", async () => {
   _cacheLeeren();
   const u = await auslieferungUebersicht({ env: {}, fetchImpl: fetchStub(GESUND), jetztMs: JETZT, wurzel: mkdtempSync(path.join(tmpdir(), "al-")) });
   const d = Object.fromEntries(u.dienste.map((x) => [x.id, x]));
@@ -51,9 +52,12 @@ test("gesunde Kette: Frontend und Bruecke gleich, Control abgeleitet gleich, 404
   assert.equal(d.control.zustand, "gleich");
   assert.equal(d.control.abgeleitet, true, "ohne Commit in der Umgebung muss 'abgeleitet' dranstehen");
   assert.equal(d.bruecke.zustand, "gleich");
-  assert.equal(d.video.zustand, "erreichbar");
+  assert.equal(d.video.zustand, "nicht-erreichbar", "404 auf /health beweist nichts — kein gruener Punkt");
+  assert.equal(d.video.liveStand, "ohne Health (404)");
+  assert.match(d.video.satz, /404/);
   assert.equal(d.bild.zustand, "nicht-erreichbar");
-  assert.equal(u.nichtErreichbar, 1);
+  assert.equal(d.waechter.zustand, "erreichbar", "gesund: 200 mit Version bleibt erreichbar");
+  assert.equal(u.nichtErreichbar, 2);
   assert.ok(u.nichtMessbar.length >= 3, "was der Server nicht messen kann, steht ehrlich da");
 });
 
@@ -114,4 +118,37 @@ test("Sperren im Abbild: stimmt / veraendert / nicht im Abbild", () => {
   assert.equal(s["Start-Lock"].zustand, "fehlt");
   assert.equal(s["Favicon-Lock"].zustand, "stimmt");
   assert.equal(s["Favicon-Lock"].dateien, 1);
+});
+
+test("Live-Test 15.09.: Container startet VOR Bau-Ende, Bau-Wache bestaetigt -> gleich (abgeleitet), nicht 'Neustart steht aus'", async () => {
+  // Live gemessen: Start 09:59:51, Zeabur-Check-Run fertig 10:01:44, ZEABUR_GIT_COMMIT_SHA fehlt.
+  const LIVE = GESUND.map(([m, w]) => m === "smejj-control.zeabur.app/api/health" ? [m, antwort(200, { ok: true, gestartetAm: "2026-08-23T05:38:07.000Z" })] : [m, w]);
+  try {
+    // Gesund A: die Bau-Wache hat den Commit hinterlegt (aktuellerStand) -> gleich, abgeleitet.
+    _cacheLeeren();
+    merkeAbgeleitetenStand("b32860de000000");
+    let c = (await auslieferungUebersicht({ env: {}, fetchImpl: fetchStub(LIVE), jetztMs: JETZT, wurzel: mkdtempSync(path.join(tmpdir(), "al-")) })).dienste.find((x) => x.id === "control");
+    assert.equal(c.zustand, "gleich");
+    assert.equal(c.abgeleitet, true, "hinterlegt heisst nicht gemessen — 'abgeleitet' bleibt dran");
+    assert.equal(c.liveStand, "b32860de");
+    assert.doesNotMatch(c.satz, /Neustart steht aus/);
+    // Gesund B: Bau-Wache noch nicht gelaufen -> dieselbe Ableitung (±10 min um den Start) greift selbst.
+    merkeAbgeleitetenStand("");
+    _cacheLeeren();
+    c = (await auslieferungUebersicht({ env: {}, fetchImpl: fetchStub(LIVE), jetztMs: JETZT, wurzel: mkdtempSync(path.join(tmpdir(), "al-")) })).dienste.find((x) => x.id === "control");
+    assert.equal(c.zustand, "gleich");
+    assert.equal(c.abgeleitet, true);
+    // Kaputt: hinterlegter Stand ist aelter als die Spitze des Bau-Branch -> dahinter, nie gleich.
+    merkeAbgeleitetenStand("aaaaaaaa11111111");
+    _cacheLeeren();
+    c = (await auslieferungUebersicht({ env: {}, fetchImpl: fetchStub(LIVE), jetztMs: JETZT, wurzel: mkdtempSync(path.join(tmpdir(), "al-")) })).dienste.find((x) => x.id === "control");
+    assert.equal(c.zustand, "dahinter");
+    // Kaputt: Umgebung traegt einen Commit -> sie gewinnt vor jeder Ableitung und ist nicht 'abgeleitet'.
+    _cacheLeeren();
+    c = (await auslieferungUebersicht({ env: { ZEABUR_GIT_COMMIT_SHA: "cccccccc2222" }, fetchImpl: fetchStub(LIVE), jetztMs: JETZT, wurzel: mkdtempSync(path.join(tmpdir(), "al-")) })).dienste.find((x) => x.id === "control");
+    assert.equal(c.zustand, "dahinter");
+    assert.equal(c.abgeleitet, false);
+  } finally {
+    merkeAbgeleitetenStand("");
+  }
 });

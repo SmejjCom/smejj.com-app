@@ -61,6 +61,20 @@ test("shouldSearchWeb ignoriert Smalltalk, Coding-Aufgaben und Codebloecke", () 
   assert.equal(shouldSearchWeb("ok"), false);
 });
 
+// Live-Test 15.09.2026, Befund 11: ein Vorsatz vor "Übersetze …:" loeste eine Websuche
+// aus ("morgen" als Aktualitaet). Kaputt: Textarbeit mit Vorsatz; gesund: echte Suchfragen,
+// auch mit eigenem Doppelpunkt-Vorsatz, suchen weiterhin.
+test("shouldSearchWeb: Textarbeit mit Vorsatz vor dem Doppelpunkt sucht NICHT (Befund 11)", () => {
+  assert.equal(shouldSearchWeb("AZ15-Modell: Übersetze ins Englische: Guten Morgen"), false);
+  assert.equal(shouldSearchWeb("Bitte übersetze: Das Haus ist rot"), false);
+  assert.equal(shouldSearchWeb("Aufgabe 3: Korrigiere bitte: Die aktuellen Preise sind gestiegen"), false);
+  assert.equal(shouldSearchWeb("Frage: Wie ist das Wetter heute in Berlin?"), true);
+  assert.equal(shouldSearchWeb("Nachrichten heute: was gibt es Neues?"), true);
+  assert.equal(shouldSearchWeb("Suche: aktuelle Nachrichten aus Berlin"), true);
+  // Ein Vorsatz ueber 40 Zeichen ist kein Etikett mehr, sondern eine eigene Frage.
+  assert.equal(shouldSearchWeb("Wie ist das aktuelle Wetter morgen frueh in Berlin und Potsdam: übersetze das"), true);
+});
+
 // Regressionstest zum Live-Befund vom 2026-07-29: Singular loeste keine Suche
 // aus, Plural schon. Ursache war eine Liste aus Vollformen statt Wortstaemmen.
 test("shouldSearchWeb trifft bei Singular UND Plural (Befund Schlagzeile)", () => {

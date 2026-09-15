@@ -9,6 +9,7 @@
 //
 // Sie erneuert den Export NICHT — das ist ein Deploy-Schritt der Brücke.
 // Sie sagt nur, wann es fällig ist.
+import { issueSessionToken } from "../auth/sessionToken.js";
 
 /** Älter als so viele Tage gilt der Export als veraltet (überschreibbar). */
 export function maxAlterTage(env = process.env) {
@@ -46,6 +47,24 @@ export function fuehreSelbsttestAus() {
   return { bestanden: fehler.length === 0, fehler, geprueft: 5 };
 }
 
+/**
+ * Brücke v157 (A-bis-Z-Livetest 15.09.) zeigt /health anonym nur {ok, app, version}.
+ * Diese Wache braucht `projektwissen` — sie weist sich deshalb aus: Wächter-Ausweis
+ * (SMEJJ_EVOLUTION_TOKEN) und/oder ein kurzlebiger Sitzungsausweis wie der Messlauf.
+ */
+export function waechterKoepfe(env = process.env) {
+  const koepfe = { "User-Agent": "smejj-projektwissen-frische" };
+  const token = String(env.SMEJJ_EVOLUTION_TOKEN || "").trim();
+  if (token) koepfe["x-smejj-evolution-token"] = token;
+  const secret = String(env.SMEJJ_SESSION_SECRET || "").trim();
+  if (secret) {
+    try {
+      koepfe.Authorization = `Bearer ${issueSessionToken({ secret, user: { userId: "projektwissen-waechter", email: "messlauf@smejj.invalid", method: "local-e2e" }, ttlMs: 5 * 60 * 1000 })}`;
+    } catch { /* ohne Ausweis bleibt die anonyme Antwort — die Meldung sagt dann "kein projektwissen" */ }
+  }
+  return koepfe;
+}
+
 /** Der Lauf im Takt: Selbsttest, dann /health der Brücke. */
 export async function laufProjektwissenFrische({ mitNetz = true, env = process.env, fetchImpl = fetch, jetztMs = Date.now() } = {}) {
   const probe = fuehreSelbsttestAus();
@@ -54,7 +73,7 @@ export async function laufProjektwissenFrische({ mitNetz = true, env = process.e
   const basis = String(env.SMEJJ_BRUECKE_URL || "https://smejj-chat-bridge.zeabur.app").replace(/\/+$/, "");
   let health;
   try {
-    const antwort = await fetchImpl(`${basis}/health`, { signal: AbortSignal.timeout(12_000), headers: { "User-Agent": "smejj-projektwissen-frische" } });
+    const antwort = await fetchImpl(`${basis}/health`, { signal: AbortSignal.timeout(12_000), headers: waechterKoepfe(env) });
     if (!antwort.ok) return { ok: false, meldung: `Brücke /health antwortet HTTP ${antwort.status} — Projektwissen nicht messbar` };
     health = await antwort.json();
   } catch (f) {

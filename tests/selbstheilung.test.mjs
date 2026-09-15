@@ -11,8 +11,12 @@ import {
   planeHeilung,
   fuehreHeilungAus,
   VERSUCHE_MAX,
-  ABSTAENDE_MS
+  ABSTAENDE_MS,
+  befristeterAlarm,
+  befristeterAlarmBis,
+  BEFRISTUNG_MAX_MS
 } from "../control-server/src/autopilots/selbstheilung.js";
+import { laufKontoWache } from "../control-server/src/autopilots/kontoWacheAutopilot.js";
 
 const rot = (id, extra = {}) => ({ id, name: id, ampel: "rot", ampelGrund: "Überfällig", ...extra });
 const gruen = (id) => ({ id, name: id, ampel: "gruen", ampelGrund: "pünktlich" });
@@ -179,4 +183,61 @@ test("Der Heiler hat einen Registry-Eintrag — sonst meldet er ins Leere", asyn
       `${id}: interneMeldung nimmt die Kennung nicht an — die Selbstmeldung ginge verloren`);
   }
   _herzschlaegeZuruecksetzen();
+});
+
+test("Live-Test 15.09.: bewusst befristet rote Wache wird NICHT wiederbelebt, zählt nicht und eskaliert nie", async () => {
+  const t0 = Date.parse("2026-09-15T10:00:00Z");
+  const grund = (bisMs) => `Der letzte Lauf hat einen Fehler gemeldet: ${befristeterAlarm(bisMs)}: Admin-Liste wurde vor Kurzem geändert (NEU x@y) — Alarm noch 8 h, dann gilt der neue Stand.`;
+  const bis = t0 + 8 * 3_600_000;
+  assert.equal(befristeterAlarmBis(grund(bis)), bis, "die Marke ist lesbar (Minutengenau)");
+  const zustand = new Map([["konto-wache", { versuche: 2, letzterMs: t0 - 1, eskaliert: false }]]);
+  const erreichbar = new Set(["konto-wache", "echt-kaputt"]);
+  const alarme = [];
+  const gemeldet = new Map();
+  let t = t0;
+  // Gesund: über viele Takte hinweg (mehr als VERSUCHE_MAX) kein Versuch, kein Zähler, keine Mail.
+  for (let i = 0; i < VERSUCHE_MAX + 3; i += 1, t += ABSTAENDE_MS[2] + 1) {
+    const plan = planeHeilung({ autopiloten: [rot("konto-wache", { ampelGrund: grund(bis) })], zustand, jetztMs: t, erreichbar });
+    assert.deepEqual(plan.heilen, [], "eine befristete Frist lässt sich nicht wegheilen");
+    assert.deepEqual(plan.eskalieren, []);
+    assert.deepEqual(plan.befristet.map((b) => b.id), ["konto-wache"]);
+    assert.equal(zustand.has("konto-wache"), false, "kein Zähler, auch keine Altlast von vor der Marke");
+    await fuehreHeilungAus({ plan, heiler: { "konto-wache": async () => true }, melde: (id, e) => { gemeldet.set(id, e); return true; }, sendeAlarm: async (e) => { alarme.push(e); } });
+  }
+  assert.equal(alarme.length, 0, "keine 'Autopilot gibt auf'-Mail");
+  assert.equal(gemeldet.get("selbstheilung").status, "ok", "die Erste Hilfe wird dadurch nicht selbst rot");
+  assert.match(gemeldet.get("selbstheilung").meldung, /1 bewusst befristet rot \(konto-wache\) = kein Ausfall/);
+
+  // Kaputt 1: echter Ausfall daneben wird weiter geheilt — die Marke ist kein Freifahrtschein für alle.
+  const daneben = planeHeilung({ autopiloten: [rot("konto-wache", { ampelGrund: grund(bis) }), rot("echt-kaputt")], zustand: new Map(), jetztMs: t0, erreichbar });
+  assert.deepEqual(daneben.heilen, [{ id: "echt-kaputt", versuch: 1 }]);
+  // Kaputt 2: Frist abgelaufen und immer noch rot -> wieder ein normaler Ausfall.
+  const abgelaufen = planeHeilung({ autopiloten: [rot("konto-wache", { ampelGrund: grund(bis) })], zustand: new Map(), jetztMs: bis + 60_000, erreichbar });
+  assert.deepEqual(abgelaufen.heilen, [{ id: "konto-wache", versuch: 1 }]);
+  // Kaputt 3: eine Frist weit in der Zukunft ist eine Dauer-Ausrede, keine Befristung.
+  const ewig = planeHeilung({ autopiloten: [rot("konto-wache", { ampelGrund: grund(t0 + BEFRISTUNG_MAX_MS + 3_600_000) })], zustand: new Map(), jetztMs: t0, erreichbar });
+  assert.deepEqual(ewig.heilen, [{ id: "konto-wache", versuch: 1 }]);
+  // Kaputt 4: bleibt die Wache aus, trägt der ampelGrund "Überfällig" -> echter Ausfall, auch mit alter Marke im letzten Lauf.
+  const stumm = planeHeilung({ autopiloten: [rot("konto-wache", { ampelGrund: "Überfällig: der letzte Lauf ist deutlich länger her als der Zeitplan erlaubt.", letzterLauf: { status: "fehler", meldung: befristeterAlarm(bis) } })], zustand: new Map(), jetztMs: t0, erreichbar });
+  assert.deepEqual(stumm.heilen, [{ id: "konto-wache", versuch: 1 }]);
+  assert.equal(befristeterAlarmBis("Admin-Liste wurde vor Kurzem geändert — Alarm noch 6 h"), null, "ohne Marke kein Signal");
+});
+
+test("Konto-Wache trägt die Marke vorn — auch wenn der Herzschlag nach 200 Zeichen abschneidet", async () => {
+  const env = { SMEJJ_SESSION_SECRET: "x".repeat(48), SMEJJ_ADMIN_OWNER_EMAILS: "a@x.de" };
+  // Eigene Ablage im Speicher: createRecordStore griffe mit e2-Schlüsseln in der Umgebung auf den echten Speicher.
+  const karte = new Map();
+  const ablage = { lies: async (id) => karte.get(id) || null, schreib: async (r) => { karte.set(r.id, { ...r }); return r; } };
+  const t0 = Date.parse("2026-09-15T10:00:00Z");
+  await laufKontoWache({ env, ablage, jetztMs: t0 });
+  const viele = Array.from({ length: 12 }, (_, i) => `neuer-admin-${i}@beispiel.example`).join(",");
+  const drift = await laufKontoWache({ env: { ...env, SMEJJ_ADMIN_OWNER_EMAILS: `a@x.de,${viele}` }, ablage, jetztMs: t0 });
+  assert.equal(drift.ok, false);
+  assert.equal(befristeterAlarmBis(drift.meldung.slice(0, 200)), Date.parse("2026-09-16T10:00:00Z"));
+  const nachhall = await laufKontoWache({ env: { ...env, SMEJJ_ADMIN_OWNER_EMAILS: `a@x.de,${viele}` }, ablage, jetztMs: t0 + 3_600_000 });
+  assert.equal(nachhall.ok, false, "die Wache bleibt bewusst rot");
+  assert.equal(befristeterAlarmBis(nachhall.meldung.slice(0, 200)), Date.parse("2026-09-16T10:00:00Z"), "die Frist läuft ab der Änderung, nicht ab jedem Lauf");
+  const danach = await laufKontoWache({ env: { ...env, SMEJJ_ADMIN_OWNER_EMAILS: `a@x.de,${viele}` }, ablage, jetztMs: t0 + 25 * 3_600_000 });
+  assert.equal(danach.ok, true, danach.meldung);
+  assert.equal(befristeterAlarmBis(danach.meldung), null, "grün trägt keine Marke");
 });

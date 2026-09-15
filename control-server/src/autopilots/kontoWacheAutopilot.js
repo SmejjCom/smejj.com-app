@@ -13,6 +13,10 @@
 // 3. SELBSTTEST: Der Drift-Erkenner bekommt eine kaputte und eine gesunde
 //    Probe — dieselbe Regel wie bei jedem Prüfer.
 import { createRecordStore } from "../admin/recordStore.js";
+// Die 24-h-Frist trägt die generische Marke der Ersten Hilfe (Nr. 33) VORN in der Meldung:
+// sonst "belebte" sie diese bewusst rote Wache dreimal, gab auf und schickte Alarm-Mails
+// (Live-Test 15.09.). Die Wache bleibt trotzdem rot — der Betreiber soll die Änderung sehen.
+import { befristeterAlarm } from "./selbstheilung.js";
 
 const ABLAGE_ID = "admin-eigentuemer-stand";
 const DRIFT_ALARM_MS = 24 * 60 * 60 * 1000;
@@ -113,13 +117,13 @@ export async function laufKontoWache({ env = process.env, ablage = null, jetztMs
         driftWas: beschreibung
       });
     } catch { /* der Alarm unten gilt auch ohne Stempel */ }
-    return { ok: false, meldung: `Admin-Eigentümerliste hat sich GEÄNDERT: ${beschreibung} — 24 h Alarm, dann gilt der neue Stand` };
+    return { ok: false, meldung: `${befristeterAlarm(jetztMs + DRIFT_ALARM_MS)}: Admin-Eigentümerliste hat sich GEÄNDERT: ${beschreibung} — 24 h Alarm, dann gilt der neue Stand` };
   }
 
   const driftAmMs = Date.parse(stand.driftAm || "");
   if (Number.isFinite(driftAmMs) && jetztMs - driftAmMs < DRIFT_ALARM_MS) {
     const nochH = Math.ceil((DRIFT_ALARM_MS - (jetztMs - driftAmMs)) / 3_600_000);
-    return { ok: false, meldung: `Admin-Liste wurde vor Kurzem geändert (${stand.driftWas || "?"}) — Alarm noch ${nochH} h, dann gilt der neue Stand` };
+    return { ok: false, meldung: `${befristeterAlarm(driftAmMs + DRIFT_ALARM_MS)}: Admin-Liste wurde vor Kurzem geändert (${stand.driftWas || "?"}) — Alarm noch ${nochH} h, dann gilt der neue Stand` };
   }
 
   return { ok: true, meldung: `Selbsttest 4/4; Grundpfeiler stehen, Admin-Liste unverändert (${konfiguration.eigentuemer.length} Eigentümer)` };

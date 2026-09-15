@@ -22,6 +22,7 @@ import { createWochenbericht } from "./opsWochenbericht.js";
 import { pruefeAlarmCore, vorfaelleFortschreiben as vorfaelleFortschreibenCore, ladeVorfaelle as ladeVorfaelleCore } from "./opsAutopilotenAlerts.js";
 import { AUTOPILOTEN } from "./opsAutopilotenListe.js";
 import { bereichVon } from "./opsAutopilotenBereiche.js";
+import { wirkungVon } from "./autopilotWirkung.js";
 
 export { AUTOPILOTEN };
 
@@ -201,6 +202,9 @@ function bewerten(a, jetztMs) {
     // "stumm, obwohl er melden sollte" (Befund) von "stillgelegt" (normal).
     messung: a.messung,
     bereich: bereichVon(a.id),
+    // "baustein" = nur Selbsttest, keine Live-Wirkung. Die Seite sagt damit
+    // "Läuft 83 · davon 12 nur Baustein" wie das Control Center (Befund 7, 15.09.2026).
+    wirkung: wirkungVon(a.id).stufe,
     // "Einstellungen" der Detailseite (Design-Vorschlag): die Regeln, nach denen
     // diese Ampel schaltet — als Zahlen, nicht als Behauptung.
     einstellungen: {
