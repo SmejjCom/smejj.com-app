@@ -2,6 +2,7 @@
 // autopilotLaeufer.js (die 800-Zeilen-Regel; der Taktgeber selbst wohnt
 // weiter dort). Hier steht nur: WANN gelaufen wird.
 import { laufeAlle, heileWasRotIst } from "./autopilotLaeufer.js";
+import { halteAnalytikFrisch } from "../admin/analytikAuffrischen.js";
 
 /**
  * Den Läufer im Takt starten. Standard: alle 30 Minuten — oft genug, damit
@@ -17,6 +18,10 @@ export function starteAutopilotLaeufer({ intervallMs = 30 * 60 * 1000, sendeAlar
     laufeAlle()
       .then(() => heileWasRotIst({ sendeAlarm, log: console.log }))
       .catch(() => {});
+    // Modul W: die Tagesprojektion hatte ausser dem Seitenaufruf keinen
+    // Erbauer und war live zehn Tage alt (Befund 15.09.). Unabhaengig vom
+    // Laeufer, damit ein haengender Durchgang sie nicht mitreisst.
+    halteAnalytikFrisch().catch(() => {});
   };
   // ZWEI Anlauf-Stufen statt einer, damit die Ampel nach einem Deploy nicht
   // minutenlang grau steht:
