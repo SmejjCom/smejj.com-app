@@ -95,7 +95,10 @@ const SMALLTALK_PATTERN = /^(hi|hallo|hey|servus|moin|hey smejj|danke|dankeschoe
 // 33 bis 84 s bis zur Antwort. Wer einen Text zum Uebersetzen, Verbessern, Korrigieren,
 // Umformulieren oder Kuerzen hinter einen Doppelpunkt stellt, gibt MATERIAL, keine
 // Frage an das Internet. Gleiche Regel in public/chat-bridge.js (Gleichlauf-Test).
-export const TEXTARBEIT_PATTERN = /^\s*(bitte\s+)?(uebersetz\w*|translate|korrigier\w*|verbesser\w*|umformulier\w*|kuerz\w*|formulier\w*)\b[^:\n]{0,60}:/i;
+// VORSATZ (Live-Test 15.09.2026, Befund 11): "AZ15-Modell: Übersetze ins Englische: Guten
+// Morgen" suchte trotzdem — der Anker ^ liess vor dem Verb nichts zu. Ein kurzer Vorsatz
+// mit eigenem Doppelpunkt (hoechstens 40 Zeichen, eine Zeile) ist jetzt erlaubt.
+export const TEXTARBEIT_PATTERN = /^\s*(?:[^:\n]{1,40}:\s*)?(bitte\s+)?(uebersetz\w*|translate|korrigier\w*|verbesser\w*|umformulier\w*|kuerz\w*|formulier\w*)\b[^:\n]{0,60}:/i;
 // Klare Coding-Absicht wird separat behandelt und braucht keine Websuche.
 const CODING_SKIP_PATTERN = /unified diff|\bpatch\b|\brefactor|\bdebug\b|\bstack ?trace\b/i;
 // Deutsche Suchverben; bewusst als Vollform, weil englisch "such" ein anderes

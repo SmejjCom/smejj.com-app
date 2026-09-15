@@ -25,6 +25,44 @@ export const VERSUCHE_MAX = 3;
 // dann ist ein Mensch dran.
 export const ABSTAENDE_MS = Object.freeze([0, 5 * 60 * 1000, 15 * 60 * 1000]);
 
+// ---- Befristeter Alarm: der Vertrag zwischen einer Wache und der Ersten Hilfe ----
+//
+// WARUM (Live-Test 15.09.): Die Konto-Wache (Nr. 52) steht nach einer Änderung der
+// Admin-Liste ABSICHTLICH 24 h rot — der Betreiber soll die Änderung sehen. Die Erste
+// Hilfe hielt das für einen Ausfall, "belebte" die Wache dreimal (ohne jede Wirkung:
+// derselbe Lauf meldet dieselbe Frist), gab auf, wurde selbst rot und schickte eine
+// "Autopilot gibt auf"-Mail — nach jedem Neustart erneut. Ein Doppel-Rot ohne Aussage.
+//
+// Das Signal ist GENERISCH, kein Namens-Sonderfall: jede Wache, die bewusst befristet
+// rot meldet, beginnt ihre Meldung mit BEFRISTETER_ALARM und dem Ende der Frist. Die
+// Marke steht VORN, weil der Herzschlag die Meldung nach 200 Zeichen abschneidet.
+// Drei Sicherungen gegen Missbrauch als Dauer-Ausrede:
+//   - gilt nur bis zum genannten Zeitpunkt; danach ist Rot wieder ein Ausfall,
+//   - gilt nur, wenn die Frist höchstens BEFRISTUNG_MAX_MS in der Zukunft liegt,
+//   - wird nur im ampelGrund gelesen: dort steht die Meldung NUR, wenn der Lauf den
+//     Fehler selbst gemeldet hat. Bleibt die Wache aus ("Überfällig"), ist das ein
+//     echter Ausfall — auch wenn ihre letzte Meldung noch eine Frist trug.
+export const BEFRISTETER_ALARM = "Befristeter Alarm bis";
+export const BEFRISTUNG_MAX_MS = 48 * 60 * 60 * 1000;
+
+/** Marke für den Anfang einer bewusst befristeten Rot-Meldung, z. B. "Befristeter Alarm bis 2026-09-16T17:38Z". */
+export function befristeterAlarm(bisMs) {
+  return `${BEFRISTETER_ALARM} ${new Date(bisMs).toISOString().slice(0, 16)}Z`;
+}
+
+/** Ende der Frist in ms aus einem Text, oder null, wenn keine (lesbare) Marke darin steht. */
+export function befristeterAlarmBis(text) {
+  const m = /Befristeter Alarm bis (\d{4}-\d{2}-\d{2}T\d{2}:\d{2})Z/.exec(String(text || ""));
+  if (!m) return null;
+  const ms = Date.parse(`${m[1]}:00Z`);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+function inBefristetemAlarm(a, jetztMs) {
+  const bis = befristeterAlarmBis(a.ampelGrund);
+  return bis !== null && jetztMs < bis && bis - jetztMs <= BEFRISTUNG_MAX_MS ? bis : null;
+}
+
 /**
  * Entscheidet je Autopilot, was zu tun ist. REINE Funktion: kein Netz, keine
  * Uhr, kein Zustand ausserhalb des uebergebenen `zustand` — damit die Bremse
@@ -41,13 +79,16 @@ export const ABSTAENDE_MS = Object.freeze([0, 5 * 60 * 1000, 15 * 60 * 1000]);
  *   Hilfe stand tagelang rot, weil sie zwei Mac-Jobs "nach 3 Versuchen
  *   aufgab", die sie nie haette starten koennen — ein Doppel-Rot ohne
  *   Aussage, denn die Mac-Jobs sind selbst schon rot und tragen den Grund.
- * @returns {{heilen: Array<{id: string, versuch: number}>, eskalieren: Array<{id: string, name: string, grund: string}>, warten: Array<{id: string, nochMs: number}>, betreiber: Array<{id: string, name: string}>}}
+ * Ein roter Autopilot mit befristetem Alarm (siehe BEFRISTETER_ALARM) ist KEIN
+ * Ausfall: kein Versuch, kein Zähler, keine Eskalation — er steht nur unter `befristet`.
+ * @returns {{heilen: Array<{id: string, versuch: number}>, eskalieren: Array<{id: string, name: string, grund: string}>, warten: Array<{id: string, nochMs: number}>, betreiber: Array<{id: string, name: string}>, befristet: Array<{id: string, name: string, bisMs: number}>}}
  */
 export function planeHeilung({ autopiloten = [], zustand = new Map(), jetztMs = Date.now(), erreichbar = null } = {}) {
   const heilen = [];
   const eskalieren = [];
   const warten = [];
   const betreiber = [];
+  const befristet = [];
 
   for (const a of autopiloten) {
     const eintrag = zustand.get(a.id);
@@ -62,6 +103,17 @@ export function planeHeilung({ autopiloten = [], zustand = new Map(), jetztMs = 
 
     // Wartung heisst: bewusst stillgelegt. Da wird nichts wiederbelebt.
     if (a.wartung) continue;
+
+    // Bewusst befristet rot (z. B. Konto-Wache nach Admin-Listen-Änderung): Ein
+    // Neustart der Wache ändert daran nichts, also zählt es weder als Versuch noch
+    // als Aufgabe. Ein alter Zähler aus der Zeit VOR der Marke fällt weg — sonst
+    // eskalierte die Erste Hilfe beim Ablauf der Frist sofort mit Altlast.
+    const bisMs = inBefristetemAlarm(a, jetztMs);
+    if (bisMs !== null) {
+      if (eintrag) zustand.delete(a.id);
+      befristet.push({ id: a.id, name: a.name || a.id, bisMs });
+      continue;
+    }
 
     // Kein Start-Weg von hier aus: Betreiber-Punkt, genau einmal je Rot-Phase.
     if (erreichbar && !erreichbar.has(a.id)) {
@@ -99,7 +151,7 @@ export function planeHeilung({ autopiloten = [], zustand = new Map(), jetztMs = 
     heilen.push({ id: a.id, versuch: stand.versuche });
   }
 
-  return { heilen, eskalieren, warten, betreiber };
+  return { heilen, eskalieren, warten, betreiber, befristet };
 }
 
 /**
@@ -142,13 +194,16 @@ export async function fuehreHeilungAus({ plan, heiler = {}, melde = null, sendeA
   // waere derselbe Alarm in anderer Verpackung.
   const betreiber = plan.betreiber || [];
   for (const b of betreiber) log(`[selbstheilung] BETREIBER-PUNKT ${b.id}: kein Start-Weg von hier (Mac/extern), Grund steht an seiner Ampel`);
+  for (const b of plan.befristet || []) log(`[selbstheilung] BEFRISTET ${b.id}: bewusster Alarm bis ${new Date(b.bisMs).toISOString()} — keine Wiederbelebung`);
 
   // Der Heiler bezeugt sich selbst — sonst wüsste niemand, ob er überhaupt
   // arbeitet. Dieselbe Regel wie beim Taktgeber.
   if (melde) {
     const versucht = ergebnisse.length;
     const gelungen = ergebnisse.filter((r) => r.ok).length;
-    const anhang = betreiber.length ? `; ${betreiber.length} ohne Start-Weg (Mac/extern) = Betreiber-Punkt, nicht eskaliert` : "";
+    const befristet = plan.befristet || [];
+    const anhang = (betreiber.length ? `; ${betreiber.length} ohne Start-Weg (Mac/extern) = Betreiber-Punkt, nicht eskaliert` : "")
+      + (befristet.length ? `; ${befristet.length} bewusst befristet rot (${befristet.map((b) => b.name).join(", ")}) = kein Ausfall, nicht wiederbelebt` : "");
     melde("selbstheilung", {
       status: plan.eskalieren.length ? "fehler" : "ok",
       meldung: (plan.eskalieren.length

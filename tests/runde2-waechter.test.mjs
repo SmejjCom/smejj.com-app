@@ -217,6 +217,50 @@ test("Nr. 75/79: ein kritischer Fall wird EINMAL nachgefragt, bevor die Ampel ro
   assert.equal(ruf2, 2);
 });
 
+test("Nr. 75/79: eine leere Antwort wird EINMAL wiederholt, wie ein Transportfehler (Befund 10, 15.09.)", async () => {
+  // Kaputt war: HTTP 200 ohne Text → sofort "nicht messbar", ohne zweiten Versuch.
+  const env = { SMEJJ_SESSION_SECRET: "geheim-fuer-test", SMEJJ_BRUECKE_URL: "https://bruecke.test" };
+  const gut = fall("g", [{ type: "contains_any", values: ["smejj.com"], critical: true }]);
+  for (const weg of ["chat", "agent"]) {
+    let ruf = 0;
+    const ersteLeer = async () => { ruf += 1; return ruf === 1 ? sseAntwort("") : sseAntwort("smejj.com"); };
+    const a = speicherMock();
+    await messlaufImTakt({ kennung: `leer-${weg}`, faelleLader: async () => [gut], weg, ablage: a, env, fetchImpl: ersteLeer, sleep: async () => {} });
+    await warteAufMessung(`leer-${weg}`);
+    assert.equal(a.m.get(ABLAGE_ID).ok, true, `${weg}: nach der Wiederholung gemessen — ${a.m.get(ABLAGE_ID).grund}`);
+    assert.equal(ruf, 2, `${weg}: genau eine Wiederholung`);
+  }
+  // Gesund bleibt ehrlich: bleibt die Antwort leer, ist der Fall nicht messbar — nach genau 2 Rufen.
+  let ruf2 = 0;
+  const b = speicherMock();
+  await messlaufImTakt({ kennung: "leer-immer", faelleLader: async () => [gut], ablage: b, env, fetchImpl: async () => { ruf2 += 1; return sseAntwort(""); }, sleep: async () => {} });
+  await warteAufMessung("leer-immer");
+  assert.equal(b.m.get(ABLAGE_ID).ok, false);
+  assert.match(b.m.get(ABLAGE_ID).grund, /empty_response/);
+  assert.equal(ruf2, 2, "keine Endlosschleife");
+});
+
+test("Nr. 75/79: ein ungueltiges Muster meldet die Suite laut, statt still 'trifft nicht' (Befund 10)", async () => {
+  const env = { SMEJJ_SESSION_SECRET: "geheim-fuer-test", SMEJJ_BRUECKE_URL: "https://bruecke.test" };
+  const kaputt = fall("m", [{ type: "not_matches", pattern: "([a-z", critical: true }]);
+  let ruf = 0;
+  const a = speicherMock();
+  await messlaufImTakt({ kennung: "muster-1", faelleLader: async () => [kaputt], ablage: a, env, fetchImpl: async () => { ruf += 1; return sseAntwort("smejj.com"); }, sleep: async () => {} });
+  await warteAufMessung("muster-1");
+  const stand = a.m.get(ABLAGE_ID);
+  assert.equal(stand.ok, false);
+  assert.match(stand.grund, /muster_ungueltig/, stand.grund);
+  assert.equal(stand.faelle[0].status, "error");
+  assert.equal(ruf, 1, "kein Nachfragen beim Modell: die Suite ist kaputt, nicht die Antwort");
+  // Gesund: "(?i)" ist ein gueltiges Muster und wird wie ignoreCase gemessen.
+  const b = speicherMock();
+  const inline = fall("i", [{ type: "matches", pattern: "(?i)BEISPIEL\\.de", critical: true }]);
+  await messlaufImTakt({ kennung: "muster-2", faelleLader: async () => [inline], ablage: b, env, fetchImpl: async () => sseAntwort("beispiel.de"), sleep: async () => {} });
+  await warteAufMessung("muster-2");
+  assert.equal(b.m.get(ABLAGE_ID).ok, true, b.m.get(ABLAGE_ID).grund);
+  assert.match(beurteileMessung({ cases: 2, errors: 1, musterFehler: 1, weightedScore: 0.5 }).grund, /ungültigem Muster/);
+});
+
 test("Nr. 75/79: neue Brücken-Version macht das alte Urteil ungültig, der Verstoss traegt einen Beleg (Master-Audit 15.09.)", async () => {
   // Befund 15.09.: beide Ampeln rot mit einem Urteil von 11:00 UTC, die Brücke v151
   // hatte den Fehler um 13:25 behoben — nachgemessen 3/3 bestanden, Ampel blieb 12 h rot.

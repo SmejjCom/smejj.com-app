@@ -20,6 +20,8 @@
 import { createHash } from "node:crypto";
 import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
+import { aktuellerStand } from "../autopilots/rueckRollerAutopilot.js";
+import { leiteCommitAb } from "../autopilots/bauWacheAutopilot.js";
 
 const ZEIT_MS = 8_000;
 const CACHE_MS = 2 * 60 * 1000;
@@ -99,13 +101,23 @@ async function control(fetchImpl, jetztMs, env, startzeitMs) {
     const runs = await hole(fetchImpl, `https://api.github.com/repos/${APP_REPO}/commits/${bauSha}/check-runs`, { json: true, jetztMs });
     lauf = (runs.json?.check_runs || []).find((r) => /zeabur/i.test(r.name)) || null;
   }
-  const eigenerCommit = env.ZEABUR_GIT_COMMIT_SHA || env.GIT_COMMIT_SHA || env.SOURCE_COMMIT || null;
+  const ausUmgebung = env.ZEABUR_GIT_COMMIT_SHA || env.GIT_COMMIT_SHA || env.SOURCE_COMMIT || null;
   const gestartetAm = health.json?.gestartetAm || (Number.isFinite(startzeitMs) ? new Date(startzeitMs).toISOString() : null);
+  // Live-Test 15.09.: seit ZEABUR_GIT_COMMIT_SHA fehlt, stand hier "dahinter, Neustart steht
+  // aus", obwohl die Bau-Wache (Nr. 76) den Commit bestätigte. Grund: Zeabur startet den
+  // Container VOR dem Abschluss des Check-Runs (live: Start 09:59:51, Bau fertig 10:01:44),
+  // die Regel unten verlangte Start NACH Bau-Ende. Darum dieselbe Ableitung wie Bau-Wache und
+  // Rück-Roller: erst der von der Bau-Wache hinterlegte Stand (aktuellerStand), sonst
+  // leiteCommitAb mit ihrem ±10-min-Fenster um den Prozessstart. Beides bleibt "abgeleitet".
+  const abgeleitet = ausUmgebung
+    ? ""
+    : (aktuellerStand(env) || leiteCommitAb({ juengster: bauSha || "", checkRun: lauf, prozessStartMs: Date.parse(gestartetAm || "") }));
+  const eigenerCommit = ausUmgebung || abgeleitet || null;
   let zustand, satz, liveStand;
   if (eigenerCommit) {
     liveStand = kurz(eigenerCommit);
     if (!bauSha) { zustand = "unbekannt"; satz = "Bau-Branch bei GitHub nicht lesbar."; }
-    else if (bauSha.startsWith(eigenerCommit) || eigenerCommit.startsWith(bauSha.slice(0, 8))) { zustand = "gleich"; satz = "Der laufende Prozess ist aus dem juengsten Commit des Bau-Branch gebaut."; }
+    else if (bauSha.startsWith(eigenerCommit) || eigenerCommit.startsWith(bauSha.slice(0, 8))) { zustand = "gleich"; satz = abgeleitet ? "Abgeleitet wie die Bau-Wache: der Prozess laeuft mit dem juengsten Commit (" + kurz(bauSha) + ") — ZEABUR_GIT_COMMIT_SHA fehlt in der Umgebung." : "Der laufende Prozess ist aus dem juengsten Commit des Bau-Branch gebaut."; }
     else { zustand = "dahinter"; satz = "Der Bau-Branch ist weiter als der laufende Prozess — Push ≠ gebaut."; }
   } else {
     // Abgeleitet: kein Commit in der Umgebung. Startzeit gegen Bau-Abschluss.
@@ -120,7 +132,7 @@ async function control(fetchImpl, jetztMs, env, startzeitMs) {
     id: "control", name: "smejj-control", bautAus: "Zeabur · " + BAU_BRANCH,
     liveStand, bauStand: kurz(bauSha), zustand, satz,
     bauLauf: lauf ? { status: lauf.status, ergebnis: lauf.conclusion, fertigAm: lauf.completed_at } : null,
-    gestartetAm, abgeleitet: !eigenerCommit, antwortMs: health.ms ?? null
+    gestartetAm, abgeleitet: !ausUmgebung, antwortMs: health.ms ?? null
   };
 }
 
@@ -143,7 +155,11 @@ async function einfacherDienst(fetchImpl, jetztMs, { id, name, bautAus, url, ver
   const a = await hole(fetchImpl, url, { json: true, jetztMs });
   const antwortMs = a.ms ?? null;
   if (a.status === 0) return { id, name, bautAus, liveStand: null, bauStand: null, zustand: "nicht-erreichbar", satz: "Nicht erreichbar: " + (a.fehler || "keine Antwort") + ".", antwortMs };
-  if (a.status === 404) return { id, name, bautAus, liveStand: "antwortet (404)", bauStand: null, zustand: "erreichbar", satz: "Der Dienst antwortet, hat aber keinen Gesundheitspfad — Version nicht messbar.", antwortMs };
+  // Live-Test 15.09.: 404 auf /health galt als "Antwortet" (gruen). Auf zeabur.app antwortet
+  // aber schon der Rand mit 404, wenn unter der Domain gar kein Dienst mehr haengt — ein
+  // gruener Punkt fuer einen moeglicherweise toten Dienst. Ohne Gesundheitspfad ist nichts
+  // bewiesen; darum "nicht erreichbar", und der Satz sagt, was genau fehlt.
+  if (a.status === 404) return { id, name, bautAus, liveStand: "ohne Health (404)", bauStand: null, zustand: "nicht-erreichbar", satz: "/health antwortet 404 — kein Gesundheitspfad oder kein Dienst unter dieser Adresse. Nicht als erreichbar gewertet; im Zeabur-Portal pruefen, ob der Dienst laeuft.", antwortMs };
   if (a.status !== 200) return { id, name, bautAus, liveStand: "HTTP " + a.status, bauStand: null, zustand: "nicht-erreichbar", satz: "Antwortet mit HTTP " + a.status + ".", antwortMs };
   const version = versionAus ? versionAus(a.json) : null;
   return { id, name, bautAus, liveStand: version || "antwortet", bauStand: null, zustand: "erreichbar", satz: version ? "Meldet Version " + version + "; kein Bau-Stand zum Vergleich hinterlegt." : "Antwortet gesund; Version nicht gemeldet.", antwortMs };

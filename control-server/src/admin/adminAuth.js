@@ -4,7 +4,9 @@
 //
 // Drei Festlegungen, die den Rest tragen:
 //   1. Die Rolle wird NIE aus dem Sitzungs-Token gelesen, sondern bei jeder
-//      Anfrage frisch aus dem Nutzer-Store. Ein Entzug wirkt damit sofort und
+//      Anfrage aus dem Nutzer-Store (hoechstens 30 s zwischengespeichert, jede
+//      Schreibung verwirft den Speicher — siehe ladeAdminDatensatz). Ein Entzug
+//      ueber die Konsole wirkt damit sofort und
 //      ein manipuliertes Token bringt keine Rechte. (sessionToken.js filtert
 //      "role" ohnehin heraus — wir verlassen uns aber nicht darauf.)
 //   2. Fail-closed: Storage-Stoerung, unbekannte Rolle, gesperrtes Konto und
@@ -12,8 +14,63 @@
 //   3. Owner-Bootstrap ueber SMEJJ_ADMIN_OWNER_EMAILS, damit der erste Zugang
 //      ohne Datenbankeingriff moeglich ist. Der Weg ist protokollpflichtig und
 //      als Quelle "bootstrap" erkennbar.
-import { getUserByEmail, normalizeEmail, userRole, userStatus } from "../auth/emailUserStore.js";
+import { getUserByEmail, normalizeEmail, nutzerSchreibStand, nutzerStoreIstEntfernt, userRole, userStatus } from "../auth/emailUserStore.js";
 import { GRANT, can, isAdminRole } from "./adminRoles.js";
+
+// ---- Kurzer Zwischenspeicher fuer den Konto-Datensatz --------------------------
+// A-bis-Z-Livetest 15.09.2026, Befund M8: /api/admin/me brauchte 5-13 s, beim
+// Kaltstart einmal "Nutzerverzeichnis nicht erreichbar". Jeder Seitenaufruf
+// der Konsole las den Datensatz frisch aus IDrive e2 (2,5 s Zeitgrenze, zwei
+// Wiederholungen) — und die Konsole ruft viele Routen kurz hintereinander.
+//
+// Was Festlegung 1 (oben) davon unberuehrt laesst:
+//   - Die Rolle kommt weiter aus dem STORE, nie aus dem Token; gespeichert wird
+//     nur der Store-Datensatz, und die Pruefung darauf laeuft bei JEDER Anfrage.
+//   - Hoechstens 30 s alt (Obergrenze laut Auftrag ~60 s).
+//   - Jede Schreibung in diesem Prozess (Rollenaenderung, Sperre, Loeschung)
+//     verwirft ALLE Eintraege sofort (Schreibstand aus emailUserStore.js).
+//   - Fail-closed: Fehler werden nie gespeichert; kein alter Eintrag springt
+//     bei einer Stoerung ein.
+//   - Nur fuer den entfernten Store — der Speicher-Zweig (lokal, Tests) ist
+//     ohnehin sofort und bleibt ungepuffert.
+const ZWISCHENSPEICHER_MS = 30_000;
+const ZWISCHENSPEICHER_MAX = 200;
+// Kaltstart: der erste TLS-Aufbau zu IDrive e2 reisst die 2,5-s-Grenze. Ein
+// zweiter Anlauf mit mehr Geduld, bevor "nicht erreichbar" gemeldet wird.
+const KALTSTART_TIMEOUT_MS = 8_000;
+const zwischenspeicher = new Map(); // email -> { am, stand, text }
+
+/**
+ * Konto-Datensatz fuer die Admin-Pruefung laden: Zwischenspeicher, sonst Store
+ * mit einer geduldigeren Wiederholung. Wirft, wenn beide Anlaeufe scheitern.
+ * Exportiert fuer die Tests (lese/jetztMs/aktiv injizierbar).
+ */
+export async function ladeAdminDatensatz(email, env = process.env, {
+  lese = getUserByEmail, jetztMs = Date.now(), aktiv = nutzerStoreIstEntfernt(env)
+} = {}) {
+  const stand = nutzerSchreibStand();
+  const eintrag = aktiv ? zwischenspeicher.get(email) : null;
+  if (eintrag && eintrag.stand === stand && jetztMs - eintrag.am >= 0 && jetztMs - eintrag.am < ZWISCHENSPEICHER_MS) {
+    return eintrag.text === null ? null : JSON.parse(eintrag.text); // Kopie: niemand veraendert den Eintrag
+  }
+  let record;
+  try {
+    record = await lese(email, env);
+  } catch {
+    record = await lese(email, env, { timeoutMs: KALTSTART_TIMEOUT_MS }); // wirft weiter -> 503
+  }
+  // Nur ablegen, wenn waehrenddessen niemand geschrieben hat.
+  if (aktiv && nutzerSchreibStand() === stand) {
+    if (zwischenspeicher.size >= ZWISCHENSPEICHER_MAX) zwischenspeicher.delete(zwischenspeicher.keys().next().value);
+    zwischenspeicher.set(email, { am: jetztMs, stand, text: record ? JSON.stringify(record) : null });
+  }
+  return record;
+}
+
+/** Nur fuer Tests. */
+export function _adminZwischenspeicherLeeren() {
+  zwischenspeicher.clear();
+}
 
 /** E-Mail-Liste aus der Umgebung: "a@x.de, b@y.de" -> Set normalisierter Adressen. */
 export function bootstrapOwnerEmails(env = process.env) {
@@ -46,7 +103,7 @@ export async function resolveAdminActor(authUser, { env = process.env, erlaubeUn
   const bootstrap = bootstrapOwnerEmails(env);
   let record = null;
   try {
-    record = await getUserByEmail(email, env);
+    record = await ladeAdminDatensatz(email, env);
   } catch {
     // Storage-Stoerung darf niemals zu mehr Rechten fuehren.
     return deny(503, "admin_directory_unavailable");

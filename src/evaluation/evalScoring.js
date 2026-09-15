@@ -3,7 +3,7 @@
 // Reine Funktionen, keine Seiteneffekte, kein Netz. Deterministisch: gleiche Antwort
 // ergibt immer dieselbe Punktzahl. Damit ist jede Modellentscheidung nachvollziehbar
 // und replaybar (Kernprinzip von smejj.com).
-import { isSafePattern } from "./evalSuite.js";
+import { isSafePattern, zerlegeMuster } from "./evalSuite.js";
 
 /** Bewertet eine einzelne Erwartung. Liefert nie eine Ausnahme. */
 export function evaluateAssertion(assertion, { text = "", latencyMs = null } = {}) {
@@ -23,9 +23,9 @@ export function evaluateAssertion(assertion, { text = "", latencyMs = null } = {
     case "contains_none":
       return verdict(assertion, values(assertion).every((value) => !lower.includes(value.toLowerCase())));
     case "matches":
-      return verdict(assertion, testPattern(assertion.pattern, haystack, assertion.ignoreCase === true));
+      return patternVerdict(assertion, haystack, false);
     case "not_matches":
-      return verdict(assertion, !testPattern(assertion.pattern, haystack, assertion.ignoreCase === true));
+      return patternVerdict(assertion, haystack, true);
     case "min_length":
       return verdict(assertion, haystack.trim().length >= assertion.value);
     case "max_length":
@@ -68,6 +68,26 @@ export function scoreCase(evalCase, result) {
   }
 
   const evaluated = assertions.map((assertion) => evaluateAssertion(assertion, { text, latencyMs }));
+  // Ein ungueltiges Muster macht den FALL unmessbar: Status "error" (zaehlt in
+  // summary.errors und musterFehler) statt einer Note, die nur die Suite bewertet.
+  // Fail-closed wie ein Transportfehler, aber mit eigenem Grund, damit man es sieht.
+  const kaputt = evaluated.find((entry) => entry.fehler === MUSTER_UNGUELTIG);
+  if (kaputt) {
+    return {
+      caseId: evalCase?.id || "unknown",
+      profile: evalCase?.profile || "default",
+      weight: positiveInt(evalCase?.weight, 1),
+      status: "error",
+      score: 0,
+      criticalFailed: true,
+      latencyMs,
+      firstTokenMs: Number.isFinite(result?.firstTokenMs) ? result.firstTokenMs : null,
+      outputChars: text.length,
+      error: shortReason(`${MUSTER_UNGUELTIG}: ${kaputt.pattern}`),
+      musterFehler: true,
+      assertions: evaluated
+    };
+  }
   const passed = evaluated.filter((entry) => entry.ok).length;
   const criticalFailed = evaluated.some((entry) => entry.critical && !entry.ok);
   const ratio = evaluated.length > 0 ? passed / evaluated.length : 0;
@@ -195,6 +215,9 @@ export function aggregateCaseScores(caseScores) {
     partial: scores.filter((entry) => entry.status === "partial").length,
     failed: scores.filter((entry) => entry.status === "failed").length,
     errors: scores.filter((entry) => entry.status === "error").length,
+    // Davon Fehler der SUITE (ungueltiges Muster), nicht des Transports — getrennt
+    // gezaehlt, damit "nicht messbar" nicht faelschlich auf die Bruecke zeigt.
+    musterFehler: scores.filter((entry) => entry.musterFehler === true).length,
     criticalFailures: scores.filter((entry) => entry.criticalFailed).length,
     // Wackelige Faelle sind kein Nebenwert: sie sind der Grund, warum sich die
     // Gesamtpunktzahl zwischen zwei unveraenderten Laeufen bewegt.
@@ -282,13 +305,30 @@ function values(assertion) {
  * auffallen, obwohl sie sich nur in der Schreibweise unterscheidet.
  * Wer das nicht braucht, setzt in der Suite ignoreCase auf true.
  */
-function testPattern(pattern, text, ignoreCase = false) {
-  if (!isSafePattern(pattern)) return false;
+export function testPattern(pattern, text, ignoreCase = false) {
+  // Kaputtes Muster = kaputte MESSUNG, nicht "trifft nicht". Frueher kam hier still
+  // false zurueck; bei not_matches wurde daraus sogar ein stilles Bestanden (Befund 10).
+  // Nie werfen: ein Muster darf nicht den ganzen Messlauf abbrechen — der Aufrufer
+  // kennzeichnet den Fall stattdessen als Fehler (siehe patternVerdict/scoreCase).
+  if (typeof pattern !== "string" || pattern.length === 0 || !isSafePattern(pattern)) return MUSTER_UNGUELTIG;
+  const { quelle, flags } = zerlegeMuster(pattern, ignoreCase);
   try {
-    return new RegExp(pattern, ignoreCase ? "i" : "").test(text);
+    return new RegExp(quelle, flags).test(text);
   } catch {
-    return false;
+    return MUSTER_UNGUELTIG;
   }
+}
+
+/** Ergebnis von testPattern fuer ein unbrauchbares Muster — bewusst kein Boolean. */
+export const MUSTER_UNGUELTIG = "muster_ungueltig";
+
+/** matches/not_matches: ein ungueltiges Muster faellt laut durch, mit Fehlerkennung. */
+function patternVerdict(assertion, haystack, negiert) {
+  const treffer = testPattern(assertion.pattern, haystack, assertion.ignoreCase === true);
+  if (treffer === MUSTER_UNGUELTIG) {
+    return { ...verdict(assertion, false), fehler: MUSTER_UNGUELTIG, pattern: String(assertion.pattern ?? "").slice(0, 80) };
+  }
+  return verdict(assertion, negiert ? !treffer : treffer);
 }
 
 /**

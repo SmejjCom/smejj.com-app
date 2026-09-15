@@ -182,11 +182,23 @@ function validateAssertion(assertion, reject) {
 export function isSafePattern(pattern) {
   if (String(pattern).length > 300) return false;
   try {
-    new RegExp(pattern, "i");
+    new RegExp(zerlegeMuster(pattern).quelle, "i");
     return true;
   } catch {
     return false;
   }
+}
+
+/**
+ * Fuehrendes Inline-Flag "(?i)" (Python/PCRE-Schreibweise) in das JS-Flag i umsetzen.
+ * WARUM (Live-Test 15.09.2026, Befund 10): JS kennt "(?i)" nicht, new RegExp warf, und
+ * testPattern wertete das still als "trifft nicht" — ein Messfehler sah aus wie ein
+ * Modellfehler. Nur das fuehrende "(?i)" wird umgesetzt; alles andere bleibt, wie es ist.
+ */
+export function zerlegeMuster(pattern, ignoreCase = false) {
+  const text = String(pattern);
+  const inline = text.startsWith("(?i)");
+  return { quelle: inline ? text.slice(4) : text, flags: ignoreCase || inline ? "i" : "" };
 }
 
 /** Faelle in Ausfuehrungsreihenfolge, begrenzt auf das Budget der Suite bzw. das Limit des Aufrufs. */

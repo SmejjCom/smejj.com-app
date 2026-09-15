@@ -60,6 +60,8 @@ export async function ladePackFaelle(packDatei, ids = []) {
 export function beurteileMessung(summary, { mindestNote = 0.95, nurKritisch = false } = {}) {
   if (!summary || !Number.isFinite(summary.cases) || summary.cases <= 0) return { ok: false, grund: "keine Fälle gemessen" };
   const prozent = Math.round((summary.weightedScore || 0) * 1000) / 10;
+  // Ungueltiges Muster ist ein Fehler der SUITE, nicht der Bruecke — eigener Grund (Befund 10).
+  if (summary.musterFehler > 0) return { ok: false, grund: `nicht messbar: ${summary.musterFehler} von ${summary.cases} Fällen mit ungültigem Muster in der Suite`, prozent };
   if (summary.errors > 0) return { ok: false, grund: `nicht messbar: ${summary.errors} von ${summary.cases} Fällen mit Transportfehler (HTTP/Timeout/Notfall-Assistent)`, prozent };
   const zahlen = `Note ${String(prozent).replace(".", ",")} % (${summary.cases} Fälle, ${summary.criticalFailures} kritisch, p95 ${summary.latencyMsP95 ?? "?"} ms)`;
   if (summary.criticalFailures > 0) return { ok: false, grund: `${zahlen} — kritische Zusicherung verletzt`, prozent };
@@ -181,6 +183,13 @@ async function messe({ faelle, modelId, weg = "chat", env, fetchImpl, sleep }) {
     if (!ergebnis.ok && /^(http_(429|502|503|504)|timeout)$/.test(String(ergebnis.error || ""))) {
       await sleep(ergebnis.error === "http_429" ? 65_000 : 15_000);
       ergebnis = await rufe();
+    } else if (!ergebnis.ok && ergebnis.error === "empty_response") {
+      // LEERE ANTWORT (Live-Test 15.09.2026, Befund 10): HTTP 200, aber kein Text —
+      // ein Aussetzer wie ein Transportfehler, kein Urteil ueber das Modell. Frueher
+      // kippte EIN leerer Strom den Fall auf "nicht messbar". Einmal wiederholen,
+      // mit dem normalen Abstand (Bruecken-Limit 12/min).
+      await sleep(ABSTAND_MS);
+      ergebnis = await rufe();
     }
     let bewertet = scoreCase(fall, ergebnis);
     gezaehlterText = ergebnis.text;
@@ -193,7 +202,9 @@ async function messe({ faelle, modelId, weg = "chat", env, fetchImpl, sleep }) {
     // Hier reicht die gezielte Nachfrage: nur der kritische Fall wird EINMAL
     // wiederholt (kostet fast nichts) und gilt erst dann als Verstoss, wenn er
     // auch beim zweiten Mal faellt.
-    if (bewertet.criticalFailed && ergebnis.ok) {
+    // Nicht bei status "error" (ungueltiges Muster): die Suite ist kaputt, eine zweite
+    // Antwort aendert daran nichts und kostet nur eine Anfrage.
+    if (bewertet.criticalFailed && ergebnis.ok && bewertet.status !== "error") {
       await sleep(ABSTAND_MS);
       const zweiteAntwort = await rufe();
       const zweiter = scoreCase(fall, zweiteAntwort);

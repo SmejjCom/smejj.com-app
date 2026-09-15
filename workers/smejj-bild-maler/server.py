@@ -135,6 +135,9 @@ def health():
         "schritte": SCHRITTE,
         "groesse": GROESSE,
         "gesichtsfix": gesichtsfix_zustand,
+        # Malt gerade ein Bild (40-140 s CPU)? Autopilot Nr. 12 wertet das als
+        # "beschaeftigt" statt als Ausfall (A-bis-Z-Livetest 15.09.2026, M7).
+        "beschaeftigt": mal_sperre.locked(),
     }
 
 

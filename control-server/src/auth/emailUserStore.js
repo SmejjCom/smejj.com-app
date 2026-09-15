@@ -58,13 +58,27 @@ export function userStatus(record) {
   return KNOWN_STATUS.has(status) ? status : DEFAULT_STATUS;
 }
 
-export async function getUserByEmail(email, env = process.env) {
+/** Liegt der Store im (langsamen) Objektspeicher statt im Speicher des Prozesses? */
+export function nutzerStoreIstEntfernt(env = process.env) {
+  return Boolean(idriveConfig(env));
+}
+
+// Schreibstand: jede Schreibung in diesem Prozess zaehlt hoch. Wer Datensaetze
+// zwischenspeichert (adminAuth.js, A-bis-Z-Livetest 15.09.2026 Befund M8),
+// verwirft sie, sobald sich der Stand bewegt hat — eine Rollenaenderung ueber
+// die Konsole wirkt damit sofort, nicht erst nach Ablauf des Zwischenspeichers.
+let schreibStand = 0;
+export function nutzerSchreibStand() {
+  return schreibStand;
+}
+
+export async function getUserByEmail(email, env = process.env, { timeoutMs } = {}) {
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
   const cfg = idriveConfig(env);
   if (!cfg) return memoryStore.get(emailKey(normalized)) || null;
   try {
-    const { body } = await signedS3Get({ ...cfg, key: objectKey(normalized) });
+    const { body } = await signedS3Get({ ...cfg, key: objectKey(normalized), ...(timeoutMs ? { timeoutMs } : {}) });
     return JSON.parse(body);
   } catch (error) {
     if (/40[34]|NoSuchKey|not found/i.test(String(error?.message || error))) return null;
@@ -75,14 +89,19 @@ export async function getUserByEmail(email, env = process.env) {
 export async function putUser(record, env = process.env) {
   if (!record || !normalizeEmail(record.email)) throw new Error("email_user_record_invalid");
   record.updatedAt = new Date().toISOString();
+  schreibStand += 1; // vor dem Schreiben: ein laufender Lesevorgang darf nichts Altes mehr ablegen
   const cfg = idriveConfig(env);
   if (!cfg) { memoryStore.set(emailKey(record.email), record); return record; }
-  await signedS3Put({
-    ...cfg,
-    key: objectKey(record.email),
-    body: JSON.stringify(record, null, 2),
-    contentType: "application/json; charset=utf-8"
-  });
+  try {
+    await signedS3Put({
+      ...cfg,
+      key: objectKey(record.email),
+      body: JSON.stringify(record, null, 2),
+      contentType: "application/json; charset=utf-8"
+    });
+  } finally {
+    schreibStand += 1; // und danach: was waehrend des Schreibens gelesen wurde, gilt nicht
+  }
   return record;
 }
 
@@ -163,5 +182,6 @@ function shortUserAgent(userAgent) {
 }
 
 export function __clearMemoryStoreForTests() {
+  schreibStand += 1;
   memoryStore.clear();
 }

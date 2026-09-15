@@ -119,3 +119,73 @@ test("dual und consent werden als eigener Grund abgewiesen, nicht als pauschales
   assert.equal(consent.ok, false);
   assert.equal(consent.error, "admin_subject_consent_required");
 });
+
+// ---- Befund M8 (A-bis-Z-Livetest 15.09.2026): Zwischenspeicher + Kaltstart ----
+// Kaputte Proben: Stoerung darf nie gespeichert werden, Schreibung und Ablauf
+// muessen den Eintrag verwerfen. Gesunde Probe: der zweite Ruf fragt den Store
+// nicht erneut.
+import { ladeAdminDatensatz, _adminZwischenspeicherLeeren } from "./adminAuth.js";
+
+function zaehlLeser(antworten) {
+  const rufe = [];
+  const lese = async (email, env, optionen = {}) => {
+    rufe.push(optionen.timeoutMs || null);
+    const naechste = antworten.length > 1 ? antworten.shift() : antworten[0];
+    if (naechste instanceof Error) throw naechste;
+    return naechste;
+  };
+  return { lese, rufe };
+}
+
+test("M8 gesund: zweiter Ruf innerhalb von 30 s kommt aus dem Zwischenspeicher", async () => {
+  _adminZwischenspeicherLeeren();
+  const { lese, rufe } = zaehlLeser([{ email: "z@example.de", role: "admin" }]);
+  const a = await ladeAdminDatensatz("z@example.de", ENV, { lese, jetztMs: 1_000, aktiv: true });
+  a.role = "owner"; // Aufrufer veraendert seine Kopie
+  const b = await ladeAdminDatensatz("z@example.de", ENV, { lese, jetztMs: 20_000, aktiv: true });
+  assert.equal(rufe.length, 1);
+  assert.equal(b.role, "admin", "der Eintrag ist eine Kopie — Veraenderungen wirken nicht zurueck");
+});
+
+test("M8 kaputt: nach 30 s wird frisch gelesen", async () => {
+  _adminZwischenspeicherLeeren();
+  const { lese, rufe } = zaehlLeser([{ email: "z@example.de", role: "admin" }, { email: "z@example.de", role: "user" }]);
+  await ladeAdminDatensatz("z@example.de", ENV, { lese, jetztMs: 1_000, aktiv: true });
+  const b = await ladeAdminDatensatz("z@example.de", ENV, { lese, jetztMs: 31_001, aktiv: true });
+  assert.equal(rufe.length, 2);
+  assert.equal(b.role, "user");
+});
+
+test("M8 kaputt: eine Schreibung (Rollenentzug) verwirft den Eintrag sofort", async () => {
+  _adminZwischenspeicherLeeren();
+  const { lese, rufe } = zaehlLeser([{ email: "z@example.de", role: "admin" }, { email: "z@example.de", role: "user" }]);
+  await ladeAdminDatensatz("z@example.de", ENV, { lese, jetztMs: 1_000, aktiv: true });
+  await putUser({ ...createUserRecord({ email: "anders@example.de", name: "A", passwordHash: "scrypt$x" }) }, ENV);
+  const b = await ladeAdminDatensatz("z@example.de", ENV, { lese, jetztMs: 2_000, aktiv: true });
+  assert.equal(rufe.length, 2);
+  assert.equal(b.role, "user");
+});
+
+test("M8 Kaltstart: erster Anlauf scheitert, zweiter mit mehr Geduld gelingt", async () => {
+  _adminZwischenspeicherLeeren();
+  const { lese, rufe } = zaehlLeser([new Error("timeout"), { email: "z@example.de", role: "admin" }]);
+  const a = await ladeAdminDatensatz("z@example.de", ENV, { lese, jetztMs: 1_000, aktiv: true });
+  assert.equal(a.role, "admin");
+  assert.deepEqual(rufe, [null, 8000]);
+});
+
+test("M8 fail-closed: scheitern beide Anlaeufe, wird geworfen und NICHTS gespeichert", async () => {
+  _adminZwischenspeicherLeeren();
+  const { lese, rufe } = zaehlLeser([new Error("weg"), new Error("weg"), { email: "z@example.de", role: "admin" }]);
+  await assert.rejects(ladeAdminDatensatz("z@example.de", ENV, { lese, jetztMs: 1_000, aktiv: true }));
+  await ladeAdminDatensatz("z@example.de", ENV, { lese, jetztMs: 1_500, aktiv: true });
+  assert.equal(rufe.length, 3, "nach der Stoerung muss frisch gelesen werden");
+});
+
+test("M8: ohne entfernten Store (Speicher-Zweig) wird nie zwischengespeichert", async () => {
+  _adminZwischenspeicherLeeren();
+  const { lese, rufe } = zaehlLeser([{ email: "z@example.de", role: "admin" }]);
+  await ladeAdminDatensatz("z@example.de", ENV, { lese, jetztMs: 1_000, aktiv: false });
+  await ladeAdminDatensatz("z@example.de", ENV, { lese, jetztMs: 1_001, aktiv: false });
+  assert.equal(rufe.length, 2);
+});

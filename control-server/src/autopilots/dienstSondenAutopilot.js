@@ -23,7 +23,38 @@ import { piperAdresse, probeBild, probeImTakt, probeStimme } from "./echteProben
  * der Bild-Maler nur, wenn seine Adresse gesetzt ist — einen nie
  * ausgerollten Dienst rot zu malen waere keine Messung, sondern Laerm.
  */
-export async function laufMedienQualitaet({ mitNetz = true, env = process.env, fetchImpl = fetch, mitProbe = fetchImpl === fetch, ablage = null, sofortMs } = {}) {
+// ZWEITER BLICK VOR "NICHT ERREICHBAR" (A-bis-Z-Livetest 15.09.2026, Befund M7):
+// um 11:00 UTC meldete dieser Lauf "Bild-Maler nicht erreichbar (fetch failed)",
+// um 11:29 war er bereit — laut Zeabur ohne Neustart, /health dort alle 10 s 200.
+// Der Maler rechnet ein Bild 40-140 s auf 2 CPU-Kernen; in der Zeit kann /health
+// ins Zeitlimit laufen. Ein einzelner Fehlschlag ist deshalb noch kein Ausfall:
+// nach 10 s wird einmal wiederholt. Ein 429 (oder beschaeftigt:true im
+// Health-Koerper) heisst "malt gerade" und zaehlt nicht als Ausfall.
+export const HEALTH_WIEDERHOLUNG_MS = 10_000;
+
+async function frageHealth(ziel, { fetchImpl, wiederholAbstandMs }) {
+  let letzterFehler = null;
+  for (let versuch = 1; versuch <= 2; versuch += 1) {
+    if (versuch === 2) await new Promise((r) => setTimeout(r, wiederholAbstandMs));
+    const begonnen = Date.now();
+    try {
+      const antwort = await fetchImpl(`${ziel.url.replace(/\/$/, "")}/health`, { signal: AbortSignal.timeout(10_000) });
+      const dauerMs = Date.now() - begonnen;
+      if (antwort.status === 429) return { art: "beschaeftigt", dauerMs, versuch };
+      // 5xx kann "gerade ueberlastet" sein -> einmal nachsehen; 4xx ist endgueltig.
+      if (!antwort.ok && antwort.status >= 500 && versuch === 1) { letzterFehler = { art: "http", status: antwort.status, dauerMs }; continue; }
+      if (!antwort.ok) return { art: "http", status: antwort.status, dauerMs, versuch };
+      const daten = await antwort.json().catch(() => ({}));
+      if (daten.beschaeftigt === true) return { art: "beschaeftigt", dauerMs, versuch };
+      return { art: "antwort", daten, dauerMs, versuch };
+    } catch (fehler) {
+      letzterFehler = { art: "fehler", fehler, dauerMs: Date.now() - begonnen };
+    }
+  }
+  return { ...letzterFehler, versuch: 2 };
+}
+
+export async function laufMedienQualitaet({ mitNetz = true, env = process.env, fetchImpl = fetch, mitProbe = fetchImpl === fetch, ablage = null, sofortMs, wiederholAbstandMs = HEALTH_WIEDERHOLUNG_MS } = {}) {
   if (!mitNetz) {
     return { ok: true, meldung: "Netz-Takt abgewartet — Worker-Zustand wird im naechsten Lauf gemessen" };
   }
@@ -56,28 +87,33 @@ export async function laufMedienQualitaet({ mitNetz = true, env = process.env, f
     // Recht der Form nach ("Video-Worker: bereit (parallax)"), obwohl eine
     // echte Netzabfrage dahinterstand. Ein Waechter, dessen Fehlalarme man
     // sich abgewoehnt, ist keiner mehr — also bekommt er seine Zahl.
-    const begonnen = Date.now();
-    try {
-      const antwort = await fetchImpl(`${ziel.url.replace(/\/$/, "")}/health`, { signal: AbortSignal.timeout(10_000) });
-      const dauerMs = Date.now() - begonnen;
-      if (!antwort.ok) {
-        allesOk = false;
-        befunde.push(`${ziel.name}: HTTP ${antwort.status} nach ${dauerMs} ms`);
-        continue;
-      }
-      const daten = await antwort.json().catch(() => ({}));
-      if (daten.bereit === false) {
-        // "laeuft, aber nicht bereit" ist der Fehlbild-Klassiker aus der
-        // Salad-Zeit — genau der Zustand, der frueher unsichtbar blieb.
-        allesOk = false;
-        befunde.push(`${ziel.name}: laeuft, aber NICHT bereit nach ${dauerMs} ms${daten.fehler ? ` (${String(daten.fehler).slice(0, 40)})` : ""}`);
-      } else {
-        befunde.push(`${ziel.name}: bereit in ${dauerMs} ms${daten.engine ? ` (${daten.engine})` : ""}`);
-        if (ziel.name === "Bild-Maler") bildMalerBereit = true;
-      }
-    } catch (fehler) {
+    const ergebnis = await frageHealth(ziel, { fetchImpl, wiederholAbstandMs });
+    const nachgesehen = ergebnis.versuch === 2 ? " (2. Versuch nach 10 s)" : "";
+    if (ergebnis.art === "beschaeftigt") {
+      // Kein Ausfall: der Dienst lebt und arbeitet. Gemalt wird in diesem Lauf nicht.
+      befunde.push(`${ziel.name}: beschäftigt (malt gerade, HTTP 429/beschaeftigt) nach ${ergebnis.dauerMs} ms${nachgesehen}`);
+      continue;
+    }
+    if (ergebnis.art === "http") {
       allesOk = false;
-      befunde.push(`${ziel.name}: nicht erreichbar (${String(fehler?.name === "TimeoutError" ? "Zeitlimit 10 s" : fehler?.message || fehler).slice(0, 50)})`);
+      befunde.push(`${ziel.name}: HTTP ${ergebnis.status} nach ${ergebnis.dauerMs} ms${nachgesehen}`);
+      continue;
+    }
+    if (ergebnis.art === "fehler") {
+      const fehler = ergebnis.fehler;
+      allesOk = false;
+      befunde.push(`${ziel.name}: nicht erreichbar (${String(fehler?.name === "TimeoutError" ? "Zeitlimit 10 s" : fehler?.message || fehler).slice(0, 50)}), auch im 2. Versuch nach 10 s`);
+      continue;
+    }
+    const { daten, dauerMs } = ergebnis;
+    if (daten.bereit === false) {
+      // "laeuft, aber nicht bereit" ist der Fehlbild-Klassiker aus der
+      // Salad-Zeit — genau der Zustand, der frueher unsichtbar blieb.
+      allesOk = false;
+      befunde.push(`${ziel.name}: laeuft, aber NICHT bereit nach ${dauerMs} ms${daten.fehler ? ` (${String(daten.fehler).slice(0, 40)})` : ""}`);
+    } else {
+      befunde.push(`${ziel.name}: bereit in ${dauerMs} ms${daten.engine ? ` (${daten.engine})` : ""}${nachgesehen}`);
+      if (ziel.name === "Bild-Maler") bildMalerBereit = true;
     }
   }
   // ECHTE PROBE (Master-Audit 2026-09-15): /health sagt nur "Prozess lebt". Ob

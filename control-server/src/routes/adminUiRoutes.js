@@ -30,6 +30,12 @@ const UI_DIR = path.resolve(fileURLToPath(new URL("../../admin-ui/", import.meta
 const DATEIEN = Object.freeze({
   "": "index.html",
   "index.html": "index.html",
+  // gate.js stand hier bis 15.09.2026 bewusst nicht — die Folge war auf dem
+  // Rueckfall-Host ein 404 samt MIME-Fehler in der Konsole (A-bis-Z-Livetest,
+  // Befund 4). Auf dieser Herkunft tut das Gate nichts (es erkennt den
+  // Control-Server und legt nur eine untaetige Attrappe an); die Rolle hat
+  // der Server hier schon VOR der ersten Datei geprueft.
+  "gate.js": "gate.js",
   "console.css": "console.css",
   "schiene.js": "schiene.js",
   "api.js": "api.js",

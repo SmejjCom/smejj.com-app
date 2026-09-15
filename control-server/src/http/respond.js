@@ -1,10 +1,57 @@
 // smejj.com control-server — HTTP-Antwort- und Body-Helfer (Single Responsibility: Request/Response-I/O).
 import { SECURITY_HEADERS } from "../../../src/shared/platform.js";
 import { SECURITY_LIMITS } from "../../../src/shared/securityPolicy.js";
+import { brotliCompressSync, gzipSync, constants as zlibKonstanten } from "node:zlib";
+
+// KOMPRIMIERUNG (A-bis-Z-Livetest 15.09.2026, Befund M1): JSON ging bisher
+// unkomprimiert raus. /api/admin/ops/autopiloten wog 592 KB — am Handy ueber
+// 30 s Ladezeit. JSON schrumpft mit Brotli/Gzip auf rund ein Zehntel.
+// Unter 1 KB lohnt es nicht (Kopfzeilen + Rechenzeit > Ersparnis).
+const KOMPRIMIEREN_AB_BYTES = 1024;
+
+/** Welche Kodierung der Aufrufer annimmt — br vor gzip, q=0 heisst "nein". */
+export function waehleKodierung(acceptEncoding) {
+  const angebote = new Map();
+  for (const teil of String(acceptEncoding || "").toLowerCase().split(",")) {
+    const [name, ...parameter] = teil.trim().split(";");
+    if (!name) continue;
+    const q = parameter.map((p) => p.trim()).find((p) => p.startsWith("q="));
+    angebote.set(name.trim(), q ? Number(q.slice(2)) : 1);
+  }
+  const erlaubt = (name) => (angebote.has(name) ? angebote.get(name) > 0 : (angebote.get("*") || 0) > 0);
+  if (erlaubt("br")) return "br";
+  if (erlaubt("gzip")) return "gzip";
+  return null;
+}
+
+/** Vary zusammenfuehren statt ueberschreiben — CORS setzt vorher schon "Origin". */
+function varyMit(res, eintrag) {
+  const vorher = typeof res.getHeader === "function" ? res.getHeader("Vary") : undefined;
+  const liste = String(vorher || "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (!liste.some((s) => s.toLowerCase() === eintrag.toLowerCase())) liste.push(eintrag);
+  return liste.join(", ");
+}
 
 export function json(res, status, payload) {
-  res.writeHead(status, { ...SECURITY_HEADERS, "Content-Type": "application/json; charset=utf-8" });
-  res.end(JSON.stringify(payload, null, 2));
+  const kopf = { ...SECURITY_HEADERS, "Content-Type": "application/json; charset=utf-8" };
+  const text = JSON.stringify(payload, null, 2);
+  // res.req setzt Node selbst (http.ServerResponse); Attrappen ohne req bleiben unkomprimiert.
+  const kodierung = Buffer.byteLength(text) >= KOMPRIMIEREN_AB_BYTES ? waehleKodierung(res.req?.headers?.["accept-encoding"]) : null;
+  if (!kodierung) {
+    if (Buffer.byteLength(text) >= KOMPRIMIEREN_AB_BYTES) kopf.Vary = varyMit(res, "Accept-Encoding");
+    res.writeHead(status, kopf);
+    res.end(text);
+    return;
+  }
+  // Brotli-Stufe 5 statt 11: 592 KB in wenigen Millisekunden, fast gleich klein.
+  const rumpf = kodierung === "br"
+    ? brotliCompressSync(text, { params: { [zlibKonstanten.BROTLI_PARAM_QUALITY]: 5, [zlibKonstanten.BROTLI_PARAM_SIZE_HINT]: Buffer.byteLength(text) } })
+    : gzipSync(text, { level: 6 });
+  kopf["Content-Encoding"] = kodierung;
+  kopf["Content-Length"] = rumpf.length;
+  kopf.Vary = varyMit(res, "Accept-Encoding");
+  res.writeHead(status, kopf);
+  res.end(rumpf);
 }
 
 export function privateJson(res, status, payload) {

@@ -257,3 +257,53 @@ test("Nr. 03 voice-region-check: Piper spricht = grün; Demo-Seite statt Ton = R
   assert.equal(kaputt.ok, false);
   assert.match(kaputt.meldung, /Stimm-Probe gescheitert/);
 });
+
+// ---- Befund M7 (A-bis-Z-Livetest 15.09.2026): zweiter Blick vor "nicht erreichbar" ----
+test("M7 Nr. 12: ein einzelner /health-Aussetzer ist kein Ausfall — nach der Wiederholung bereit", async () => {
+  const rufe = {};
+  const fetchImpl = async (url) => {
+    rufe[url] = (rufe[url] || 0) + 1;
+    if (url.includes("bild-maler") && rufe[url] === 1) throw new TypeError("fetch failed");
+    return antwort(200, { ok: true, bereit: true, engine: "parallax" });
+  };
+  const r = await laufMedienQualitaet({ env: {}, mitProbe: false, fetchImpl, wiederholAbstandMs: 0 });
+  assert.equal(r.ok, true, r.meldung);
+  assert.match(r.meldung, /Bild-Maler: bereit in \d+ ms.*2\. Versuch/);
+});
+
+test("M7 Nr. 12 kaputt: bleibt der Maler auch im zweiten Versuch stumm, ist er ROT", async () => {
+  let rufe = 0;
+  const fetchImpl = async (url) => {
+    if (url.includes("bild-maler")) { rufe += 1; throw new TypeError("fetch failed"); }
+    return antwort(200, { ok: true, bereit: true });
+  };
+  const r = await laufMedienQualitaet({ env: {}, mitProbe: false, fetchImpl, wiederholAbstandMs: 0 });
+  assert.equal(r.ok, false);
+  assert.equal(rufe, 2, "genau eine Wiederholung");
+  assert.match(r.meldung, /Bild-Maler: nicht erreichbar \(fetch failed\), auch im 2\. Versuch/);
+});
+
+test("M7 Nr. 12: 429 oder beschaeftigt:true heisst 'malt gerade' — kein Ausfall, kein Probeauftrag", async () => {
+  for (const health of [() => antwort(429, { ok: false, fehler: "beschaeftigt" }), () => antwort(200, { ok: true, bereit: true, beschaeftigt: true })]) {
+    const gerufen = [];
+    const fetchImpl = async (url) => {
+      gerufen.push(url);
+      return url.includes("bild-maler") ? health() : antwort(200, { ok: true, bereit: true });
+    };
+    const r = await laufMedienQualitaet({ env: {}, mitProbe: true, ablage: speicherMock(), fetchImpl, wiederholAbstandMs: 0 });
+    assert.equal(r.ok, true, r.meldung);
+    assert.match(r.meldung, /Bild-Maler: beschäftigt/);
+    assert.ok(gerufen.every((u) => u.endsWith("/health")), "ein beschaeftigter Maler bekommt keinen Probeauftrag");
+  }
+});
+
+test("M7 Nr. 12 gesund: 404 bleibt endgueltig rot und wird nicht wiederholt", async () => {
+  let rufe = 0;
+  const fetchImpl = async (url) => {
+    if (url.includes("bild-maler")) { rufe += 1; return antwort(404, { error: "nf" }); }
+    return antwort(200, { ok: true, bereit: true });
+  };
+  const r = await laufMedienQualitaet({ env: {}, mitProbe: false, fetchImpl, wiederholAbstandMs: 0 });
+  assert.equal(r.ok, false);
+  assert.equal(rufe, 1);
+});
