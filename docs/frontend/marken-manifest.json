@@ -46,8 +46,8 @@
       "finger": "0e13342644705727"
     },
     "such-nachladen.js": {
-      "marke": "14",
-      "finger": "a6cd7506d24d2227"
+      "marke": "15",
+      "finger": "079ef354c4cdbade"
     },
     "nachladen.js": {
       "marke": "2",
@@ -90,8 +90,8 @@
       "finger": "f6fa1879f058ff6f"
     },
     "chat-store.js": {
-      "marke": "b77",
-      "finger": "9e95e10995fe6e13"
+      "marke": "b78",
+      "finger": "020c1d5c4f30e7f2"
     },
     "autonomous-thread-run.js": {
       "marke": "1",
@@ -106,16 +106,16 @@
       "finger": "41e56f29b4d1d96c"
     },
     "papierkorb.js": {
-      "marke": "25",
-      "finger": "12cf752408bc940e"
+      "marke": "26",
+      "finger": "eb9289bc183aadbe"
     },
     "kamera.js": {
       "marke": "b35live3",
       "finger": "aa2b06994086d893"
     },
     "erwaehnung.js": {
-      "marke": "15",
-      "finger": "057047b5de9b3eee"
+      "marke": "16",
+      "finger": "dc4d7f8737bcc0aa"
     },
     "chat-runter-pfeil.js": {
       "marke": "3",
@@ -138,12 +138,12 @@
       "finger": "83b7dce67c0ba9c6"
     },
     "chat-history-view.js": {
-      "marke": "b70",
-      "finger": "65196a5e6123e5e7"
+      "marke": "b71",
+      "finger": "f95eafd4ccabe31e"
     },
     "arbeitsbereiche.js": {
-      "marke": "32",
-      "finger": "63bed17fd703447b"
+      "marke": "33",
+      "finger": "ab01ffa5ee1226dd"
     },
     "browser-pane.js": {
       "marke": "browser-pane-20260906-18",
@@ -250,12 +250,12 @@
       "finger": "7582ef4714cff5b4"
     },
     "chat-history-cards.js": {
-      "marke": "b71",
-      "finger": "7babaaa3ba5f33bf"
+      "marke": "b72",
+      "finger": "6e7aa0e6426976e1"
     },
     "chat-store-bereiche.js": {
-      "marke": "14",
-      "finger": "b61900fa4920c756"
+      "marke": "15",
+      "finger": "78579ab46bea54c9"
     },
     "chat-owner.js": {
       "marke": "3",
@@ -266,8 +266,8 @@
       "finger": "5858b2ce5e95c735"
     },
     "chat-sync.js": {
-      "marke": "21",
-      "finger": "129e7367ff0862ac"
+      "marke": "22",
+      "finger": "a3192d5bd8906581"
     },
     "chat-sync-auswahl.js": {
       "marke": "7",
@@ -286,8 +286,8 @@
       "finger": "edae0d858cf4bf54"
     },
     "code-flaeche.js": {
-      "marke": "72",
-      "finger": "ea004b2817bbe0c1"
+      "marke": "73",
+      "finger": "cc4b510bc992f99d"
     },
     "composer-anhang-chips.js": {
       "marke": "2",
@@ -366,24 +366,24 @@
       "finger": "9c3de55d2b468598"
     },
     "spur-start.js": {
-      "marke": "b61",
-      "finger": "e9d374ed7e1fbebf"
+      "marke": "b62",
+      "finger": "b85e190ce3def887"
     },
     "code-nachladen.js": {
-      "marke": "32",
-      "finger": "a4e05c89b4af741a"
+      "marke": "33",
+      "finger": "6458dcc696792f3f"
     },
     "bedarf-nachladen.js": {
-      "marke": "22",
-      "finger": "1035da9a6ed67b67"
+      "marke": "23",
+      "finger": "398aa3d180bc02b5"
     },
     "app.js": {
-      "marke": "b181",
-      "finger": "c3f8a07fffb40950"
+      "marke": "b182",
+      "finger": "aae8291f64b202c2"
     },
     "pwa-schnellstart.js": {
-      "marke": "18",
-      "finger": "3508da982db3a04d"
+      "marke": "19",
+      "finger": "43323795e074b2e3"
     },
     "browser-nachladen.js": {
       "marke": "21",
@@ -398,8 +398,8 @@
       "finger": "220df06185cd1eed"
     },
     "chat-actions.js": {
-      "marke": "b63",
-      "finger": "e1ee93dfe6bc1b2d"
+      "marke": "b64",
+      "finger": "c53518577556cd94"
     },
     "panel-status.js": {
       "marke": "1",
@@ -458,8 +458,8 @@
       "finger": "ddf238e94e55304d"
     },
     "search-overlay.js": {
-      "marke": "b71",
-      "finger": "c64611018edca75e"
+      "marke": "b72",
+      "finger": "ecda50b53bd48428"
     },
     "medien-absicht.js": {
       "marke": "8",
@@ -470,8 +470,8 @@
       "finger": "b549ece74577df15"
     },
     "search.js": {
-      "marke": "b64",
-      "finger": "4320ee00da277b40"
+      "marke": "b65",
+      "finger": "dbfc8ac60b676ad7"
     },
     "voice-landing-signin.js": {
       "marke": "8",
