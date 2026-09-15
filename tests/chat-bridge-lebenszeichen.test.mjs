@@ -152,3 +152,18 @@ test("Reserve im Strom: scheitern Control UND Schnellspur, antwortet der Control
     await close(upstream);
   }
 });
+
+test("v156: Reserve im laufenden Strom bekommt sofort Puls und Restfrist statt 60 s Stille", async () => {
+  const { starteVorlauf, LEBENSZEICHEN_ALLE_MS } = await import("../public/chat-bridge-lebenszeichen.js");
+  const geschrieben = [];
+  const res = { headersSent: true, writableEnded: false, writeHead: () => assert.fail("Kopf darf nicht doppelt gehen"), write: (z) => geschrieben.push(z) };
+  let fristGesetzt = 0;
+  const vorlauf = starteVorlauf(res, {}, () => { fristGesetzt += 1; return setTimeout(() => {}, 60_000); });
+  assert.equal(fristGesetzt, 1, "Restfrist sofort gesetzt");
+  await new Promise((r) => setTimeout(r, LEBENSZEICHEN_ALLE_MS + 300));
+  vorlauf.aufraeumen();
+  assert.ok(geschrieben.some((z) => z.startsWith(": lebenszeichen")), "Puls laeuft im Strom");
+  const vorher = geschrieben.length;
+  await new Promise((r) => setTimeout(r, LEBENSZEICHEN_ALLE_MS + 300));
+  assert.equal(geschrieben.length, vorher, "nach aufraeumen kein Puls mehr");
+});

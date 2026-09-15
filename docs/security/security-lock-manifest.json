@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-15T08:45:46.667Z",
-  "confirmation": "Betreiber, 2026-09-15 (schriftlich): 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' — public/chat-bridge.js: nur Versionskennung v155 (Vision-Nachfolger in chat-bridge-vision.js: Groq schaltete qwen3.6-27b ab).",
+  "frozenAt": "2026-09-15T09:35:06.942Z",
+  "confirmation": "Betreiber 15.09.2026: Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig — Bruecke v156 Reserve-Frist im laufenden Strom",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "e17cab6eeec5393c65c3cf1269a582499c65e489ebfddb8d85852d69bf0863ee",
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/chat-history-context.js": "fb3b2ce06399428b9166a46a00769234f738c3bf87571334168bda5097babfe5",
-    "public/chat-bridge.js": "8bd610d85eeb3cbefd4e90d5d42eef5412374c2f93823c9bc9ddcc83543efc6f",
+    "public/chat-bridge.js": "6a181f56abae69f8d432d9f46ec76494727f7b5b5cf005f77d376fcee80532d0",
     "public/ai/fetch-retry.js": "c9cc00145776d34fecae036769ddd73dbeb67b924db1fb4479666bc724f052b2",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }

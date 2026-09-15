@@ -48,13 +48,24 @@ export function schreibeVorabKopf(res, basisKopf = {}) {
 export function starteVorlauf(res, basisKopf, beiVorab) {
   let lebenszeichen = null;
   let restWecker = null;
-  const vorab = setTimeout(() => {
+  let vorab = null;
+  const aufraeumen = () => { clearTimeout(vorab); clearTimeout(restWecker); clearInterval(lebenszeichen); };
+  // v156 — RESERVE IM LAUFENDEN STROM (live 15.09.): ist der Kopf schon draussen, lief
+  // hier nie etwas an — kein Lebenszeichen, und der Wecker des Aufrufers wartete volle
+  // 60 s. "Nenne drei Farben." endete so nach 60 s ohne Antwort. Jetzt sofort Puls
+  // und dieselbe Restfrist wie im Vorab-Fall.
+  if (res.headersSent) {
+    lebenszeichen = setInterval(() => { if (!res.writableEnded) res.write(": lebenszeichen\n\n"); }, LEBENSZEICHEN_ALLE_MS);
+    restWecker = beiVorab?.() ?? null;
+    return { aufraeumen };
+  }
+  vorab = setTimeout(() => {
     if (res.headersSent) return;
     schreibeVorabKopf(res, basisKopf);
     lebenszeichen = setInterval(() => { if (!res.writableEnded) res.write(": lebenszeichen\n\n"); }, LEBENSZEICHEN_ALLE_MS);
     restWecker = beiVorab?.() ?? null;
   }, KOPF_VORLAUF_MS);
-  return { aufraeumen: () => { clearTimeout(vorab); clearTimeout(restWecker); clearInterval(lebenszeichen); } };
+  return { aufraeumen };
 }
 
 /** Fehler, nachdem der Kopf schon draussen ist: als lesbarer Antworttext im Strom. */
