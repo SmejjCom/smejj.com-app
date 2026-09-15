@@ -70,6 +70,14 @@ test("chat, coding, streaming and model failure share the registry router", asyn
     assert.equal(state.requests.at(-1).body.max_tokens, 4_096);
     assert.match(state.requests.at(-1).body.messages[0].content, /smejj\.com Code Agent/);
 
+    // Auto ist keine Wahl eines bestimmten Modells: antwortet das von Auto gewaehlte
+    // Modell im ersten Versuch, ist das KEIN Rueckfall (live 15.09.: stand immer auf "true").
+    const auto = await fetch(`${base}/api/chat`, { method: "POST", headers, body: JSON.stringify({ model: "Auto", message: "Hallo" }) });
+    assert.equal(auto.status, 200);
+    assert.equal(auto.headers.get("x-smejj-model-id"), "glm-5-2");
+    assert.equal(auto.headers.get("x-smejj-model-fallback"), "false");
+    await auto.text();
+
     state.kimiFails = true;
     const fallback = await fetch(`${base}/api/chat`, {
       method: "POST",

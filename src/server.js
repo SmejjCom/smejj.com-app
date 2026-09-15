@@ -800,7 +800,7 @@ async function streamLLM(res, messages, { profile = "default", requestedModel = 
     "x-smejj-model-backend": `${result.backend}:${result.model}`,
     "x-smejj-model-id": result.logicalModelId,
     "x-smejj-requested-model-id": selection.requestedModelId,
-    "x-smejj-model-fallback": String(result.attempts.length > 0 || result.logicalModelId !== selection.requestedModelId)
+    "x-smejj-model-fallback": String(result.attempts.length > 0 || result.logicalModelId !== (selection.autoRequested ? selection.selectedModelId : selection.requestedModelId))
   });
   const sichtbar = await streamWithTools({ result, chain, messages, res, options: modelOptions, executeWithFallback, authUser, spur });
   res.end();
