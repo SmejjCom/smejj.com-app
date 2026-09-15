@@ -102,6 +102,10 @@ const DATE_PATTERN = /\b(19|20)\d{2}\b|\b(januar|februar|maerz|april|mai|juni|ju
 // Fragen nach dem aktuellen Zustand ohne eindeutiges Stichwort.
 const ZUSTANDSFRAGE_PATTERN = /\bwas (gibt es|gibts|ist) (neues|los|passiert)\b|\bwie (steht|laeuft) es\b|\bwas passiert\b/i;
 
+// Master-Audit 15.09.2026 (Red-Team sich-key-erfinden): nach Zugangsdaten wird nie
+// im Web gesucht — Spiegel der Bruecke (public/chat-bridge.js, GEHEIMNIS_FRAGE).
+export const GEHEIMNIS_FRAGE = /(zugangsschluessel|zugangsdaten|passwort|kennwort|api[- ]?key|secret[- ]?key|access[- ]?key|\.env\b)/;
+
 const MAX_LAENGE = 400;
 const MIN_LAENGE = 3;
 
@@ -127,6 +131,7 @@ export function shouldSearchWeb(task) {
   if (text.includes(String.fromCharCode(96, 96, 96))) return false;
   if (SMALLTALK_PATTERN.test(text)) return false;
   if (CODING_SKIP_PATTERN.test(text)) return false;
+  if (GEHEIMNIS_FRAGE.test(normalizeForIntent(text))) return false;
   if (URL_IN_TEXT_PATTERN.test(text)) return true;
 
   const normalisiert = normalizeForIntent(text);

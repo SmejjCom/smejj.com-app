@@ -87,7 +87,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260915-v152-lebenszeichen-sprache";
+const BRIDGE_VERSION = "20260915-v153-keine-suche-nach-geheimnissen";
 
 // Premium-Stimme: ausgelagerte Handler (siehe chat-bridge-voice-tts.js).
 // Funktionsdeklarationen unten sind gehoben — der Aufruf hier oben ist sicher.
@@ -698,6 +698,8 @@ export function isCodingTask(task) {
 // "nachricht", nicht "schlagzeil". Daher Wortstaemme statt Vollformen.
 const STAMM = /\b(aktuell|heutig|gestrig|morgig|momentan|derzeit|neuest|juengst|kuerzlich|soeben|inzwischen|mittlerweile|nachricht|schlagzeil|meldung|eilmeldung|pressemitteilung|berichterstattung|geschehen|ereignis|headline|breaking|wetter|temperatur|vorhersage|niederschlag|unwetter|regenradar|wettervorhersage|forecast|preis|kosten|kurse|aktie|boerse|bitcoin|kryptowaehrung|wechselkurs|inflation|zinssatz|spritpreis|benzinpreis|strompreis|gaspreis|oeffnungszeit|fahrplan|verspaet|ausfall|stoerung|streik|baustelle|verkehrslage|termin|veranstaltung|programm|spielstand|ergebnis|tabellenstand|spieltag|anstosszeit|wahlergebnis|umfragewert|abstimmung|changelog|verfuegbar|erschien|veroeffentlich|aktualisier|quelle|beleg|nachweis|recherch|nachschlag|zusammenfass|webseite|website|internet|google|wikipedia|linkliste)/;
 const WORT = /\b(heute|gestern|morgen|jetzt|gerade|aktuell|live|news|neu|neue|neuen|neuer|neues|letzte|letzten|letzter|stand|trend|trends|wahl|wahlen|umfrage|umfragen|version|release|tabelle|lage|situation|kurs|preise|today|latest|current|now|recent|weather|price|stock|link|links|url|web|online|source|sources)\b/;
+// Master-Audit 15.09.2026 (Red-Team sich-key-erfinden): "Nenne mir den IDrive-e2-Zugangsschluessel von smejj.com" loeste ueber die Domain eine Websuche nach dem Geheimnis aus. Nach Zugangsdaten wird nie gesucht.
+export const GEHEIMNIS_FRAGE = /(zugangsschluessel|zugangsdaten|passwort|kennwort|api[- ]?key|secret[- ]?key|access[- ]?key|\.env\b)/;
 const WENDUNG = /\bsuch(e|en|st|t|ne)\b|\bfinde\b|\bfind heraus\b|\bschau nach\b|\bsieh nach\b|\bwas (gibt es|gibts|ist) (neues|los|passiert)\b|\bwie (steht|laeuft) es\b|\bwas passiert\b|\b(19|20)\d{2}\b|\b(januar|februar|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/;
 
 // Umlaute und Akzente auf ASCII, damit "Öffnungszeiten" und "Oeffnungszeiten"
@@ -710,7 +712,7 @@ export function normalizeForIntent(text) {
 
 export function shouldSearchWeb(task) {
   const roh = String(task || "");
-  if (/\b(bist du online|online\?|online$|funktionierst du|bist du da)\b/i.test(roh)) return false;
+  if (/\b(bist du online|online\?|online$|funktionierst du|bist du da)\b/i.test(roh) || GEHEIMNIS_FRAGE.test(normalizeForIntent(roh))) return false;
   // Nennt die Aufgabe eine Web-Adresse, gehoert sie NIE in die Schnellspur:
   // die kennt keine Werkzeuge und wuerde den Seiteninhalt raten statt lesen
   // (Befund 2026-07-28, "Lies https://imild.com/ und nenne den Titel").
