@@ -98,7 +98,7 @@ const SMALLTALK_PATTERN = /^(hi|hallo|hey|servus|moin|hey smejj|danke|dankeschoe
 // VORSATZ (Live-Test 15.09.2026, Befund 11): "AZ15-Modell: Übersetze ins Englische: Guten
 // Morgen" suchte trotzdem — der Anker ^ liess vor dem Verb nichts zu. Ein kurzer Vorsatz
 // mit eigenem Doppelpunkt (hoechstens 40 Zeichen, eine Zeile) ist jetzt erlaubt.
-export const TEXTARBEIT_PATTERN = /^\s*(?:[^:\n]{1,40}:\s*)?(bitte\s+)?(uebersetz\w*|translate|korrigier\w*|verbesser\w*|umformulier\w*|kuerz\w*|formulier\w*)\b[^:\n]{0,60}:/i;
+export const TEXTARBEIT_PATTERN = /^\s*(?:[^\s:]{1,30}(?:\s+[^\s:]{1,30}){0,2}\s*[:,;–-]\s+)?(?:bitte\s+)?(?:uebersetz\w*|translate|korrigier\w*|verbesser\w*|umformulier\w*|kuerz\w*|formulier\w*|fass\w*\s+(?:[^:\n]{0,40}\s)?zusammen)\b[^:\n]{0,60}:\s*\S/i;
 // Klare Coding-Absicht wird separat behandelt und braucht keine Websuche.
 const CODING_SKIP_PATTERN = /unified diff|\bpatch\b|\brefactor|\bdebug\b|\bstack ?trace\b/i;
 // Deutsche Suchverben; bewusst als Vollform, weil englisch "such" ein anderes

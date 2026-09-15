@@ -202,14 +202,16 @@ export function sperrenImAbbild({ wurzel = process.cwd() } = {}) {
 // ---- Einstieg ----------------------------------------------------------------
 
 export async function auslieferungUebersicht({ env = process.env, startzeitMs = null, fetchImpl = fetch, jetztMs = Date.now(), wurzel = process.cwd() } = {}) {
+  // Video-Worker und Bild-Maler haben keine oeffentliche Domain (oeffentlich 404) — gefragt wird
+  // dieselbe interne Adresse wie in Autopilot Nr. 12 (dienstSondenAutopilot.js), sonst waeren sie falsch rot.
   const dienste = await Promise.all([
     frontend(fetchImpl, jetztMs),
     control(fetchImpl, jetztMs, env, startzeitMs),
     bruecke(fetchImpl, jetztMs),
     einfacherDienst(fetchImpl, jetztMs, { id: "waechter", name: "smejj-brueckenwaechter", bautAus: "Zeabur · eigener Dienst", url: "https://smejj-brueckenwaechter.zeabur.app/health", versionAus: (j) => j?.version || null }),
     einfacherDienst(fetchImpl, jetztMs, { id: "maus", name: "smejj-maus-engine", bautAus: "Zeabur · Dockerfile im Repo", url: "https://smejj-maus-engine.zeabur.app/health", versionAus: (j) => j?.engine ? "antwortet" : null }),
-    einfacherDienst(fetchImpl, jetztMs, { id: "video", name: "smejj-video-worker", bautAus: "Zeabur · deploy/smejj-video", url: "https://smejj-video-worker.zeabur.app/health" }),
-    einfacherDienst(fetchImpl, jetztMs, { id: "bild", name: "smejj-bild-maler", bautAus: "Zeabur · eigener Branch", url: "https://smejj-bild-maler.zeabur.app/health" })
+    einfacherDienst(fetchImpl, jetztMs, { id: "video", name: "smejj-video-worker", bautAus: "Zeabur · deploy/smejj-video", url: `${String(env.SMEJJ_VIDEO_WORKER_URL || "http://smejj-video-worker.zeabur.internal:8080").replace(/\/+$/, "")}/health` }),
+    einfacherDienst(fetchImpl, jetztMs, { id: "bild", name: "smejj-bild-maler", bautAus: "Zeabur · eigener Branch", url: `${String(env.SMEJJ_BILDER_WORKER_URL || (env.SMEJJ_BILD_MALER_HOST ? `http://${env.SMEJJ_BILD_MALER_HOST}:8080` : "") || "http://smejj-bild-maler.zeabur.internal:8080").replace(/\/+$/, "")}/health` })
   ]);
   const sperren = sperrenImAbbild({ wurzel });
   const zaehle = (z) => dienste.filter((d) => d.zustand === z).length;
