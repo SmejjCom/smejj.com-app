@@ -52,7 +52,9 @@
 export const INDEX_DATEI = "_index.json";
 
 /** Format-Nummer. Ein Index mit anderer Nummer wird verworfen, nicht geraten. */
-export const INDEX_VERSION = 1;
+// 2 (Live-Nachtest 15.09.2026): Eintraege tragen deletedAt. Ein Index der Fassung 1 kennt den
+// Papierkorb nicht — leseIndex lehnt ihn ab, der Lesepfad baut ihn EINMAL aus allen Chats neu.
+export const INDEX_VERSION = 2;
 
 /** Voller Schluessel des Index eines Kontos. */
 export function indexSchluessel(praefix, kontoId) {
@@ -117,7 +119,8 @@ function abgleichsfelder(chat) {
     id: String(chat?.id || ""),
     updatedAt: String(chat?.updatedAt || ""),
     ...(chat?.ownerId ? { ownerId: String(chat.ownerId) } : {}),
-    ...(chat?.geloescht === true ? { geloescht: true } : {}) // Grabstein fuer den Client (15.09.2026)
+    ...(chat?.geloescht === true ? { geloescht: true } : {}), // Grabstein fuer den Client (15.09.2026)
+    ...(chat?.deletedAt ? { deletedAt: String(chat.deletedAt) } : {}) // Papierkorb: sichtbare Chats zuerst holen (Nachtest 15.09.)
   };
 }
 
