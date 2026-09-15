@@ -79,3 +79,36 @@ test("aus der Umgebung wird nichts ausser den zwei Release-Zeigern gelesen", () 
   const text = JSON.stringify(e);
   assert.equal(text.includes("geheim"), false, "kein Schluesselwert darf in die Antwort geraten");
 });
+
+test("BEFUND 15.09. gesund: Zeabur-Git-Bau zeigt den laufenden Commit statt leerer Striche", () => {
+  const e = deployUebersicht({
+    env: { ZEABUR_GIT_COMMIT_SHA: "77A96A10D34ABC564F00112233445566778899AA" },
+    jetztMs: JETZT, startzeitMs: JETZT - 3_600_000, leseDatei: leser(null)
+  });
+  assert.equal(e.bewertung, "zeabur-git");
+  assert.equal(e.git.commit, "77a96a10d34abc564f00112233445566778899aa");
+  assert.equal(e.git.commitKurz, "77a96a10");
+  assert.equal(e.gestartetAm, new Date(JETZT - 3_600_000).toISOString());
+  assert.equal(e.laufzeitMs, 3_600_000);
+  assert.equal(e.hinweis.includes("kein separates Release-Artefakt"), true);
+});
+
+test("BEFUND 15.09. kaputt: ohne oder mit unbrauchbarem Bau-Commit wird kein Git-Stand behauptet", () => {
+  const ohne = deployUebersicht({ env: {}, jetztMs: JETZT, leseDatei: leser(null) });
+  assert.equal(ohne.git, null);
+  assert.equal(ohne.bewertung, "lokal");
+  const unsinn = deployUebersicht({
+    env: { ZEABUR_GIT_COMMIT_SHA: "<script>alert(1)</script>" }, jetztMs: JETZT, leseDatei: leser(null)
+  });
+  assert.equal(unsinn.git, null, "nur eine Hex-Kennung wird uebernommen");
+  assert.equal(unsinn.bewertung, "lokal");
+  // Mit Release-Artefakt bleibt der Artefakt-Abgleich massgeblich.
+  const mitArtefakt = deployUebersicht({
+    env: {
+      ZEABUR_GIT_COMMIT_SHA: "77a96a10",
+      SMEJJ_CONTROL_ARTIFACT_KEY: "deployments/control/smejj-control-stufe5-2026-07-28.tar.gz"
+    },
+    jetztMs: JETZT, leseDatei: leser(MANIFEST)
+  });
+  assert.equal(mitArtefakt.bewertung, "deckungsgleich");
+});

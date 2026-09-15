@@ -9,7 +9,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  AUFFRISCHEN_AB_SEKUNDEN, __neubauMerkerLeeren, baueProjektion, leseProjektion, projektionFrisch
+  AUFFRISCHEN_AB_SEKUNDEN, NEUBAU_HAENGT_AB_MS, __neubauMerkerLeeren, baueProjektion, leseProjektion, projektionFrisch
 } from "./analytikProjektion.js";
 
 const JETZT = Date.parse("2026-07-29T12:00:00.000Z");
@@ -241,4 +241,71 @@ test("FRISCH: ohne Objektspeicher wird nicht gebaut, sondern gemeldet", async ()
   assert.equal(e.ok, false);
   assert.equal(e.error, "speicher_nicht_eingerichtet");
   assert.equal(gezaehlt, 0, "ohne Ziel wird nicht gezaehlt");
+});
+
+test("BEFUND 15.09. kaputt: ein gescheiterter Hintergrund-Neubau wird GENANNT, nicht verschluckt", async () => {
+  __neubauMerkerLeeren();
+  const alt = new Date(JETZT - 10 * 24 * 3600 * 1000).toISOString();
+  const lesen = async (url, init) => ((init?.method || "GET") === "PUT"
+    ? antwort("AccessDenied", 403)
+    : antwort(JSON.stringify({ version: 1, gebautAm: alt, reihen: { laeufe: { erreichbar: true, tage: {} } } })));
+  const warnungen = [];
+  const warnVorher = console.warn;
+  console.warn = (text) => warnungen.push(String(text));
+  try {
+    const erst = await projektionFrisch({
+      env: ENV, jetztMs: JETZT, fetchImpl: lesen,
+      zaehleAlles: async () => ({ laeufe: reihe({ "2026-07-29": 1 }) })
+    });
+    assert.equal(erst.wirdAufgefrischt, true);
+    await new Promise((fertig) => setTimeout(fertig, 20));
+    const zweit = await projektionFrisch({
+      env: ENV, jetztMs: JETZT + 30_000, fetchImpl: lesen,
+      zaehleAlles: async () => ({ laeufe: reihe({ "2026-07-29": 1 }) })
+    });
+    assert.equal(zweit.gebautAm, alt, "der alte Stand bleibt stehen (Regel 3)");
+    assert.equal(Boolean(zweit.neubauFehler), true, "aber mit dem Grund, warum er alt bleibt");
+    assert.equal(zweit.neubauFehler.grund.includes("403"), true);
+    assert.equal(warnungen.some((w) => w.includes("Tagesprojektion nicht erneuert")), true, "und im Log");
+    // Der zweite Aufruf hat erneut einen Neubau angestossen — abwarten, damit
+    // er nicht in den naechsten Fall hineinschreibt.
+    await new Promise((fertig) => setTimeout(fertig, 20));
+  } finally {
+    console.warn = warnVorher;
+    __neubauMerkerLeeren();
+  }
+});
+
+test("BEFUND 15.09. gesund: nach gelungenem Neubau steht kein Fehlervermerk", async () => {
+  __neubauMerkerLeeren();
+  const gebaut = await baueProjektion({
+    env: ENV, jetztMs: JETZT, fetchImpl: async () => antwort("", 200),
+    zaehleAlles: async () => ({ laeufe: reihe({ "2026-07-29": 1 }) })
+  });
+  assert.equal(gebaut.ok, true);
+  const e = await projektionFrisch({
+    env: ENV, jetztMs: JETZT + 1000,
+    fetchImpl: async () => antwort(JSON.stringify({ version: 1, gebautAm: gebaut.gebautAm, reihen: gebaut.reihen })),
+    zaehleAlles: async () => ({})
+  });
+  assert.equal(e.ok, true);
+  assert.equal("neubauFehler" in e, false);
+  __neubauMerkerLeeren();
+});
+
+test("ein haengender Neubau haelt den Merker nicht fuer immer fest", async () => {
+  __neubauMerkerLeeren();
+  const alt = new Date(JETZT - 3600_000).toISOString();
+  const fetchImpl = async () => antwort(JSON.stringify({ version: 1, gebautAm: alt, reihen: { laeufe: { erreichbar: true, tage: {} } } }));
+  let gestartet = 0;
+  const nie = () => { gestartet += 1; return new Promise(() => {}); };
+  await projektionFrisch({ env: ENV, jetztMs: JETZT, fetchImpl, zaehleAlles: nie });
+  await new Promise((fertig) => setTimeout(fertig, 10));
+  await projektionFrisch({ env: ENV, jetztMs: JETZT + 25_000, fetchImpl, zaehleAlles: nie });
+  await new Promise((fertig) => setTimeout(fertig, 10));
+  assert.equal(gestartet, 1, "waehrend ein Neubau laeuft, startet kein zweiter");
+  await projektionFrisch({ env: ENV, jetztMs: JETZT + NEUBAU_HAENGT_AB_MS + 30_000, fetchImpl, zaehleAlles: nie });
+  await new Promise((fertig) => setTimeout(fertig, 10));
+  assert.equal(gestartet, 2, "nach der Haenge-Frist wird neu gezaehlt");
+  __neubauMerkerLeeren();
 });

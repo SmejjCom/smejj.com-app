@@ -14,8 +14,15 @@
 // als angenommen: typischerweise, weil der Rollout noch nicht durch ist. Genau
 // das war bisher nur durch Raten zu erkennen.
 //
+// NACHTRAG 15.09. (Live-Audit): Der Control-Server laeuft auf Zeabur direkt
+// aus Git. Es gibt dort KEIN Release-Artefakt, also weder Soll-Zeiger noch
+// Manifest — die Seite zeigte nur Striche. Der laufende Stand ist dort der
+// Commit, den Zeabur je Bau setzt (ZEABUR_GIT_COMMIT_SHA, siehe
+// bauWacheAutopilot.js). Er wird jetzt als eigene Angabe gezeigt, und die
+// Bewertung heisst "zeabur-git" statt "lokal".
+//
 // Keine Geheimnisse: aus der Umgebung werden ausschliesslich die zwei
-// Release-Zeiger gelesen, nie ein Schluessel.
+// Release-Zeiger und der Bau-Commit gelesen, nie ein Schluessel.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -44,6 +51,7 @@ export function deployUebersicht({
   const stimmtUeberein = vergleichbar ? sollRelease === istRelease : null;
 
   const laufzeitMs = Number.isFinite(startzeitMs) ? Math.max(0, jetztMs - startzeitMs) : null;
+  const git = gitStand(env);
 
   return {
     ok: true,
@@ -63,13 +71,28 @@ export function deployUebersicht({
       }
       : { releaseId: null, fehler: manifest.fehler },
     stimmtUeberein,
+    git,
     laufzeitMs,
     gestartetAm: Number.isFinite(startzeitMs) ? new Date(startzeitMs).toISOString() : null,
     knoten: process.version,
-    bewertung: bewerte({ stimmtUeberein, manifestOk: manifest.ok, sollRelease }),
-    hinweis: "Ein Rollout dauert rund zehn Minuten. Weichen Soll und Ist ab, ist er "
-      + "meist noch unterwegs — bleibt es so, zeigt der Container auf ein anderes Artefakt."
+    bewertung: bewerte({ stimmtUeberein, manifestOk: manifest.ok, sollRelease, git }),
+    hinweis: !manifest.ok && !sollRelease && git
+      ? "Zeabur baut den Control-Server direkt aus Git. Dabei entsteht kein separates "
+        + "Release-Artefakt — Release, Bauzeit und Pruefsummen gibt es deshalb nicht. "
+        + "Massgeblich ist der laufende Commit."
+      : "Ein Rollout dauert rund zehn Minuten. Weichen Soll und Ist ab, ist er "
+        + "meist noch unterwegs — bleibt es so, zeigt der Container auf ein anderes Artefakt."
   };
+}
+
+/**
+ * Der Bau-Commit, den Zeabur beim Git-Bau setzt. Nur eine Hex-Kennung wird
+ * uebernommen — was anderes in der Variable steht, wird nicht angezeigt.
+ */
+function gitStand(env) {
+  const commit = String(env.ZEABUR_GIT_COMMIT_SHA || "").trim().toLowerCase();
+  if (!/^[0-9a-f]{7,40}$/.test(commit)) return null;
+  return { commit, commitKurz: commit.slice(0, 8), quelle: "ZEABUR_GIT_COMMIT_SHA" };
 }
 
 function liesManifest(wurzel, leseDatei) {
@@ -88,8 +111,8 @@ function releaseAusSchluessel(schluessel) {
   return name.replace(/\.tar\.gz$/i, "");
 }
 
-function bewerte({ stimmtUeberein, manifestOk, sollRelease }) {
-  if (!manifestOk && !sollRelease) return "lokal";
+function bewerte({ stimmtUeberein, manifestOk, sollRelease, git = null }) {
+  if (!manifestOk && !sollRelease) return git ? "zeabur-git" : "lokal";
   if (!manifestOk) return "unbekannt";
   if (stimmtUeberein === true) return "deckungsgleich";
   if (stimmtUeberein === false) return "abweichend";

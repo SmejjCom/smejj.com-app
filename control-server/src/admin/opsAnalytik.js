@@ -116,28 +116,7 @@ export async function analytikUebersicht({
   const spanne = spanneAus(tage);
   const tagListe = tageAbsteigend(jetztMs, spanne);
   const erlaubt = new Set(tagListe);
-  const cfg = idriveConfig(env);
-
-  const zaehler = zaehleSchluessel
-    || ((praefixe, art) => zaehleNachTagUeberS3(cfg, praefixe, art, fetchImpl));
-  const laufZaehler = zaehleLaeufe || (() => zaehleLaeufeUeberS3(cfg, fetchImpl));
-
-  // Was die Projektion neu zaehlt, wenn sie zu alt ist. Absichtlich ohne
-  // Zeitraum: die Projektion haelt 90 Tage, jede Anfrage schneidet sich ihren
-  // Ausschnitt heraus. Sonst haette jeder Zeitraum seine eigene Projektion.
-  const alleTage = new Set(tageAbsteigend(jetztMs, 90));
-  async function zaehleAlles() {
-    const [audit, mail, laeufe] = await Promise.all([
-      sicher(() => zaehler(monatsPraefixe(AUDIT_PREFIX, [...alleTage]), "audit")),
-      sicher(() => zaehler([`${MAIL_PREFIX}/`], "mail")),
-      sicher(() => laufZaehler())
-    ]);
-    return {
-      verwaltung: schluesselReihe(audit, alleTage, "Audit-Log"),
-      mails: schluesselReihe(mail, alleTage, "Zustellprotokoll"),
-      laeufe: laufReihe(laeufe, alleTage)
-    };
-  }
+  const zaehleAlles = () => zaehleAnalytikQuellen({ env, jetztMs, fetchImpl, zaehleSchluessel, zaehleLaeufe });
 
   const [index, projektion] = await Promise.all([
     sicher(() => leseIndex({ env, nowMs: jetztMs })),
@@ -146,9 +125,9 @@ export async function analytikUebersicht({
 
   const reihen = {
     registrierungen: registrierungenReihe(index, erlaubt, tagListe),
-    verwaltung: ausProjektion(projektion, "verwaltung", "Audit-Log"),
-    mails: ausProjektion(projektion, "mails", "Zustellprotokoll"),
-    laeufe: ausProjektion(projektion, "laeufe", "Job-Ablage jobs/ im Hauptspeicher")
+    verwaltung: ausProjektion(projektion, "verwaltung", "Audit-Log", tagListe),
+    mails: ausProjektion(projektion, "mails", "Zustellprotokoll", tagListe),
+    laeufe: ausProjektion(projektion, "laeufe", "Job-Ablage jobs/ im Hauptspeicher", tagListe)
   };
 
   return {
@@ -177,6 +156,8 @@ export async function analytikUebersicht({
         alterSekunden: projektion.alterSekunden ?? null,
         wirdAufgefrischt: projektion.wirdAufgefrischt === true,
         ersterBau: projektion.ersterBau === true,
+        // Warum der Stand alt bleibt, falls der letzte Neubau scheiterte.
+        neubauFehler: projektion.neubauFehler || null,
         hinweis: "Verwaltung, Mails und Laeufe kommen aus einer Tagesprojektion auf IDrive e2. "
           + "Registrierungen und Bestand sind live aus dem Nutzer-Index."
       }
@@ -193,24 +174,63 @@ export async function analytikUebersicht({
 }
 
 /**
+ * Zaehlt die drei Auflistungs-Reihen fuer die Projektion. Absichtlich ohne
+ * Zeitraum: die Projektion haelt 90 Tage, jede Anfrage schneidet sich ihren
+ * Ausschnitt heraus. Sonst haette jeder Zeitraum seine eigene Projektion.
+ * Exportiert, damit der Autopilot-Takt (analytikAuffrischen.js) DIESELBE
+ * Zaehlung benutzt wie der Seitenaufruf.
+ */
+export async function zaehleAnalytikQuellen({
+  env = process.env, jetztMs = Date.now(), fetchImpl = fetch, zaehleSchluessel = null, zaehleLaeufe = null
+} = {}) {
+  const cfg = idriveConfig(env);
+  const zaehler = zaehleSchluessel
+    || ((praefixe, art) => zaehleNachTagUeberS3(cfg, praefixe, art, fetchImpl));
+  const laufZaehler = zaehleLaeufe || (() => zaehleLaeufeUeberS3(cfg, fetchImpl));
+  const alleTage = new Set(tageAbsteigend(jetztMs, MAX_TAGE));
+  const [audit, mail, laeufe] = await Promise.all([
+    sicher(() => zaehler(monatsPraefixe(AUDIT_PREFIX, [...alleTage]), "audit")),
+    sicher(() => zaehler([`${MAIL_PREFIX}/`], "mail")),
+    sicher(() => laufZaehler())
+  ]);
+  return {
+    verwaltung: schluesselReihe(audit, alleTage, "Audit-Log"),
+    mails: schluesselReihe(mail, alleTage, "Zustellprotokoll"),
+    laeufe: laufReihe(laeufe, alleTage)
+  };
+}
+
+/**
  * Holt eine Reihe aus der Projektion. Ist die Projektion selbst nicht lesbar,
  * ist die Reihe nicht lesbar — und zeigt "—", nie 0. Eine Projektion, die man
  * nicht lesen kann, sagt nichts darueber aus, ob an einem Tag etwas passiert ist.
+ *
+ * Befund 15.09.: eine zehn Tage alte Projektion zeigte fuer die zehn Tage NACH
+ * ihrem Bau je eine 0 — "0 Laeufe, 0 Mails", obwohl gelaufen und gemailt wurde.
+ * Ein Tag nach dem Bautag ist nicht gezaehlt, also "—" (Regel a), und die
+ * Reihe sagt, dass sie deshalb eine Untergrenze ist.
  */
-function ausProjektion(projektion, name, quelle) {
+function ausProjektion(projektion, name, quelle, tagListe = []) {
   if (!projektion?.ok) {
     return { erreichbar: false, grund: String(projektion?.error || "projektion_nicht_lesbar").slice(0, 120), quelle };
   }
   const reihe = projektion.reihen?.[name];
   if (!reihe) return { erreichbar: false, grund: "reihe_fehlt_in_projektion", quelle };
   if (!reihe.erreichbar) return { erreichbar: false, grund: String(reihe.grund || "unbekannt").slice(0, 120), quelle };
+  const bautag = tagAusIso(projektion.gebautAm);
+  const ungezaehlt = bautag ? tagListe.filter((tag) => tag > bautag) : [];
+  const zuAlt = ungezaehlt.length > 0
+    ? `Die Tagesprojektion stammt vom ${bautag}. Die ${ungezaehlt.length} Tage danach sind noch nicht `
+      + "gezaehlt und stehen auf \"—\", nicht auf 0."
+    : null;
   return {
     erreichbar: true,
     quelle: reihe.quelle || quelle,
     tage: reihe.tage || {},
+    ungezaehltNach: zuAlt ? bautag : null,
     ohneDatum: Number(reihe.ohneDatum) || 0,
-    unvollstaendig: reihe.unvollstaendig === true,
-    grundUnvollstaendig: reihe.grundUnvollstaendig || null,
+    unvollstaendig: reihe.unvollstaendig === true || Boolean(zuAlt),
+    grundUnvollstaendig: [zuAlt, reihe.grundUnvollstaendig].filter(Boolean).join(" ") || null,
     hinweis: reihe.hinweis || null
   };
 }
@@ -506,6 +526,7 @@ function monatsPraefixe(basis, tagListe) {
 // wird dort nichts gespeichert, was von einer Luecke nicht zu unterscheiden waere.
 function wertOderNull(reihe, tag) {
   if (!reihe?.erreichbar) return null;
+  if (reihe.ungezaehltNach && tag > reihe.ungezaehltNach) return null;
   return Number(reihe.tage?.[tag]) || 0;
 }
 
@@ -536,7 +557,11 @@ function bewerte(reihen, spanne, tagListe) {
   let summeLaeufe = 0;
   for (const tag of tagListe) summeLaeufe += Number(reihen.laeufe.tage?.[tag]) || 0;
 
-  const kern = summeLaeufe === 0
+  // Eine Null aus einer Untergrenze ist kein "kein Lauf" — sie heisst nur,
+  // dass in den GEZAEHLTEN Tagen keiner lag.
+  const kern = summeLaeufe === 0 && reihen.laeufe.unvollstaendig
+    ? `In den gezaehlten Tagen der letzten ${spanne} liegt kein Lauf — die Zaehlung ist unvollstaendig.`
+    : summeLaeufe === 0
     ? `In den letzten ${spanne} Tagen ist kein neuer Lauf angelegt worden.`
     : `${summeLaeufe} Laeufe in ${spanne} Tagen — das ist die einzige Zahl hier, die echte `
       + "Nutzung abbildet.";
