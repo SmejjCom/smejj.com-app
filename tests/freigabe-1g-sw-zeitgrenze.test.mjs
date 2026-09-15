@@ -29,5 +29,7 @@ test("Verdrahtung: Installation mit Signal, Navigation mit Grenze, /api/ ohne", 
   assert.match(quelle, /new Request\(url, \{ cache: "reload", signal: installSignal\(\) \}\)/);
   assert.match(quelle, /const INSTALL_ZEITGRENZE_MS = 30000;/);
   assert.match(quelle, /mitZeitgrenze\(netz, \(\) => caches\.match\(request\)\)/);
-  assert.match(quelle, /if \(url\.pathname\.startsWith\("\/api\/"\)\) \{\n\s*event\.respondWith\(fetch\(request\)\);/);
+  // Livetest 15.09.2026 (Firefox): /api/ wird gar nicht mehr abgefangen — ohne
+  // Zeitgrenze bleibt es damit erst recht (tests/sw-api-und-huelle.test.mjs).
+  assert.match(quelle, /if \(url\.pathname\.startsWith\("\/api\/"\)\) return;/);
 });
