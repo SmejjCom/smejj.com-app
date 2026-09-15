@@ -145,7 +145,7 @@ const SESSION_COOKIE_SAMESITE = SHORT_ACCESS_TOKEN ? "None; Partitioned" : "Lax"
 // Ein zweiter Nachbau haette Sitzungen mit einem anderen Geheimnis
 // signiert — alle Anmeldungen waeren still ungueltig geworden.
 const {
-  ensureRegistrySid, readSession, serializeAccessToken,
+  ensureRegistrySid, erneuereDauerCookie, readSession, serializeAccessToken,
   serializeSessionCookie, serializeSessionToken, sessionStillValid
 } = createSessionHelpers({
   sessionSecret: config.sessionSecret, SESSION_COOKIE_SAMESITE, SHORT_ACCESS_TOKEN
@@ -509,6 +509,7 @@ async function handleAuthMe(req, res) { // noStoreJson: Identitaet nie cachen (F
 function handleAuthSessionToken(req, res) {
   const user = readSession(req);
   if (!user) return noStoreJson(res, 401, { authenticated: false, error: "authentication_required" });
+  erneuereDauerCookie(res, user); // Freigabe 1a: 30-Tage-Cookie gleitend (Begruendung im Helfer)
   return noStoreJson(res, 200, {
     authenticated: true,
     user,
