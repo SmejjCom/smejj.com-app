@@ -17,14 +17,19 @@
 
 export const WIRKUNG = Object.freeze({
   baustein: Object.freeze([
-    "deep-research", "code-interpreter", "memory-sync", "self-healing", "task-orchestrator", "self-improvement",
-    "smart-router", "model-lifecycle", "process-reward", "knowledge-distiller", "evolutionary-mutation",
-    "multi-file-repo-architect", "live-arena-leaderboard", "instant-web-container", "realtime-voice-pair", "autonomous-git-bot"
+    "deep-research", "code-interpreter", "memory-sync", "task-orchestrator",
+    "model-lifecycle", "process-reward", "knowledge-distiller", "evolutionary-mutation",
+    "live-arena-leaderboard", "instant-web-container", "realtime-voice-pair", "autonomous-git-bot"
   ]),
   teilweise: Object.freeze({
     // voice-region-check und agenten-sonde sind seit 15.09. "echt": Piper spricht,
     // Maus-Engine und Fern-Browser öffnen example.com (echteProben.js, 1× je 22 h).
     "multimodal-engine": "Bild-Maler malt 1× je 22 h ein echtes Probebild; Video-Worker nur /health (kein Kurz-Modus — jeder Auftrag malt erst ein Bild)",
+    // Runde 3 (15.09.): vom Baustein zu Arbeit an echten Daten, ohne neue Kosten.
+    "smart-router": "stellt die echte Chat-Weiche (classifyProfile + resolveModelRequest) mit Kernsuite-Prompts und Live-Konfiguration, ruft aber kein Modell auf",
+    "self-healing": "beurteilt die echten Antworten der Messläufe Nr. 75/79, repariert aber nichts (Reparatur im Produkt nicht verdrahtet)",
+    "self-improvement": "prüft die echten DPO-Paare der Ablage auf Tauglichkeit; Training ruht per Beschluss",
+    "multi-file-repo-architect": "echte Importprüfung des Abbilds (fehlende Pfade, Zyklen), Ergebnis abgelegt, aber nicht weiterverwendet",
     "knowledge-graph": "echter Scan, Ergebnis wird nicht weiterverwendet",
     "bug-predictor": "echter Scan, Befunde werden nicht gespeichert",
     "user-feedback-flywheel": "zählt echte Daumen, erzeugt keine Trainingspaare",
@@ -43,9 +48,29 @@ export const WIRKUNG = Object.freeze({
   })
 });
 
+/**
+ * Warum die übrigen Bausteine Bausteine BLEIBEN (geprüft 15.09., grep außerhalb
+ * autopilots/ und Tests): keiner wird im Produkt aufgerufen, oder sein echter Weg
+ * ist schon von einem anderen Autopiloten gemessen, oder echte Arbeit kostete Geld.
+ */
+export const BAUSTEIN_GRUND = Object.freeze({
+  "deep-research": "echter Weg (runDeepResearch) läuft nur in der Wissens-Ernte (Nr. 23) und wird dort gemessen; ein eigener Lauf verbrauchte das Suchkontingent doppelt",
+  "code-interpreter": "kein Chat- oder Coding-Weg führt Code durch diese Sandbox; node:vm ist keine Sicherheitsgrenze (Ausbruch zu process belegt)",
+  "memory-sync": "Faktenextraktion wird im Produkt nirgends aufgerufen",
+  "task-orchestrator": "Aufgabengraph wird im Produkt nirgends aufgerufen",
+  "model-lifecycle": "Schatten-Bewertung wird im Produkt nirgends aufgerufen; echte Versionswechsel misst Nr. 83",
+  "process-reward": "Schrittprüfung wird im Produkt nirgends aufgerufen",
+  "knowledge-distiller": "Destillation wird im Produkt nirgends aufgerufen; Training ruht per Beschluss",
+  "evolutionary-mutation": "Mutationstest wird im Produkt nirgends aufgerufen",
+  "live-arena-leaderboard": "ELO-Rechnung wird im Produkt nirgends aufgerufen; die echte Arena misst der Modell-Einkäufer (Nr. 34)",
+  "instant-web-container": "Vorschau-Erzeugung wird im Produkt nirgends aufgerufen",
+  "realtime-voice-pair": "Sprachsitzung wird im Produkt nirgends aufgerufen",
+  "autonomous-git-bot": "Diff-Prüfung wird im Produkt nirgends aufgerufen; im Abbild gibt es kein Git, Geheimnisse im Quelltext sucht Nr. 48"
+});
+
 export function wirkungVon(id) {
   const kennung = String(id || "");
-  if (WIRKUNG.baustein.includes(kennung)) return { stufe: "baustein", grund: "nur Selbsttest mit festen Eingaben, keine Live-Wirkung" };
+  if (WIRKUNG.baustein.includes(kennung)) return { stufe: "baustein", grund: `nur Selbsttest mit festen Eingaben, keine Live-Wirkung — ${BAUSTEIN_GRUND[kennung] || "ohne Grund"}` };
   if (Object.hasOwn(WIRKUNG.teilweise, kennung)) return { stufe: "teilweise", grund: WIRKUNG.teilweise[kennung] };
   return { stufe: "echt", grund: "arbeitet an Live-System oder echten Daten" };
 }

@@ -12,10 +12,10 @@
 //   bug-predictor     scannt die echten Quelldateien dieses Containers
 //   knowledge-graph   baut den Symbolgraphen ueber dieselben Dateien
 //   code-interpreter  fuehrt eine Rechnung mit PRUEFBAREM Ergebnis aus
-//   smart-router      klassifiziert Prompts mit bekannter Soll-Zuordnung
-//   self-healing      bekommt kaputte Antworten und muss sie erkennen
+//   smart-router      stellt die echte Chat-Weiche mit den Kernsuite-Prompts
+//   self-healing      beurteilt die echten Antworten der Messlaeufe Nr. 75/79
 //
-// Die letzten drei sind Selbsttests mit erwartetem Ergebnis: Der Autopilot
+// Der code-interpreter ist ein Selbsttest mit erwartetem Ergebnis: Der Autopilot
 // wird nicht gefragt "laeufst du?", sondern bekommt eine Aufgabe, deren
 // richtige Antwort feststeht. Faellt er durch, wird seine Ampel ROT. Genau
 // das unterscheidet Arbeit von einem Lebenszeichen.
@@ -36,8 +36,9 @@ import { pruefeSpracheAlle } from "./spracheQualitaetAutopilot.js";
 import { runProjectBugScan } from "./bugPredictorAutopilot.js";
 import { buildKnowledgeGraph } from "./knowledgeGraphAutopilot.js";
 import { runCodeInterpreter } from "./codeInterpreterAutopilot.js";
-import { routePrompt } from "./smartRouterAutopilot.js";
-import { inspectResponseHealth, detectRepetitiveLoop } from "./selfHealingAutopilot.js";
+// Nr. 11, 14, 16, 24 arbeiten seit dem Master-Audit 15.09. an echten Daten — eigene Datei.
+import { laufSmartRouter, laufSelfHealing, laufSelfImprovement, laufRepoArchitect } from "./bausteinEchtLaeufe.js";
+export { laufSmartRouter, laufSelfHealing, laufSelfImprovement, laufRepoArchitect };
 // Die uebrigen Selbsttests liegen in einer eigenen Datei (800-Zeilen-Regel).
 import * as S from "./autopilotSelbsttests.js";
 import { laufNutzerreise, alsAmpelMeldung } from "./nutzerreiseWaechter.js";
@@ -230,42 +231,6 @@ export function laufCodeInterpreter() {
     return { ok: false, meldung: `Selbsttest FEHLGESCHLAGEN: erwartet 5050, bekam ${ergebnis?.result} (${ergebnis?.error || ergebnis?.status})` };
   }
   return { ok: true, meldung: `Sandbox-Selbsttest bestanden (Summe 1..100 = 5050, ${ergebnis.executionTimeMs} ms)` };
-}
-
-export function laufSmartRouter() {
-  // Drei Prompts mit bekannter Soll-Sparte. Trifft der Router daneben, ist
-  // seine Klassifikation kaputt — und die Ampel muss das zeigen.
-  const faelle = [
-    { prompt: "Berechne das Integral von x^2 und beweise die Ableitung", erwartet: "math_and_logic" },
-    { prompt: "Entwirf die Systemarchitektur fuer einen Microservice und refaktoriere die Module", erwartet: "system_architecture" }
-  ];
-  const daneben = [];
-  for (const f of faelle) {
-    const r = routePrompt(f.prompt);
-    if (r?.domain !== f.erwartet) daneben.push(`"${f.prompt.slice(0, 24)}…" -> ${r?.domain || "?"} statt ${f.erwartet}`);
-  }
-  if (daneben.length) {
-    return { ok: false, meldung: `Router traf ${daneben.length}/${faelle.length} Faelle nicht: ${daneben[0]}` };
-  }
-  return { ok: true, meldung: `Klassifikation geprueft: ${faelle.length}/${faelle.length} Prompts richtig zugeordnet` };
-}
-
-export function laufSelfHealing() {
-  // Der Autopilot muss kaputte Antworten als kaputt erkennen UND eine
-  // gesunde als gesund. Nur beides zusammen ist ein Nachweis.
-  const pruefungen = [
-    { name: "leere Antwort", healthy: inspectResponseHealth("")?.healthy, soll: false },
-    { name: "kaputtes JSON", healthy: inspectResponseHealth('{"a": 1,,}', "json")?.healthy, soll: false },
-    // Mindestens 50 Zeichen — kuerzere Texte prueft detectRepetitiveLoop
-    // bewusst nicht (eine kurze Wiederholung ist oft legitim).
-    { name: "Endlosschleife", healthy: !detectRepetitiveLoop("wiederhole dich wiederhole dich wiederhole dich wiederhole dich wiederhole dich"), soll: false },
-    { name: "gesunde Antwort", healthy: inspectResponseHealth("Das ist eine vollstaendige, sinnvolle Antwort.")?.healthy, soll: true }
-  ];
-  const daneben = pruefungen.filter((p) => Boolean(p.healthy) !== p.soll);
-  if (daneben.length) {
-    return { ok: false, meldung: `Selbstheilung erkennt ${daneben.length} Fall/Faelle falsch: ${daneben.map((d) => d.name).join(", ")}` };
-  }
-  return { ok: true, meldung: `Fehlererkennung geprueft: ${pruefungen.length}/${pruefungen.length} Faelle richtig beurteilt` };
 }
 
 /**
@@ -597,13 +562,13 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     ["bug-predictor", () => laufBugPredictor(dateien)],
     ["knowledge-graph", () => laufKnowledgeGraph(dateien)],
     ["code-interpreter", S.alsBaustein(() => laufCodeInterpreter())],
-    ["smart-router", S.alsBaustein(() => laufSmartRouter())],
-    ["self-healing", S.alsBaustein(() => laufSelfHealing())],
+    ["smart-router", () => laufSmartRouter()],
+    ["self-healing", () => laufSelfHealing()],
     ["deep-research", S.alsBaustein(() => S.laufDeepResearch())],
     ["memory-sync", S.alsBaustein(() => S.laufMemory())],
     ["multimodal-engine", () => laufMedienQualitaet({ mitNetz })],
     ["task-orchestrator", S.alsBaustein(() => S.laufTaskOrchestrator())],
-    ["self-improvement", S.alsBaustein(() => S.laufSelfImprovement())],
+    ["self-improvement", () => laufSelfImprovement()],
     ["model-lifecycle", S.alsBaustein(() => S.laufModelLifecycle())],
     ["user-feedback-flywheel", () => laufFeedbackSchwungrad()],
     ["antwort-tuev", () => laufAntwortTuev()],
@@ -613,7 +578,7 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     ["knowledge-distiller", S.alsBaustein(() => S.laufKnowledgeDistiller())],
     ["evolutionary-mutation", S.alsBaustein(() => S.laufEvolutionaryMutation())],
     ["realtime-internet-harvester", () => laufWissensErnte({ mitNetz })],
-    ["multi-file-repo-architect", () => S.laufRepoArchitect(dateien)],
+    ["multi-file-repo-architect", () => laufRepoArchitect(dateien)],
     ["live-arena-leaderboard", S.alsBaustein(() => S.laufLiveArena())],
     ["instant-web-container", S.alsBaustein(() => S.laufWebContainer())],
     ["realtime-voice-pair", S.alsBaustein(() => S.laufVoicePair())],

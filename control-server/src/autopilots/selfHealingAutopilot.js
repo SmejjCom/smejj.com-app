@@ -35,9 +35,15 @@ export function inspectResponseHealth(response, expectedFormat = "text") {
 
 export function detectRepetitiveLoop(text) {
   if (!text || text.length < 50) return false;
-  // Erkennt wiederholte Sequenzen ab 3 Zeichen (z.B. "ABC ABC ABC ABC")
-  const repeatRegex = /(.{3,30}?)\1{3,}/s;
-  return repeatRegex.test(text);
+  // Erkennt wiederholte Sequenzen ab 3 Zeichen (z.B. "ABC ABC ABC ABC").
+  // Master-Audit 15.09. (echte Antworten statt Beispiel-Eingaben): eine
+  // Markdown-Tabelle ("|---|---|---|---|") und eingerueckter Code (12 Leerzeichen)
+  // galten als Endlosschleife. Eine Wiederholung zaehlt deshalb nur, wenn die
+  // wiederholte Einheit mindestens zwei Buchstaben oder Ziffern traegt.
+  for (const treffer of text.matchAll(/(.{3,30}?)\1{3,}/gs)) {
+    if ((treffer[1].match(/[\p{L}\p{N}]/gu) || []).length >= 2) return true;
+  }
+  return false;
 }
 
 export function sanitizeJsonText(text) {

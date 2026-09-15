@@ -65,7 +65,9 @@ test("Ein abstuerzendes Modul reisst den Lauf nicht mit", async () => {
     mitNetz: false
   });
   assert.equal(ergebnisse.length, 72, "alle anderen laufen trotzdem");
-  assert.equal(gemeldet.get("smart-router").status, "ok");
+  // smart-router misst seit dem Master-Audit 15.09. die Live-Konfiguration (ohne
+  // Schluessel rot) — der unabhaengige Beleg ist darum ein Selbsttest-Baustein.
+  assert.equal(gemeldet.get("deep-research").status, "ok");
 });
 
 test("Mit Netz kommt der E2E-Waechter dazu — und meldet ehrlich, wenn er nicht pruefen kann", async () => {
@@ -114,13 +116,13 @@ test("Quelltext-Sammler findet den echten Code dieses Projekts", () => {
   assert.equal(dateien.some((d) => d.path.includes("%20")), false, "Pfade duerfen nicht URL-kodiert sein");
 });
 
-test("Die Aufgaben haben feststehende Antworten — keine Zufallswerte", () => {
+test("Die Aufgaben haben feststehende Antworten — keine Zufallswerte", async () => {
   // Zweimal dieselbe Aufgabe muss dasselbe ergeben. Ein Autopilot, dessen
   // Ergebnis wuerfelt (wie der alte synthetic-user-watchdog mit Math.random),
   // beweist nichts.
   assert.deepEqual(laufCodeInterpreter().ok, laufCodeInterpreter().ok);
   assert.deepEqual(laufSmartRouter().meldung, laufSmartRouter().meldung);
-  assert.deepEqual(laufSelfHealing().meldung, laufSelfHealing().meldung);
+  assert.deepEqual((await laufSelfHealing()).meldung, (await laufSelfHealing()).meldung);
 });
 
 test("Die Repo-Autopiloten melden echte Zahlen aus ihrer Arbeit", () => {
