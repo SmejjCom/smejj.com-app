@@ -15,6 +15,7 @@ import {
   baueVorschlaege, entscheidungsUebersicht, entscheide, planText, __clearEntscheidungenForTests
 } from "./entscheidungen.js";
 import { __clearAufgabenForTests } from "./aufgaben.js";
+import { KONKURRENZ_STAND } from "../evolution/missingFunctionDetector.js";
 
 const ENV = {}; // ohne IDrive-Zugang: recordStore laeuft im Speicher
 const ACTOR = { email: "pruefer@example.de", role: "owner" };
@@ -48,6 +49,29 @@ test("Vorschlaege entstehen aus Luecken, Bausteinen und Radar-Treffern", async (
       assert.ok(String(v[feld] || "").length > 0, `${v.id}: Feld ${feld} ist leer — die vier Felder sind Pflicht`);
     }
   }
+});
+
+test("Recherche-Funde kommen mit Quelle und doppeln den bestaetigten Stand nicht", async () => {
+  zuruecksetzen();
+  const { vorschlaege } = await baueVorschlaege({ env: ENV, radarBestand: RADAR_OK });
+  const recherche = vorschlaege.filter((v) => v.quelle === "Radar-Recherche");
+
+  assert.ok(recherche.length > 0, "die Recherche vom 16.09. muss ankommen");
+  for (const v of recherche) {
+    assert.match(v.url, /^https:\/\//, `${v.id}: ohne Quelle ist ein Fund eine Behauptung`);
+  }
+
+  // Was der bestaetigte Stand schon kennt, darf nicht zusaetzlich als Fund
+  // erscheinen — sonst stuende dieselbe Funktion zweimal zur Entscheidung.
+  const bekannt = new Set((KONKURRENZ_STAND.funktionen || []).map((f) => f.id));
+  for (const v of recherche) {
+    assert.ok(!bekannt.has(v.id.replace(/^recherche-/, "")), `${v.id} steht schon im Konkurrenz-Stand`);
+  }
+
+  // Und die Kennungen muessen ueber alle Quellen hinweg eindeutig sein, sonst
+  // entscheidet ein Klick ueber zwei Vorschlaege.
+  const ids = vorschlaege.map((v) => v.id);
+  assert.equal(new Set(ids).size, ids.length, "doppelte Vorschlags-Kennung");
 });
 
 test("Radar stumm: Grund steht da, die Seite bleibt bedienbar", async () => {

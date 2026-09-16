@@ -23,8 +23,9 @@
 //      Vorschlag beim naechsten Scan wieder auf wie neu.
 import { createRecordStore } from "./recordStore.js";
 import { erfasseAufgabe } from "./aufgaben.js";
-import { erkenneLuecken, baueLueckenAufgaben, KONKURRENZ_STAND } from "../evolution/missingFunctionDetector.js";
+import { erkenneLuecken, baueLueckenAufgaben, KONKURRENZ_STAND, SMEJJ_FAEHIGKEITEN } from "../evolution/missingFunctionDetector.js";
 import { holeKandidaten } from "../evolution/konkurrenzRadar.js";
+import { offeneRechercheFunktionen, RECHERCHE_STAND } from "../evolution/radarRecherche.js";
 
 const store = createRecordStore("admin/entscheidungen");
 
@@ -89,6 +90,33 @@ function vorschlagAusBaustein(funktion) {
   };
 }
 
+/**
+ * Ein Fund aus der Radar-Recherche: belegt mit Quelle und Datum, aber noch
+ * NICHT im bestaetigten Konkurrenz-Stand. Genau dazwischen lag die Luecke —
+ * der Radar lieferte Schlagzeilen, der Stand war vom 14.08.
+ */
+function vorschlagAusRecherche(funktion) {
+  const anbieter = (funktion.anbieter || []).join(", ") || "mindestens ein Anbieter";
+  const gesperrt = funktion.quelleGesperrt
+    ? " Die Herstellerseite war beim Abruf gesperrt (403), die Zeile stützt sich auf Suchtreffer-Auszüge derselben Seite."
+    : "";
+  return {
+    id: `recherche-${funktion.id}`,
+    titel: funktion.name,
+    quelle: "Radar-Recherche",
+    quelleKurz: `${RECHERCHE_STAND.stand} · ${anbieter} · seit ${funktion.seit}`,
+    konkurrent: `${anbieter} haben das seit ${funktion.seit}. ${funktion.warum}${gesperrt}`,
+    wirHeute: "Noch nicht im bestätigten Konkurrenz-Stand (der ist vom "
+      + KONKURRENZ_STAND.stand + ") — und bei smejj.com gibt es dafür keinen Eintrag im Fähigkeitsregister.",
+    aenderung: `"${funktion.name}" als bestätigte Konkurrenzfunktion eintragen und bauen.`,
+    aufwand: "Vor dem Bauen einmal prüfen, ob die Quelle noch stimmt. Danach: eigener Nutzerweg, "
+      + "der messbar durchläuft — ohne den gilt die Funktion nicht als vorhanden.",
+    beleg: `Quelle: ${funktion.quelle}`,
+    url: funktion.quelle,
+    plan: `Ein echter Nutzerweg für "${funktion.name}" muss messbar durchlaufen (E2E).`
+  };
+}
+
 function vorschlagAusRadar(kandidat) {
   const titel = String(kandidat.titel || "").slice(0, 140);
   return {
@@ -117,9 +145,17 @@ export async function baueVorschlaege({ env = process.env, radarBestand = holeKa
   const aufgaben = baueLueckenAufgaben(luecken);
   const jeLuecke = new Map(aufgaben.map((a) => [a.betrifft, a]));
 
+  // Was der bestaetigte Stand und das eigene Register schon kennen, kommt nicht
+  // noch einmal als Recherche-Fund — sonst stuende dieselbe Funktion zweimal da.
+  const bekannt = new Set([
+    ...(KONKURRENZ_STAND.funktionen || []).map((f) => f.id),
+    ...SMEJJ_FAEHIGKEITEN.map((f) => f.id)
+  ]);
+
   const vorschlaege = [
     ...luecken.map((l) => vorschlagAusLuecke(l, jeLuecke.get(l.id))),
     ...nurBaustein.filter((f) => f.beiKonkurrenz).map(vorschlagAusBaustein),
+    ...offeneRechercheFunktionen({ bekannteIds: bekannt }).map(vorschlagAusRecherche),
     ...kandidaten.slice(0, MAX_RADAR).map(vorschlagAusRadar)
   ];
 

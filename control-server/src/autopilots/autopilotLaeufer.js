@@ -23,7 +23,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { interneMeldung, autopilotUebersicht } from "../admin/opsAutopiloten.js";
+import { interneMeldung, autopilotUebersicht, persistiereHerzschlag } from "../admin/opsAutopiloten.js";
 import { laufNachweisKette } from "./nachweisKetteAutopilot.js";
 import { laufMedienQualitaet, laufVoiceRegion } from "./dienstSondenAutopilot.js";
 // Nr. 8, 32 und 41 liegen in eigenen Dateien (800-Zeilen-Regel), bleiben aber
@@ -539,7 +539,42 @@ export async function laufWissensErnte({ mitNetz = true, bestandLader = getHarve
  * selbst war unsichtbar. So fuellt sich die Ampel Stueck fuer Stueck, und
  * was haengt, faellt als Luecke sofort auf.
  */
-export async function fuehreLaeufeAus(laeufe, { melde = interneMeldung, zeitlimitMs = ZEITLIMIT_JE_LAUF_MS } = {}) {
+/**
+ * DIE VIER, DEREN LAUF EINEN NEUSTART UEBERLEBEN MUSS (Befund 16.09.2026).
+ *
+ * `interneMeldung` haelt den Lauf nur im Prozess und legt sonst bloss die
+ * Tagesstatistik ab. Fuer die meisten Autopiloten reicht das: sie laufen in
+ * JEDEM Durchgang, sind also zwei Minuten nach einem Neustart wieder gruen.
+ * Diese vier nicht —
+ *   synthetic-user-watchdog, voice-region-check, sync-waechter: sie haengen am
+ *     Durchgang MIT Netz und kommen deshalb erst im naechsten Netz-Takt dran,
+ *   selbstheilung: sie laeuft nur, wenn ueberhaupt etwas rot ist.
+ * Nach jedem Deploy standen sie darum bis zu 30 Minuten grau mit dem Satz
+ * "Seit dem <Vortag> ist kein Herzschlag mehr angekommen" — obwohl sie am Tag
+ * davor 53 bis 131 Mal gelaufen waren. Grau heisst "ich weiss es nicht", und
+ * das war hier schlicht falsch.
+ *
+ * Deshalb legen GENAU DIESE VIER ihren Lauf ab (derselbe Griff wie beim
+ * Modell-Einkaeufer Nr. 34, start.js). Bewusst nicht alle: im Taktgeber waeren
+ * das rund 72 Schreibvorgaenge je Durchgang statt vier.
+ */
+export const HERZSCHLAG_ABLEGEN = Object.freeze([
+  "synthetic-user-watchdog", "voice-region-check", "sync-waechter", "selbstheilung"
+]);
+
+/**
+ * Meldet wie bisher — und legt den Lauf ab, wenn er einen Neustart ueberleben
+ * muss. Das Ablegen laeuft nebenher: eine langsame Ablage darf den Taktgeber
+ * nicht aufhalten, und ein Schreibfehler macht aus einem gelungenen Lauf
+ * keinen gescheiterten.
+ */
+export function meldeUndMerke(id, ergebnis, { env = process.env } = {}) {
+  const ok = interneMeldung(id, ergebnis);
+  if (ok && HERZSCHLAG_ABLEGEN.includes(String(id))) persistiereHerzschlag(id, { env }).catch(() => {});
+  return ok;
+}
+
+export async function fuehreLaeufeAus(laeufe, { melde = meldeUndMerke, zeitlimitMs = ZEITLIMIT_JE_LAUF_MS } = {}) {
   const ergebnisse = [];
   for (const [id, arbeit] of laeufe) {
     const e = await fuehreAus(id, arbeit, zeitlimitMs);
@@ -549,7 +584,7 @@ export async function fuehreLaeufeAus(laeufe, { melde = interneMeldung, zeitlimi
   return ergebnisse;
 }
 
-export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQuelldateien, seitenLader = sammleSeiten, mitNetz = true, zeitlimitMs = ZEITLIMIT_JE_LAUF_MS } = {}) {
+export async function laufeAlle({ melde = meldeUndMerke, dateienLader = sammleQuelldateien, seitenLader = sammleSeiten, mitNetz = true, zeitlimitMs = ZEITLIMIT_JE_LAUF_MS } = {}) {
   // Einmal lesen, zweimal nutzen: beide Repo-Autopiloten sehen denselben Stand.
   let dateien = [];
   try {
@@ -685,7 +720,7 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
  * Das ist ein echter Mangel — aber einer, den der Betreiber im Portal lösen
  * muss, nicht einer, den ein Heiler wegzaubern kann.
  */
-export function baueHeiler({ melde = interneMeldung, lauf = laufeAlle } = {}) {
+export function baueHeiler({ melde = meldeUndMerke, lauf = laufeAlle } = {}) {
   // Die im Control-Server betriebenen Autopiloten heilt derselbe Griff:
   // ihren Lauf sofort wiederholen, statt bis zum nächsten Takt zu warten.
   //
@@ -762,7 +797,7 @@ export async function laufSupportSla({ env = process.env, jetztMs = Date.now() }
 export async function heileWasRotIst({
   uebersicht = autopilotUebersicht,
   zustand = heilungsZustand,
-  melde = interneMeldung,
+  melde = meldeUndMerke,
   sendeAlarm = null,
   jetztMs = Date.now(),
   log = () => {}
