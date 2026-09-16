@@ -17,6 +17,7 @@ import { isCaptureEnabled } from "../../../src/training/constants.js";
 import { TRAININGS_QUELLEN } from "./trainingsTaktAutopilot.js";
 import { readTrainingIdriveConfig } from "../../../src/training/idrive-conditional-writer.js";
 import { signedS3Get, signedS3List, parseS3ListPage } from "../storage/s3Signer.js";
+import { LERNPAAR_PRAEFIX } from "../../../src/training/lernpaare.js";
 
 /**
  * WO DIE ECHTEN NUTZERFRAGEN LIEGEN (Befund 2026-09-04): Die Erfassung schreibt
@@ -43,17 +44,35 @@ const MAX_LIST_SEITEN = 40;
  */
 export const DATENSATZ_INDEX = "datasets/index.json";
 
-/** Zaehlt die erfassten Fragen per LIST (nur Schluessel, nie Inhalte). */
+/** Zaehlt die erfassten Fragen per LIST (nur Schluessel, nie Inhalte). Lernpaare liegen darunter und zaehlen getrennt. */
 export async function zaehleFragen({ env = process.env, listImpl = signedS3List, fetchImpl = fetch } = {}) {
+  return zaehleSchluessel({ env, listImpl, fetchImpl, praefix: FRAGEN_PRAEFIX, ausser: `${LERNPAAR_PRAEFIX}/` });
+}
+
+/**
+ * Lernpaare (17.09.2026): Frage + Antwort mit Daumen hoch UND Trainings-
+ * Einwilligung. Ab LERNRUNDE_ZIEL neuen Paaren ist eine Lernrunde fuer smejj 1 reif.
+ */
+export async function zaehleLernpaare({ env = process.env, listImpl = signedS3List, fetchImpl = fetch } = {}) {
+  return zaehleSchluessel({ env, listImpl, fetchImpl, praefix: `${LERNPAAR_PRAEFIX}/` });
+}
+
+/** Betreiber-Setzung 17.09.: "sobald etwa 500 neue gute Paare zusammen sind". */
+export function lernrundeZiel({ env = process.env } = {}) {
+  const roh = Number(env?.SMEJJ_LERNRUNDE_ZIEL_PAARE);
+  return Number.isFinite(roh) && roh > 0 ? Math.floor(roh) : 500;
+}
+
+async function zaehleSchluessel({ env, listImpl, fetchImpl, praefix, ausser = null }) {
   let cfg;
   try { cfg = readTrainingIdriveConfig(env); } catch (f) { return { lesbar: false, grund: String(f?.message || f).slice(0, 60) }; }
   let marke = null;
   let anzahl = 0;
   for (let seite = 0; seite < MAX_LIST_SEITEN; seite += 1) {
-    const { response, body } = await listImpl({ ...cfg, prefix: FRAGEN_PRAEFIX, continuationToken: marke, fetchImpl, timeoutMs: 8000 });
+    const { response, body } = await listImpl({ ...cfg, prefix: praefix, continuationToken: marke, fetchImpl, timeoutMs: 8000 });
     if (!response.ok) return { lesbar: false, grund: `HTTP ${response.status}` };
     const s = parseS3ListPage(body);
-    anzahl += (s.keys || []).filter((k) => k.endsWith(".json")).length;
+    anzahl += (s.keys || []).filter((k) => k.endsWith(".json") && !(ausser && k.startsWith(ausser))).length;
     if (!s.isTruncated) return { lesbar: true, anzahl };
     marke = s.nextContinuationToken || null;
     if (!marke) return { lesbar: true, anzahl, abgeschnitten: true };
@@ -163,7 +182,8 @@ export async function laufTrainingsReife({
   kartenAblage = null,
   mitNetz = true,
   fragenZaehler = zaehleFragen,
-  gebauteZaehler = zaehleGebaute
+  gebauteZaehler = zaehleGebaute,
+  lernpaarZaehler = zaehleLernpaare
 } = {}) {
   const probe = fuehreSelbsttestAus({ env });
   if (!probe.bestanden) {
@@ -171,6 +191,7 @@ export async function laufTrainingsReife({
   }
 
   const gemessen = [];
+  let lernpaare = null;
   for (const q of quellen) {
     try {
       const ergebnis = await storeFabrik(q.praefix, { maximal: q.limit }).liste({ limit: q.limit });
@@ -187,6 +208,10 @@ export async function laufTrainingsReife({
     // (Nr. 74) ist dafuer zustaendig und nennt den fehlenden Wert.
     if (fragen.lesbar) gemessen.push({ name: "erfasste Fragen", lesbar: true, anzahl: fragen.anzahl });
     else gemessen.push({ name: `erfasste Fragen (nicht zaehlbar: ${fragen.grund || "unbekannt"})`, lesbar: true, anzahl: 0 });
+    const lern = await Promise.resolve().then(() => lernpaarZaehler({ env })).catch((f) => ({ lesbar: false, grund: String(f?.message || f).slice(0, 60) }));
+    lernpaare = lern.lesbar ? lern.anzahl : null;
+    if (lern.lesbar) gemessen.push({ name: "Lernpaare (Daumen hoch mit Einwilligung)", lesbar: true, anzahl: lern.anzahl });
+    else gemessen.push({ name: `Lernpaare (nicht zaehlbar: ${lern.grund || "unbekannt"})`, lesbar: true, anzahl: 0 });
     // Die gebauten Paare — getrennt benannt, damit niemand sie fuer echte
     // Nutzerfragen haelt.
     const gebaut = await Promise.resolve().then(() => gebauteZaehler({ env })).catch((f) => ({ lesbar: false, grund: String(f?.message || f).slice(0, 60) }));
@@ -213,6 +238,7 @@ export async function laufTrainingsReife({
       gesamt: urteil.gesamt ?? 0,
       ziel,
       jeQuelle: Object.fromEntries(gemessen.map((q) => [q.name, q.anzahl])),
+      lernrunde: { lernpaare, ziel: lernrundeZiel({ env }), reif: lernpaare !== null && lernpaare >= lernrundeZiel({ env }) },
       captureAn,
       createdAt: new Date().toISOString()
     }, { timeoutMs: 5000 });
@@ -228,6 +254,7 @@ export async function laufTrainingsReife({
   return {
     ok: true,
     meldung: `Selbsttest 5/5; Reife Stufe ${urteil.stufe}/3 (${urteil.grund}): ${zahlen}; `
+      + (lernpaare === null ? "Lernrunde smejj 1: nicht zaehlbar; " : `Lernrunde smejj 1: ${lernpaare} von ${lernrundeZiel({ env })} Lernpaaren; `)
       + `${capture}; GPU-Start bleibt hinter Betreiber-Freigabe; ${karteStatus}`
   };
 }

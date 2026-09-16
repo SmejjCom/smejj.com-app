@@ -12,11 +12,12 @@
 import { privateJson, readJson } from "../http/respond.js";
 import { createRateLimiter } from "../http/rateLimiter.js";
 import { processUserFeedbackSignal, SIGNAL_TYPEN } from "../autopilots/userFeedbackFlywheelAutopilot.js";
+import { sichereLernpaar } from "./lernpaarAblage.js";
 
 const PREFIX = "/api/feedback";
 const gate = createRateLimiter({ capacity: 60, refillPerSec: 60 / 3600, maxKeys: 5_000 });
 
-export async function handleFeedbackRoute(req, url, res, { env = process.env } = {}) {
+export async function handleFeedbackRoute(req, url, res, { env = process.env, lernpaar = sichereLernpaar, verarbeite = processUserFeedbackSignal } = {}) {
   if (url.pathname !== PREFIX && !url.pathname.startsWith(`${PREFIX}/`)) return false;
 
   const wer = String(req.authUser?.email || "").toLowerCase().trim();
@@ -44,7 +45,7 @@ export async function handleFeedbackRoute(req, url, res, { env = process.env } =
   // Die E-Mail des Klickenden wird BEWUSST nicht mitgespeichert: das
   // Schwungrad braucht die Antwortqualitaet, nicht die Person. Was die
   // Engine ablegt, ist bereits PII-bereinigt (scrubPiiData).
-  const ergebnis = await processUserFeedbackSignal({
+  const ergebnis = await verarbeite({
     signalType,
     prompt: String(body?.prompt || "").slice(0, 2000),
     chosenResponse: signalType === "thumbs_up" ? String(body?.antwort || "").slice(0, 4000) : "",
@@ -52,6 +53,15 @@ export async function handleFeedbackRoute(req, url, res, { env = process.env } =
   }, { env });
 
   if (!ergebnis.ok) { privateJson(res, 400, { ok: false, error: ergebnis.reason || "feedback_rejected" }); return true; }
-  privateJson(res, 200, { ok: true, hinweis: "Signal angekommen — es fliesst in die Qualitaetsarbeit ein." });
+  // Daumen hoch MIT Trainings-Einwilligung wird zusaetzlich ein Lernpaar fuer
+  // smejj 1 (17.09.2026). Ohne Einwilligung bleibt es beim Signal oben.
+  const lern = signalType === "thumbs_up"
+    ? await lernpaar(req.authUser, { frage: body?.prompt, antwort: body?.antwort }, { env })
+    : null;
+  privateJson(res, 200, {
+    ok: true,
+    hinweis: "Signal angekommen — es fliesst in die Qualitaetsarbeit ein.",
+    ...(lern ? { lernpaar: { erfasst: lern.erfasst === true, grund: lern.grund || null } } : {})
+  });
   return true;
 }
