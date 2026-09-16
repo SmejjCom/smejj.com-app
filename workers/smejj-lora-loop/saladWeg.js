@@ -13,6 +13,7 @@
 
 import { baueSaladJobMesser } from "./saladJobMesser.js";
 import { baueSaladJobTrainer, clientFuer } from "./saladJobTrainer.js";
+import { baueLernrundenTor, befoerdereZumHausmodell } from "./lernrunde.js";
 
 /**
  * Der Versionsname eines Zyklus. Reine Funktion.
@@ -75,7 +76,10 @@ export function baueJobWeg({
   log = () => {}
 } = {}) {
   const version = versionFuer(zyklusIndex, { praefix: konfig?.versionPraefix, start: konfig?.versionStart });
-  const datensatzName = konfig?.datensatzName;
+  // Lernrunde: jede Version trainiert auf ihrem EIGENEN Datensatz (Basis +
+  // Lernpaare bis heute), der erst gebaut wird, wenn das Tor offen ist.
+  const lernrunde = konfig?.lernrunde === true;
+  const datensatzName = lernrunde ? `lernrunde-${version}` : konfig?.datensatzName;
   const saladClient = client || clientFuer(konfig);
 
   return {
@@ -90,6 +94,9 @@ export function baueJobWeg({
       client: saladClient, e2, konfig, version, suite, suiteDatei,
       warteUndStarte, ...(maxMessMinuten ? { maxMinuten: maxMessMinuten } : {}), jetzt, log
     }),
-    pruefeDaten: baueDatenPruefung({ e2, datensatzName })
+    pruefeDaten: lernrunde
+      ? baueLernrundenTor({ e2, ziel: konfig?.lernrundeZiel, basisName: konfig?.datensatzName, datensatzName, jetzt, log })
+      : baueDatenPruefung({ e2, datensatzName }),
+    befoerdere: lernrunde ? (stand) => befoerdereZumHausmodell({ e2, stand, jetzt, log }) : null
   };
 }

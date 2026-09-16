@@ -233,7 +233,7 @@ test("EIN ganzer Zyklus laeuft gegen den echten Dienst durch", { skip: !python }
       grenzen,
       zyklusIndex: 0,
       verbrauchtUsd: 0,
-      besterStand: null,
+      besterStand: { punktzahl: 0.684, quelle: "basis" },
       basismodell: { hfRepo: "Qwen/Qwen3-14B" },
       datensatz: { schluessel: "datasets/smejj-1-0/projektwissen/x/train.jsonl" },
       trainerBasisUrl: dienst.basisUrl,

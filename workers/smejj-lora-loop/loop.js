@@ -53,9 +53,12 @@ export function erzeugeLoop({ config, env = process.env, log = console.log, deps
         return zustand;
       }
 
-      const besterStand = deps.besterStand !== undefined
+      const gespeicherterBester = deps.besterStand !== undefined
         ? deps.besterStand
         : await leseBestenStand({ env, key: config.bestenKey, idriveConfig: deps.idriveConfig, request: deps.bestenRequest });
+      // Solange keine Version besser war, ist die gemessene Basis der Massstab.
+      const besterStand = gespeicherterBester
+        || (Number.isFinite(config.basisPunktzahl) ? { punktzahl: config.basisPunktzahl, quelle: "basis" } : null);
 
       /**
        * Weg-Fabrik: Trainer, Messer und Datenpruefung werden JE ZYKLUS neu
@@ -83,8 +86,14 @@ export function erzeugeLoop({ config, env = process.env, log = console.log, deps
         // Ohne diese Zeile bliebe der Job-Weg wirkungslos: cycle.js faende
         // seinen Standard (HTTP-Dauerdienst) und meldete "nicht erreichbar".
         ...(weg?.trainer || deps.trainer ? { trainer: weg?.trainer || deps.trainer } : {}),
-        speichereBesten: deps.speichereBesten
-          || ((stand) => schreibeBestenStand(stand, { env, key: config.bestenKey, idriveConfig: deps.idriveConfig, request: deps.bestenRequest })),
+        speichereBesten: async (stand) => {
+          const gespeichert = await (deps.speichereBesten
+            ? deps.speichereBesten(stand)
+            : schreibeBestenStand(stand, { env, key: config.bestenKey, idriveConfig: deps.idriveConfig, request: deps.bestenRequest }));
+          // Schritt 3: nur ein gespeicherter neuer Bester geht zum Hausmodell.
+          if (gespeichert === true && weg?.befoerdere) await weg.befoerdere({ ...stand, version: weg.version }).catch(() => false);
+          return gespeichert;
+        },
         fetchImpl: deps.fetchImpl,
         warte: deps.warte,
         abfrageAbstandMs: config.abfrageAbstandMs,

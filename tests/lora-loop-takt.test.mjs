@@ -180,3 +180,26 @@ test("/health antwortet auch im Aus-Zustand und nennt die Gruende", async () => 
     await new Promise((r) => server.close(r));
   }
 });
+
+// ---- Lernrunde 17.09.2026: Basis als Massstab, Befoerderung nur beim neuen Besten ----
+test("Loop: ohne gespeicherten Besten misst er gegen die Basis und befoerdert nur, was sie schlaegt", async () => {
+  const befoerdert = [];
+  const weg = (punktzahl) => () => ({
+    version: "smejj-1-11",
+    messe: async () => ({ ok: true, kennzahlen: { punktzahl, kritischeFehler: 0 } }),
+    befoerdere: async (stand) => { befoerdert.push(stand.version); return true; }
+  });
+  const config = ladeLoopKonfiguration({ ...FREIGEGEBEN, SMEJJ_LORA_BASIS_PUNKTZAHL: "0.684" });
+
+  const schlechter = erzeugeLoop({ config, env: {}, log: () => {}, deps: deps(ablage(), { baueWeg: weg(0.629) }) });
+  await schlechter.tick();
+  assert.deepEqual(befoerdert, [], "62,9 % gegen Basis 68,4 % geht nie live");
+
+  const besser = erzeugeLoop({ config, env: {}, log: () => {}, deps: deps(ablage(), { baueWeg: weg(0.75) }) });
+  await besser.tick();
+  assert.deepEqual(befoerdert, ["smejj-1-11"]);
+
+  const ohneBasis = erzeugeLoop({ config: ladeLoopKonfiguration(FREIGEGEBEN), env: {}, log: () => {}, deps: deps(ablage(), { baueWeg: weg(0.99) }) });
+  await ohneBasis.tick();
+  assert.deepEqual(befoerdert, ["smejj-1-11"], "ohne Basiswert kein Vergleich, also keine Befoerderung");
+});

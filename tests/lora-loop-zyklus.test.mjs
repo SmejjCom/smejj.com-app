@@ -52,7 +52,8 @@ function basis(overrides = {}) {
     grenzen: GRENZEN,
     zyklusIndex: 0,
     verbrauchtUsd: 0,
-    besterStand: null,
+    // Seit 17.09.2026 ist die gemessene Basis der Vergleichswert (nie null).
+    besterStand: { punktzahl: 0.684, quelle: "basis" },
     basismodell: { hfRepo: "Qwen/Qwen2.5-Coder-7B-Instruct" },
     datensatz: { schluessel: "datasets/smejj-1-0/v1/train.jsonl", manifestSchluessel: "datasets/smejj-1-0/v1/manifest.json" },
     trainerBasisUrl: "https://trainer.example",
@@ -242,4 +243,12 @@ test("ein DAUERausfall bricht weiterhin ab — die Toleranz ist begrenzt", () =>
       ergebnis.gruende.join(",")
     );
   });
+});
+
+test("ohne Vergleichswert wird NIE befoerdert — die erste Version ist nicht automatisch die beste (17.09.2026)", () => {
+  const v = istNeuerBester({ punktzahl: 0.99, kritischeFehler: 0 }, null);
+  assert.equal(v.besser, false);
+  assert.deepEqual(v.gruende, ["vergleichswert_fehlt"]);
+  assert.equal(istNeuerBester({ punktzahl: 0.62, kritischeFehler: 0 }, { punktzahl: 0.684, quelle: "basis" }).besser, false,
+    "schlechter als die Basis (wie smejj 1.8 mit 62,9 %) darf nie live gehen");
 });

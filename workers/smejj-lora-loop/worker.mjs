@@ -225,7 +225,10 @@ async function baueJobWegFabrik(config, log = console.log) {
     return {
       hindernis: null,
       fabrik: (zyklusIndex) => baueJobWeg({
-        konfig: { ...saladKonfig, versionPraefix: config.versionPraefix, versionStart: config.versionStart, datensatzName: config.datensatzName },
+        konfig: {
+          ...saladKonfig, versionPraefix: config.versionPraefix, versionStart: config.versionStart, datensatzName: config.datensatzName,
+          lernrunde: config.lernrunde, lernrundeZiel: config.lernrundeZiel
+        },
         zyklusIndex, e2, suite, suiteDatei, warteUndStarte, log
       })
     };

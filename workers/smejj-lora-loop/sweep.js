@@ -130,7 +130,10 @@ export function istNeuerBester(neu, bisherBester, { rauschschwelle = RAUSCHSCHWE
   if (Number(neu?.kritischeFehler || 0) > 0) {
     return { besser: false, gruende: [`kritische_fehler:${neu.kritischeFehler}`] };
   }
-  if (!bisherBester) return { besser: true, gruende: ["erster_stand"] };
+  // Ohne Vergleichswert gibt es kein "besser" (17.09.2026): frueher galt die
+  // erste Version automatisch als bester Stand — auch wenn sie schlechter als
+  // die untrainierte Basis mass. Der Vergleichswert ist jetzt die Basis.
+  if (!bisherBester) return { besser: false, gruende: ["vergleichswert_fehlt"] };
 
   const altePunktzahl = Number(bisherBester?.punktzahl) || 0;
   const vorsprung = Number((neuePunktzahl - altePunktzahl).toFixed(4));

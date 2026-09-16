@@ -101,6 +101,19 @@ export function ladeLoopKonfiguration(env = process.env) {
     abfrageAbstandMs: begrenzteZahl(env.SMEJJ_LORA_ABFRAGE_ABSTAND_MS, 30_000, 5_000, 300_000),
     verlaufMax: begrenzteZahl(env.SMEJJ_LORA_VERLAUF_MAX, 200, 1, 2000),
 
+    /**
+     * Lernrunde (Betreiber 17.09.2026): trainiert wird erst ab `lernrundeZiel`
+     * NEUEN Lernpaaren (Daumen hoch + Einwilligung), und eine Version gilt nur
+     * als besser, wenn sie die gemessene BASIS schlaegt. Ohne Basiswert wird
+     * nichts befoerdert (fail-closed) — die erste Version war bisher immer
+     * "erster Stand" und haette die Basis ersetzt, obwohl alle acht
+     * Handlaeufe schlechter massen. Basis 10.09.: 68,4 % auf smejj-chat-breit-v1.
+     */
+    lernrunde: String(env.SMEJJ_LERNRUNDE || "YES").trim().toUpperCase() === "YES",
+    lernrundeZiel: begrenzteZahl(env.SMEJJ_LERNRUNDE_ZIEL_PAARE, 500, 1, 1_000_000),
+    basisPunktzahl: Number.isFinite(Number(env.SMEJJ_LORA_BASIS_PUNKTZAHL)) && env.SMEJJ_LORA_BASIS_PUNKTZAHL !== ""
+      ? Number(env.SMEJJ_LORA_BASIS_PUNKTZAHL) : null,
+
     zustandKey: env.SMEJJ_LORA_ZUSTAND_KEY || "ops/smejj-lora-loop/zustand.json",
     bestenKey: env.SMEJJ_LORA_BESTEN_KEY || "ops/smejj-lora-loop/bester-stand.json"
   });
