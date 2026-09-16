@@ -235,3 +235,53 @@ Regression danach:
 - Web (Chrome, Firefox), PWA, iOS, Android und Tablet sind im Simulator bzw. Emulator ohne Befund.
 - Performance-Budgets eingehalten, 0 npm-Lücken.
 - Kein „100 % sicher": Die Restrisiken stehen in 16 und 22, die Lücken in 23.
+
+---
+
+## NACHTRAG 17.09. — Live-Test auf Geräten, 5. Fehler behoben (SW v893) ✅
+
+Auftrag des Betreibers (17.09.): „Bitte öffne smejj.com im Browser und teste die gesamte App … Wenn du Fehler
+findest, behebe sie sofort, deploye erneut und teste live weiter … Danach alles 100 % schützen."
+
+**Live-Tests auf den Geräten:**
+- **iPhone 17 Pro** (Simulator iOS 26.5, Safari) auf https://smejj.com/: Startseite sauber (Screenshot).
+- **Android, Pixel** (Chrome 124), live mit dem Betreiber-Konto (Zugang „local-e2e"):
+  - SW v892 aktiv, alte Caches werden abgeräumt, kein seitlicher Scroll, 0 Knöpfe ohne Namen.
+  - Eine klar beschriftete Testfrage „Endabnahme v892 Android-Test: Wie viel ist 3 plus 4?" wurde nach 6 s
+    mit „7" beantwortet.
+  - Menüs: 11 bzw. 13 Punkte, ganz im Bild, der Knopf trifft „menu".
+
+**5. Fehler (live gefunden):**
+- Symptom: Die erste Zeile der ersten Nachricht war im Chat am Handy verdeckt.
+- Ursache: Der Kopf-Glasstreifen `.mobil-kopfglas` aus `mobil-dock.js` (fixed, 52 px, 92 % deckend) stammt aus
+  der Zeit mit 56 px Polster. Seit v891 beginnt der Verlauf an der Oberkante.
+
+**Fix:**
+- `design-v13-kompakt.css` blendet den Streifen im Chat am Handy aus. Die Code-Ansicht behält ihn.
+- Neuer Regressionstest `tests/kopfglas-verdeckt-nicht.test.mjs`.
+- Commits: Arbeitszweig `425aa2b2`, Bauzweig `c7d11e5f`, Frontend `5dd7551`.
+
+**Prüfungen und Auslieferung:**
+- `check:frontend` 688 bestanden, 0 fehlgeschlagen; alle `check:all`-Einzelprüfungen grün.
+- smejj.com war nach 30 s live, api.smejj.com nach 45 s.
+- Prüfsummen (Quelle = smejj.com = api.smejj.com):
+  - `design-v13-kompakt.css` 9ab83ec2a076
+  - `index.html` 0a9dcaccbf6f
+  - `start-styles.css` 0da7fc932d2a
+  - `sw.js` d98cc591e65f
+- `schutz-echtheit` OK (48 Dateien).
+
+**Nachtest:**
+- **Android live** (v893): Streifen im Chat `display:none`, erste Zeile bei y=20 frei (elementsFromPoint =
+  `entry user`), Screenshot zeigt beide Zeilen. In der Code-Ansicht ist der Streifen weiter `block`.
+- **iOS Test-Kopie:**
+  - iPhone 17 Pro 402×714: Streifen `none`, erste Zeile bei y=17 frei, Layout ohne Befund.
+  - iPhone 17e: Streifen `none`, nachdem der alte Cache der Test-Kopie erneuert war.
+
+**Schutz:**
+- Anker auf v892 (vor dem Fix): `schutz-100-2026-09-17-v892`, `-v892-bauzweig`, `-v892-frontend`.
+- Anker auf v893 (neuer Stand): `schutz-100-2026-09-17-v893`, `-v893-bauzweig`, `-v893-frontend`.
+- Tags sind per Ruleset unlöschbar und unverschiebbar.
+- Zweigschutz aktiv (kein Force-Push, kein Löschen) auf Frontend `main`, Bauzweig, Arbeitszweig und
+  `feature/design-v11`.
+- Start-Lock mit Wortlaut gestempelt: Änderungen an der Startseite schlagen ohne neuen Stempel an.
