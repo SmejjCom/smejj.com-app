@@ -213,7 +213,7 @@ Regression danach:
 - api.smejj.com als direkt geöffnete Oberfläche (Rückfallweg): Die strengere CSP (`style-src 'self'`,
   `microphone=()`) lässt dort eingespeiste Stil-Module und das Diktieren nicht zu. smejj.com ist davon
   nicht betroffen.
-- Veraltete, tote Kopien unter `/assets/admin` auf api.smejj.com. Sie werden nicht geladen.
+- ~~Veraltete Kopien unter `/assets/admin` auf api.smejj.com~~ — nachgeprüft 17.09.: kein Befund. `/assets/admin/index.html` und `/assets/admin/radar/index.html` liefern beide die Rückfallseite (gleiche Prüfsumme a193a1fd5ae1), `console.css` ist identisch mit `/admin/console.css` (a85b93e3c7de).
 - smejj.com auf GitHub Pages: keine Header-Kontrolle (siehe 16).
 
 ## 23. NICHT TESTBARE PUNKTE
