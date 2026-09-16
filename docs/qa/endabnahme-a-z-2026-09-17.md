@@ -302,3 +302,15 @@ findest, behebe sie sofort, deploye erneut und teste live weiter … Danach alle
   (HTTP 422 „edges on Service"). Das Skript fragt jetzt zweistufig ab wie `findeDienst()` und läuft wieder.
 - **Offen bleibt nur `CODEBERG_TOKEN`:** `gh secret list` ist leer. Die Codeberg-Token-Seite ist in Chrome
   vorbereitet; erzeugen und bei GitHub eintragen kann nur der Betreiber.
+
+## NACHTRAG 3 — Codeberg-Sicherung ohne Token nachgeholt (17.09.) ✅ / Automatik ⚠️
+- Der Mac hat einen funktionierenden SSH-Zugang zu Codeberg (`git ls-remote codeberg` klappt).
+- `scripts/deploy/codeberg_spiegel_sync.sh lokal` lief über SSH mit Exit 0: alle Zweige und Tags von GitHub
+  gespiegelt, ohne Prune, also ohne Löschen.
+- Nachweis: Bauzweig `bd84e8e7` und Arbeitszweig `01e43ff6` sind auf GitHub und Codeberg gleich. Codeberg führt
+  144 Tags (GitHub 100, ältere bleiben erhalten), darunter `schutz-100-2026-09-17-v893`.
+- **Automatik:** Codeberg bietet keine Pull-Spiegel mehr an (Migrationsformular ohne Mirror-Option).
+  Die tägliche GitHub Action braucht deshalb weiter das Secret `CODEBERG_TOKEN`.
+  - Die Token-Seite ist in Chrome vorbereitet (Name `github-sicherung-smejj`, repository: Lesen und Schreiben).
+  - Token erzeugen und bei GitHub eintragen kann nur der Betreiber.
+  - Bis dahin bleibt die Action bewusst rot (fail-closed) und täuscht keine Sicherung vor.
