@@ -340,8 +340,11 @@ test("Quellen ueberleben ein Neuladen", () => {
 test('"Quellen anzeigen" erscheint nur mit echter Quelle', () => {
   assert.ok(!menuItemsFor("assistant", false).some((i) => i.act === "sources"), "ohne Beleg kein Menuepunkt");
   const mitQuelle = menuItemsFor("assistant", true);
-  assert.equal(mitQuelle[0].act, "sources", "mit Beleg steht er ganz oben");
-  assert.equal(mitQuelle.length, 7, "sources + copy + speak + regen + copy-plain + fork + remove");
+  // Seit 16.09.2026 stehen vier Kacheln davor (Kopieren, Teilen, Vorlesen, Anpinnen) —
+  // "Quellen anzeigen" fuehrt weiterhin die Liste darunter an.
+  const liste = mitQuelle.filter((i) => !i.kachel);
+  assert.equal(liste[0].act, "sources", "mit Beleg steht er ganz oben in der Liste");
+  assert.equal(mitQuelle.length, 14, "4 Kacheln + sources + 7 Listenpunkte + fork + remove");
   assert.ok(!menuItemsFor("user", true).some((i) => i.act === "sources"), "eigene Nachrichten haben keine Quellen");
 });
 
@@ -536,14 +539,17 @@ test("Belegung der Leiste je Rolle", () => {
 test("Menuepunkte je Rolle, Loeschen zuletzt und als Gefahr markiert", () => {
   const user = menuItemsFor("user").map((item) => item.act);
   // "speak" seit 2026-09-07 (Betreiber: eigene Frage laut lesen lassen).
-  assert.deepEqual(user, ["copy", "edit", "speak", "fork", "remove"]);
+  // Seit 2026-09-16 (Betreiber: "Teilen fehlt und soll unbedingt hinzugefuegt werden … Menue
+  // umfangreicher, professioneller"): vier Kacheln oben, dann die Liste.
+  assert.deepEqual(user, ["copy", "share", "speak", "pin", "edit", "quote", "forward", "translate", "select-text", "fork", "remove"]);
+  assert.equal(menuItemsFor("user", false, true).find((i) => i.act === "pin").label, "Lösen", "angepinnt heisst die Kachel Loesen");
 
   const assistant = menuItemsFor("assistant");
   // Betreiber 2026-09-08: "Antworten kann ich nicht kopieren, vorlesen — muessen auch wie meine
   // Anfragen genau sein." Kopieren und Vorlesen stehen zwar sichtbar in der Leiste, aber wer sie
   // bei der eigenen Frage im Menue sucht, sucht sie dort auch bei der Antwort. Einheitliche
   // Bedienung schlaegt die aeltere Regel "keine doppelten Wege" (ZCode-Abgleich 2026-08-16).
-  assert.deepEqual(assistant.map((item) => item.act), ["copy", "speak", "regen", "copy-plain", "fork", "remove"]);
+  assert.deepEqual(assistant.map((item) => item.act), ["copy", "share", "speak", "pin", "reply", "quote", "forward", "translate", "select-text", "regen", "copy-plain", "fork", "remove"]);
   assert.equal(assistant.at(-1).danger, true);
   assert.ok(!assistant.some((item) => item.act === "sources"), "keine Quellenliste, solange keine Quellen erfasst werden");
 });
@@ -592,9 +598,12 @@ test("buildMenu erzeugt bedienbare Menuepunkte mit Trennlinie vor dem Loeschen",
   assert.equal(head.className, "msg-menu-head");
   assert.equal(head.textContent, "Heute, 16:30 · smejj 1.0");
 
-  const items = menu.children.filter((node) => String(node.className).includes("msg-menu-item"));
-  // seit 2026-09-08 auch Kopieren und Vorlesen (Betreiber: Antworten wie eigene Fragen bedienen)
-  assert.equal(items.length, 6);
+  // Seit 16.09.2026: vier Kacheln in einer eigenen Reihe (.msg-menu-kacheln), darunter die Liste.
+  const kacheln = menu.children.find((node) => node.className === "msg-menu-kacheln");
+  assert.ok(kacheln, "Kachelreihe vorhanden");
+  assert.deepEqual(kacheln.children.map((k) => k.dataset.act), ["copy", "share", "speak", "pin"]);
+  const items = [...kacheln.children, ...menu.children.filter((node) => String(node.className).includes("msg-menu-item"))];
+  assert.equal(items.length, 13);
   for (const item of items) {
     assert.equal(item.type, "button", "Menuepunkte sind echte Knoepfe und damit fokussierbar");
     assert.equal(item.attributes.role, "menuitem");

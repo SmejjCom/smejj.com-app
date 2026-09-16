@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-16T18:06:03.258Z",
-  "confirmation": "Betreiber 16.09.2026 schriftlich im Chat: 'Fuer Mobile (iOS, Android usw.) bitte den gesamten Chat- und Eingabebereich so anpassen: Das + Icon muss ganz links stehen. Modelle -> Mikrofon/Diktieren -> Sprachwelle/Senden muessen ganz rechts stehen ... Das Schreibfeld soll so viel Platz wie moeglich bekommen ... nur eine kompakte Zeile hoch ... automatisch nach oben erweitern ... Wenn Mikrofon oder Sprachwelle aktiviert wird, soll das aktive Icon unsere Logo-Farbe bekommen ... Texte, Nachrichten, Icons und wichtige Bedienelemente muessen gross und gut lesbar sein.' Umgesetzt (bis 600 px, design-v13-kompakt.css): Leiste randlos, Feld 128-238 px statt 105-160, Deckel 320 px statt 148, Cursor bleibt beim Wachsen sichtbar (kompakt.js), ein Grundton fuer alle Symbole (24 px), aktiv #02fdfd, Verlauf ab 48 px, Aktions-Symbole 20 px / Woerter 12 px / Uhrzeit 13 px; SW smejj-shell-v891.",
+  "frozenAt": "2026-09-16T18:27:44.640Z",
+  "confirmation": "Betreiber 16.09.2026 schriftlich im Chat (Runde 3, Mobile): 'Der Chat-/Textbereich soll nicht erst unterhalb von Logo und Browser-Icon beginnen … bis ganz nach oben … Im Schreibfeld soll der eingegebene Text von ganz links bis ganz rechts die verfuegbare Breite nutzen … Wenn man bei einer Nachricht auf das Menue klickt, sollen dem User mehr professionelle Moeglichkeiten angeboten werden … Teilen fehlt und soll unbedingt hinzugefuegt werden.' Dazu Runde 2: '+ links, Modelle -> Mikrofon -> Sprachwelle ganz rechts … aktive Icons in Logo-Farbe … gross und gut lesbar.' Umgesetzt: Verlauf ab Safe Area + 6 px (erste Nachricht zwischen Logo und Browser-Icon, Icons mit Glas-Grund), Schreibfeld volle Breite ab zweiter Zeile (kompakt.js .feld-breit), Nachrichten-Menue mit Kacheln Kopieren/Teilen/Vorlesen/Anpinnen und Antworten/Zitieren/Weiterleiten/Uebersetzen/Text auswaehlen (chat-menue-mehr.js); SW smejj-shell-v891.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "f59f3c098d5765ada4154fae2d5e5df7497ccb3946849de30b3fd9bb23c867f9",
+    "public/index.html": "12917e9ef2a10e3b4af90dc17505b49d53475adfa19a73b2f1ab37ca0aa3eb50",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
-    "public/start-styles.css": "669d3332fb9bbf69a9d1614ebd93ecd7241b9e311be0898e1fb36db7ad4e18c9",
+    "public/start-styles.css": "ee4671f153fc61dceb4375af497f73c007579771a8feb8c9e7dbcbd68af5b6ff",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "10ba77e36d5b6e57b90245a559b2451db1ec256ff9d5aa8004677c9236a76b59",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "9d2b7a38c146251fdd35b9a18fc0ffef6000035fef51c0f5750f39a0bd6d7d9b",
+    "public/sw.js": "68edbd0984542d81b53c102dc71ccc5c5fc3356d1d1d8bec84d300cc04c07ef9",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
