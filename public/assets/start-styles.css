@@ -6415,3 +6415,87 @@ html body #code .code-wchips.code-wchips.code-wchips {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+@media (max-width: 600px) {
+  html body #start:not(.has-start-chat) .home-feed.home-feed > .prompt-glass.prompt-glass {
+    width: calc(100% + 32px);
+    max-width: none;
+    margin-left: -16px;
+    margin-right: -16px;
+  }
+  html body #start.view .prompt-glass.prompt-glass.prompt-glass {
+    padding: 4px 4px 0;
+    column-gap: 2px;
+  }
+  html body #start.view .prompt-glass.prompt-glass.prompt-glass #modelPickerButton {
+    min-width: 44px;
+    max-width: 22vw;
+    padding: 0 6px;
+    font-size: 15px;
+    color: rgba(242, 245, 244, 0.86);
+    background: transparent;
+    box-shadow: none;
+  }
+  html body #start.view .prompt-glass.prompt-glass.prompt-glass #startMessage {
+    max-height: min(40dvh, 320px);
+    padding-left: 6px;
+    padding-right: 6px;
+    font-size: 18px;
+    line-height: 1.4;
+    scroll-padding-bottom: 8px;
+  }
+  html body #start.view .prompt-glass.prompt-glass.prompt-glass :where(#composerPlusButton, [data-start-tool="voice"], #startSend) {
+    color: rgba(242, 245, 244, 0.9);
+    background: transparent;
+    box-shadow: none;
+  }
+  html body #start.view .prompt-glass.prompt-glass.prompt-glass :is(#composerPlusButton, [data-start-tool="voice"], #startSend) svg {
+    width: 24px;
+    height: 24px;
+  }
+  html body #start.view .prompt-glass.prompt-glass.prompt-glass #startSend:not(.ist-sprache) {
+    color: #ffffff;
+  }
+  html body #start.has-start-chat #startLog.start-log {
+    padding-top: 48px;
+    scroll-padding-top: 48px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  html body #startLog .entry.user {
+    padding: 10px 14px;
+  }
+  html body #startLog .msg-actions.msg-actions .msg-act svg {
+    width: 20px;
+    height: 20px;
+  }
+  html body #startLog .msg-actions.msg-actions .msg-act-wort {
+    font-size: 12px;
+    opacity: 1;
+  }
+  html body #startLog .msg-actions.msg-actions .msg-act {
+    color: rgba(246, 243, 238, 0.86);
+  }
+  html body #startLog .msg-actions.msg-actions .msg-act.hat-wort {
+    width: auto;
+    min-width: 44px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  html body #startLog .msg-actions.msg-actions:has(.msg-act.hat-wort) {
+    gap: 4px;
+  }
+  html body #startLog .msg-actions.msg-actions .msg-zeit {
+    font-size: 13px;
+    color: rgba(246, 243, 238, 0.62);
+  }
+}
+@media (max-width: 360px) {
+  html body #startLog .msg-actions.msg-actions .msg-zeit { display: none; }
+}
+html body #start.view .prompt-glass.prompt-glass.prompt-glass [data-start-tool="voice"]:is(.is-recording, [aria-pressed="true"]),
+html body:has(#voiceModeOverlay:not([hidden])) #start.view .prompt-glass.prompt-glass.prompt-glass #startSend.ist-sprache {
+  color: #02fdfd;
+  background: rgba(2, 253, 253, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(2, 253, 253, 0.55);
+  animation: none;
+}

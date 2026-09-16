@@ -113,4 +113,23 @@ export function spiegleDiktat(doc = document, Beobachter = typeof MutationObserv
   return true;
 }
 
-if (typeof document !== "undefined" && document.querySelector(".view")) { sorgeFuerStil(); spiegleDiktat(); }
+// Das Schreibfeld waechst beim Tippen (app.js setzt height auf "auto" und dann neu) — dabei
+// springt der Inhalt an den ANFANG. Gemessen 16.09.2026 (375 px, 756 Zeichen, Feld am
+// Deckel): scrollTop 0, Cursor am Ende, die gerade getippte Zeile unsichtbar. Wer am Ende
+// schreibt, sieht jetzt das Ende; wer mitten im Text korrigiert, bleibt an seiner Stelle.
+export function haltCursorSichtbar(doc = document) {
+  const feld = doc.getElementById("startMessage");
+  if (!feld || feld.dataset.cursorSichtbar === "an") return false;
+  feld.dataset.cursorSichtbar = "an";
+  let vorher = 0;
+  feld.addEventListener("beforeinput", () => { vorher = feld.scrollTop; });
+  feld.addEventListener("input", () => {
+    const zeichne = () => {
+      feld.scrollTop = feld.selectionEnd >= feld.value.length ? feld.scrollHeight : vorher;
+    };
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(zeichne); else zeichne();
+  });
+  return true;
+}
+
+if (typeof document !== "undefined" && document.querySelector(".view")) { sorgeFuerStil(); spiegleDiktat(); haltCursorSichtbar(); }
