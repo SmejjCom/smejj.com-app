@@ -1,13 +1,12 @@
 #!/bin/zsh
 # smejj.com — Kaskade 2026-09-16: kompakter Chat- und Code-Bereich ausliefern.
-# Runde 4 (SW v892, Endabnahme 17.09.): Menue-Knopf der ersten Nachricht frei, keine doppelte
-# Aktionsleiste unter Code-Antworten, Menue im Querformat scrollbar, Platzhalter-Kontrast AA.
-# Runden 1-3 (v890/v891) sind live auf beiden Wegen.
+# Runde 5 (SW v893, Live-Test 17.09.): Kopf-Glasstreifen verdeckte im Chat die erste Nachricht.
+# Runden 1-4 (v890-v892) sind live auf beiden Wegen.
 #
 # Betreiber-Auftrag 16.09. (schriftlich): "Chat- und Code-Bereich deutlich kompakter und
 # sauberer machen …". Umgesetzt, getestet und gestempelt in:
-#   Arbeitszweig  feature/design-start-chat-2026-09-13  8ba85677
-#   Bauzweig      feature/auth-redesign-github-magiclink 1e03c0ac (Rueckfallweg api.smejj.com)
+#   Arbeitszweig  feature/design-start-chat-2026-09-13  425aa2b2
+#   Bauzweig      feature/auth-redesign-github-magiclink c7d11e5f (Rueckfallweg api.smejj.com)
 # Der Auto-Modus der Sitzung sperrt Produktiv-Auslieferungen — darum per Doppelklick.
 #
 # Sicherheitsnetz wie qa-fixrunde-2026-09-14.sh: live muss den Stand VOR der Aenderung
@@ -15,12 +14,12 @@
 set -uo pipefail
 REPO="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 KLON="/Users/alanbest/smejj-app-frontend"
-BASIS="c1000034"
-NEU="8ba85677"
-BAU_NEU="1e03c0ac"
+BASIS="8ba85677"
+NEU="425aa2b2"
+BAU_NEU="c7d11e5f"
 BAU_ZWEIG="feature/auth-redesign-github-magiclink"
-SW_VORHER="smejj-shell-v891"
-SW_NEU="smejj-shell-v892"
+SW_VORHER="smejj-shell-v892"
+SW_NEU="smejj-shell-v893"
 export GIT_TERMINAL_PROMPT=0
 
 cd "$REPO" || { echo "ABBRUCH: App-Ordner fehlt."; exit 1; }
@@ -59,7 +58,7 @@ else
     git add "$f"
     if [ -d "$KLON/assets" ]; then mkdir -p "$KLON/assets/$(dirname "$f")"; git -C "$REPO" show "$NEU:public/$f" > "$KLON/assets/$f" && git add "assets/$f"; fi
   done
-  git commit -q -m "deploy(endabnahme): Menue-Knopf frei, keine doppelte Leiste, Menue im Querformat, Platzhalter AA; SW $SW_NEU — Quelle smejj.com-app $NEU" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
+  git commit -q -m "deploy(mobil): Kopf-Glasstreifen verdeckte die erste Nachricht nicht mehr; SW $SW_NEU — Quelle smejj.com-app $NEU" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
   git merge-base --is-ancestor origin/main HEAD || { echo "ABBRUCH: kein Fast-Forward."; exit 1; }
   git push -q origin main || { echo "ABBRUCH: Push auf main fehlgeschlagen."; exit 1; }
   echo "gepusht: $(git rev-parse --short HEAD)"
