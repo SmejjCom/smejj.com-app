@@ -46,8 +46,8 @@
       "finger": "0e13342644705727"
     },
     "such-nachladen.js": {
-      "marke": "18",
-      "finger": "44df5edf1859ee16"
+      "marke": "19",
+      "finger": "ae65c04dc4ff061c"
     },
     "nachladen.js": {
       "marke": "2",
@@ -90,8 +90,8 @@
       "finger": "f6fa1879f058ff6f"
     },
     "chat-store.js": {
-      "marke": "b81",
-      "finger": "644a1bcde94615b6"
+      "marke": "b82",
+      "finger": "41e48e604d6e2113"
     },
     "autonomous-thread-run.js": {
       "marke": "1",
@@ -106,16 +106,16 @@
       "finger": "41e56f29b4d1d96c"
     },
     "papierkorb.js": {
-      "marke": "29",
-      "finger": "40bf6f50964b26a0"
+      "marke": "30",
+      "finger": "86151afccf24f072"
     },
     "kamera.js": {
       "marke": "b35live3",
       "finger": "aa2b06994086d893"
     },
     "erwaehnung.js": {
-      "marke": "19",
-      "finger": "4111b07f5fa8e840"
+      "marke": "20",
+      "finger": "25593939b21863fe"
     },
     "chat-runter-pfeil.js": {
       "marke": "3",
@@ -138,12 +138,12 @@
       "finger": "83b7dce67c0ba9c6"
     },
     "chat-history-view.js": {
-      "marke": "b74",
-      "finger": "5460557d71dcc6b1"
+      "marke": "b75",
+      "finger": "9005e348cb572dde"
     },
     "arbeitsbereiche.js": {
-      "marke": "36",
-      "finger": "69e9f4e84fbe6516"
+      "marke": "37",
+      "finger": "51a3bc5f01030b02"
     },
     "browser-pane.js": {
       "marke": "browser-pane-20260906-18",
@@ -250,28 +250,28 @@
       "finger": "7582ef4714cff5b4"
     },
     "chat-history-cards.js": {
-      "marke": "b75",
-      "finger": "b44cead933f44803"
+      "marke": "b76",
+      "finger": "0ae9d46c19b2a804"
     },
     "chat-medien.js": {
-      "marke": "6",
-      "finger": "29f04887e5ecb6ed"
+      "marke": "7",
+      "finger": "16a745a21e3393ac"
     },
     "chat-medien-ansicht.js": {
-      "marke": "1",
-      "finger": "4d0e874501e84a35"
+      "marke": "2",
+      "finger": "17c103f6287876a7"
     },
     "chat-store-bereiche.js": {
-      "marke": "18",
-      "finger": "1d71c81e243434ad"
+      "marke": "19",
+      "finger": "7b67f50e550bf99a"
     },
     "chat-owner.js": {
       "marke": "3",
       "finger": "b0f84b90d605750a"
     },
     "chat-sync.js": {
-      "marke": "25",
-      "finger": "6f8107373c01a281"
+      "marke": "26",
+      "finger": "33c42bdbcbb66e27"
     },
     "chat-sync-auswahl.js": {
       "marke": "9",
@@ -290,8 +290,8 @@
       "finger": "edae0d858cf4bf54"
     },
     "code-flaeche.js": {
-      "marke": "76",
-      "finger": "f7c00fc64f278c57"
+      "marke": "77",
+      "finger": "2af48a0d6bfe7b18"
     },
     "code-kompakt-menue.js": {
       "marke": "3",
@@ -374,24 +374,24 @@
       "finger": "9c3de55d2b468598"
     },
     "spur-start.js": {
-      "marke": "b65",
-      "finger": "98592ac519ede5b1"
+      "marke": "b66",
+      "finger": "ee0db2c419166ccd"
     },
     "code-nachladen.js": {
-      "marke": "39",
-      "finger": "82b8b2f0c4adfc7d"
+      "marke": "40",
+      "finger": "c4babfbba96404f8"
     },
     "bedarf-nachladen.js": {
-      "marke": "26",
-      "finger": "6abbc770df7a401f"
+      "marke": "27",
+      "finger": "8bbc8a2e9a684ff0"
     },
     "app.js": {
-      "marke": "b185",
-      "finger": "00323b6e5e236f59"
+      "marke": "b186",
+      "finger": "25cee3de2731a7df"
     },
     "pwa-schnellstart.js": {
-      "marke": "22",
-      "finger": "816db08929b3080e"
+      "marke": "23",
+      "finger": "fa196e0e242e539b"
     },
     "browser-nachladen.js": {
       "marke": "21",
@@ -406,8 +406,8 @@
       "finger": "220df06185cd1eed"
     },
     "chat-actions.js": {
-      "marke": "b68",
-      "finger": "34c25ec33a4520a5"
+      "marke": "b69",
+      "finger": "0260bc6791d8a412"
     },
     "panel-status.js": {
       "marke": "1",
@@ -466,8 +466,8 @@
       "finger": "ddf238e94e55304d"
     },
     "search-overlay.js": {
-      "marke": "b75",
-      "finger": "d82b7980306f2888"
+      "marke": "b76",
+      "finger": "d3c4f880a1272366"
     },
     "medien-absicht.js": {
       "marke": "8",
@@ -478,8 +478,8 @@
       "finger": "b549ece74577df15"
     },
     "search.js": {
-      "marke": "b68",
-      "finger": "e5f31699b457e99b"
+      "marke": "b69",
+      "finger": "db3547aa1f9aa486"
     },
     "voice-landing-signin.js": {
       "marke": "8",
