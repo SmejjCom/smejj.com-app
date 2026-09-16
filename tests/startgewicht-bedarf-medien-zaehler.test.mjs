@@ -24,7 +24,7 @@ test("chat-store.js holt chat-medien.js nicht mehr beim Modulstart", () => {
   // Geholt wird nur, wenn eine Nachricht wirklich eine Serveradresse traegt.
   assert.match(store, /MEDIEN_ADRESSE\.test\(String\(m\?\.html \|\| ""\)\)/);
   // Die Nachlade-Form bleibt — die Selbstheilungs-Tests schreiben genau sie um.
-  assert.match(store, /import\("\.\/chat-medien\.js\?v=5"\)/);
+  assert.match(store, /import\("\.\/chat-medien\.js\?v=6"\)/);
 });
 
 test("die Wiederherstellung wartet auf den Parker, BEVOR sie zeichnet", () => {

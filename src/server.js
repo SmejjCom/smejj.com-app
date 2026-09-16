@@ -255,7 +255,7 @@ const server = http.createServer(async (req, res) => {
     // Verlauf-Sync (Stufe 3): eigene Routen-Datei, damit dieser Verteiler
     // schlank bleibt. Abgeschaltet, solange SMEJJ_CHAT_SYNC_ENABLED fehlt.
     if (url.pathname === "/api/chats" && await chatSyncRoutes.handle(req, res, url)) return;
-    if (url.pathname === "/api/chat-medien" && await chatMedienRoutes.handle(req, res, url)) return;
+    if (chatMedienRoutes.zustaendig(url.pathname) && await chatMedienRoutes.handle(req, res, url)) return;
     if (url.pathname === "/api/bild/erzeuge" && await bildExternRoutes.handle(req, res, url)) return;
     // Projekte-Sync (2026-08-13): benannte Sammlungen fuer Chats, gleiches Flag.
     if (url.pathname === "/api/projekte" && await projektSyncRoutes.handle(req, res, url)) return;

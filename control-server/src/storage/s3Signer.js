@@ -169,7 +169,7 @@ export async function signedS3Delete({
 
 export async function signedS3Get({
   endpoint, region, accessKey, secretKey, bucket, key, fetchImpl = fetch, timeoutMs,
-  allowNotFound = false, responseType = "text"
+  allowNotFound = false, responseType = "text", range = ""
 }) {
   if (!["text", "buffer"].includes(responseType)) throw new Error("Unsupported S3 response type");
   const endpointUrl = new URL(endpoint);
@@ -195,10 +195,13 @@ export async function signedS3Get({
   const response = await s3FetchWithRetry(() => fetchImpl(getUrl, {
     method,
     signal: requestTimeoutSignal(timeoutMs),
+    // Range ist ein unsignierter Zusatz (SigV4 signiert nur die genannten
+    // Header) — so kann die Medien-Ablage Video und Audio in Stuecken liefern.
     headers: {
       Authorization: authorization,
       "x-amz-content-sha256": payloadHash,
-      "x-amz-date": amzDate
+      "x-amz-date": amzDate,
+      ...(range ? { Range: String(range) } : {})
     }
   }));
   const bytes = Buffer.from(await response.arrayBuffer());
@@ -212,7 +215,8 @@ export async function signedS3Get({
     key,
     status: response.status,
     body,
-    etag: normalizeEtag(response.headers?.get?.("etag"))
+    etag: normalizeEtag(response.headers?.get?.("etag")),
+    contentRange: response.headers?.get?.("content-range") || ""
   };
 }
 
