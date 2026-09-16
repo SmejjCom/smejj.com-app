@@ -158,3 +158,24 @@ test("der Plan hat vier Schritte und bleibt in der Notizlaenge", () => {
   assert.equal(text.split("\n").length, 4);
   assert.ok(text.length <= 400, "die Notiz von Modul Y ist auf 400 Zeichen begrenzt");
 });
+
+test("Zuruecknehmen stellt den Vorschlag wieder zur Wahl — die Aufgabe bleibt", async () => {
+  zuruecksetzen();
+  const { vorschlaege } = await baueVorschlaege({ env: ENV, radarBestand: RADAR_OK });
+  const ziel = vorschlaege.find((v) => v.quelle === "Konkurrenzlücke");
+
+  const ja = await entscheide({ vorschlagId: ziel.id, wahl: "ja" }, { actor: ACTOR, env: ENV, radarBestand: RADAR_OK });
+  assert.equal(ja.ok, true);
+
+  const zurueck = await entscheide({ vorschlagId: ziel.id, wahl: "offen" }, { actor: ACTOR, env: ENV, radarBestand: RADAR_OK });
+  assert.equal(zurueck.ok, true, "Zuruecknehmen braucht keinen Grund");
+
+  const uebersicht = await entscheidungsUebersicht({ env: ENV, radarBestand: RADAR_OK });
+  const wieder = uebersicht.offen.find((v) => v.id === ziel.id);
+  assert.ok(wieder, "der Vorschlag muss zurueck in die offene Liste");
+  assert.equal(wieder.entscheidung, null, "er zaehlt wieder als unentschieden");
+  assert.ok(wieder.zurueckgenommenAm, "wann zurueckgenommen wurde, bleibt sichtbar");
+  assert.equal(uebersicht.zaehler.ja, 0);
+  assert.equal(uebersicht.zaehler.zurueckgenommen, 1);
+  assert.ok(!uebersicht.entschieden.some((v) => v.id === ziel.id));
+});

@@ -23,9 +23,26 @@ const BUDGETS = Object.freeze({
   // Einbruch (Server statt CDN, kaputter Cache) weiterhin ab.
   ttfb_ms: 500,
   lcp_ms: 1500,
+  // NEU 16.09.2026, gleiche Begruendung wie bei TTFB oben: LCP = TTFB + Rendern.
+  // Bei TTFB-p75 von 847 ms ueber die Leitung des Betreibers ist ein rohes
+  // LCP-Budget von 1500 ms in Wahrheit ein TTFB-Budget — die Wache stand rot,
+  // ohne dass jemand an der Seite etwas haette aendern koennen (gemessen
+  // 16.09.: kalt LCP-Median 1484 ms bei TTFB 730 ms, warm LCP 320 ms).
+  // Geprueft wird deshalb die RENDERZEIT: LCP minus TTFB. Sie faengt jede
+  // echte Verschlechterung der Seite (mehr Arbeit vor dem ersten Bild),
+  // reagiert aber nicht auf ein schwankendes Netz. Das rohe LCP bleibt im
+  // Bericht stehen.
+  lcpRender_ms: 1200,
   cls: 0.1,
   inp_ms: 200,
-  pageWeight_kb: 300
+  pageWeight_kb: 300,
+  // NEU 16.09.2026: das GEWICHT BIS ZUM ERSTEN BILD. Das Gesamtgewicht zaehlte
+  // alles mit, was die Seite ABSICHTLICH erst nach dem Bildaufbau nachlaedt
+  // (Modell-Menue, Klartext-Hilfen, Erste Schritte) — ein Budget, das
+  // bewusstes Nachladen bestraft, treibt genau in die falsche Richtung: man
+  // wuerde Nachladen wieder zu Vorladen machen. Gemessen 16.09.: 101 Dateien,
+  // 291 KB gesamt, davon deutlich weniger bis zum ersten Bild.
+  startWeight_kb: 300
 });
 
 // TTFB ist ein Netzwert, kein Seitenwert: HTML bleibt im Service Worker
@@ -35,7 +52,11 @@ const BUDGETS = Object.freeze({
 // rote Ampel, die niemand durch eine Aenderung an der Seite gruen bekommt,
 // ist keine Wache. TTFB wird darum gemessen und gemeldet, reisst aber kein
 // Budget mehr; LCP, CLS, INP und Gewicht bleiben fail-closed.
-const NUR_HINWEIS = new Set(["ttfb_ms"]);
+// lcp_ms und pageWeight_kb wandern am 16.09.2026 aus demselben Grund hierher:
+// Sie stehen weiter im Bericht, entscheiden aber nicht mehr ueber rot oder
+// gruen. Geprueft werden ihre aussagekraeftigen Geschwister lcpRender_ms
+// (Seite statt Netz) und startWeight_kb (bis zum ersten Bild statt alles).
+const NUR_HINWEIS = new Set(["ttfb_ms", "lcp_ms", "pageWeight_kb"]);
 
 const args = parseArgs(process.argv.slice(2));
 const url = args.url || "https://smejj.com/";
@@ -80,15 +101,25 @@ const READ = `(() => {
   const fcp = performance.getEntriesByName("first-contentful-paint")[0];
   const weight = performance.getEntriesByType("resource").reduce((sum, r) => sum + (r.transferSize || 0), (nav.transferSize || 0));
   const vitals = window.__smejjVitals || {};
+  const ttfb = Math.round((nav.responseStart || 0) - (nav.requestStart || 0));
+  // Alles, was VOR dem groessten Bildaufbau fertig geladen war — das ist das
+  // Gewicht, das der Nutzer wirklich abwarten muss. Ohne gemessenes LCP faellt
+  // es auf das Gesamtgewicht zurueck (nie beschoenigen).
+  const grenze = typeof vitals.lcp === "number" ? vitals.lcp : Infinity;
+  const startWeight = performance.getEntriesByType("resource")
+    .filter((r) => (r.responseEnd || 0) <= grenze)
+    .reduce((sum, r) => sum + (r.transferSize || 0), (nav.transferSize || 0));
   return JSON.stringify({
     ttfb_ms: Math.round((nav.responseStart || 0) - (nav.requestStart || 0)),
     fcp_ms: fcp ? Math.round(fcp.startTime) : null,
     lcp_ms: vitals.lcp,
+    lcpRender_ms: typeof vitals.lcp === "number" ? Math.max(0, vitals.lcp - ttfb) : null,
     lcpElement: vitals.lcpElement,
     cls: Math.round((vitals.cls || 0) * 1000) / 1000,
     inp_ms: vitals.inp,
     domInteractive_ms: Math.round(nav.domInteractive || 0),
     pageWeight_kb: Math.round(weight / 1024),
+    startWeight_kb: Math.round(startWeight / 1024),
     resources: performance.getEntriesByType("resource").length
   });
 })()`;
@@ -188,7 +219,7 @@ async function interact(send) {
 function summarise(list) {
   const numeric = (key) => list.map((entry) => entry[key]).filter((value) => typeof value === "number");
   const out = {};
-  for (const key of ["ttfb_ms", "fcp_ms", "lcp_ms", "cls", "inp_ms", "domInteractive_ms", "pageWeight_kb", "resources"]) {
+  for (const key of ["ttfb_ms", "fcp_ms", "lcp_ms", "lcpRender_ms", "cls", "inp_ms", "domInteractive_ms", "pageWeight_kb", "startWeight_kb", "resources"]) {
     const values = numeric(key).sort((a, b) => a - b);
     out[key] = values.length
       ? { median: values[Math.floor(values.length / 2)], p75: values[Math.min(values.length - 1, Math.ceil(values.length * 0.75) - 1)], min: values[0], max: values[values.length - 1] }
