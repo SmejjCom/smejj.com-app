@@ -104,7 +104,11 @@ test("service worker caches only small app shell assets and has offline fallback
   // Das Verhalten beider Groessen pruefen tests/sw-schmaler-eingang.test.mjs
   // am ECHTEN sw.js.
   // Freigabe 1g (15.09.2026): die Install-Anfragen tragen zusaetzlich eine Zeitgrenze.
-  assert.match(sw, /cache\.addAll\(INSTALL_LISTE\.map\(\(url\) => new Request\(url, \{ cache: "reload", signal: installSignal\(\) \}\)\)\)/);
+  // 16.09.2026: addAll erzeugte alle Anfragen vorab, die 30-s-Uhr lief in der
+  // Warteschlange ab — der volle Speicher blieb leer. Jetzt fuellt fuelleSpeicher
+  // mit Grenze JE DATEI ab ihrem eigenen Start (freigabe-1g-sw-zeitgrenze.test.mjs).
+  assert.match(sw, /caches\.open\(AKTIVER_CACHE\)\.then\(\(cache\) => fuelleSpeicher\(cache, INSTALL_LISTE\)\)/);
+  assert.match(sw, /new Request\(url, \{ cache: "reload", signal: installSignal\(\) \}\)/);
   assert.match(sw, /const INSTALL_LISTE = SCHMAL \? WILLKOMMEN_SHELL : SHELL;/, "ohne Zusatz muss weiterhin die volle App-Liste gelten");
   assert.match(sw, /(fetch\(request\)|antwort)\.catch\(\(\) => caches\.match\(request\)/);
   assert.match(sw, /caches\.match\("\/"\)/);
