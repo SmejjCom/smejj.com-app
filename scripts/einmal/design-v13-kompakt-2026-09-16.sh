@@ -1,10 +1,12 @@
 #!/bin/zsh
-# smejj.com — Kaskade 2026-09-16: kompakter Chat- und Code-Bereich ausliefern (SW v890).
+# smejj.com — Kaskade 2026-09-16: kompakter Chat- und Code-Bereich ausliefern.
+# Runde 2 (SW v891): Handy-Chat- und Eingabebereich; Runde 1 (v890) ist auf smejj.com live,
+# der Bauzweig (api.smejj.com) traegt noch v889 und bekommt beide Runden auf einmal.
 #
 # Betreiber-Auftrag 16.09. (schriftlich): "Chat- und Code-Bereich deutlich kompakter und
 # sauberer machen …". Umgesetzt, getestet und gestempelt in:
-#   Arbeitszweig  feature/design-start-chat-2026-09-13  bfe17d7f (gepusht)
-#   Bauzweig      lokaler Zweig bau-kompakt-20260916     3d2421cf (Rueckfallweg api.smejj.com)
+#   Arbeitszweig  feature/design-start-chat-2026-09-13  d431a43e (gepusht)
+#   Bauzweig      lokaler Zweig bau-kompakt-20260916     ad0ab3f4 (Rueckfallweg api.smejj.com)
 # Der Auto-Modus der Sitzung sperrt Produktiv-Auslieferungen — darum per Doppelklick.
 #
 # Sicherheitsnetz wie qa-fixrunde-2026-09-14.sh: live muss den Stand VOR der Aenderung
@@ -12,12 +14,12 @@
 set -uo pipefail
 REPO="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 KLON="/Users/alanbest/smejj-app-frontend"
-BASIS="14a2021c"
-NEU="bfe17d7f"
-BAU_NEU="3d2421cf"
+BASIS="bfe17d7f"
+NEU="d431a43e"
+BAU_NEU="ad0ab3f4"
 BAU_ZWEIG="feature/auth-redesign-github-magiclink"
-SW_VORHER="smejj-shell-v889"
-SW_NEU="smejj-shell-v890"
+SW_VORHER="smejj-shell-v890"
+SW_NEU="smejj-shell-v891"
 export GIT_TERMINAL_PROMPT=0
 
 cd "$REPO" || { echo "ABBRUCH: App-Ordner fehlt."; exit 1; }
@@ -56,7 +58,7 @@ else
     git add "$f"
     if [ -d "$KLON/assets" ]; then mkdir -p "$KLON/assets/$(dirname "$f")"; git -C "$REPO" show "$NEU:public/$f" > "$KLON/assets/$f" && git add "assets/$f"; fi
   done
-  git commit -q -m "deploy(design): Chat- und Code-Bereich kompakt — eine Zeile, ein Menue-Icon nach oben; SW $SW_NEU — Quelle smejj.com-app $NEU" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
+  git commit -q -m "deploy(mobil): Chat- und Eingabebereich am Handy kompakt und gut lesbar; SW $SW_NEU — Quelle smejj.com-app $NEU" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
   git merge-base --is-ancestor origin/main HEAD || { echo "ABBRUCH: kein Fast-Forward."; exit 1; }
   git push -q origin main || { echo "ABBRUCH: Push auf main fehlgeschlagen."; exit 1; }
   echo "gepusht: $(git rev-parse --short HEAD)"
