@@ -248,12 +248,14 @@ export async function speichereVorschau({ id, daten, kontoId, env = process.env,
   if (!syncAktiv(env)) return { ok: false, error: "sync_aus" };
   if (!kontoGueltig(kontoId)) return { ok: false, error: "konto_fehlt" };
   if (!kennungGueltig(id) || !typFuerKennung(id).startsWith("image/")) return { ok: false, error: "kennung_ungueltig" };
-  const geprueft = pruefeRohdatei(daten, "image/webp");
+  // WebP; Safari kann kein WebP schreiben und schickt JPEG.
+  const typ = inhaltPasstZuTyp(daten, "image/jpeg") ? "image/jpeg" : "image/webp";
+  const geprueft = pruefeRohdatei(daten, typ);
   if (!geprueft.ok) return geprueft;
   if (geprueft.daten.length > 2 * 1024 * 1024) return { ok: false, error: "zu_gross" };
   const original = await ladeMedium({ id, kontoId, env, fetchImpl, range: "bytes=0-0" });
   if (!original.ok) return { ok: false, error: "nicht_gefunden" };
-  const geschrieben = await schreibe({ kontoId, id, daten: geprueft.daten, mime: "image/webp", vorschau: true, env, fetchImpl });
+  const geschrieben = await schreibe({ kontoId, id, daten: geprueft.daten, mime: typ, vorschau: true, env, fetchImpl });
   return geschrieben.ok ? { ok: true, id, bytes: geprueft.daten.length } : geschrieben;
 }
 
@@ -274,7 +276,7 @@ export async function ladeMedium({ id, kontoId, env = process.env, fetchImpl = f
   const bereich = bereichGueltig(range) ? range : "";
   if (vorschau && typFuerKennung(id).startsWith("image/")) {
     const klein = await holeObjekt({ cfg, key: medienSchluessel(kontoId, id, { vorschau: true }), range: bereich, fetchImpl });
-    if (klein.ok) return { ...klein, mime: "image/webp", vorschau: true };
+    if (klein.ok) return { ...klein, mime: inhaltPasstZuTyp(klein.daten, "image/jpeg") ? "image/jpeg" : "image/webp", vorschau: true };
   }
   const gross = await holeObjekt({ cfg, key: medienSchluessel(kontoId, id), range: bereich, fetchImpl });
   return gross.ok ? { ...gross, mime: typFuerKennung(id) } : gross;
