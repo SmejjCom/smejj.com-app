@@ -122,14 +122,54 @@ export function haltCursorSichtbar(doc = document) {
   if (!feld || feld.dataset.cursorSichtbar === "an") return false;
   feld.dataset.cursorSichtbar = "an";
   let vorher = 0;
+  const glas = feld.closest(".prompt-glass");
   feld.addEventListener("beforeinput", () => { vorher = feld.scrollTop; });
-  feld.addEventListener("input", () => {
+  const pruefe = () => {
+    breitePruefen(feld, glas);
     const zeichne = () => {
       feld.scrollTop = feld.selectionEnd >= feld.value.length ? feld.scrollHeight : vorher;
     };
     if (typeof requestAnimationFrame === "function") requestAnimationFrame(zeichne); else zeichne();
-  });
+  };
+  feld.addEventListener("input", pruefe);
+  // Senden leert das Feld OHNE input-Ereignis (app.js submit) — danach zurueck in die Zeile.
+  doc.addEventListener("click", (e) => { if (e.target.closest?.("#startSend")) setTimeout(pruefe, 0); });
+  feld.addEventListener("keydown", (e) => { if (e.key === "Enter") setTimeout(pruefe, 0); });
+  doc.addEventListener("smejj:composer-changed", pruefe);
   return true;
+}
+
+// Betreiber 16.09.2026 (Handy): "Im Schreibfeld soll der eingegebene Text von ganz links bis ganz
+// rechts die verfuegbare Breite nutzen." Passt der Text nicht mehr in die schmale Zeile zwischen
+// den Symbolen, bekommt das Feld die volle Breite (.feld-breit, design-v13-kompakt.css). Zurueck
+// in die Zeile erst, wenn er dort wieder in EINE Zeile passt — gemessen an der gemerkten
+// schmalen Breite, sonst sprang das Feld bei jedem Zeichen hin und her.
+let schmaleBreite = 0;
+let messer = null;
+function textBreite(feld) {
+  try {
+    messer = messer || feld.ownerDocument.createElement("canvas").getContext("2d");
+    const s = getComputedStyle(feld);
+    messer.font = `${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;
+    return messer.measureText(feld.value).width;
+  } catch { return 0; }
+}
+export function breitePruefen(feld, glas) {
+  if (!feld || !glas) return false;
+  const breit = glas.classList.contains("feld-breit");
+  let handy = false;
+  try { handy = matchMedia("(max-width:600px)").matches; } catch { handy = false; }
+  if (!breit) {
+    const s = getComputedStyle(feld);
+    schmaleBreite = feld.clientWidth - parseFloat(s.paddingLeft || 0) - parseFloat(s.paddingRight || 0);
+  }
+  const soll = handy && feld.value.length > 0 && (feld.value.includes("\n") || textBreite(feld) > schmaleBreite - 2);
+  if (soll === breit) return soll;
+  glas.classList.toggle("feld-breit", soll);
+  // Neue Breite -> neue Hoehe (wie app.js resizeInput, Deckel dort 324 px).
+  feld.style.height = "auto";
+  feld.style.height = feld.value ? `${Math.min(feld.scrollHeight, 324)}px` : "";
+  return soll;
 }
 
 if (typeof document !== "undefined" && document.querySelector(".view")) { sorgeFuerStil(); spiegleDiktat(); haltCursorSichtbar(); }

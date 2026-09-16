@@ -377,6 +377,8 @@ const SHELL = [
   "/assets/arbeitsbereiche.js",
   "/assets/papierkorb.js",
   "/assets/chat-actions-menu.js",
+  // Erweitertes Nachrichten-Menue (16.09.2026), per import() aus chat-actions-menu.js.
+  "/assets/chat-menue-mehr.js",
   // Sieben Module, die chat-actions-menu.js per import() nachlaedt und die
   // bis 2026-09-06 hier fehlten. Online faellt das nie auf — der Browser holt
   // sie einfach aus dem Netz. Offline lieferte der Fetch-Handler dafuer die
