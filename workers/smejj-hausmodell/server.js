@@ -21,6 +21,7 @@ import { Depot } from "./depot.js";
 import { Motor, ZUSTAENDE } from "./motor.js";
 import { Warteschlange } from "./warteschlange.js";
 import { alleLaufModelle, findeLaufModell, standardModell } from "./katalog.js";
+import { freigabeGeaendert, leseFreigabe, mitFreigabe } from "./freigabe.js";
 
 const HAFEN = Number(process.env.PORT || 8080);
 const MOTOR_HAFEN = Number(process.env.SMEJJ_HAUSMODELL_MOTOR_PORT || 8081);
@@ -71,10 +72,33 @@ server.listen(HAFEN, "0.0.0.0", () => {
   console.log(`[hausmodell] horcht auf 0.0.0.0:${HAFEN}`);
   console.log(`[hausmodell] Cache ${CACHE_VERZEICHNIS} (Deckel ${CACHE_DECKEL_GB} GB), Leerlauf ${LEERLAUF_MIN} min`);
   console.log(`[hausmodell] Standardmodell ${standardModell().id}, wach gehalten: ${motor.wachModellId || "keins"}`);
-  wachHalten("start");
+  pruefeFreigabe("start").finally(() => wachHalten("start"));
   // Stirbt der Motor oder scheitert ein Start, holt die Runde ihn zurueck.
   setInterval(() => wachHalten("runde"), 60_000).unref();
+  // Freigegebene trainierte Version (Schritt 3 des Lernwegs) alle 10 min lesen.
+  setInterval(() => pruefeFreigabe("runde"), 10 * 60_000).unref();
 });
+
+// Die von der Trainingsschleife freigegebene Version (freigabe.js). null = Basis.
+let freigabe = null;
+let neustartFuerFreigabe = false;
+const laufModell = (id) => mitFreigabe(findeLaufModell(id), freigabe);
+
+async function pruefeFreigabe(anlass) {
+  let neu;
+  try {
+    neu = await leseFreigabe(e2);
+  } catch (fehler) {
+    // Unlesbar heisst: beim bisherigen Stand bleiben, nicht auf Basis springen.
+    console.error(`[hausmodell] Freigabe nicht lesbar (${anlass}): ${fehler.message}`);
+    return;
+  }
+  if (!freigabeGeaendert(freigabe, neu)) return;
+  const betroffen = neu?.modell || freigabe?.modell;
+  freigabe = neu;
+  console.log(`[hausmodell] Freigabe ${neu ? `${neu.modell} Version ${neu.version || "?"}` : "entfernt — Basis"} (${anlass})`);
+  if (motor.modell?.id === betroffen) neustartFuerFreigabe = true;
+}
 
 let wachLaeuft = false;
 /**
@@ -85,8 +109,15 @@ let wachLaeuft = false;
  */
 async function wachHalten(anlass) {
   if (!motor.wachModellId || wachLaeuft) return;
-  const modell = findeLaufModell(motor.wachModellId);
-  const frei = () => motor.zustand === ZUSTAENDE.GESTOPPT && schlange.laufend === 0 && schlange.wartend.length === 0;
+  const modell = laufModell(motor.wachModellId);
+  const leer = () => schlange.laufend === 0 && schlange.wartend.length === 0 && motor.offeneAnfragen === 0;
+  // Neue Freigabe: der laufende Motor traegt noch den alten Adapter. Erst wenn
+  // niemand rechnet, neu starten — eine laufende Antwort wird nie abgeschnitten.
+  if (neustartFuerFreigabe && leer() && motor.zustand !== ZUSTAENDE.LADEND) {
+    neustartFuerFreigabe = false;
+    await motor.stoppen("neue-freigabe");
+  }
+  const frei = () => motor.zustand === ZUSTAENDE.GESTOPPT && leer();
   if (!frei()) return;
   wachLaeuft = true;
   try {
@@ -144,6 +175,7 @@ function gesundheit(antwort) {
     // Beweis fuer die Betreiber-Regel "0 MB im Leerlauf": im Zustand STOPPED
     // haelt nur noch der Node-Prozess selbst Speicher, das Modell keinen.
     modellImRam: motor.zustand !== ZUSTAENDE.GESTOPPT,
+    freigabe: freigabe ? { modell: freigabe.modell, version: freigabe.version } : null,
     nodeRssMb: Math.round(speicher.rss / 1e6),
     freierSystemSpeicherMb: Math.round(os.freemem() / 1e6),
     letzterBezug
@@ -178,7 +210,7 @@ async function entladen(antwort) {
 
 async function vorwaermen(anfrage, antwort) {
   const koerper = await liesJson(anfrage).catch(() => ({}));
-  const modell = findeLaufModell(koerper.model);
+  const modell = laufModell(koerper.model);
   if (!modell) return sendeJson(antwort, 400, { error: { message: `unbekanntes Modell: ${koerper.model}`, type: "invalid_request_error" } });
   const begonnen = Date.now();
   const bezug = await depot.bereitstellen(modell);
@@ -189,7 +221,7 @@ async function vorwaermen(anfrage, antwort) {
 
 async function inferenz(anfrage, antwort, pfad) {
   const koerper = await liesJson(anfrage);
-  const modell = findeLaufModell(koerper.model);
+  const modell = laufModell(koerper.model);
   if (!modell) {
     return sendeJson(antwort, 400, {
       error: { message: `unbekanntes Modell: ${koerper.model}. Bekannt: ${alleLaufModelle().map((m) => m.id).join(", ")}`, type: "invalid_request_error" }
