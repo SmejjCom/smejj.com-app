@@ -18,7 +18,8 @@
 | Auslieferung | `check-buendel-gegen-live`, `check-schutz-echtheit` | 1272/1272 Regeln, 48 Dateien identisch mit live |
 | Automatiken | Live-Ampel | **85/85 grün** (09:35 UTC) |
 | Sperren | 13 Sperr- und Nummern-Prüfer | alle grün |
-| **iOS-Simulator** | — | **nicht testbar**, s. „Offen" |
+| **iOS: iPhone 17 Pro (402×714)** | Test-Kopie des Live-Stands + Messskript im WebKit | 80/80 Module laden, **18/18 Ansichten** ohne Überlauf, ohne Skriptfehler |
+| **iOS: iPad Pro 11" (834×1078)** | dasselbe | 80/80 Module, **18/18 Ansichten** sauber |
 
 ## Fehler 1: Offline-Speicher der App blieb leer (behoben, SW v889)
 
@@ -42,12 +43,19 @@ Probe-Nutzer Nr. 29 wurde nach dem Frontend-Deploy rot: `smejj.com` trug v889, `
 - `messe_responsive.mjs` misst ohne `--url` gegen `127.0.0.1:3000` und bricht ab, wenn dort nichts läuft.
 - Der Emulator braucht die Startwerte aus `scripts/diagnose/emulator/README.md` (`-memory 3072 -gpu swiftshader_indirect -no-metrics`), sonst stirbt er im Rundgang.
 
-## Offen — nur der Betreiber kann es lösen
+## iOS (nachgeholt, nachdem der Betreiber die Xcode-Lizenz bestätigt hatte)
 
-**iOS-Simulator:** Auf dem Mac ist die Xcode-Lizenz nicht bestätigt (`xcrun simctl` bricht ab), und in `/Applications/Xcode.app/Contents/Developer/Applications/` liegt kein `Simulator.app`. Beides braucht das Betreiber-Passwort:
+Safari auf iOS lässt sich von außen nicht fernsteuern (kein DevTools-Protokoll, safaridriver startet nicht). Gemessen wurde deshalb **im WebKit des Simulators selbst**:
 
-```
-sudo xcodebuild -license accept
-```
+1. **Test-Kopie aus dem Live-Stand** (`~/smejj-app-frontend`, nicht aus `public/` — dort fehlen gebündelte Module wie `assets/shared/http-json.js`; das erste Ergebnis „16 von 63 Modulen scheitern" war genau dieser Fehler der Test-Kopie, kein App-Fehler).
+2. **Server wie GitHub Pages:** Ordner ohne Schrägstrich → 301, Fehlendes → 404 **mit** dem Inhalt von `404.html`. Damit läuft auch der echte Rückfallweg der App-Adressen mit (`/storage` und `/ai` sind auf Pages Ordner → 301 → 404.html → Rückkehr zur Ansicht).
+3. Drei Skripte nur in der Test-Kopie: vorgetäuschte Sitzung (wie measure_web_vitals.mjs), Messung nach 7 s (Überlauf, Elemente über den Rand, Tippziele < 44 px, Skriptfehler), Modulprobe (jeden Import einzeln). Ergebnisse gehen per POST an den Test-Server.
 
-danach in Xcode → Settings → Components die iOS-Plattform laden. Dann kann derselbe Rundgang auf dem iPhone-Simulator laufen.
+| Gerät | Module | Ansichten | Befunde |
+|---|---|---|---|
+| iPhone 17 Pro, iOS 26.5 | 80/80 | 18/18 | keine (einzige Meldung `#profilePictureInput` = bekannte Ausnahme: verborgenes Datei-Feld, bedient wird der Knopf daneben) |
+| iPad Pro 11", iOS 26.5 | 80/80 | 18/18 | keine (dieselbe Ausnahme) |
+
+Die zugeklappte Seitenleiste (`aside.sidebar` −218…−18) und das geschlossene Browser-Fenster (`#browserPanel` rechts außen) liegen absichtlich außerhalb — `ueberlauf=false` bestätigt, dass die Seite nicht seitlich scrollt.
+
+**Nebenbefund:** Seit der Lizenzbestätigung braucht `git` auf dem Mac keinen `DEVELOPER_DIR`-Umweg mehr.
