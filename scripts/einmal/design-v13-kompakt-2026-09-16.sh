@@ -3,8 +3,8 @@
 #
 # Betreiber-Auftrag 16.09. (schriftlich): "Chat- und Code-Bereich deutlich kompakter und
 # sauberer machen …". Umgesetzt, getestet und gestempelt in:
-#   Arbeitszweig  feature/design-start-chat-2026-09-13  d1f4c259 (gepusht)
-#   Bauzweig      lokaler Zweig bau-kompakt-20260916     25e45de4 (Rueckfallweg api.smejj.com)
+#   Arbeitszweig  feature/design-start-chat-2026-09-13  bfe17d7f (gepusht)
+#   Bauzweig      lokaler Zweig bau-kompakt-20260916     3d2421cf (Rueckfallweg api.smejj.com)
 # Der Auto-Modus der Sitzung sperrt Produktiv-Auslieferungen — darum per Doppelklick.
 #
 # Sicherheitsnetz wie qa-fixrunde-2026-09-14.sh: live muss den Stand VOR der Aenderung
@@ -13,8 +13,8 @@ set -uo pipefail
 REPO="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 KLON="/Users/alanbest/smejj-app-frontend"
 BASIS="14a2021c"
-NEU="d1f4c259"
-BAU_NEU="25e45de4"
+NEU="bfe17d7f"
+BAU_NEU="3d2421cf"
 BAU_ZWEIG="feature/auth-redesign-github-magiclink"
 SW_VORHER="smejj-shell-v889"
 SW_NEU="smejj-shell-v890"
