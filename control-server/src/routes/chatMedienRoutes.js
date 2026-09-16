@@ -29,7 +29,7 @@ import {
 import { erzeugeZugang, pruefeZugang, zugangsSchluessel } from "../chats/medienZugang.js";
 import { holeMedienDienste } from "../chats/medienDienste.js";
 import { tokenGueltig } from "../chats/medienTeilen.js";
-import { clientKeyFromRequest, createRateLimiter } from "../http/rateLimiter.js";
+import { createRateLimiter } from "../http/rateLimiter.js";
 import { corsHeadersFor } from "../http/cors.js";
 
 // Ein Medium je Antwort, ein paar Antworten je Minute — 120/Stunde ist reichlich
@@ -44,6 +44,23 @@ const ROBOTER = /whatsapp|telegrambot|facebookexternalhit|facebookcatalog|slackb
 
 export function istRoboter(userAgent) {
   return ROBOTER.test(String(userAgent || ""));
+}
+
+/**
+ * Die Adresse des Besuchers fuer Bremsen und Nachlauf.
+ *
+ * NICHT der erste Eintrag von X-Forwarded-For (Live-Test 17.09.): den setzt der
+ * Besucher selbst, und der Proxy haengt die echte Adresse nur HINTEN an. Mit
+ * wechselnden Fantasie-Adressen liesse sich sonst jede Bremse umgehen. Genommen
+ * wird von rechts die erste oeffentliche Adresse — die hat der Proxy gesehen.
+ */
+export function besucherAdresse(req) {
+  const kette = String(req?.headers?.["x-forwarded-for"] || "").split(",").map((teil) => teil.trim()).filter(Boolean);
+  const intern = /^(?:10\.|127\.|169\.254\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.|100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|::1$|fc|fd|fe80:)/i;
+  for (let i = kette.length - 1; i >= 0; i -= 1) {
+    if (!intern.test(kette[i])) return kette[i];
+  }
+  return String(req?.socket?.remoteAddress || kette[0] || "").trim();
 }
 
 /** Nur der Anfang zaehlt als Aufruf — spaetere Bereiche sind Spulen im selben Aufruf. */
@@ -159,7 +176,7 @@ export function createChatMedienRoutes({ env = process.env, readSession, json, r
 
   // ---- /medium/<token>: private Anzeige ueber signierte Adresse -------------
   async function signierteAnzeige(req, res, token) {
-    const adresse = clientKeyFromRequest(req);
+    const adresse = besucherAdresse(req);
     if (!anzeigeGrenze.take(adresse, 1).allowed) {
       textAntwort(res, 429, "Zu viele Anfragen.", { "Retry-After": "10" });
       return;
@@ -186,7 +203,7 @@ export function createChatMedienRoutes({ env = process.env, readSession, json, r
 
   // ---- /m/<token>: bewusst geteilter Link ------------------------------------
   async function teilenAnzeige(req, res, token) {
-    const adresse = clientKeyFromRequest(req);
+    const adresse = besucherAdresse(req);
     if (!teilenGrenze.take(adresse, 1).allowed) {
       textAntwort(res, 429, "Zu viele Anfragen.", { "Retry-After": "30" });
       return;
@@ -367,10 +384,12 @@ export function createChatMedienRoutes({ env = process.env, readSession, json, r
         json(res, 404, { ok: false, error: "kennung_ungueltig" });
         return;
       }
-      // Die Kennung IST der Inhalts-Hash — derselbe Schluessel liefert also nie
-      // etwas anderes. Deshalb darf der Browser das Medium behalten (privat).
+      // NICHT speichern (Live-Test 17.09.): Chrome lieferte eine mit Bearer
+      // geholte Antwort spaeter auch OHNE Anmeldung aus dem HTTP-Cache — auf
+      // einem geteilten Geraet nach dem Abmelden ein Leck. Schnell ist der neue
+      // Weg ueber /medium/; dieser hier ist nur noch Rueckfall.
       await sendeMedium(req, res, {
-        kontoId, id, cache: "private, max-age=31536000, immutable", name: `smejj-medium.${id.split(".").pop()}`
+        kontoId, id, cache: "private, no-store", name: `smejj-medium.${id.split(".").pop()}`
       });
       return;
     }

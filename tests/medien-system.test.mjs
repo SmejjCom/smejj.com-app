@@ -17,7 +17,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
-import { createChatMedienRoutes, istErsterAbruf, istRoboter } from "../control-server/src/routes/chatMedienRoutes.js";
+import { besucherAdresse, createChatMedienRoutes, istErsterAbruf, istRoboter } from "../control-server/src/routes/chatMedienRoutes.js";
 import { createChatSyncRoutes } from "../control-server/src/routes/chatSyncRoutes.js";
 import { json, readJson } from "../control-server/src/http/respond.js";
 import { kontoKennung } from "../control-server/src/chats/chatSyncStore.js";
@@ -194,6 +194,12 @@ test("Teilen-Token: zufaellig, lang genug, keine Aufzaehlung", () => {
   assert.equal(linkStatus({ token: "A".repeat(16), id: `${"a".repeat(40)}.png`, ablaufAm: "2020-01-01T00:00:00Z" }), "abgelaufen");
 });
 
+test("Besucher-Adresse: gefaelschte X-Forwarded-For-Eintraege links zaehlen nicht", () => {
+  assert.equal(besucherAdresse({ headers: { "x-forwarded-for": "9.9.9.9, 203.0.113.7" } }), "203.0.113.7");
+  assert.equal(besucherAdresse({ headers: { "x-forwarded-for": "9.9.9.9, 203.0.113.7, 10.0.0.5" } }), "203.0.113.7", "interne Proxy-Hops rechts ueberspringen");
+  assert.equal(besucherAdresse({ headers: {}, socket: { remoteAddress: "198.51.100.2" } }), "198.51.100.2");
+});
+
 test("Vorschau-Roboter und Spulen verbrauchen keinen Aufruf", () => {
   assert.equal(istRoboter("WhatsApp/2.23.20.0"), true);
   assert.equal(istRoboter("TelegramBot (like TwitterBot)"), true);
@@ -318,7 +324,7 @@ test("Alte Chat-Medien: ?id=-Adresse und data:-URL-Upload funktionieren weiter",
     const zurueck = await fetch(`${s.basis}/api/chat-medien?id=${id}`, { headers: als(A) });
     assert.equal(zurueck.status, 200);
     assert.deepEqual(Buffer.from(await zurueck.arrayBuffer()), PNG);
-    assert.equal(zurueck.headers.get("cache-control"), "private, max-age=31536000, immutable");
+    assert.equal(zurueck.headers.get("cache-control"), "private, no-store", "mit Bearer geholt darf nie ohne Anmeldung aus dem Cache kommen");
   } finally { await s.schliessen(); }
 });
 
@@ -393,9 +399,9 @@ test("Teilen-Link: Ablauf und Einmal-Nutzung; Vorschau-Roboter verbraucht nichts
     const roboter = await fetch(einmalUrl, { headers: { "User-Agent": "WhatsApp/2.24" } });
     assert.equal(roboter.status, 403, "Roboter bekommt einen Einmal-Link nicht");
     assert.equal((await fetch(einmalUrl, { method: "HEAD" })).status, 200, "HEAD zaehlt nicht");
-    assert.equal((await fetch(einmalUrl, { headers: { "X-Forwarded-For": "1.1.1.1" } })).status, 200, "erster echter Aufruf");
-    assert.equal((await fetch(einmalUrl, { headers: { "X-Forwarded-For": "1.1.1.1", Range: "bytes=5-9" } })).status, 206, "Spulen im selben Aufruf");
-    const zweiter = await fetch(einmalUrl, { headers: { "X-Forwarded-For": "2.2.2.2" } });
+    assert.equal((await fetch(einmalUrl, { headers: { "X-Forwarded-For": "7.7.7.7, 1.1.1.1" } })).status, 200, "erster echter Aufruf");
+    assert.equal((await fetch(einmalUrl, { headers: { "X-Forwarded-For": "7.7.7.7, 1.1.1.1", Range: "bytes=5-9" } })).status, 206, "Spulen im selben Aufruf");
+    const zweiter = await fetch(einmalUrl, { headers: { "X-Forwarded-For": "7.7.7.7, 2.2.2.2" } });
     assert.equal(zweiter.status, 410, "zweiter Besucher: verbraucht");
 
     const befristet = await neu({ tage: 1 });
