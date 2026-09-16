@@ -48,7 +48,7 @@ function stil() {
   el.id = STIL_ID;
   el.textContent = `
 .entry img[data-smejj-adresse]{cursor:zoom-in}
-.smejj-vollbild{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;background:rgba(0,0,0,.94);color:#f6f3ee;font:17px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+.smejj-vollbild{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;background:#000;color:#f6f3ee;font:17px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
 .smejj-vollbild *{border-radius:0!important;box-sizing:border-box}
 .smejj-vollbild-leiste{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px}
 .smejj-vollbild-leiste .smejj-vb-titel{margin-right:auto;font-size:17px;opacity:.8}
