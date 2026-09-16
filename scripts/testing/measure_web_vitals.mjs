@@ -41,8 +41,11 @@ const BUDGETS = Object.freeze({
   // (Modell-Menue, Klartext-Hilfen, Erste Schritte) — ein Budget, das
   // bewusstes Nachladen bestraft, treibt genau in die falsche Richtung: man
   // wuerde Nachladen wieder zu Vorladen machen. Gemessen 16.09.: 101 Dateien,
-  // 291 KB gesamt, davon deutlich weniger bis zum ersten Bild.
-  startWeight_kb: 300
+  // 291-310 KB gesamt, davon 56-66 KB bis zum ersten Bild. Die Grenze steht
+  // deshalb bei 120 KB — knapp genug, dass sie eine echte Verschlechterung
+  // faengt, und weit genug, dass sie nicht bei jedem Schwanken anschlaegt.
+  // 300 KB waeren an dieser Stelle eine Grenze, die nie etwas meldet.
+  startWeight_kb: 120
 });
 
 // TTFB ist ein Netzwert, kein Seitenwert: HTML bleibt im Service Worker
@@ -57,6 +60,22 @@ const BUDGETS = Object.freeze({
 // gruen. Geprueft werden ihre aussagekraeftigen Geschwister lcpRender_ms
 // (Seite statt Netz) und startWeight_kb (bis zum ersten Bild statt alles).
 const NUR_HINWEIS = new Set(["ttfb_ms", "lcp_ms", "pageWeight_kb"]);
+
+// IM KALTEN LAUF ist auch die Renderzeit noch ein Netzwert: Zwischen TTFB und
+// dem ersten Bild liegt der Download des Dokuments und des Stylesheets ueber
+// dieselbe Leitung. Gemessen 16.09. in einem kalten Lauf: TTFB 168 ms, das
+// HTML war erst nach 1546 ms vollstaendig da, das erste Bild kam 526 ms
+// spaeter — die Arbeit der Seite sind diese 526 ms, der Rest ist Leitung.
+// Derselbe Lauf schwankte ueber den Tag zwischen 0,5 s und 2 s fuer dieselben
+// 18,6 KB HTML.
+//
+// Was die Seite im kalten Lauf wirklich verantwortet, steht in
+// startWeight_kb (Bytes bis zum ersten Bild), CLS und INP — die bleiben
+// fail-closed. Die Renderzeit wird im WARMEN Lauf geprueft: dort liegen alle
+// Dateien im Service Worker, gemessen wurden 30-44 ms gegen ein Budget von
+// 300 ms. Verschlechtert sich die Seite wirklich, faellt es dort sofort auf.
+const NUR_HINWEIS_KALT = new Set(["lcpRender_ms"]);
+const WARM_BUDGETS = Object.freeze({ lcpRender_ms: 300, cls: 0.1, inp_ms: 200 });
 
 const args = parseArgs(process.argv.slice(2));
 const url = args.url || "https://smejj.com/";
@@ -150,8 +169,8 @@ const report = {
   budgets: BUDGETS
 };
 
-const verstoesse = checkBudgets(report.kalt).map((line) => `kalt: ${line}`)
-  .concat(checkBudgets(report.warm).map((line) => `warm: ${line}`));
+const verstoesse = checkBudgets(report.kalt, "kalt").map((line) => `kalt: ${line}`)
+  .concat(checkBudgets(report.warm, "warm").map((line) => `warm: ${line}`));
 
 if (asJson) {
   process.stdout.write(`${JSON.stringify({ ...report, verstoesse }, null, 2)}\n`);
@@ -229,10 +248,12 @@ function summarise(list) {
   return out;
 }
 
-function checkBudgets(summary) {
+function checkBudgets(summary, phase = "kalt") {
   const failures = [];
-  for (const [key, budget] of Object.entries(BUDGETS)) {
+  const budgets = phase === "warm" ? WARM_BUDGETS : BUDGETS;
+  for (const [key, budget] of Object.entries(budgets)) {
     if (NUR_HINWEIS.has(key)) continue;
+    if (phase === "kalt" && NUR_HINWEIS_KALT.has(key)) continue;
     const measured = summary[key]?.p75;
     if (typeof measured !== "number") continue;
     if (measured > budget) failures.push(`${key} p75 ${measured} > Budget ${budget}`);
@@ -247,7 +268,12 @@ function print(data, failures) {
     for (const [key, budget] of Object.entries(BUDGETS)) {
       const value = data[phase][key];
       if (!value) { console.log(`  ${key.padEnd(16)} nicht gemessen`); continue; }
-      console.log(`  ${key.padEnd(16)} p75 ${String(value.p75).padStart(6)}  (min ${value.min} / max ${value.max})  Budget ${budget}  ${value.p75 > budget ? "VERFEHLT" : "OK"}`);
+      const gilt = phase === "warm"
+        ? Object.prototype.hasOwnProperty.call(WARM_BUDGETS, key)
+        : !NUR_HINWEIS.has(key) && !NUR_HINWEIS_KALT.has(key);
+      const grenze = phase === "warm" && Object.prototype.hasOwnProperty.call(WARM_BUDGETS, key) ? WARM_BUDGETS[key] : budget;
+      const urteil = !gilt ? "nur Hinweis" : (value.p75 > grenze ? "VERFEHLT" : "OK");
+      console.log(`  ${key.padEnd(16)} p75 ${String(value.p75).padStart(6)}  (min ${value.min} / max ${value.max})  Budget ${grenze}  ${urteil}`);
     }
     if (data[phase].lcpElement) console.log(`  LCP-Element:     ${data[phase].lcpElement}`);
     console.log("");
