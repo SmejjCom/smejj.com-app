@@ -1,7 +1,7 @@
 // smejj.com — Kompakter Code-Komposer (Betreiber-Auftrag 16.09.2026: "Zusaetzliche
 // Funktionen/Icons ... unter einem Icon zusammengefasst ... Menue nach oben").
 //
-// Die Eingabezeile zeigt nur noch [+] [Feld] [Mikrofon] [Modell] [Senden]. Modus,
+// Die Eingabezeile zeigt nur noch [+] [Feld] [Modell] [Mikrofon] [Senden]. Modus,
 // Antwortstufe, Projekt und die Vorlagen stehen im Plus-Menue (#codePlusMenue). Jeder
 // Eintrag klickt den ECHTEN, jetzt ausgeblendeten Knopf — code-flaeche.js bleibt die
 // einzige Verdrahtung. Modus- und Projekt-Menue ankern am .codefeld, nicht am Chip,
