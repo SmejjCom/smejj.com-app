@@ -37,10 +37,12 @@ export const ZEABUR_WERTE = Object.freeze([
 
   { name: "SMEJJ_LORA_BASIS_HF_REPO", wert: "Qwen/Qwen3-4B-Instruct-2507", warum: "Basismodell" },
   { name: "SMEJJ_LORA_BASIS_PREFIX", wert: "models/staging/qwen3-4b-instruct", warum: "gespiegelt in e2, 8 GB" },
-  { name: "SMEJJ_LORA_DATENSATZ_NAME", wert: "smejj-1-1", warum: "4.506 handgeschriebene Paare, 0 % Satzwiederholung" },
-  { name: "SMEJJ_LORA_DATENSATZ_SCHLUESSEL", wert: "datasets/smejj-1-1/train.jsonl", warum: "Trainingsanteil in e2" },
+  { name: "SMEJJ_LORA_DATENSATZ_NAME", wert: "smejj-1-10", warum: "Basis jeder Lernrunde: Handpaare + Wissenspaare (kleinster Verlust der Reihe)" },
+  { name: "SMEJJ_LORA_DATENSATZ_SCHLUESSEL", wert: "datasets/smejj-1-10/train.jsonl", warum: "Trainingsanteil in e2" },
   { name: "SMEJJ_LORA_SUITE_PATH", wert: "evals/suites/smejj-chat-breit-v1.json", warum: "295 Faelle; die schmale Suite mit 14 Faellen misst zu grob" },
-  { name: "SMEJJ_LORA_VERSION_START", wert: "5", warum: "smejj 1.0 bis 1.4 sind von Hand gebaut — der Autopilot faengt dahinter an" },
+  { name: "SMEJJ_LORA_VERSION_START", wert: "12", warum: "smejj 1.1 bis 1.11 sind von Hand gebaut — der Autopilot faengt dahinter an" },
+  { name: "SMEJJ_LORA_BASIS_PUNKTZAHL", wert: "0.684", warum: "gemessene Basis (10.09., breite Suite) — nur wer sie schlaegt, geht live" },
+  { name: "SMEJJ_LERNRUNDE_ZIEL_PAARE", wert: "500", warum: "Betreiber 17.09.: trainiert wird erst ab 500 neuen Lernpaaren" },
 
   { name: "IDRIVE_E2_ENDPOINT", geheim: false, ausEnvLocal: true, warum: "Ablage" },
   { name: "IDRIVE_E2_BUCKET", geheim: false, ausEnvLocal: true, warum: "Ablage" },
