@@ -26,17 +26,20 @@ for (const feld of schema?.__schema?.mutationType?.fields || []) {
 }
 
 console.log("=== Projekte, Umgebungen, Dienste ===");
+// Zwei Abfragen wie findeDienst() in scripts/deploy/zeabur-umgebung-setzen.mjs:
+// `Project.services` ist eine Liste, keine Verbindung — die verschachtelte Fassung
+// endete mit HTTP 422 ("Cannot query field \"edges\" on type \"Service\"", 17.09.).
 const projekte = await zeaburAbfrage(`{
-  projects { edges { node {
-    _id name
-    environments { _id name }
-    services { edges { node { _id name } } }
-  } } }
+  projects { edges { node { _id name environments { _id name } } } }
 }`);
 for (const kante of projekte?.projects?.edges || []) {
   const p = kante.node;
   const umgebungen = (p.environments || []).map((e) => `${e.name}=${e._id}`).join("  ");
   console.log(`  Projekt ${p.name}  (${p._id})`);
   console.log(`    Umgebungen: ${umgebungen || "(keine)"}`);
-  for (const s of p.services?.edges || []) console.log(`    Dienst ${s.node.name}  (${s.node._id})`);
+  const dienste = await zeaburAbfrage(
+    `query($p:ObjectID!){ services(projectID:$p, limit:100){ edges { node { _id name } } } }`,
+    { p: p._id }
+  );
+  for (const s of dienste?.services?.edges || []) console.log(`    Dienst ${s.node.name}  (${s.node._id})`);
 }

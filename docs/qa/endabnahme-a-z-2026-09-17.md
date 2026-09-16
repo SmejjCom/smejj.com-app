@@ -285,3 +285,20 @@ findest, behebe sie sofort, deploye erneut und teste live weiter … Danach alle
 - Zweigschutz aktiv (kein Force-Push, kein Löschen) auf Frontend `main`, Bauzweig, Arbeitszweig und
   `feature/design-v11`.
 - Start-Lock mit Wortlaut gestempelt: Änderungen an der Startseite schlagen ohne neuen Stempel an.
+
+## NACHTRAG 2 — Zeabur-Zugang erneuert (17.09., 23:3x UTC) ✅
+- Der Betreiber hat `npx zeabur@latest auth login` selbst ausgeführt. Der alte Zugang war ein
+  „deprecated legacy API key", jetzt ist ein Access-Token in `~/.config/zeabur/cli.yaml` abgelegt.
+- `scripts/diagnose/zeabur-schluessel-suchen.mjs` meldet: `cli.yaml:token … TRAEGT — angemeldet als smejjcom`.
+- **Server-Protokolle** (Zeabur-CLI, Laufzeit, nur lesend):
+  - `smejj-control`: 11 Zeilen, 0 Fehler, Start 23:36:16Z.
+  - `smejj-chat-bridge`: 65 Zeilen, 0 Fehler.
+  - `brueckenwaechter`: 11 Zeilen, 0 Fehler.
+- Der Neustart von `smejj-control` um 23:36Z war der Auto-Deploy einer **parallelen Sitzung**
+  (Medien-System, SW v894, Bauzweig `bd84e8e7`, Frontend `fd873f6`). Er baut per Fast-Forward auf v893 auf.
+- Auf beiden Ursprüngen nachgeprüft, dass alle Fixes dieser Endabnahme in v894 enthalten sind:
+  Kopfglas-Regel, Platzhalter 0.9, Menü-`max-height`, Leisten-Einzug, Karten-Reihenfolge.
+- `scripts/diagnose/zeabur-dienste-zeigen.mjs` scheiterte an einer geänderten Zeabur-API
+  (HTTP 422 „edges on Service"). Das Skript fragt jetzt zweistufig ab wie `findeDienst()` und läuft wieder.
+- **Offen bleibt nur `CODEBERG_TOKEN`:** `gh secret list` ist leer. Die Codeberg-Token-Seite ist in Chrome
+  vorbereitet; erzeugen und bei GitHub eintragen kann nur der Betreiber.
