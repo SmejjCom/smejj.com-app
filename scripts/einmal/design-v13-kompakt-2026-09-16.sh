@@ -75,7 +75,8 @@ if git merge-base --is-ancestor "$BAU_NEU" "origin/$BAU_ZWEIG"; then
   echo "(Bauzweig traegt $BAU_NEU schon)"
 else
   git merge-base --is-ancestor "origin/$BAU_ZWEIG" "$BAU_NEU" || { echo "ABBRUCH: Bauzweig ist weitergelaufen — kein Fast-Forward, nichts gepusht."; exit 1; }
-  git push -q origin "$BAU_NEU:refs/heads/$BAU_ZWEIG" || { echo "ABBRUCH: Push Bauzweig fehlgeschlagen."; exit 1; }
+  # ${…}: in zsh liest "$BAU_NEU:r…" das :r als Datei-Modifikator (Lauf 16.09. brach daran ab).
+  git push -q origin "${BAU_NEU}:refs/heads/${BAU_ZWEIG}" || { echo "ABBRUCH: Push Bauzweig fehlgeschlagen."; exit 1; }
   echo "Bauzweig gepusht: $BAU_NEU"
 fi
 CONFIRM_CONTROL_BAU=JA node scripts/deploy/control-neu-bauen.mjs "$BAU_ZWEIG" || { echo "ABBRUCH: Neubau smejj-control nicht angestossen."; exit 1; }
