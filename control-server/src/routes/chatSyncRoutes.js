@@ -19,8 +19,10 @@ import {
   speichereChat,
   syncAktiv
 } from "../chats/chatSyncStore.js";
+import { holeMedienDienste } from "../chats/medienDienste.js";
+import { kennungenIn } from "../chats/medienAufraeumen.js";
 
-export function createChatSyncRoutes({ env = process.env, readSession, json, readJson, fetchImpl = fetch }) {
+export function createChatSyncRoutes({ env = process.env, readSession, json, readJson, fetchImpl = fetch, medienDienste = null }) {
   async function handle(req, res, url) {
     if (url.pathname !== "/api/chats") return false;
 
@@ -94,7 +96,12 @@ export function createChatSyncRoutes({ env = process.env, readSession, json, rea
         return true;
       }
       try {
+        // Medien-System 2026-09-17: die Medien des Chats VOR dem Grabstein
+        // merken — danach stehen sie nirgends mehr. Der Aufraeumer loescht nur,
+        // was kein anderer Chat des Kontos mehr erwaehnt.
+        const vorher = await ladeChat({ kontoId, chatId: id, env, fetchImpl }).catch(() => null);
         const ergebnis = await loescheChat({ kontoId, chatId: id, env, fetchImpl });
+        if (ergebnis.ok) (medienDienste || holeMedienDienste({ env, fetchImpl })).aufraeumer.plane(kontoId, [...kennungenIn(JSON.stringify(vorher?.chat || vorher || ""))]);
         json(res, ergebnis.ok ? 200 : 503, ergebnis);
       } catch (error) {
         json(res, 503, { ok: false, error: String(error?.message || "loeschen_fehlgeschlagen").slice(0, 160) });
