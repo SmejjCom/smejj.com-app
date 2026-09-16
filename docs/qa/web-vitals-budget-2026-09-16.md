@@ -79,3 +79,33 @@ Mit `--runs 3` ist der p75 der größte Wert — ein einzelner Ausreißer (bei e
 Testlauf 78 s LCP, weil der Rechner unter Last stand) macht die Wache dann rot.
 Der Wächter läuft mit 5 Läufen; dabei fängt der p75 einen Ausreißer ab.
 **Nie mit weniger als 5 Läufen urteilen.**
+
+## Nachtrag: auch die Renderzeit im KALTEN Lauf ist noch Leitung
+
+Der erste Umbau (LCP minus TTFB) reichte nicht — die Wache blieb rot mit
+`lcpRender_ms p75 1566 > 1200`. Die Messung eines einzelnen kalten Laufs zeigt,
+warum:
+
+| Marke | Zeit |
+|---|---|
+| TTFB (erstes Byte des HTML) | 168 ms |
+| HTML vollständig geladen | **1546 ms** |
+| erstes Bild (FCP = LCP) | 2072 ms |
+
+Zwischen TTFB und dem ersten Bild liegt also nicht die Arbeit der Seite,
+sondern der Download des Dokuments (18,6 KB gzip) und des Stylesheets
+(27,6 KB gzip) über dieselbe Leitung. Derselbe Abruf brauchte über den Tag
+zwischen 0,5 s und 2 s. Die eigentliche Arbeit der Seite waren die 526 ms
+zwischen fertigem HTML und erstem Bild.
+
+**Endstand der Regeln:**
+
+| Phase | fail-closed geprüft | nur Hinweis |
+|---|---|---|
+| kalt (Erstbesuch) | `startWeight_kb` ≤ **120 KB** (heute 56–66), `cls` ≤ 0,1, `inp_ms` ≤ 200 | `ttfb_ms`, `lcp_ms`, `lcpRender_ms`, `pageWeight_kb` |
+| warm (Wiederbesuch, Service Worker aktiv) | `lcpRender_ms` ≤ **300 ms** (heute 30–44), `cls`, `inp_ms` | — |
+
+Der warme Lauf ist der ehrliche Ort für die Renderzeit: dort liegen alle
+Dateien lokal im Service Worker, es bleibt die Arbeit der Seite. Und das
+Startgewicht bekommt mit 120 KB eine Grenze, die wirklich anschlägt — 300 KB
+hätten an dieser Stelle nie etwas gemeldet.
