@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-15T21:12:07.231Z",
-  "confirmation": "Betreiber, 2026-09-14 (A-bis-Z-Pruefauftrag, Master-Prompt/Ship-Loop): Nach der Umsetzung bitte live gehen, live testen und pruefen, ob alles richtig funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 % sauber laeuft. — Nachtest 3: Betreiber 15.09.2026 per Auswahl 'Alle beheben (Empfehlung)' und 'Mach weiter bis alles fertig': Sichtpruefung nach v887 — Erste-Schritte-Ausgleich nur ab 601 px, am Handy wie vorher; keine Designaenderung, Cache-Marken und SW smejj-shell-v888.",
+  "frozenAt": "2026-09-16T09:09:50.964Z",
+  "confirmation": "Betreiber 16.09.2026 schriftlich: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig ... Wenn du Fehler findest, behebe sie sofort, deploye erneut und teste live weiter.' Umgesetzt: sw.js v889 — Precache paketweise (Uhr je Paket statt vorab), weil der volle Offline-Speicher live leer blieb (0/237 Dateien, gemessen 41 s gegen 30-s-Grenze).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "a48167ea726636b1e79e96e11f4d517cb9ed0693258a034ce734c23df5f07f75",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "dcb926f90592e990e2f1d9e89868360fd00020db748001a6844fa93b12ed53f4",
+    "public/sw.js": "c82a4c854411ef7ab99c34fdd62cf2d39d98f681c829718558e17170c6065fd7",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
