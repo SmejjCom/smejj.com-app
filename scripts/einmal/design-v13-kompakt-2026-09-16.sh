@@ -1,12 +1,13 @@
 #!/bin/zsh
 # smejj.com — Kaskade 2026-09-16: kompakter Chat- und Code-Bereich ausliefern.
-# Runde 2+3 (SW v891): Handy-Chat, Schreibfeld volle Breite, Nachrichten-Menue; Runde 1 (v890) live,
-# der Bauzweig (api.smejj.com) traegt noch v889 und bekommt beide Runden auf einmal.
+# Runde 4 (SW v892, Endabnahme 17.09.): Menue-Knopf der ersten Nachricht frei, keine doppelte
+# Aktionsleiste unter Code-Antworten, Menue im Querformat scrollbar, Platzhalter-Kontrast AA.
+# Runden 1-3 (v890/v891) sind live auf beiden Wegen.
 #
 # Betreiber-Auftrag 16.09. (schriftlich): "Chat- und Code-Bereich deutlich kompakter und
 # sauberer machen …". Umgesetzt, getestet und gestempelt in:
-#   Arbeitszweig  feature/design-start-chat-2026-09-13  c1000034 (gepusht)
-#   Bauzweig      lokaler Zweig bau-kompakt-20260916     47ac393f (Rueckfallweg api.smejj.com)
+#   Arbeitszweig  feature/design-start-chat-2026-09-13  8ba85677
+#   Bauzweig      feature/auth-redesign-github-magiclink 1e03c0ac (Rueckfallweg api.smejj.com)
 # Der Auto-Modus der Sitzung sperrt Produktiv-Auslieferungen — darum per Doppelklick.
 #
 # Sicherheitsnetz wie qa-fixrunde-2026-09-14.sh: live muss den Stand VOR der Aenderung
@@ -14,12 +15,12 @@
 set -uo pipefail
 REPO="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 KLON="/Users/alanbest/smejj-app-frontend"
-BASIS="bfe17d7f"
-NEU="c1000034"
-BAU_NEU="47ac393f"
+BASIS="c1000034"
+NEU="8ba85677"
+BAU_NEU="1e03c0ac"
 BAU_ZWEIG="feature/auth-redesign-github-magiclink"
-SW_VORHER="smejj-shell-v890"
-SW_NEU="smejj-shell-v891"
+SW_VORHER="smejj-shell-v891"
+SW_NEU="smejj-shell-v892"
 export GIT_TERMINAL_PROMPT=0
 
 cd "$REPO" || { echo "ABBRUCH: App-Ordner fehlt."; exit 1; }
@@ -58,7 +59,7 @@ else
     git add "$f"
     if [ -d "$KLON/assets" ]; then mkdir -p "$KLON/assets/$(dirname "$f")"; git -C "$REPO" show "$NEU:public/$f" > "$KLON/assets/$f" && git add "assets/$f"; fi
   done
-  git commit -q -m "deploy(mobil): Handy-Chat ab Oberkante, Schreibfeld volle Breite, Nachrichten-Menue mit Teilen; SW $SW_NEU — Quelle smejj.com-app $NEU" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
+  git commit -q -m "deploy(endabnahme): Menue-Knopf frei, keine doppelte Leiste, Menue im Querformat, Platzhalter AA; SW $SW_NEU — Quelle smejj.com-app $NEU" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
   git merge-base --is-ancestor origin/main HEAD || { echo "ABBRUCH: kein Fast-Forward."; exit 1; }
   git push -q origin main || { echo "ABBRUCH: Push auf main fehlgeschlagen."; exit 1; }
   echo "gepusht: $(git rev-parse --short HEAD)"
@@ -81,7 +82,9 @@ else
   git push -q origin "${BAU_NEU}:refs/heads/${BAU_ZWEIG}" || { echo "ABBRUCH: Push Bauzweig fehlgeschlagen."; exit 1; }
   echo "Bauzweig gepusht: $BAU_NEU"
 fi
-CONFIRM_CONTROL_BAU=JA node scripts/deploy/control-neu-bauen.mjs "$BAU_ZWEIG" || { echo "ABBRUCH: Neubau smejj-control nicht angestossen."; exit 1; }
+# Zeabur baut bei jedem Push selbst (gemessen 16.09.: 43 s); der Schluessel fuer den
+# Extra-Anstoss ist seit 02.09. abgelaufen (401) — kein Abbruch, nur Hinweis.
+CONFIRM_CONTROL_BAU=JA node scripts/deploy/control-neu-bauen.mjs "$BAU_ZWEIG" || echo "(Extra-Anstoss nicht moeglich — Auto-Deploy nach Push wird abgewartet)"
 for i in $(seq 1 60); do
   sleep 15
   L=$(curl -s -m 20 "https://api.smejj.com/sw.js?n=$RANDOM" | grep -o 'smejj-shell-v[0-9]*' | head -1)
