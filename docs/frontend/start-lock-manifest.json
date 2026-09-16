@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-16T21:58:06.793Z",
-  "confirmation": "Betreiber 16.09.2026 schriftlich im Chat: 'AUFGABE: KOMPLETTE A–Z ENDABNAHME VON smejj.com … Wenn ein Fehler gefunden wird: Ursache finden, beheben, neu bauen, neu deployen, erneut testen und Regressionstest durchführen.' Behoben in der Endabnahme 17.09.: erste eigene Nachricht — Menue-Knopf lag unter dem Browser-Icon (Leiste 34 px eingerueckt), zweite Aktionsleiste unter Code-/Tabellen-Antworten (arbeitsflaeche.js setzt die Karte hinter die Leiste, v=4), Nachrichten-Menue ragte im Handy-Querformat aus dem Bild (max-height 100dvh-16px, scrollt), Platzhalter-Kontrast 4,26:1 -> 5,21:1 (WCAG AA); SW smejj-shell-v892 (Stil-Marke v13n-20260917). (Bauzweig, Rueckfallweg api.smejj.com)",
+  "frozenAt": "2026-09-16T22:23:28.805Z",
+  "confirmation": "Betreiber 17.09.2026 schriftlich im Chat: 'Bitte öffne smejj.com im Browser und teste die gesamte App, Web, PWA, iOS mit Simulator, Android mit Emulator, von A bis Z. Wenn du Fehler findest, behebe sie sofort, deploye erneut und teste live weiter, bis alles stabil, sicher und zuverlässig funktioniert.' Behoben (Live-Test Pixel 412x783): der Kopf-Glasstreifen aus mobil-dock.js verdeckte im Chat die erste Zeile der ersten Nachricht — im Chat am Handy ausgeblendet, Code-Ansicht unveraendert; Stil-Marke v13o-20260917; SW smejj-shell-v893. (Bauzweig, Rueckfallweg api.smejj.com)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "160f853d17fcdd459d6d0e84e78406eee881d304fc057f1eadb09c31b1b33b24",
+    "public/index.html": "0a9dcaccbf6f8ad0549f0f87936d9776b70e8f00b6dd5affad7e3d13ea61158d",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
-    "public/start-styles.css": "ec750cd69df5cdcd97cfedd2fdcbb0ec23a68d8963b29187612ec4e65c7a613f",
+    "public/start-styles.css": "0da7fc932d2a6496e3128f11be5796ac503a2a0692d36a56a6b8036cdea04068",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "10ba77e36d5b6e57b90245a559b2451db1ec256ff9d5aa8004677c9236a76b59",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "eb03ca0a4119f3cb6c3aeccd9f8af02759af3adf85ca1f0222caaa75990b378f",
+    "public/sw.js": "d98cc591e65f27f090a35dd37993b8383d383394951fca3c489508bc5740c3a1",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
