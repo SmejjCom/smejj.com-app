@@ -62,7 +62,10 @@ export const SOURCES = Object.freeze([
   "design-v12-spur.css",
   "design-v12-chat.css",
   "design-v12-code.css",
-  "design-v12-vollbild.css"
+  "design-v12-vollbild.css",
+  // Kompakter Chat- und Code-Bereich (Betreiber-Auftrag 16.09.2026) — MUSS das
+  // Kaskaden-Ende bleiben, sie legt sich ueber V11/V12.
+  "design-v13-kompakt.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.
