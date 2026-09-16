@@ -49,7 +49,7 @@ function laden() {
   return import("./code-flaeche.js?v=75")
     .then((modul) => {
       modul.initCodeFlaeche?.();
-      import("./code-kompakt-menue.js?v=1").then((m) => m.initCodeKompaktMenue()).catch(() => {});
+      import("./code-kompakt-menue.js?v=2").then((m) => m.initCodeKompaktMenue()).catch(() => {});
       return modul;
     })
     .catch((fehler) => {

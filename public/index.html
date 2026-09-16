@@ -296,8 +296,7 @@
                       <span class="werk-was">smejj sieht die Fehlermeldung, statt sie sich beschreiben zu lassen.</span>
                       <span class="werk-bsp">„Warum geht dieser Knopf nicht?"</span>
                     </button>
-                    <p class="plus-gruppe" role="separator" aria-hidden="true">Sprechen und hören</p><!-- 16.09.2026: die drei Knoepfe der alten Eingabezeile; composer-tools.js bindet sie per [data-start-tool], "werkzeug" schliesst nur das Menue -->
-                    <button type="button" role="menuitem" data-start-tool="voice" data-composer-action="werkzeug" aria-label="Mikrofon" title="Mikrofon"><svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a4 4 0 0 0-4 4v5a4 4 0 0 0 8 0V7a4 4 0 0 0-4-4Z"/><path d="M5 11v1a7 7 0 0 0 14 0v-1"/><path d="M12 19v3"/></svg><b>Mikrofon</b><span class="werk-was">Du diktierst, smejj schreibt mit. Nochmal antippen beendet das Diktat.</span></button>
+                    <p class="plus-gruppe" role="separator" aria-hidden="true">Sprechen und hören</p><!-- 16.09.2026: Audio und Stimme aus der alten Eingabezeile; composer-tools.js bindet sie per [data-start-tool], "werkzeug" schliesst nur das Menue -->
                     <button type="button" role="menuitem" data-start-tool="audio" data-composer-action="werkzeug" aria-label="Audio" title="Audio"><svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4"/><path d="M8 7v10"/><path d="M12 4v16"/><path d="M16 7v10"/><path d="M20 10v4"/></svg><b>Audio</b><span class="werk-was">Gespräch mit smejj — du sprichst, smejj antwortet mit Stimme.</span></button>
                     <button type="button" role="menuitem" data-start-tool="speaker" data-composer-action="werkzeug" aria-label="Stimme" title="Stimme"><svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a8 8 0 0 1 0 11"/></svg><b>Stimme</b><span class="werk-was">Liest die letzte Antwort vor. Nochmal antippen stoppt.</span></button>
                     <p class="plus-gruppe" role="separator" aria-hidden="true">Nachschauen</p>
@@ -347,7 +346,8 @@
                     <button type="button" role="menuitem" data-model="Kimi K2.7">Coding-Profi (Kimi K2.7)</button>
                   </div>
                 </div>
-                <!-- 16.09.2026 kompakt: EINE Zeile [+] [Feld] [Modell] [Senden]; Uhr-Pille "Nachdenken" raus (Stufe bleibt im Modellmenue), Sprach-Knoepfe im Plus-Menue -->
+                <!-- 16.09.2026 kompakt: EINE Zeile [+] [Feld] [Mikrofon] [Modell] [Senden]; Uhr-Pille "Nachdenken" raus (Stufe bleibt im Modellmenue), Audio/Stimme im Plus-Menue -->
+                <button class="ghost-button icon-button" type="button" data-start-tool="voice" aria-label="Mikrofon" title="Diktieren"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a4 4 0 0 0-4 4v5a4 4 0 0 0 8 0V7a4 4 0 0 0-4-4Z"/><path d="M5 11v1a7 7 0 0 0 14 0v-1"/><path d="M12 19v3"/></svg></button>
                 <button id="startSend" class="send-button icon-button" type="button" aria-label="Senden" title="Senden">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4"/><path d="M5 11l7-7 7 7"/></svg>
                 </button>
@@ -987,7 +987,7 @@
     <script src="/assets/spur-schalter.js?v=10" type="module"></script>
     <script src="/assets/spur-start.js?v=b64" type="module"></script>
     <!-- holt code-flaeche.js (27,1 KB) erst, wenn #code aufgeht — Begruendung im Modul -->
-    <script src="/assets/code-nachladen.js?v=36" type="module"></script>
+    <script src="/assets/code-nachladen.js?v=37" type="module"></script>
     <!-- Peripherie (Fuehrung, Papierkorb, Kamera, @-Erwaehnung, Codeblock-Werkzeuge)
          laedt erst bei ihrer Handlung — Betreiber-Freigabe 2026-08-24 "Startseite abspecken". -->
     <script src="/assets/bedarf-nachladen.js?v=25" type="module"></script>

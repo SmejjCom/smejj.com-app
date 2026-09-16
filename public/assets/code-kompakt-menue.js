@@ -1,8 +1,8 @@
 // smejj.com — Kompakter Code-Komposer (Betreiber-Auftrag 16.09.2026: "Zusaetzliche
 // Funktionen/Icons ... unter einem Icon zusammengefasst ... Menue nach oben").
 //
-// Die Eingabezeile zeigt nur noch [+] [Feld] [Modell] [Senden]. Modus, Antwortstufe,
-// Projekt, Diktat und die Vorlagen stehen im Plus-Menue (#codePlusMenue). Jeder
+// Die Eingabezeile zeigt nur noch [+] [Feld] [Mikrofon] [Modell] [Senden]. Modus,
+// Antwortstufe, Projekt und die Vorlagen stehen im Plus-Menue (#codePlusMenue). Jeder
 // Eintrag klickt den ECHTEN, jetzt ausgeblendeten Knopf — code-flaeche.js bleibt die
 // einzige Verdrahtung. Modus- und Projekt-Menue ankern am .codefeld, nicht am Chip,
 // und oeffnen darum auch aus dem ausgeblendeten Knopf an der richtigen Stelle.
@@ -10,8 +10,7 @@
 const ZIELE = Object.freeze({
   modus: "codeModusChip",
   stufe: "codeStufeChip",
-  projekt: "codeProjektChip",
-  diktat: "codeDiktat"
+  projekt: "codeProjektChip"
 });
 
 // Die Eintraege entstehen hier statt in index.html: die Datei steht an ihrer
@@ -22,7 +21,6 @@ const EINTRAEGE = Object.freeze([
   ["projekt", "Projekt", '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>'],
   ["modus", "Modus", '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6Z"/>'],
   ["stufe", "Antwortstufe", '<path d="M4 18h4v-4H4Z"/><path d="M10 18h4V9h-4Z"/><path d="M16 18h4V5h-4Z"/>'],
-  ["diktat", "Diktieren", '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/>'],
   null,
   ["vorlage", "Fehler suchen", '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>', "Suche den Fehler in:"],
   ["vorlage", "Funktion einbauen", '<path d="M12 5v14M5 12h14"/>', "Baue folgende Funktion ein:"],
@@ -52,7 +50,7 @@ function baueEintraege(dokument, menue) {
     const wort = dokument.createElement("span");
     wort.textContent = text;
     knopf.append(wort);
-    if (ZIELE[was] && was !== "diktat") {
+    if (ZIELE[was]) {
       const wert = dokument.createElement("kbd");
       wert.className = "code-mehr-wert";
       wert.setAttribute("aria-hidden", "true");

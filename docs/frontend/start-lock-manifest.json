@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-16T17:22:23.218Z",
-  "confirmation": "Betreiber 16.09.2026 schriftlich im Chat: 'Chat- und Code-Bereich deutlich kompakter und sauberer machen: Oben: Logo links und Browser-Icon rechts sollen so weit wie moeglich nach oben ... Das Uhr-Icon komplett entfernen. Ein einziges Menue-Icon: Zusaetzliche Funktionen/Icons ueber dem Schreibfeld sollen unter einem Icon zusammengefasst werden. Beim Anklicken oeffnet sich das Menue nach oben ... Schreibfeld: Im normalen Zustand nur eine kompakte Zeile, aehnlich wie bei ChatGPT ... Beim Schreiben ... automatisch nach oben vergroessern.' Umgesetzt: design-v13-kompakt.css als letzte Buendel-Schicht (Kopf-Icons 10 px hoeher, eine Zeile [+][Feld][Modell][Senden], Plus-Menue am Handy immer nach oben), Uhr-Pille Nachdenken raus, Kachelreihe ausgeblendet und Mikrofon/Audio/Stimme sowie Video/Schreiben ins Plus-Menue, Code-Chips (Projekt/Modus/Stufe/Diktat/Vorlagen) ins Code-Plus-Menue (code-kompakt-menue.js); SW smejj-shell-v890. (Bauzweig, Rueckfallweg api.smejj.com)",
+  "frozenAt": "2026-09-16T17:30:52.293Z",
+  "confirmation": "Betreiber 16.09.2026 schriftlich im Chat: 'Chat- und Code-Bereich deutlich kompakter und sauberer machen: Oben: Logo links und Browser-Icon rechts sollen so weit wie moeglich nach oben ... Das Uhr-Icon komplett entfernen. Ein einziges Menue-Icon: Zusaetzliche Funktionen/Icons ueber dem Schreibfeld sollen unter einem Icon zusammengefasst werden. Beim Anklicken oeffnet sich das Menue nach oben ... Schreibfeld: Im normalen Zustand nur eine kompakte Zeile, aehnlich wie bei ChatGPT ... Beim Schreiben ... automatisch nach oben vergroessern.' Umgesetzt: design-v13-kompakt.css als letzte Buendel-Schicht (Kopf-Icons 10 px hoeher, eine Zeile [+][Feld][Mikrofon][Modell][Senden], Plus-Menue am Handy immer nach oben), Uhr-Pille Nachdenken raus, Kachelreihe ausgeblendet und Audio/Stimme sowie Video/Schreiben ins Plus-Menue, Code-Chips (Projekt/Modus/Stufe/Vorlagen) ins Code-Plus-Menue (code-kompakt-menue.js); Nachtrag Betreiber: 'Das Mikrofon-Icon zum Diktieren muss vorhanden sein' — Diktier-Mikrofon bleibt in Chat- und Code-Zeile; SW smejj-shell-v890. (Bauzweig, Rueckfallweg api.smejj.com)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "281f236245f9d00daec3faaadf0dfef22404b619f59dbb069c358ac450f2514f",
+    "public/index.html": "02a45363b671890019fbb808cafd0382217c3d00644df3d0408db931cd92236d",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
-    "public/start-styles.css": "7483b2d0149625bb5aa65512e640b6d277dcfd7e9b8634f7f7d79056d2028d03",
+    "public/start-styles.css": "d4e6d6c5dfdacd7cc85ab2b18e305c8af356ca2ca85b9b5d0546f0ea46440f8b",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "10ba77e36d5b6e57b90245a559b2451db1ec256ff9d5aa8004677c9236a76b59",

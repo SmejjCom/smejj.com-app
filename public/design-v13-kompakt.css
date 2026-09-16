@@ -39,7 +39,7 @@ html body #start .start-chips.start-chipreihe.start-chipreihe {
   }
 }
 
-/* ---- Chat: EINE Zeile  [+] [Feld …] [Modell] [Senden] -----------------------
+/* ---- Chat: EINE Zeile  [+] [Feld …] [Mikrofon] [Modell] [Senden] ------------
    flex-wrap bleibt an, damit die Anhang-Chips (.paste-attach-row, volle Breite)
    ueber der Zeile stehen koennen; das Feld hat Basis 0 und bricht darum nie um.
    flex-end haelt die Knoepfe unten, wenn das Feld beim Tippen nach oben waechst
@@ -64,7 +64,9 @@ html body #start.view .prompt-glass.prompt-glass.prompt-glass textarea {
   width: auto;
   min-width: 0;
 }
-html body #start.view .prompt-glass.prompt-glass.prompt-glass .model-picker { order: 3; flex: 0 0 auto; }
+/* Das Diktier-Mikrofon bleibt IN der Zeile (Betreiber 16.09.: "muss vorhanden sein"). */
+html body #start.view .prompt-glass.prompt-glass.prompt-glass [data-start-tool="voice"] { order: 3; flex: 0 0 auto; }
+html body #start.view .prompt-glass.prompt-glass.prompt-glass .model-picker { order: 4; flex: 0 0 auto; }
 /* Der Modell-Chip trug 88 px Mindestbreite (.text-chip) fuer das Wort "Auto" —
    gemessen 375 px: dem Feld blieben 133 px. So breit wie sein Wort, hoechstens
    ein Viertel der Zeile (laengere Namen mit Auslassungspunkten). */
@@ -77,7 +79,7 @@ html body #start.view .prompt-glass.prompt-glass.prompt-glass #modelPickerButton
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-html body #start.view .prompt-glass.prompt-glass.prompt-glass .send-button { order: 4; flex: 0 0 auto; }
+html body #start.view .prompt-glass.prompt-glass.prompt-glass .send-button { order: 5; flex: 0 0 auto; }
 html body #start.view .prompt-glass.prompt-glass.prompt-glass .prompt-spacer { display: none; }
 
 /* Das Plus-Menue geht IMMER nach oben auf. V11 liess es auf der leeren Seite
@@ -116,16 +118,15 @@ html body #start .prompt-glass .plus-menu.plus-menu [data-start-tool] {
   order: 0;
 }
 
-/* Mikrofon oder Vorlesen laeuft, das Menue ist zu: das Plus traegt den Zustand
-   (dieselbe Logofarbe wie das Mikrofon selbst, kompakt.js). */
-#start .prompt-glass:has([data-start-tool="voice"].is-recording) #composerPlusButton,
+/* Vorlesen laeuft, das Menue ist zu: das Plus traegt den Zustand (Logofarbe wie
+   beim Mikrofon, kompakt.js). Das Mikrofon zeigt seinen Zustand selbst. */
 #start .prompt-glass:has([data-start-tool="speaker"].is-speaking) #composerPlusButton {
   color: #02fdfd;
   box-shadow: inset 0 0 0 1px rgba(2, 253, 253, 0.55);
 }
 
-/* ---- Code: EINE Zeile  [+] [Feld …] [Modell] [Senden] -----------------------
-   Modus, Antwortstufe, Projekt, Diktat und die Vorlagen stehen im Plus-Menue
+/* ---- Code: EINE Zeile  [+] [Feld …] [Mikrofon] [Modell] [Senden] ------------
+   Modus, Antwortstufe, Projekt und die Vorlagen stehen im Plus-Menue
    (code-kompakt-menue.js klickt die ausgeblendeten Original-Knoepfe). Deren
    Menues ankern am .codefeld und oeffnen darum weiter an derselben Stelle. */
 html body #code .codefeld.codefeld.codefeld {
@@ -143,19 +144,17 @@ html body #code .codefeld.codefeld.codefeld #codeAufgabe {
   width: auto;
   min-width: 0;
 }
+html body #code .codefeld.codefeld.codefeld #codeDiktat { order: 3; flex: 0 0 auto; }
 html body #code .codefeld.codefeld.codefeld .code-rechts.code-rechts {
-  order: 3;
+  order: 4;
   flex: 0 0 auto;
   margin-left: 0;
 }
-html body #code .codefeld.codefeld.codefeld :is(#codeModusChip, #codeStufeChip, #codeProjektChip, #codeDiktat, #codeTiefeAnzeige) {
+html body #code .codefeld.codefeld.codefeld :is(#codeModusChip, #codeStufeChip, #codeProjektChip, #codeTiefeAnzeige) {
   display: none !important;
 }
 html body #code .code-wchips.code-wchips.code-wchips {
   display: none !important;
-}
-#code .codefeld:has(#codeDiktat.is-recording) #codeAnhang {
-  color: #02fdfd;
 }
 
 /* Handy: die Code-Flaeche war fest "Bildschirm minus 130 px" hoch (mobil-composer.css)
