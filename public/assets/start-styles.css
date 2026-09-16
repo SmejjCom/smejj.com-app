@@ -6337,8 +6337,8 @@ html body #start.view .prompt-glass.prompt-glass.prompt-glass textarea {
   width: auto;
   min-width: 0;
 }
-html body #start.view .prompt-glass.prompt-glass.prompt-glass [data-start-tool="voice"] { order: 3; flex: 0 0 auto; }
-html body #start.view .prompt-glass.prompt-glass.prompt-glass .model-picker { order: 4; flex: 0 0 auto; }
+html body #start.view .prompt-glass.prompt-glass.prompt-glass .model-picker { order: 3; flex: 0 0 auto; }
+html body #start.view .prompt-glass.prompt-glass.prompt-glass [data-start-tool="voice"] { order: 4; flex: 0 0 auto; }
 html body #start.view .prompt-glass.prompt-glass.prompt-glass #modelPickerButton {
   width: auto;
   min-width: 44px;
@@ -6388,12 +6388,10 @@ html body #code .codefeld.codefeld.codefeld #codeAufgabe {
   width: auto;
   min-width: 0;
 }
-html body #code .codefeld.codefeld.codefeld #codeDiktat { order: 3; flex: 0 0 auto; }
-html body #code .codefeld.codefeld.codefeld .code-rechts.code-rechts {
-  order: 4;
-  flex: 0 0 auto;
-  margin-left: 0;
-}
+html body #code .codefeld.codefeld.codefeld .code-rechts.code-rechts { display: contents; }
+html body #code .codefeld.codefeld.codefeld #codeModellAnzeige { order: 3; flex: 0 0 auto; }
+html body #code .codefeld.codefeld.codefeld #codeDiktat { order: 4; flex: 0 0 auto; }
+html body #code .codefeld.codefeld.codefeld #codeSenden { order: 5; flex: 0 0 auto; }
 html body #code .codefeld.codefeld.codefeld :is(#codeModusChip, #codeStufeChip, #codeProjektChip, #codeTiefeAnzeige) {
   display: none !important;
 }
