@@ -29,7 +29,12 @@ import { offeneRechercheFunktionen, RECHERCHE_STAND } from "../evolution/radarRe
 
 const store = createRecordStore("admin/entscheidungen");
 
-export const WAHLEN = Object.freeze(["ja", "nein", "spaeter"]);
+// "offen" ist das Zuruecknehmen: Wer sich vertippt oder es sich anders
+// ueberlegt, soll nicht mit einer falschen Entscheidung leben muessen. Der
+// Vorschlag wandert dann zurueck in die offene Liste. Eine bereits angelegte
+// Aufgabe bleibt bestehen — geloescht wird hier grundsaetzlich nichts, sie
+// wird auf der Aufgaben-Seite verworfen (mit Nachweis, wie ueberall).
+export const WAHLEN = Object.freeze(["ja", "nein", "spaeter", "offen"]);
 
 /** Wie viele frische Radar-Treffer hoechstens zur Entscheidung kommen. */
 const MAX_RADAR = 8;
@@ -196,13 +201,15 @@ export async function entscheidungsUebersicht({ env = process.env, jetztMs = Dat
     const e = abgelegt.jeVorschlag.get(v.id) || null;
     const eintrag = {
       ...v,
-      entscheidung: e ? e.wahl : null,
-      entschiedenAm: e ? e.entschiedenAm : null,
-      entschiedenVon: e ? e.entschiedenVon : null,
-      notiz: e ? e.notiz || "" : "",
-      aufgabeId: e ? e.aufgabeId || null : null
+      entscheidung: e && e.wahl !== "offen" ? e.wahl : null,
+      entschiedenAm: e && e.wahl !== "offen" ? e.entschiedenAm : null,
+      entschiedenVon: e && e.wahl !== "offen" ? e.entschiedenVon : null,
+      notiz: e && e.wahl !== "offen" ? e.notiz || "" : "",
+      aufgabeId: e && e.wahl !== "offen" ? e.aufgabeId || null : null,
+      zurueckgenommenAm: e && e.wahl === "offen" ? e.entschiedenAm : null
     };
-    if (!e || e.wahl === "spaeter") offen.push(eintrag);
+    // "offen" heisst zurueckgenommen — der Vorschlag steht wieder zur Wahl.
+    if (!e || e.wahl === "spaeter" || e.wahl === "offen") offen.push(eintrag);
     else entschieden.push(eintrag);
   }
 
@@ -218,6 +225,7 @@ export async function entscheidungsUebersicht({ env = process.env, jetztMs = Dat
       gesamt: basis.vorschlaege.length,
       offen: offen.filter((v) => !v.entscheidung).length,
       spaeter: offen.filter((v) => v.entscheidung === "spaeter").length,
+      zurueckgenommen: offen.filter((v) => v.zurueckgenommenAm).length,
       ja: entschieden.filter((v) => v.entscheidung === "ja").length,
       nein: entschieden.filter((v) => v.entscheidung === "nein").length
     },
