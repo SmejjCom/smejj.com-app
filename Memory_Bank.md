@@ -5,6 +5,13 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-09-17] SCHREIBWEISE PRUEFT MAN GERENDERT: text-transform MACHT AUS smejj GROSSBUCHSTABEN (job_az_check_naming_20260917)
+
+Typ: Nachcheck + Fix (SW v896). Capsule `capsules/app/job_az_check_naming_20260917/`.
+Loesung: check:guidelines prueft nur Quelltext. Zwei Stellen zeigten den Namen trotzdem in Grossbuchstaben, weil CSS uppercase machte: Preis-Stufen der Landeseite und der Admin-Cockpit-Balken. Behoben (Stufen ohne uppercase; Balken mit span.ck-marke text-transform:none). Secret-Scanning und Push-Schutz jetzt auch im Frontend-Repo.
+Begruendung: Die Namensregel gilt fuer die ANZEIGE. Gesucht wird per TreeWalker plus getComputedStyle(textTransform) ueber alle gerenderten Seiten. Stempel-Wortlaute duerfen die falsche Schreibweise nicht zitieren — check:guidelines schlaegt sonst am Manifest an.
+Verifikation: check:frontend 695/0; alle check:all-Schritte gruen, schutz-echtheit und admin-console-sync nach Deploy OK. Pruefsummen Quelle = smejj.com = api.smejj.com. Live gerendert: transform none. Chrome angemeldet 0 Konsolenfehler. Freigabe per Auswahl 17.09.
+
 ### [2026-09-17] ENDABNAHME A–Z: DIE ERSTE ZEILE MISST MAN AN DER ZEILE, NICHT AM KASTEN (job_endabnahme_a_z_20260917)
 
 Typ: Verifikation + Fixes. Capsule: `capsules/app/job_endabnahme_a_z_20260917/` (IDrive e2), Bericht `docs/qa/endabnahme-a-z-2026-09-17.md`.

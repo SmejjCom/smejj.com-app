@@ -1,0 +1,27 @@
+{
+  "jobId": "job_az_check_naming_20260917",
+  "createdAt": "2026-09-17T07:30:00.000Z",
+  "closedAt": "2026-09-17T08:40:00.000Z",
+  "owner": "smejj.com autonomous coding (Betreiber 17.09.: 'checke Gesamte nochmal … Was habe ich vergessen? … professionelle Check von A bis Z')",
+  "title": "A-Z-Nachcheck live v895/v896 + Schreibweise smejj + Secret-Scanning Frontend",
+  "freigabe": "AskUserQuestion 17.09.: 'Schreibweise smejj (Empfehlung)' und 'Secret-Scanning (Empfehlung)' gewaehlt; DNS IPv6+CAA und DMARC NICHT gewaehlt",
+  "check": {
+    "live": "smejj.com und api.smejj.com SW v895 -> v896, Pruefsummen Quelle = live",
+    "checkAll": "EXIT 0 vor der Aenderung; danach alle Schritte gruen, schutz-echtheit und admin-console-sync nach Deploy OK",
+    "geraete": "Android-Emulator Pixel (Chrome 124) live: erste Zeile frei, Menues 11/13 im Bild, kein Querscroll; iPhone 17 Pro Landeseite; Chrome angemeldet 0 Konsolenfehler",
+    "server": "Zeabur 9 Dienste 0 Fehler im Laufzeitprotokoll; Admin-Cockpit Antwortzeit 0,1 s",
+    "sicherheit": "Dependabot 0, Secret-Scanning App 0; TLS bis 21./25.11.2026 (Let's Encrypt, automatisch); Domain bis 2027-06-14; HSTS; npm audit 0",
+    "recht": "impressum, datenschutz, agb erreichbar (200)",
+    "pwa": "Manifest standalone, 4 Icons 200, maskable vorhanden",
+    "speicher": "IDrive e2 1253,5 von 2048 GiB (61,2 %), keine Mehrkosten",
+    "automatiken": "81/85; rot: Konto-Wache 24-h-Alarm (smyst247@ bestaetigt, endet 2026-09-17T16:59Z); 3 Mac-Automatiken verspaetet; 'Anmelde-Sturm' 03:43Z kam von der eigenen Mac-IP"
+  },
+  "fixes": [
+    {"befund": "Landeseite: Preis-Stufen per text-transform:uppercase als Grossbuchstaben-Name", "fix": "public/willkommen.html .plan .stufe ohne uppercase", "live": "smejj Plus · most popular / smejj Pro / smejj Max, transform none"},
+    {"befund": "Admin-Cockpit-Balken zeigte den Domainnamen in Grossbuchstaben", "fix": "span.ck-marke text-transform:none (views-cockpit.js, console.css), Admin-Sperre mit Wortlaut gestempelt", "live": "ADMINBEREICH · smejj.com/admin — …"},
+    {"befund": "Secret-Scanning und Push-Schutz im Frontend-Repo aus", "fix": "per GitHub-API eingeschaltet", "live": "enabled / enabled"}
+  ],
+  "suche": "gerendert durchsucht: 31 Admin-Seiten, Cockpit, Autopiloten, Hilfe, App, Landeseite, Impressum, Datenschutz, AGB — nur die zwei Stellen; SMEJJ_*-Umgebungsnamen sind Code-Bezeichner",
+  "commits": {"arbeitszweig": ["aeb64644", "9c05127a"], "bauzweig": ["658d8380"], "frontend": ["e1dca86"]},
+  "offenVorschlaege": ["DNS AAAA fuer GitHub Pages + CAA letsencrypt.org (nicht freigegeben)", "DMARC p=none -> quarantine (nicht freigegeben)", "security.txt", "Messzweig messung/tempo-20260917 bleibt (Loeschen = Rote Liste)"]
+}
