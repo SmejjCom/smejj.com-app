@@ -314,3 +314,12 @@ findest, behebe sie sofort, deploye erneut und teste live weiter … Danach alle
   - Die Token-Seite ist in Chrome vorbereitet (Name `github-sicherung-smejj`, repository: Lesen und Schreiben).
   - Token erzeugen und bei GitHub eintragen kann nur der Betreiber.
   - Bis dahin bleibt die Action bewusst rot (fail-closed) und täuscht keine Sicherung vor.
+
+## NACHTRAG 4 — Tägliche Codeberg-Sicherung läuft wieder ✅ (17.09., 00:16 UTC)
+- Der Betreiber hat den Codeberg-Token erzeugt: nur Repository `smejj/smejj.com-app`, `write:repository`.
+  Er ist als GitHub-Secret `CODEBERG_TOKEN` hinterlegt (`gh secret list`: 2026-09-17T00:14:49Z).
+- Der Fehler beim ersten Versuch („Repository- und Organisationszugriff darf nicht leer sein") lag am fehlenden
+  Repository-Zugriff im Formular. Das ist ergänzt.
+- Manueller Lauf https://github.com/SmejjCom/smejj.com-app/actions/runs/35165814305: **success**, alle Schritte grün.
+  Der Zeitplan (täglich 11:20 UTC) läuft ab jetzt selbstständig.
+- Damit ist nichts mehr offen, was einen Zugang des Betreibers braucht.
