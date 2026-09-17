@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-15T22:54:12.610Z",
-  "confirmation": "Betreiber, 16.09.2026, im Chat: \"Ich gebe dir alle rechte von a bis z erledige, alles.\" (Regeln, Tagesmappe, Control Center, Autopiloten) und \"Gib mir den Stempel als .command zum Doppelklicken\", per Doppelklick ausgefuehrt. Geaendert: nur der Regeltext 4 (abgeleitete Commit-Kennung der Bau-Wache) und 5 (Schutz-Echtheit Nr. 82) in views-stage12.js. Unveraendert: Adminzugang, Rollen- und Rechtepruefung, Step-up, Vortuer, schreibende Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis, Impersonation.",
+  "frozenAt": "2026-09-17T08:20:54.782Z",
+  "confirmation": "Betreiber 17.09.2026 schriftlich im Chat, Auswahl 'Schreibweise smejj (Empfehlung)': Preisseite und Admin-Balken zeigen den Namen klein als smejj statt in Grossbuchstaben. Umgesetzt: willkommen.html .plan .stufe ohne text-transform:uppercase; Admin-Balken mit span.ck-marke und text-transform:none; SW smejj-shell-v896.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -32,11 +32,11 @@
     "control-server/src/admin/opsNutzerLage.js": "d6850cbc8da7afead2e500eefbac2f71d3cec5b383ebea3aece0e9f3fc54df4e",
     "control-server/src/admin/opsUmsatz.js": "63b88ce20ade6c4b0c9670d4f1aff6b819d30d63c57f488ec5b972eaa4d7a989",
     "control-server/src/admin/opsCockpit.js": "2c485eb065457978faddf372dc9ec4e7369579ae27005acc5a456c7af82d555a",
-    "control-server/admin-ui/views-cockpit.js": "e10ffc62485492bf689ec4737965c76ee4a807811daa81341a080b694d27825d",
+    "control-server/admin-ui/views-cockpit.js": "a09998dcb23c4a3a7940a2285615096a18b30584e8505f82b24865e11ad893fa",
     "control-server/admin-ui/console.js": "9475ddf48ba0c5440d57a4816011d82eec85c33d003a7f09adaa1ce9bd8efd1b",
     "control-server/admin-ui/views.js": "421593597c17afa9b1c9d6269723726d8820f5b4521421fc8c22e43e0aca7855",
     "control-server/admin-ui/index.html": "a193a1fd5ae1a20250dcc22be0b9d9b634f62a512fec4e323f13725a4ea36b10",
-    "control-server/admin-ui/console.css": "a85b93e3c7de80ee40bd54fe8a65b8b774fa8259a9727dd4ad0fbe419e13850e",
+    "control-server/admin-ui/console.css": "05f705b92e5a8a6243b70866d1692fa276c9e3a1db97562f10508a62b90ecbbb",
     "control-server/admin-ui/views-stage5.js": "15ea5cc9c23fc08fdca578eed29144378a05f58896e45d744144aefa4f3b1568",
     "control-server/admin-ui/views-stage7.js": "8eab5b3d3744086202e9fc02a641ef5725829009f6364625e894bec50036a868",
     "control-server/admin-ui/console-stage6.js": "590e2f1b0bf1a6b84bf3ee0d758e08b930da57fb10c985c2df78f396c3d7152a",
