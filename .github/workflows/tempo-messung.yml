@@ -36,3 +36,17 @@ jobs:
           echo "api.smejj.com IP: $(getent hosts api.smejj.com | awk '{print $1}' | head -1)"
       - name: Web-Vitals (echter Chrome)
         run: CHROME_PATH=/usr/bin/google-chrome node scripts/testing/measure_web_vitals.mjs --url https://smejj.com/ --runs 5
+      - name: A/B unter gleichen Bedingungen — Frontend v893 gegen live-Stand (12b5cc0), lokal ausgeliefert
+        run: |
+          set -uo pipefail
+          for paar in "8931:schutz-100-2026-09-17-v893-frontend" "8951:12b5cc0"; do
+            port=${paar%%:*}; ref=${paar#*:}
+            git clone -q https://github.com/SmejjCom/smejj-app-frontend.git "fe-$port"
+            git -C "fe-$port" checkout -q "$ref"
+            (cd "fe-$port" && python3 -m http.server "$port" --bind 127.0.0.1 >/dev/null 2>&1 &)
+          done
+          sleep 3
+          for port in 8931 8951; do
+            echo "=== Port $port ($( [ $port = 8931 ] && echo v893 || echo live-Stand))"
+            CHROME_PATH=/usr/bin/google-chrome node scripts/testing/measure_web_vitals.mjs --url "http://127.0.0.1:$port/" --runs 5 || true
+          done
