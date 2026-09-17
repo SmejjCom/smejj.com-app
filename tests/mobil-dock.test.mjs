@@ -166,11 +166,18 @@ test("Aktionen an Antworten sind am Handy lesbar (kein Zeigen, kein Hover)", () 
   assert.match(m.REGELN, /#startLog \.msg-actions \.msg-act,body #codeLogHalter \.msg-actions \.msg-act\{color:rgba\(246,243,238,\.82\)\}/);
 });
 
-test("Antworten tragen dieselben Menuepunkte wie eigene Fragen (Kopieren, Vorlesen)", () => {
-  const menue = readFileSync(new URL("../public/chat-actions-menu.js", import.meta.url), "utf8");
-  const kopf = menue.split("const MENU_KOPF")[1];
-  const assistant = kopf.split("assistant: Object.freeze([")[1].split("])")[0];
-  for (const act of ["copy", "speak", "regen"]) assert.ok(assistant.includes(`act: "${act}"`), `Antwort-Menue braucht ${act}`);
+test("Antworten tragen dieselben Menuepunkte wie eigene Fragen (Kopieren, Vorlesen)", async () => {
+  // Geprueft wird die ZUSAGE, nicht ihre Fundstelle: das Antwort-Menue bietet Kopieren,
+  // Vorlesen und Neu generieren. Bis 16.09.2026 standen Kopieren und Vorlesen in
+  // MENU_KOPF.assistant, seither als Kacheln oben im Menue (KACHELN, fuer beide Rollen) —
+  // der alte Text-Test las nur MENU_KOPF und war deshalb rot, obwohl die Punkte da sind.
+  // Darum jetzt ueber die echte Schnittstelle menuItemsFor(), wie in
+  // tests/chat-message-actions.test.mjs.
+  const { menuItemsFor } = await import("../public/chat-actions-menu.js");
+  const antwort = menuItemsFor("assistant").map((i) => i.act);
+  for (const act of ["copy", "speak", "regen"]) assert.ok(antwort.includes(act), `Antwort-Menue braucht ${act}`);
+  const frage = menuItemsFor("user").map((i) => i.act);
+  for (const act of ["copy", "speak"]) assert.ok(frage.includes(act), `Frage-Menue braucht ${act}`);
 });
 
 test("Die drei Punkte unter einer Antwort sind antippbar", () => {
