@@ -101,3 +101,25 @@ Der Auto-Modus sperrt Stempel und Produktiv-Push. Doppelklick im Finder:
 `smejj.com Vollbild-Chat stempeln und ausliefern.command` (Kaskade
 `scripts/einmal/vollbild-chat-2026-09-17.sh`: Stempel beider Zweige, Bauzweig-Push
 fuer api.smejj.com, Frontend-Klon nach smejj.com, Nachweis per Pruefsumme).
+
+## Live-Test A–Z des Live-Stands v896 (17.09., vor der Auslieferung von v897)
+
+Betreiber-Frage „Kannst du in live von A bis Z testen" — v897 war noch nicht ausgeliefert
+(Stempel und Push sind im Auto-Modus gesperrt, siehe oben), darum wurde der LIVE-Stand v896
+geprueft. Kein Fehler gefunden.
+
+| Bereich | Ergebnis |
+|---|---|
+| HTTP-Proben | smejj.com 200 (0,9 s), willkommen.html 200, manifest 200, sw.js 200 (v896), start-styles.css 200, api.smejj.com 200, /api/health 200, /api/status 401 ohne Anmeldung (richtig), Unbekanntes 404 |
+| `check:funktionen-live` | alle 8 Funktionen antworten (7 × 401 ohne Anmeldung, Compliance 200), keine abgeschaltet |
+| Web (Browser-Pane, 375×812, ohne Anmeldung) | Landeseite EN, Preise, Probefeld; Anmeldeseite mit Google/Fingerabdruck/GitHub/E-Mail; 0 Konsolenfehler |
+| iOS (Simulator iPhone 17 Pro, Safari, live) | Landeseite DE und Anmeldeseite sauber gerendert, Safe Area frei |
+| Android (Emulator Pixel, Chrome 124, ANGEMELDET als Betreiber-Konto) | SW `smejj-shell-v896` aktiv; klar beschriftete Live-Frage „Was ist 2+2?" → Antwort „Vier" nach 4,8 s; Plus-Menue 14 Knoepfe (144..731 px, im Bild), Modell-Menue 6 Eintraege (410..727), Antwort-Menue 13 Punkte (241..775 von 783), letzte Leiste 720 < Feld 735, Schrift 18 px, keine Dialoge/Fehler |
+| PWA | Manifest gueltig, Service Worker registriert, Cache v896 (Android) |
+
+Nicht getestet: Diktat mit echtem Mikrofon (Emulator/Simulator ohne Spracherkennung), Huawei.
+Waehrend des Tests haengte sich der Emulator-Chrome einmal nach einer Serie von 8 Aktionen in einem
+Skript auf (DevTools-Antworten blieben aus) — nach Neuladen des Tabs lief alles; kein App-Fehler.
+
+Naechster Schritt: Doppelklick auf `smejj.com Vollbild-Chat stempeln und ausliefern.command`,
+danach derselbe Test auf v897 (PWA-Wechsel v896 → v897 beim zweiten Start).
