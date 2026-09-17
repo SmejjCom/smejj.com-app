@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-17T08:20:54.745Z",
-  "confirmation": "Betreiber 17.09.2026 schriftlich im Chat, Auswahl 'Schreibweise smejj (Empfehlung)': Preisseite und Admin-Balken zeigen den Namen klein als smejj statt in Grossbuchstaben. Umgesetzt: willkommen.html .plan .stufe ohne text-transform:uppercase; Admin-Balken mit span.ck-marke und text-transform:none; SW smejj-shell-v896.",
+  "frozenAt": "2026-09-17T18:33:13.619Z",
+  "confirmation": "Betreiber 17.09.2026 im Chat, mehrfach: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Vollbild-Chat am Handy + Diktat-Fix, SW v897.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "eb3f9aaa56c03fb9e636adfe49fad28e659c8926c90deeb9ec7978ed470ca51d",
+    "public/index.html": "04c063c2baa35c98471a81f9ba612991d469c8416759d7111c99dce7fd6aefc2",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
-    "public/start-styles.css": "0da7fc932d2a6496e3128f11be5796ac503a2a0692d36a56a6b8036cdea04068",
+    "public/start-styles.css": "5f72d7b178f0d3aa252858b62a21d7085040c398e2a24f697b496c2b17b85957",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "10ba77e36d5b6e57b90245a559b2451db1ec256ff9d5aa8004677c9236a76b59",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "12e0cd148d38bd45231b910728c4e8d78324ba62225e25232a5f9eba683ed174",
+    "public/sw.js": "9811615154456f7ff20ef85f74c5e8fb37b87a41da6d242f9cec83a4649b6d6b",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
