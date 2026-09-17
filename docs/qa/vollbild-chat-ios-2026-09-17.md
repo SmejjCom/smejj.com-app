@@ -123,3 +123,76 @@ Skript auf (DevTools-Antworten blieben aus) — nach Neuladen des Tabs lief alle
 
 Naechster Schritt: Doppelklick auf `smejj.com Vollbild-Chat stempeln und ausliefern.command`,
 danach derselbe Test auf v897 (PWA-Wechsel v896 → v897 beim zweiten Start).
+
+---
+
+# Nachtrag 18.09.2026 — ausgeliefert, und die WURZELURSACHE gefunden (SW v898)
+
+## 1. Auslieferung v897
+
+Nach dem Moduswechsel liefen Stempel und Auslieferung aus der Sitzung.
+smejj.com ging auf v897, danach api.smejj.com.
+
+**Fehler beim ersten Anlauf, gefunden und behoben:** api.smejj.com blieb stundenlang auf
+v896, obwohl der Bauzweig angeblich gepusht war. Die Zeabur-Abfrage
+(`deployments(serviceID, environmentID, perPage)`) zeigte: der laufende Bau trug den
+richtigen Commit — aber `git show ae6e0cb7:public/sw.js` lieferte v896. Ursache: Beim
+Übernehmen in den Bauzweig hatte der dritte Commit (Lock-Stempel) einen Konflikt
+ausgelöst, und `git cherry-pick --abort` rollte die beiden bereits sauber übernommenen
+CODE-Commits mit zurück. Der Bauzweig trug danach nur den Stempel, nicht den Code —
+der Stempel war über die ALTEN Dateien gerechnet und deshalb grün. api.smejj.com lieferte
+also völlig korrekt v896.
+
+**Lehre:** `git cherry-pick --abort` setzt die GANZE Reihe zurück, nicht nur den
+konfliktbehafteten Commit. Bei einer Reihe mit Lock-Manifest am Ende: Konflikt auflösen
+(`git checkout --theirs <manifest>`, `--continue`) oder die Code-Commits einzeln
+übernehmen und danach frisch stempeln. Nie abbrechen.
+
+## 2. Die eigentliche Wurzelursache des schwarzen Balkens (v898)
+
+Der Betreiber hatte seit Tagen einen schwarzen Balken über der installierten iPhone-App.
+index.html trug längst `black-translucent`. Beim Live-Test fiel auf: ein FRISCH von
+smejj.com installierter Webclip bekam trotzdem
+
+    WebClipStatusBarStyle = UIWebClipStatusBarStyleLegacyBlack
+
+**Warum:** Safari brennt beim „Zum Home-Bildschirm" die Angabe der GERADE ANGEZEIGTEN
+Seite in die Webclip-Datei. Wer die App hinzufügt, ist fast immer abgemeldet — und das
+frühe Tor in index.html schickt jeden ohne Konto sofort auf `willkommen.html`. Dort fehlte
+die Angabe vollständig, also nahm iOS seinen Standard. index.html wird in diesem Moment
+nie geladen; sein Wert kann gar nicht greifen.
+
+**Fix:** `willkommen.html`, `auth/login/index.html` und `auth/register/index.html` tragen
+jetzt dieselben vier App-Metaangaben wie index.html. Beide Seiten polstern
+`env(safe-area-inset-*)` bereits (Landeseite Zeile 94/121, auth.css Zeile 62), der
+`<html>`-Grund ist dunkel (#141517 bzw. `--auth-bg`) — die Uhrzeit bleibt lesbar.
+
+**Nachgewiesen im iPhone-17-Pro-Simulator:** Webclip vor dem Fix `LegacyBlack`, nach dem
+Fix `LegacyBlackTranslucent` **und** `FullScreen = true`. Die gestartete App zeigt die
+Statusleiste durchsichtig über der Seite, kein Balken.
+
+## 3. Live-Test A–Z auf v898
+
+| Weg | Ergebnis |
+|---|---|
+| smejj.com und api.smejj.com | beide `smejj-shell-v898`, alle geprüften Dateien byte-gleich |
+| Statusleisten-Angabe live | `black-translucent` auf /, /willkommen.html, /auth/login/, /auth/register/ |
+| Vollbild-Dateien | design-v14 200 auf beiden, Diktat-Modul in der neuen Fassung |
+| iOS Simulator, Safari | Landeseite und Anmeldeseite sauber |
+| iOS Simulator, installierte App | Vollbild ohne schwarzen Balken, Statusleiste transparent |
+| Android-Emulator, angemeldet | Chat „Wie viele Beine hat eine Spinne?" → „8" in 4,0 s; Diktat dreimal an/aus; Feld schwebt (`position:absolute`), Schrift 19 px |
+| PWA-Update | zweiter Aufruf: nur noch Cache v898, v897 gelöscht |
+| Browser-Pane | Bündel trägt V14, Diktat-Modul neu, keine Konsolenfehler |
+| Wächter | check:frontend 695/695, start-lock, security-lock, auslieferung-lock, markenkette, guidelines, precache, assets-sync, schutz-echtheit alle grün |
+
+## 4. Schutz
+
+Anker in allen drei Repos: `schutz-100-2026-09-18-v898`, `-bauzweig`, `-frontend`.
+Stände: Arbeitszweig 7fe8eda5, Bauzweig 95e91d43, Frontend f30765f.
+Codeberg-Sicherung angestoßen.
+
+## 5. Für den Betreiber
+
+Das alte App-Symbol auf dem iPhone trägt den alten Balken weiterhin — der Wert ist beim
+Installieren eingebrannt und ändert sich nie. Einmal löschen und smejj.com neu „Zum
+Home-Bildschirm" hinzufügen; ab dann ist es Vollbild. Neue Nutzer bekommen es sofort richtig.
