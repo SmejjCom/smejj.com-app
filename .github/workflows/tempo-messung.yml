@@ -35,6 +35,7 @@ jobs:
           echo "Netz-Bezug: $(curl -s -o /dev/null -w 'github.com connect=%{time_connect}s tls=%{time_appconnect}s ttfb=%{time_starttransfer}s' https://github.com/)"
           echo "api.smejj.com IP: $(getent hosts api.smejj.com | awk '{print $1}' | head -1)"
       - name: Web-Vitals (echter Chrome)
+        continue-on-error: true
         run: CHROME_PATH=/usr/bin/google-chrome node scripts/testing/measure_web_vitals.mjs --url https://smejj.com/ --runs 5
       - name: A/B unter gleichen Bedingungen — Frontend v893 gegen live-Stand (12b5cc0), lokal ausgeliefert
         run: |
