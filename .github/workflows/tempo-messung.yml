@@ -1,0 +1,38 @@
+# smejj.com — Tempo-Messung von einem NEUTRALEN Standort (GitHub-Rechenzentrum).
+#
+# WARUM (2026-09-17): Die Messpflicht verlangt TTFB und API-p95. Vom Betreiber-Mac
+# gemessen schwankt schon der Ping zu 8.8.8.8 zwischen 78 und 358 ms; Verbindung + TLS
+# kosten dort ~800 ms. Solche Zahlen messen die Leitung, nicht smejj.com.
+#
+# Laeuft NUR auf Pushes in Zweige messung/tempo-* (kein Zeitplan, kein Bauzweig, also
+# kein Zeabur-Neubau). Oeffentliches Repo: Actions kostenlos. Rein lesend gegen live.
+name: Tempo-Messung (neutraler Standort)
+on:
+  push:
+    branches: ["messung/tempo-*"]
+permissions:
+  contents: read
+jobs:
+  messen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Server-Antwortzeit (Verbindung wiederverwendet) und Erstaufruf
+        run: |
+          set -uo pipefail
+          p() { sort -n | awk '{a[NR]=$1} END{printf "n=%d p50=%d p95=%d p99=%d max=%d ms\n", NR, a[int(NR*0.5+0.5)], a[int(NR*0.95+0.5)], a[int(NR*0.99+0.5)], a[NR]}'; }
+          F='%{time_pretransfer} %{time_starttransfer} %{http_code}\n'
+          echo "SW live: $(curl -s https://smejj.com/sw.js | grep -o 'smejj-shell-v[0-9]*' | head -1)"
+          for u in "https://api.smejj.com/api/health" "https://api.smejj.com/api/auth/me" "https://smejj.com/" "https://smejj.com/assets/start-styles.css"; do
+            args=(); for i in $(seq 1 120); do args+=(-o /dev/null -w "$F" "$u"); done
+            printf "%-45s warm  " "$u"; curl -s "${args[@]}" | tail -n +3 | awk '{printf "%d\n", ($2-$1)*1000}' | p
+            printf "%-45s kalt  " "$u"; for i in $(seq 1 30); do curl -s -o /dev/null -w '%{time_starttransfer}\n' "$u"; done | awk '{printf "%d\n", $1*1000}' | p
+          done
+          echo "Netz-Bezug: $(curl -s -o /dev/null -w 'github.com connect=%{time_connect}s tls=%{time_appconnect}s ttfb=%{time_starttransfer}s' https://github.com/)"
+          echo "api.smejj.com IP: $(getent hosts api.smejj.com | awk '{print $1}' | head -1)"
+      - name: Web-Vitals (echter Chrome)
+        run: CHROME_PATH=/usr/bin/google-chrome node scripts/testing/measure_web_vitals.mjs --url https://smejj.com/ --runs 5
