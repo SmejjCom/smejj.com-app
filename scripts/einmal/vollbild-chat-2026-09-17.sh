@@ -142,6 +142,15 @@ for i in $(seq 1 40); do
 done
 curl -s -m 20 "https://smejj.com/assets/start-styles.css?n=$RANDOM" | grep -q "design-v14-vollbild-chat" && echo "  Buendel live traegt V14" || echo "  ABWEICHEND: Buendel live ohne V14 (Rand-Cache?)"
 node scripts/check-schutz-echtheit.mjs || echo "(Schutz-Echtheit: nach dem Rand-Cache erneut laufen lassen)"
+echo "== 6. Schutz-Anker (100 %-Schutz: Anker in allen drei Repos, Tags per Ruleset unloeschbar)"
+ANKER="schutz-100-2026-09-17-vollbild"
+cd "$APP" && { git tag -l "$ANKER" | grep -q . || git tag -a "$ANKER" -m "Vollbild-Chat am Handy + Diktat-Umbau, SW $SW_NEU (Betreiber-Freigabe 17.09.2026)" "$APP_NEU"; }
+git push -q origin "refs/tags/$ANKER" 2>/dev/null && echo "  Anker App: $ANKER -> ${APP_NEU:0:8}" || echo "  (Anker App schon drueben oder Push nicht moeglich)"
+cd "$BAU" && { git tag -l "$ANKER-bauzweig" | grep -q . || git tag -a "$ANKER-bauzweig" -m "Bauzweig zu $ANKER, SW $SW_NEU" "$BAU_NEU"; }
+git push -q origin "refs/tags/$ANKER-bauzweig" 2>/dev/null && echo "  Anker Bauzweig: ${BAU_NEU:0:8}" || echo "  (Anker Bauzweig schon drueben oder Push nicht moeglich)"
+cd "$KLON" && { git tag -l "$ANKER-frontend" | grep -q . || git tag -a "$ANKER-frontend" -m "Frontend zu $ANKER, SW $SW_NEU" origin/main; }
+git push -q origin "refs/tags/$ANKER-frontend" 2>/dev/null && echo "  Anker Frontend: $(git rev-parse --short origin/main)" || echo "  (Anker Frontend schon drueben oder Push nicht moeglich)"
+cd "$APP" && gh workflow run codeberg-spiegel.yml --ref "$BAU_ZWEIG" >/dev/null 2>&1 && echo "  Codeberg-Spiegel angestossen" || echo "  (Codeberg-Spiegel: gh nicht moeglich — taegliche Action holt es nach)"
 echo "== FERTIG. Auf dem iPhone: App schliessen und neu oeffnen (zweimal, der SW wechselt beim zweiten Start)."
 echo "   Zeigt die installierte App weiter eine SCHWARZE Statusleiste, ist der Webclip aus der Zeit mit"
 echo "   Modus 'black' (08.-13.09.): Symbol loeschen und die Seite erneut 'Zum Home-Bildschirm' hinzufuegen."
