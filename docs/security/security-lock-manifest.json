@@ -1,11 +1,11 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-15T07:12:23.014Z",
-  "confirmation": "Betreiber, 2026-09-15 (schriftlich): 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' — public/chat-bridge.js (Bauzweig-Kopie): Textarbeit hinter Doppelpunkt (Uebersetzen/Verbessern/Korrigieren/Umformulieren/Kuerzen) loest keine Websuche aus, gleichlautend zu src/search/searchIntent.js (Gleichlauf-Test); keine andere Aenderung.",
+  "frozenAt": "2026-09-17T23:27:41.795Z",
+  "confirmation": "Betreiber 18.09.2026 im Chat: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Nur die vier App-Metaangaben (apple-mobile-web-app-capable / -status-bar-style black-translucent / -title / mobile-web-app-capable) in auth/login und auth/register ergaenzt — Wurzelursache des schwarzen Balkens der installierten iPhone-App. Keine Aenderung an CSP, Skripten oder Anmeldelogik.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "e17cab6eeec5393c65c3cf1269a582499c65e489ebfddb8d85852d69bf0863ee",
-    "public/auth/register/index.html": "673885f4a0482ed19c0f31621195e5272fc851e3b1c9427cb370b4bd4076485c",
+    "public/auth/login/index.html": "b1b3b73900ca2362963626c74526622b0b33f705efd8111885f7e344315cfc16",
+    "public/auth/register/index.html": "0d4729189859ce0e0053f5947c804c9a520cf2cfae5d426584c79bd42421d056",
     "public/auth/auth-page.js": "eca1eec965d0b0911a1764a51908ee7023f05ecb016ed1a3f2fd10be1f36dd3e",
     "public/auth/auth.css": "ae2641fdb167358f9bad1f4b844d68aec2b6c41268882973a63de81896c3a910",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
