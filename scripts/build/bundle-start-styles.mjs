@@ -65,7 +65,10 @@ export const SOURCES = Object.freeze([
   "design-v12-vollbild.css",
   // Kompakter Chat- und Code-Bereich (Betreiber-Auftrag 16.09.2026) — MUSS das
   // Kaskaden-Ende bleiben, sie legt sich ueber V11/V12.
-  "design-v13-kompakt.css"
+  "design-v13-kompakt.css",
+  // Vollbild-Chat am Handy (Betreiber-Auftrag 17.09.2026, iPhone-PWA): Verlauf
+  // unter der Statusleiste, schwebendes Feld. Das neue Kaskaden-Ende.
+  "design-v14-vollbild-chat.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.
