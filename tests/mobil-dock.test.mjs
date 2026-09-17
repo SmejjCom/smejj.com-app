@@ -19,9 +19,19 @@ test("Regeln gelten nur am Handy (bis 600 px) und sind ein geschlossener Block",
 test("untere Safe-Area nur EINMAL: Feld und Code-Leiste geben ihren Rand ab, die Huelle behaelt ihn", () => {
   assert.match(m.REGELN, /#start \.prompt-glass\.prompt-glass\.prompt-glass\{margin-bottom:0/);
   assert.match(m.REGELN, /#code \.codeunten\.codeunten\.codeunten\{padding-bottom:0\}/);
-  // Die Huelle traegt die Safe-Area (mobil-composer.css); angefasst wird sie NUR bei offener Tastatur (Punkt 7).
+  // Die Huelle traegt die Safe-Area (mobil-composer.css, main.shell padding-bottom). Angefasst wird sie
+  // in genau ZWEI Faellen: bei offener Tastatur faellt sie auf 0 (Punkt 7), und in der installierten App
+  // bekommt sie einen Mindestwert, weil iOS dort seit dem Wechsel auf status-bar-style "default"
+  // safe-area-inset-bottom mit 0 meldet (gemessen 08.09. im Simulator). Verdoppelt wird sie nie:
+  // das Feld und die Code-Leiste geben ihren eigenen Rand ab (die beiden Zusagen darueber).
   const huellenRegeln = [...m.REGELN.matchAll(/([^{}]*main\.shell[^{]*)\{[^}]*padding/g)].map((t) => t[1]);
-  assert.ok(huellenRegeln.every((sel) => sel.includes("html.tastatur-offen")), `Huelle nur bei offener Tastatur: ${huellenRegeln.join(" | ")}`);
+  assert.ok(
+    huellenRegeln.every((sel) => sel.includes("html.tastatur-offen") || sel.includes("html:not(.tastatur-offen)")),
+    `Huelle nur fuer Tastatur oder Mindestabstand: ${huellenRegeln.join(" | ")}`,
+  );
+  // KORREKTUR 13.09. (Design V12): im "black"-Modus reicht das Layout bis zur Unterkante und
+  // safe-area-inset-bottom ist 34 — der Home-Balken liegt IM Layout, die Huelle behaelt den Rand.
+  assert.ok(!m.REGELN.includes('html:not(.tastatur-offen) main.shell.shell{padding-bottom:0}'), "Huelle behaelt den unteren Rand");
 });
 
 test("beide Felder wachsen bis ~5 Zeilen (148 px) und scrollen dann innen", () => {
@@ -32,10 +42,12 @@ test("beide Felder wachsen bis ~5 Zeilen (148 px) und scrollen dann innen", () =
 
 test("Code-Leiste bleibt EINE Zeile: Rechnung bei 368 px Innenbreite geht auf, Ziele 44 px", () => {
   assert.match(m.REGELN, /\.codeleiste\.codeleiste\{flex-wrap:nowrap/);
-  assert.match(m.REGELN, /\.repochip\.repochip\{max-width:80px;min-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap/);
+  assert.match(m.REGELN, /\.repochip\.repochip\{display:inline-block;max-width:110px;min-width:44px/);
   assert.match(m.REGELN, /#codeTiefeAnzeige\{display:none\}/, "die reine Anzeige 'Mittel' faellt weg, sie ist kein Ziel");
-  // Modus 44 + Stufe 80 + Anhang 44 + Diktat 44 + Modell 64 + Senden 44 + 5 Luecken a 4
-  assert.ok(44 + 80 + 44 + 44 + 64 + 44 + 5 * 4 < 368);
+  // Die Chips sind flex:0 1 auto — sie duerfen schrumpfen. Massgeblich ist darum die Rechnung mit den
+  // MINDESTBREITEN: Modus 44 + Stufe 44 + Anhang 44 + Diktat 44 + Modell 64 + Senden 44 + 5 Luecken a 4.
+  assert.match(m.REGELN, /\.repochip\.repochip\{[^}]*flex:0 1 auto\}/);
+  assert.ok(44 + 44 + 44 + 44 + 64 + 44 + 5 * 4 < 368);
   assert.ok(!/height:\s*(3[0-9]|4[0-3])px/.test(m.REGELN), "keine Ziele unter 44 px");
   assert.doesNotMatch(m.REGELN, /font-size/, "keine Schriftgroessen (grosse Schrift, Betreiber-Regel)");
 });
@@ -71,28 +83,46 @@ test("Modell-Menue am Handy: Picker static, Menue absolut ueber die Glasbreite (
   assert.match(m.REGELN, /#start \.prompt-glass \.model-picker\.model-picker\{position:static\}/);
   assert.match(m.REGELN, /#startModellMenue\.code-modus-menue,[^{]*\{position:absolute!important;left:6px!important;right:6px!important;top:auto!important;bottom:calc\(100% \+ 8px\)!important;width:auto!important/);
   assert.doesNotMatch(m.REGELN, /model-submenu[^{]*\{position:fixed/, "fixed landet unter backdrop-filter bei y=-125 (gemessen 07.09.)");
-  assert.match(m.REGELN, /#start:not\(\.has-start-chat\) #startModellMenue\.code-modus-menue[^{]*\{top:calc\(100% \+ 8px\)!important;bottom:auto!important\}/, "leere Startseite: nach unten aufklappen");
+  assert.doesNotMatch(m.REGELN, /top:calc\(100% \+ 8px\)!important;bottom:auto!important/, "seit 08.09. sitzt das Glas auch leer unten — das Menue klappt immer nach oben");
   assert.match(m.REGELN, /#startModellMenue\.code-modus-menue button,[^{]*\{display:flex;align-items:center;gap:10px;width:100%;flex:0 0 auto;min-height:44px;white-space:normal/);
   assert.match(m.REGELN, /\.modus-links,body \.model-submenu \.model-submenu-name\{flex:1 1 auto;min-width:0;white-space:normal/);
 });
 
 test("Chat ohne Seitwaerts-Schieben: Eintraege brechen Links, Tabellen scrollen in sich; Frage als Glasblase, Kopfglas", () => {
   assert.match(m.REGELN, /#startLog \.entry,body #codeLogHalter \.entry\{max-width:100%;overflow-wrap:anywhere;word-break:break-word\}/);
-  assert.match(m.REGELN, /#startLog \.entry table,[^{]*\{display:block;max-width:100%;overflow-x:auto/);
+  assert.match(m.REGELN, /#startLog \.entry table,[^{]*\{display:block;width:max-content;max-width:100%;overflow-x:auto/);
+  // 08.09.: Zellen wurden buchstabenweise zerhackt ("Ze/it") — sie brechen jetzt gar nicht mehr,
+  // die Tabelle scrollt stattdessen in sich.
+  assert.match(m.REGELN, /table td,body #startLog \.entry table th,[^{]*\{overflow-wrap:normal;word-break:normal;white-space:nowrap;min-width:72px\}/);
+  assert.match(m.REGELN, /#startLog \.entry a\{overflow-wrap:anywhere\}/, "lange Links ausserhalb von Tabellen brechen weiter um");
   assert.match(m.REGELN, /\.entry\.user\.user\{margin-left:14%;max-width:86%;[^}]*backdrop-filter:blur/);
   assert.match(m.REGELN, /\.mobil-kopfglas\{position:fixed;top:0;left:0;right:0;height:calc\(env\(safe-area-inset-top,0px\) \+ 52px\);z-index:73;pointer-events:none/);
   assert.match(m.REGELN, /body:not\(\.mobil-chat-offen\) \.mobil-kopfglas\{display:none\}/);
 });
 
-test("Vollbild-Rahmen: feste Hoehe bis zur sichtbaren Unterkante (visualViewport), nie innerHeight, nie dvh-Flaechen", () => {
-  assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 852 }), 852, "voller Schirm");
-  assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 512.4 }), 512, "Tastatur offen: Rahmen endet an der Tastatur");
-  assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 0 }), 0, "unbekannt -> Rueckfall 100%");
-  assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{body::after\{top:0;bottom:auto;height:var\(--vv-unten,100%\)\}\}/);
-  assert.doesNotMatch(m.REGELN, /vollbild-fehl/, "innerHeight-Messung ist raus (Betreiber 08.09. 01:49: Balken kam nach der Tastatur zurueck)");
-  assert.doesNotMatch(m.REGELN, /100dvh \+ var\(/, "dvh-Flaechen bleiben unangetastet");
-  const quelle = readFileSync(new URL("../public/mobil-dock.js", import.meta.url), "utf8");
-  assert.match(quelle, /vv\.addEventListener\("resize", setze\); vv\.addEventListener\("scroll", setze\);/);
+test("Vollbild (Design V12, 13.09.): black-translucent, ein Grund fuer alles, Fehlbetrag als Sicherheitsnetz", () => {
+  // GEMESSEN 13.09. im iPhone-Simulator (Test-Kopie ohne Anmelde-Schranke, Diagnose-Overlay,
+  // <html>-Grund gruen gefaerbt): black-translucent -> Layout 402x812 ab y=0, safe-area 62/34,
+  // die unteren 62 pt zeigen den <html>-GRUND (nicht ausserhalb des WebViews — Annahme vom
+  // 08.09. widerlegt). black -> Layout 402x812 ab y=62, Unterkante bei 874, Statusleisten-
+  // Streifen zeigt ebenfalls den <html>-Grund. Derselbe Translucent-Webclip lieferte beim
+  // Kaltstart spaeter 874 (Vollbild mit Insets 62/34) — der 812-Zustand ist ein Erst-/
+  // Tastatur-Zustand. Also: Grund = App-Farbe, Modus bleibt black-translucent (keine
+  // Neuinstallation noetig), Fehlbetrag-Ausgleich als Sicherheitsnetz.
+  const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
+  assert.match(html, /apple-mobile-web-app-status-bar-style" content="black-translucent"/);
+  assert.match(html, /viewport-fit=cover/, "ohne cover waere die Flaeche erst recht kleiner");
+  const vollbild = readFileSync(new URL("../public/design-v12-vollbild.css", import.meta.url), "utf8");
+  assert.match(vollbild, /html:root \{ background: #101113; \}/, "der <html>-Grund ist die App-Farbe (theme-color)");
+  assert.match(vollbild, /html\.vollbild-fehl/, "alte Translucent-Installationen bekommen den Fehlbetrag");
+  assert.ok(!/html\{--sa-bottom:0px;background:#000\}/.test(m.REGELN), "kein schwarzer Grund, keine Null-Safe-Area mehr");
+  assert.match(m.REGELN, /body::before\{background:[^}]*#101113 100%\) #101113\}/, "Grund laeuft auf die App-Farbe aus");
+  assert.match(m.REGELN, /body::after\{box-shadow:inset 0 1px 0[^}]*inset 0 26px 40px -26px[^}]*\}/, "unten weder Strich noch Schein");
+  // Fehlbetrag: nur standalone, nur ohne Tastatur, nur wenn safe-area-inset-top > 0 (Translucent).
+  assert.equal(m.vollbildFehl({ standalone: true, tastaturOffen: false, schirmHoehe: 874, innerHeight: 812, saTop: 62 }), 62);
+  assert.equal(m.vollbildFehl({ standalone: true, tastaturOffen: false, schirmHoehe: 874, innerHeight: 812, saTop: 0 }), 0, "black-Modus: kein Fehlbetrag");
+  assert.equal(m.vollbildFehl({ standalone: true, tastaturOffen: true, schirmHoehe: 874, innerHeight: 500, saTop: 62 }), 0, "Tastatur offen: nichts anfassen");
+  assert.equal(m.vollbildFehl({ standalone: false, tastaturOffen: false, schirmHoehe: 874, innerHeight: 700, saTop: 62 }), 0, "Browser-Tab: nichts");
 });
 
 test("Punkt 7: bei offener Bildschirmtastatur faellt der untere Sicherheitsrand weg — Feld buendig an der Tastaturkante", () => {
@@ -106,3 +136,95 @@ test("Punkt 7: bei offener Bildschirmtastatur faellt der untere Sicherheitsrand 
   const quelle = readFileSync(new URL("../public/mobil-dock.js", import.meta.url), "utf8");
   assert.match(quelle, /doc\.addEventListener\("focusout", \(\) => setTimeout\(setze, 120\), true\);/, "focusout mit capture und Verzoegerung");
 });
+
+// ---- Runde 5 (Betreiber-Screenshots 08.09. 08:48-08:55) -------------------------------------
+test("Code-Bereich: Gruss und Verlauf liegen unter dem Kopfglas, nicht darunter versteckt", () => {
+  assert.match(m.REGELN, /body\.mobil-chat-offen #code \.codegruss\{padding-top:calc\(env\(safe-area-inset-top,0px\) \+ 60px\)\}/);
+  assert.match(m.REGELN, /#code #codeLogHalter\.code-log-halter\{padding-top:calc\(env\(safe-area-inset-top,0px\) \+ 56px\);scroll-padding-top:/);
+});
+
+test("Stufe-Chip kuerzt mit Ellipse statt beidseitig abzuschneiden (inline-flex kann das nicht)", () => {
+  assert.match(m.REGELN, /\.codeleiste \.repochip\.repochip\{display:inline-block;max-width:110px;min-width:44px;height:44px;line-height:44px;text-align:center;overflow:hidden;text-overflow:ellipsis/);
+  assert.doesNotMatch(m.REGELN, /\.repochip\.repochip\{display:inline-flex/, "inline-flex laesst text-overflow verpuffen");
+  assert.match(m.REGELN, /#codeModusChip\.repochip\{max-width:72px\}/, "der kurze Modus-Chip macht dem Stufen-Chip Platz");
+});
+
+// ---- Betreiber-Screenshots 08.09. 14:24/14:29 ------------------------------------------------
+test("Startseite sammelt sich unten statt mittig — unten blieben 153 px leer", () => {
+  assert.match(m.REGELN, /#start:not\(\.has-start-chat\) \.home-feed\.home-feed\{justify-content:flex-end;gap:10px\}/);
+  assert.match(m.REGELN, /\.home-hero\.home-hero\{margin-bottom:2px\}/);
+});
+
+test("Modell-Menue liegt ueber den Werkzeug-Kacheln (Stapel-Kontext des Glases)", () => {
+  // .prompt-glass traegt backdrop-filter -> eigener Stapel-Kontext; .start-chips kommt im DOM
+  // spaeter und gewann bei gleichem Stapelwert. Der Fingerdruck traf die Kachel statt der Zeile.
+  assert.match(m.REGELN, /#start \.prompt-glass\.prompt-glass\{position:relative;z-index:70\}/);
+  assert.match(m.REGELN, /#startModellMenue\.code-modus-menue,[^{]*\{background:#0d1219;z-index:80!important\}/, "opak, damit nichts durchscheint");
+});
+
+test("Aktionen an Antworten sind am Handy lesbar (kein Zeigen, kein Hover)", () => {
+  assert.match(m.REGELN, /#startLog \.msg-actions \.msg-act,body #codeLogHalter \.msg-actions \.msg-act\{color:rgba\(246,243,238,\.82\)\}/);
+});
+
+test("Antworten tragen dieselben Menuepunkte wie eigene Fragen (Kopieren, Vorlesen)", async () => {
+  // Geprueft wird die ZUSAGE, nicht ihre Fundstelle: das Antwort-Menue bietet Kopieren,
+  // Vorlesen und Neu generieren. Bis 16.09.2026 standen Kopieren und Vorlesen in
+  // MENU_KOPF.assistant, seither als Kacheln oben im Menue (KACHELN, fuer beide Rollen) —
+  // der alte Text-Test las nur MENU_KOPF und war deshalb rot, obwohl die Punkte da sind.
+  // Darum jetzt ueber die echte Schnittstelle menuItemsFor(), wie in
+  // tests/chat-message-actions.test.mjs.
+  const { menuItemsFor } = await import("../public/chat-actions-menu.js");
+  const antwort = menuItemsFor("assistant").map((i) => i.act);
+  for (const act of ["copy", "speak", "regen"]) assert.ok(antwort.includes(act), `Antwort-Menue braucht ${act}`);
+  const frage = menuItemsFor("user").map((i) => i.act);
+  for (const act of ["copy", "speak"]) assert.ok(frage.includes(act), `Frage-Menue braucht ${act}`);
+});
+
+test("Die drei Punkte unter einer Antwort sind antippbar", () => {
+  // Gemessen 08.09.: #startLog .msg-actions traegt pointer-events:none und am Handy overflow-x:auto —
+  // die Leiste war 0 px hoch, ihre Knoepfe ragten heraus und wurden vom Scroll-Container abgeschnitten.
+  assert.match(m.REGELN, /#startLog \.msg-actions,body #codeLogHalter \.msg-actions\{pointer-events:auto;min-height:44px;overflow:visible;margin-top:0\}/);
+  // Und ein NORMALER Abstand unter dem letzten Eintrag — keine Overlay-Freihaltung.
+  // KORRIGIERT 09.09.: hier standen 132px, weil ich das Eingabefeld fuer ein schwebendes Dock
+  // hielt. Live nachgemessen ist .home-feed ein Raster (grid-template-rows: minmax(0,1fr) auto)
+  // und .prompt-glass steht auf position:relative — ein Geschwister, das nie ueber dem Log liegt.
+  // Die 132px hielten also nichts frei, sie verschenkten den Platz (81px Loch statt 16px).
+  const treffer = m.REGELN.match(
+    /#startLog\.start-log,body #code #codeLogHalter\.code-log-halter\{padding-bottom:(\d+)px\}/,
+  );
+  assert.ok(treffer, "der Abstand unter dem letzten Eintrag muss gesetzt sein");
+  const abstand = Number(treffer[1]);
+  assert.ok(abstand >= 8, `Abstand ${abstand}px — die Leiste klebt sonst am Eingabefeld`);
+  assert.ok(abstand <= 24, `Abstand ${abstand}px — das ist ein Loch, kein Abstand (Feld ist kein Overlay)`);
+});
+
+test("Auf der leeren Startseite steht das EINGABEFELD unten, nicht nur der Block", () => {
+  // Gemessen 08.09.: mit flex-end allein sass das Feld bei 441 von 839 — darunter Werkzeugzeile
+  // und "Erste Schritte" mit zusammen 374 px. Der Betreiber meinte das Feld ("wie ChatGPT").
+  assert.match(m.REGELN, /\.home-feed \.erste-schritte\{order:6\}/);
+  assert.match(m.REGELN, /\.home-feed \.start-chips\{order:7\}/);
+  assert.match(m.REGELN, /\.home-feed \.prompt-glass\{order:8\}/);
+});
+
+test("Das Modell-Menue schliesst beim Tipp daneben — sonst schluckt es die ganze Oberflaeche", () => {
+  // GEMESSEN 08.09.: der vorhandene Aussenklick-Handler sitzt in code-flaeche.js, und dieses Modul
+  // ist auf der Startseite gar nicht geladen. Das Menue blieb offen und blockierte mit z-index 80
+  // alles darunter — unter anderem die Aktionen unter einer Antwort.
+  const quelle = readFileSync(new URL("../public/code-modell-menue.js", import.meta.url), "utf8");
+  assert.match(quelle, /export function bewacheAussenklick\(menueId, knopf\)/);
+  assert.match(quelle, /bewacheAussenklick\(menueId, chip\);/, "beim Oeffnen gesetzt");
+  assert.match(quelle, /doc\.addEventListener\("pointerdown", daneben, true\)/, "der Finger meldet pointerdown");
+  assert.match(quelle, /e\.key === "Escape"/, "Escape schliesst am Schreibtisch");
+  // Abgehaertet nach dem eigenen Rollentest: nur EIN Wachhund gleichzeitig, und contains statt
+  // id-Selektor (ein Knopf ohne id haette "#" ergeben — ungueltiger Selektor).
+  assert.match(quelle, /aktiverLoeser\?\.\(\);/, "alter Wachhund wird geloest");
+  assert.match(quelle, /knopf\?\.contains\?\.\(ziel\)/);
+  // schliesseModellMenue muss BEIDE Menues treffen
+  const zu = quelle.split("export function schliesseModellMenue")[1].split("}")[0];
+  assert.ok(zu.includes("codeModellMenue") && zu.includes("startModellMenue"));
+});
+
+test("Auch das Start-Feld selbst haelt 44 px (mass 43,5)", () => {
+  assert.match(m.REGELN, /#start \.prompt-glass #startMessage,body #start \.prompt-glass textarea\.textarea\{min-height:44px!important\}/);
+});
+
