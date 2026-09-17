@@ -1,0 +1,132 @@
+{
+  "jobId": "job_endabnahme_a_z_20260917",
+  "createdAt": "2026-09-16T21:00:00.000Z",
+  "closedAt": "2026-09-17T00:55:00.000Z",
+  "owner": "smejj.com autonomous coding (Betreiber-Auftrag 16.09.2026: KOMPLETTE A–Z ENDABNAHME, 19 Phasen; 17.09.: live weiter testen, Fehler sofort beheben, 100 % Schutz)",
+  "title": "Endabnahme A–Z smejj.com: Web, PWA, iOS-Simulator, Android-Emulator, Tablet, Accessibility, Performance, Security, Deploy, Backup",
+  "ziel": "Lokaler Code, smejj.com und api.smejj.com konsistent und stabil; gefundene Fehler beheben, ausliefern, live nachtesten; Schutz aktivieren.",
+  "betroffeneDateien": [
+    "public/design-v13-kompakt.css",
+    "public/arbeitsflaeche.js",
+    "public/index.html",
+    "public/start-styles.css",
+    "public/sw.js",
+    "docs/frontend/start-lock-manifest.json",
+    "docs/frontend/marken-manifest.json",
+    "tests/kopfglas-verdeckt-nicht.test.mjs",
+    "package.json",
+    "scripts/diagnose/zeabur-dienste-zeigen.mjs",
+    "scripts/einmal/design-v13-kompakt-2026-09-16.sh",
+    "docs/qa/endabnahme-a-z-2026-09-17.md"
+  ],
+  "fehlerBehoben": [
+    {
+      "nr": 1,
+      "befund": "Handy: Menue-Knopf der ersten eigenen Nachricht lag unter dem Browser-Icon (elementFromPoint = browserButton)",
+      "fix": "Aktionsleiste der ersten Nachricht 34 px eingerueckt",
+      "sw": "v892"
+    },
+    {
+      "nr": 2,
+      "befund": "Zwei Aktionsleisten unter Code-/Tabellen-Antworten",
+      "ursache": "arbeitsflaeche.js setzte die Karte zwischen Antwort und Leiste",
+      "fix": "Karte hinter die Leiste",
+      "sw": "v892"
+    },
+    {
+      "nr": 3,
+      "befund": "Nachrichten-Menue im Handy-Querformat 513 px bei 390 px Sicht",
+      "fix": "max-height calc(100dvh - 16px), scrollbar",
+      "sw": "v892"
+    },
+    {
+      "nr": 4,
+      "befund": "Platzhalter-Kontrast 4,26:1 (WCAG AA verfehlt)",
+      "fix": "0.78 -> 0.9 = 5,21:1",
+      "sw": "v892"
+    },
+    {
+      "nr": 5,
+      "befund": "Live auf Android gefunden: erste Zeile der ersten Nachricht verdeckt",
+      "ursache": ".mobil-kopfglas (fixed, 52 px, 92 % deckend) aus der Zeit mit 56-px-Polster",
+      "fix": "im Chat am Handy ausgeblendet, Code-Ansicht unveraendert; Regressionstest",
+      "sw": "v893"
+    },
+    {
+      "nr": 6,
+      "befund": "zeabur-dienste-zeigen.mjs HTTP 422 (Zeabur-API: Project.services ist Liste)",
+      "fix": "zweistufige Abfrage wie findeDienst()",
+      "commit": "01e43ff6"
+    }
+  ],
+  "commits": {
+    "arbeitszweig": [
+      "8ba85677",
+      "425aa2b2",
+      "01e43ff6",
+      "645ae4d2"
+    ],
+    "bauzweig": [
+      "1e03c0ac",
+      "c7d11e5f"
+    ],
+    "frontend": [
+      "23df738",
+      "5dd7551"
+    ]
+  },
+  "verifikation": {
+    "checkFrontend": "688 bestanden / 0 fehlgeschlagen (v893)",
+    "checkAll": "alle Einzelpruefungen gruen; schutz-echtheit vor Deploy erwartungsgemaess rot, nach Deploy OK (48 Dateien)",
+    "npmAudit": "0 Luecken",
+    "pruefsummenLive": "Quelle = smejj.com = api.smejj.com fuer alle ausgelieferten Dateien (v892, v893)",
+    "geraete": {
+      "ios": "Simulator iOS 26.5: iPhone 17e 390x699, iPhone 17 Pro 402x714, 17 Pro Max 440x796, iPad mini 744x1047 — ohne Befund",
+      "android": "Emulator Android 15, Chrome 124: Pixel 412x783 (live mit Betreiber-Konto: Testfrage beantwortet in 6 s, Menues im Bild), Tablet 1280x648 / 800x1128",
+      "web": "Chrome 152 live angemeldet 0 Konsolenfehler; Firefox 155 headless alle Menuefunktionen, xss 0"
+    },
+    "liveNachAbschluss": "17.09. 00:5x UTC: SW v895 (Medien-System einer Parallelsitzung, baut auf v893 auf) auf beiden Urspruengen, alle Fixes enthalten, Chrome angemeldet 0 Konsolenfehler"
+  },
+  "benchmarks": {
+    "ort": "GitHub-Actions-Runner (neutral), Lauf 35167352869 / 35167793323, Zweig messung/tempo-20260917",
+    "api": {
+      "health_warm_p95_ms": 58,
+      "health_kalt_p95_ms": 282,
+      "authMe_warm_p95_ms": 57,
+      "authMe_kalt_p95_ms": 164,
+      "budget_p95_ms": 300
+    },
+    "seite": {
+      "ttfb_kalt_p75_ms": 77,
+      "lcp_kalt_p75_ms": 252,
+      "cls": 0.001,
+      "inp_p75_ms": 16,
+      "lcpRender_warm_p75_ms": 176,
+      "pageWeight_kalt_kb": 332,
+      "startWeight_kalt_kb": 146
+    },
+    "abVergleich": "lokal gleich ausgeliefert: v893 start 512 / gesamt 912 KB, live-Stand start 503 / gesamt 913 KB (unkomprimiert) — keine Code-Verschlechterung; startWeight_kb haengt vom Messort ab (schnelle Leitung = mehr Dateien vor dem ersten Bild)",
+    "betreiberMac": "nicht belastbar: Ping 8.8.8.8 78-358 ms, Verbindung+TLS ~800 ms"
+  },
+  "rollback": {
+    "anker": [
+      "schutz-100-2026-09-17-v891*",
+      "schutz-100-2026-09-17-v892*",
+      "schutz-100-2026-09-17-v893*",
+      "schutz-100-2026-09-17-medien* (Parallelsitzung, aktueller Live-Stand)"
+    ],
+    "weg": "Anker-Inhalt als neuen Fast-Forward-Commit auf Frontend main und Bauzweig, SW hochzaehlen"
+  },
+  "zugaenge": {
+    "zeabur": "Betreiber: npx zeabur@latest auth login (Legacy-API-Key 401 -> Access-Token), zeabur-schluessel-suchen TRAEGT",
+    "codeberg": "Betreiber: Token nur smejj/smejj.com-app write:repository als GitHub-Secret CODEBERG_TOKEN; Lauf 35165814305 success; vorher per SSH vom Mac gespiegelt"
+  },
+  "offen": [
+    "api.smejj.com als direkt geoeffnete Oberflaeche: strengere Header-CSP (style-src 'self', microphone=()) — Rueckfallweg, smejj.com nicht betroffen",
+    "GitHub Pages ohne Header-Kontrolle (kein frame-ancestors)",
+    "Pins nur localStorage",
+    "nicht testbar: echte Geraete, Huawei/HMS, VoiceOver/TalkBack, aeltere iOS-Runtimes"
+  ],
+  "bericht": "docs/qa/endabnahme-a-z-2026-09-17.md",
+  "qualitaet": "alle gefundenen Fehler behoben und live nachgetestet; keine bekannten kritischen Fehler offen"
+}

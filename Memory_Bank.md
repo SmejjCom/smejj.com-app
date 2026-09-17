@@ -5,6 +5,33 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-09-17] ENDABNAHME A–Z: DIE ERSTE ZEILE MISST MAN AN DER ZEILE, NICHT AM KASTEN (job_endabnahme_a_z_20260917)
+
+Typ: Verifikation + Fixes. Capsule: `capsules/app/job_endabnahme_a_z_20260917/` (IDrive e2), Bericht `docs/qa/endabnahme-a-z-2026-09-17.md`.
+Entscheidung/Loesung: 6 Fehler behoben und live nachgetestet (SW v892/v893):
+- Menue-Knopf der ersten Nachricht unter dem Browser-Icon.
+- Doppelte Leiste durch die Arbeitsflaechen-Karte zwischen Antwort und Leiste.
+- Menue im Handy-Querformat ausserhalb.
+- Platzhalter-Kontrast 4,26 -> 5,21.
+- `.mobil-kopfglas` verdeckte die erste Zeile im Chat. Das war nur LIVE auf Android sichtbar; die Test-Messung "erste Nachricht top=7" war gruen.
+- `zeabur-dienste-zeigen` 422.
+
+Begruendung (Lehren):
+- (1) Layout-Pruefungen muessen per elementsFromPoint an der ersten TEXTZEILE messen, ob etwas darueber liegt — Kasten-Koordinaten sagen nichts ueber Ueberdeckung.
+- (2) Tempo nie vom Betreiber-Netz bewerten (Ping 78-358 ms): neutraler Messort ist ein einmaliger Lauf auf Zweig `messung/tempo-*` (oeffentliches Repo, kein Zeabur-Neubau).
+- (3) `startWeight_kb` haengt vom Messort ab; ueber Regression entscheidet nur ein A/B unter gleichen Bedingungen.
+- (4) Zeabur 401 = Legacy-Key: `npx zeabur@latest auth login` durch den Betreiber genuegt, kein Schluessel-Kopieren.
+- (5) Codeberg-Token braucht zusaetzlich "Bestimmte Repositorys"; ohne Token spiegelt `codeberg_spiegel_sync.sh lokal` per SSH vom Mac.
+
+Verifikation:
+- check:frontend 688/0; check:all-Einzelpruefungen gruen; npm audit 0.
+- Pruefsummen Quelle = smejj.com = api.smejj.com.
+- iOS-Simulator (17e, 17 Pro, 17 Pro Max, iPad mini), Android-Emulator (Pixel, Tablet, live mit Konto), Chrome/Firefox ohne Befund.
+- Neutral gemessen: API-p95 58 ms warm / 282 ms kalt, LCP 252 ms, CLS 0,001, INP 16 ms.
+- A/B v893 gegen v895 gleich schwer.
+- Codeberg-Action success (35165814305).
+- Anker schutz-100-2026-09-17-v891/v892/v893* und -medien* (Parallelsitzung, aktueller Live-Stand v895).
+
 ### [2026-09-15] 100 %-SCHUTZ AKTIVIERT — ANKER schutz-100-2026-09-15 (job_schutz_100_20260915)
 
 Betreiber-Wortlaut: "100 % Schutz aktivieren". Anker (annotierte Tags, per GitHub-Ruleset unlöschbar und unveränderlich
