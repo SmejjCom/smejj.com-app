@@ -61,6 +61,7 @@ import { handleTrainingCaptureRoute } from "../control-server/src/routes/trainin
 import { handleTrainingConsentRoute } from "../control-server/src/routes/trainingConsentRoutes.js";
 import { signGoogleAuthState, verifyGoogleAuthState, leseGoogleAuthState, verifyGoogleIdToken } from "./auth/googleAuth.js";
 import { createGoogleAuthHandlers } from "./auth/googleAuthRoutes.js";
+import { appleLoginConfigured } from "./auth/appleAuth.js";
 import { createAnmeldeProtokoll } from "../control-server/src/auth/anmeldeProtokoll.js";
 import { createExtraAuthRouter } from "./auth/extraAuthRoutes.js";
 import { mailerConfig } from "../control-server/src/auth/mailer.js";
@@ -249,7 +250,7 @@ const server = http.createServer(async (req, res) => {
         return json(res, 400, { error: error.message || "Google Login fehlgeschlagen." });
       }
     }
-    if (url.pathname.startsWith("/api/auth/github") || url.pathname.startsWith("/api/auth/magic-link") || url.pathname.startsWith("/api/billing/")) {
+    if (url.pathname.startsWith("/api/auth/github") || url.pathname.startsWith("/api/auth/apple") || url.pathname.startsWith("/api/auth/magic-link") || url.pathname.startsWith("/api/billing/")) {
       if (await routeExtraAuth(req, res, url)) return;
     }
     // Verlauf-Sync (Stufe 3): eigene Routen-Datei, damit dieser Verteiler
@@ -488,7 +489,7 @@ function handleAuthConfig(res) {
     clientId: config.googleClientId,
     allowedEmail: config.googleAllowedEmail,
     // Fail-closed-UX: nur konfigurierte Methoden werden im Frontend angeboten.
-    methods: { email: true, passkey: true, google: Boolean(config.googleClientId), github: Boolean(config.githubLoginClientId && config.githubLoginClientSecret), magicLink: Boolean(mailerConfig(process.env)), apple: false }
+    methods: { email: true, passkey: true, google: Boolean(config.googleClientId), github: Boolean(config.githubLoginClientId && config.githubLoginClientSecret), magicLink: Boolean(mailerConfig(process.env)), apple: appleLoginConfigured(process.env) }
   });
 }
 

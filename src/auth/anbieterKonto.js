@@ -35,14 +35,14 @@ function neueNutzerId() {
  * Stellt sicher, dass es zu einer vom Anbieter bestaetigten Adresse einen
  * Kontodatensatz gibt, und vermerkt die Bestaetigung.
  *
- * @param {{ email: string, name?: string, method: "google"|"github" }} anmeldung
+ * @param {{ email: string, name?: string, method: "google"|"github"|"apple" }} anmeldung
  * @returns {Promise<{ angelegt: boolean, bestaetigt: boolean, grund?: string }>}
  */
 export async function sichereAnbieterKonto(anmeldung, env = process.env, speicher = { getUserByEmail, putUser }) {
   const email = normalizeEmail(anmeldung?.email || "");
   const method = String(anmeldung?.method || "");
   if (!email) return { angelegt: false, bestaetigt: false, grund: "keine_adresse" };
-  if (method !== "google" && method !== "github") {
+  if (method !== "google" && method !== "github" && method !== "apple") {
     return { angelegt: false, bestaetigt: false, grund: "unbekannter_weg" };
   }
 

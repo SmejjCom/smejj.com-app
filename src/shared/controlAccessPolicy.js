@@ -96,6 +96,10 @@ const OEFFENTLICH_EXAKT = new Set([
   ROUTES.api.authGoogle,
   ROUTES.api.authGithub,
   ROUTES.api.authGithubCallback,
+  // Apple: Start per GET, Rueckkehr per POST-Formular von appleid.apple.com
+  // (Freigabe des Betreibers 19.09.2026, siehe security-lock-manifest.json).
+  ROUTES.api.authApple,
+  ROUTES.api.authAppleCallback,
   ROUTES.api.authMagicLinkRequest,
   ROUTES.api.authMagicLinkVerify,
   ROUTES.api.passkeyLoginOptions,
@@ -284,6 +288,10 @@ export function isSafeMutatingControlRequest(req, url) {
     : [];
   const allowed = [...selfOrigins, "https://smejj.com", "https://www.smejj.com"];
   if (url?.pathname === ROUTES.api.authGoogle) allowed.push("https://accounts.google.com");
+  // Apples form_post schickt den Browser mit Origin appleid.apple.com — NUR fuer
+  // diese eine Rueckkehr-Adresse zugelassen. Sie traegt keine Sitzung und prueft
+  // den signierten State selbst; ein fremder Origin bleibt an jeder anderen Route zu.
+  if (url?.pathname === ROUTES.api.authAppleCallback) allowed.push("https://appleid.apple.com");
   return isAllowedRequestOrigin(origin, allowed);
 }
 
