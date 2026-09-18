@@ -122,7 +122,7 @@ test("Schonfrist: Fenster zu gibt den Server-Chrome nach der Frist frei — frue
 
 test("Hauptmenue: haelt, was der Knopfname verspricht — und laesst den alten Griff drin", () => {
   const leer = hauptmenueEintraege({});
-  assert.deepEqual(leer.filter((e) => e.aktiv === false).map((e) => e.id), ["suche", "zoomPlus", "zoomMinus", "zoomNull", "adresseKopieren", "extern"]);
+  assert.deepEqual(leer.filter((e) => e.aktiv === false).map((e) => e.id), ["vor", "suche", "zoomPlus", "zoomMinus", "zoomNull", "adresseKopieren", "extern"]);
   assert.equal(leer.at(-1).id, "uebersicht", "der bisherige Klick (zur Uebersicht) bleibt erreichbar");
   const voll = hauptmenueEintraege({ hatSeite: true, zoom: 2, vollbild: true });
   assert.equal(voll.find((e) => e.id === "zoomPlus").aktiv, false, "bei 200 % ist Schluss");
@@ -190,4 +190,61 @@ test("Escape gehoert dem offenen Menue — das Fenster dahinter bleibt offen", (
   assert.match(quelle, /e\.stopImmediatePropagation\(\);\s*\n\s*schliesseMenue\(\);/);
   assert.match(quelle, /addEventListener\("keydown", tastenHaken, true\)/, "Einfangphase: VOR dem Escape-Haken von panel-backdrop.js");
   assert.match(quelle, /removeEventListener\("keydown", tastenHaken, true\)/, "mit demselben Schalter wieder entfernen, sonst bleibt der Haken haengen");
+});
+
+// --- A-bis-Z-Test der ganzen App, 19.09.2026 -----------------------------------
+import { haengeBrowserNachladerEin } from "../public/browser-nachladen.js";
+
+function nachladerBuehne() {
+  const klick = [];
+  const horcher = new Map();
+  const dokument = {
+    getElementById: () => ({ classList: { contains: () => false } }),
+    addEventListener: (art, fn) => { if (art === "click") klick.push(fn); }
+  };
+  const fenster = {
+    addEventListener: (art, fn) => { (horcher.get(art) || horcher.set(art, []).get(art)).push(fn); },
+    dispatchEvent: (e) => { (horcher.get(e.type) || []).forEach((fn) => fn(e)); return true; }
+  };
+  return { dokument, fenster, klick, horcher };
+}
+
+test("Nachlader: der Browser-Knopf der Seitenleiste laedt das Modul und klickt danach noch einmal (live war er tot)", async () => {
+  if (typeof globalThis.MutationObserver === "undefined") globalThis.MutationObserver = class { observe() {} disconnect() {} };
+  const { dokument, fenster, klick } = nachladerBuehne();
+  let geladen = 0;
+  haengeBrowserNachladerEin(dokument, fenster, async () => { geladen += 1; });
+  let nochmal = 0; let verhindert = 0;
+  const knopf = { click: () => { nochmal += 1; } };
+  const ereignis = { target: { closest: (s) => (s === "[data-browser-oeffnen]" ? knopf : null) }, preventDefault: () => { verhindert += 1; } };
+  klick.forEach((fn) => fn(ereignis));
+  await new Promise((r) => setTimeout(r, 5));
+  assert.deepEqual([geladen, nochmal, verhindert], [1, 1, 1], "laden, EINMAL nachklicken");
+  klick.forEach((fn) => fn(ereignis));
+  await new Promise((r) => setTimeout(r, 5));
+  assert.deepEqual([geladen, nochmal], [1, 1], "ist das Modul da, haelt sich der Nachlader heraus — browser-pane.js uebernimmt");
+});
+
+test("Nachlader: ein Browser-Auftrag aus dem Chat wird nach dem Laden nachgereicht statt zu verpuffen", async () => {
+  if (typeof globalThis.CustomEvent === "undefined") globalThis.CustomEvent = class { constructor(type, init) { this.type = type; this.detail = init?.detail; } };
+  const { dokument, fenster, horcher } = nachladerBuehne();
+  haengeBrowserNachladerEin(dokument, fenster, async () => {});
+  assert.ok(horcher.has("smejj:browser-request"), "ohne Horcher ging der erste Auftrag verloren");
+  const empfangen = [];
+  fenster.addEventListener("smejj:browser-request", (e) => empfangen.push(e.detail?.url));
+  fenster.dispatchEvent({ type: "smejj:browser-request", detail: { url: "https://example.com/" } });
+  await new Promise((r) => setTimeout(r, 5));
+  assert.deepEqual(empfangen, ["https://example.com/", "https://example.com/"], "einmal das Original, einmal nachgereicht fuer das frisch geladene Modul");
+});
+
+test("Handy: Kopfknoepfe des Browsers sind 44 px — nur fuer Finger, und was weicht, steht im Menue", () => {
+  const css = lies("public/browser-pane-chrome.css");
+  const block = css.slice(css.indexOf("@media (max-width: 680px) and (pointer: coarse)"));
+  assert.match(block, /--bp-control-size:\s*44px;/, "live gemessen am Pixel-Emulator: 22x22 px");
+  assert.match(block, /--bp-row-height:\s*48px;/);
+  assert.match(block, /\.bp-nav-forward,\s*\n\s*\.bp-toolbar \.bp-open-external \{\s*display:\s*none;/);
+  assert.match(block, /\.bp-address \{\s*font-size:\s*16px;/, "unter 16 px zoomt iOS beim Antippen hinein");
+  const ids = hauptmenueEintraege({ hatSeite: true, kannVor: true }).filter((e) => e.aktiv !== false).map((e) => e.id);
+  assert.ok(ids.includes("vor") && ids.includes("extern"), "Vorwaerts und extern bleiben ueber das Menue erreichbar");
+  assert.match(lies("public/browser-pane.css"), /--bp-control-size:\s*22px;/, "der Desktop behaelt die kompakte Leiste");
 });
