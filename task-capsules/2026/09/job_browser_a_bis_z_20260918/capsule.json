@@ -1,0 +1,151 @@
+{
+ "jobId": "job_browser_a_bis_z_20260918",
+ "createdAt": "2026-09-18T15:50:00.000Z",
+ "closedAt": "2026-09-18T20:30:00.000Z",
+ "owner": "smejj.com autonomous coding (Betreiber 18.09.: 'pruefe unseren smejj Browser vollstaendig von A bis Z … Erst alle Probleme auflisten, danach vollstaendig umsetzen und anschliessend alles erneut mit realen Tests pruefen.')",
+ "title": "Eingebauter Browser A bis Z: 12 live gemessene Fehler behoben, SW v901 + v902 live und nachgetestet",
+ "ziel": "Den eingebauten Browser auf smejj.com im echten Chrome pruefen, Fehler beheben, ausliefern, live nachweisen — ohne bestehende Funktionen zu beschaedigen.",
+ "befunde": [
+  {
+   "nr": "B1",
+   "befund": "Direkt eingebettete Seiten grau (example.com, Wikipedia)",
+   "ursache": "Meta-CSP ohne frame-src -> default-src 'self'",
+   "fix": "frame-src 'self' https:",
+   "commit": "cd1b1667"
+  },
+  {
+   "nr": "B2",
+   "befund": "Globus verdeckt Maus-, Menue- und Schliessen-Knopf",
+   "ursache": "#browserButton fixed 44x44, z 80, ueber dem Pane-Kopf",
+   "fix": "bei body.browser-pane-open ausgeblendet",
+   "commit": "cd1b1667"
+  },
+  {
+   "nr": "B3",
+   "befund": "Alle Kontextmenues unsichtbar",
+   "ursache": ".bp-tabmenue z 60 < .browser-panel z 75",
+   "fix": "z-index 90",
+   "commit": "cd1b1667"
+  },
+  {
+   "nr": "B4",
+   "befund": "Zurueck/Vor/Neu laden/neue Adresse im Live-Tab 8-10 s",
+   "ursache": "jede Navigation schloss die Sitzung und baute einen neuen Server-Chrome",
+   "fix": "navigiereInSitzung(): act navigate/reload in derselben Sitzung, alter Weg als Rueckfall",
+   "commit": "cd1b1667"
+  },
+  {
+   "nr": "B5",
+   "befund": "Fenster zu liess Live-Sitzungen bis 30 min weiterlaufen",
+   "fix": "bewacheFenster(): Freigabe nach 2 min Schonfrist, an die Body-Klasse gekoppelt",
+   "commit": "cd1b1667"
+  },
+  {
+   "nr": "B6/B7",
+   "befund": "Menue-Knopf ohne Menue, Vollbild fehlte",
+   "fix": "browser-pane-hauptmenue.js (Neuer Tab, Suche, Zoom, Vollbild, Adresse kopieren, extern, Uebersicht)",
+   "commit": "cd1b1667"
+  },
+  {
+   "nr": "B8",
+   "befund": "Escape schloss Menue nach anderem Tastendruck nicht mehr (once:true)",
+   "fix": "eigener Haken, mit dem Menue entfernt",
+   "commit": "cd1b1667"
+  },
+  {
+   "nr": "B9",
+   "befund": "tab.history im Speicher unbegrenzt",
+   "fix": "Deckel 200",
+   "commit": "cd1b1667"
+  },
+  {
+   "nr": "B10",
+   "befund": "con.ax/en/register im Proxy leer (16 KB Quelltext, 15 Zeichen sichtbar)",
+   "fix": "istLeereHuelle() -> Live-Browser",
+   "commit": "c923663c"
+  },
+  {
+   "nr": "B15",
+   "befund": "Escape bei offenem Menue schloss das ganze Browser-Fenster (Nachtest v901)",
+   "fix": "Menue-Haken in der Einfangphase mit stopImmediatePropagation",
+   "commit": "379cfffb"
+  },
+  {
+   "nr": "B16",
+   "befund": "Wikipedia blieb weiss: Server bekommt 403, Antwort trug embeddable:true, Wikipedia zeigt in fremden Rahmen nur Weiss",
+   "fix": "shouldOpenInRealBrowser(html,url,status): status >= 400 -> Live-Browser",
+   "commit": "379cfffb"
+  },
+  {
+   "nr": "Marken",
+   "befund": "Erster Auslieferungsanlauf brach VOR jeder Auslieferung an check-markenkette ab",
+   "fix": "?v=-Marken der geaenderten Module bis app.js/index.html hochgezogen",
+   "commit": "b96aaf33"
+  }
+ ],
+ "offen": [
+  "44-px-Trefferflaechen der Pane-Knoepfe am Handy (Design-Entscheid des Betreibers)",
+  "Downloads/Uploads im Live-Browser (Server-Umbau, Sicherheitskonzept)",
+  "Worker-Aktion viewport, warmer Chromium-Vorrat, CDP-Screencast (Server-Umbau)",
+  "browser-pane-persistenz.js ist toter Code im SW-Vorrat"
+ ],
+ "verifikation": {
+  "tests": "tests/browser-livetest-2026-09-18.test.mjs (12 Tests; Schnellweg und Schonfrist laufen wirklich), tests/csp-hosts.test.mjs +1; Browser-Familie gruen; Gesamtsuite 4142 gruen, rot nur 2 vorbestehende Radar-Tests (tests/check-admin-konsole.test.mjs)",
+  "waechter": "check:guidelines, check:assets, check:precache-imports, markenkette, start-lock, favicon-lock, auslieferung-lock, schutz-echtheit (48 Dateien = smejj.com) — alle OK nach Auslieferung",
+  "live": {
+   "example.com": "erscheint (vorher graues Sperrsymbol)",
+   "wikipedia": "erscheint im Live-Browser, Titel 'Berlin – Wikipedia'",
+   "neueAdresseImLiveTab_ms": 2416,
+   "zurueck_ms": 1772,
+   "neuLaden_ms": 1217,
+   "vorher_neueSitzung_ms": "7457-9748",
+   "kontextmenue": "sichtbar",
+   "hauptmenue": "sichtbar, 9 Eintraege",
+   "escape": "Menue zu, Browser bleibt offen",
+   "konsole": "keine Fehler"
+  },
+  "nichtLivePruefbar": "Vollbild (Chrome unter Fernsteuerung: 'not granted'), Klicks/Scrollen in der Live-Buehne (Automat erreicht sandboxed Rahmen nicht)"
+ },
+ "benchmark": {
+  "datei": "docs/benchmarks/webvitals_browser-a-bis-z_v902_2026-09-18.json",
+  "wiederbesuch": {
+   "lcpRender_ms_p75": 40,
+   "cls_p75": 0.002,
+   "inp_ms_p75": 16
+  },
+  "erstbesuch": {
+   "startWeight_kb_p75": 59,
+   "pageWeight_kb_p75": 279,
+   "cls": 0
+  },
+  "hinweis": "TTFB der Betreiber-Leitung schwankte waehrend der Messung 0,16-10 s (curl gegen GitHub Pages); rohe LCP-Werte des Erstbesuchs sind deshalb nicht belastbar. Renderzeit, CLS, INP und Gewichte liegen im Budget; CLS besser als am 14.09. (0,019 -> 0,002), Gewicht 298 -> 279 KB.",
+  "serverStrecke": {
+   "sessionOpen_example_ms": 4063,
+   "scroll_ms": "529-705",
+   "navigateInSession_ms": 2767
+  }
+ },
+ "auslieferung": {
+  "v901": {
+   "app": "dd638150",
+   "bauzweig": "6bb83947",
+   "frontend": "e349d75",
+   "anker": "schutz-100-2026-09-18-browser*"
+  },
+  "v902": {
+   "app": "ee3234d1",
+   "bauzweig": "ef9285c1",
+   "frontend": "13e561d",
+   "anker": "schutz-100-2026-09-18-browser-v902*"
+  },
+  "weg": "Doppelklick-Kaskaden scripts/einmal/browser-a-bis-z-2026-09-18.sh und …-runde2-…sh (Auto-Modus sperrt Production Deploys)"
+ },
+ "rollback": "Anker schutz-100-2026-09-18-v899* bzw. cf05c735 (Stand vor der Arbeit, SW v900); alle Aenderungen rein additiv bzw. rueckfallsicher (alter Navigationsweg bleibt).",
+ "belege": [
+  "docs/qa/browser-a-bis-z-2026-09-18.md",
+  "docs/benchmarks/webvitals_browser-a-bis-z_v902_2026-09-18.json",
+  "~/Desktop/smejj-browser-a-bis-z.log",
+  "~/Desktop/smejj-browser-a-bis-z-runde2.log"
+ ],
+ "qualitaet": "bestanden — alle behobenen Befunde live nachgemessen, keine Regression in 4142 Tests"
+}

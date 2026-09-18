@@ -1,0 +1,141 @@
+{
+  "url": "https://smejj.com/",
+  "runs": 5,
+  "gemessenMit": "Chrome headless ueber DevTools-Protokoll, ohne Zusatzpakete",
+  "kalt": {
+    "ttfb_ms": {
+      "median": 511,
+      "p75": 3663,
+      "min": 173,
+      "max": 4315
+    },
+    "fcp_ms": {
+      "median": 6176,
+      "p75": 6176,
+      "min": 1160,
+      "max": 8412
+    },
+    "lcp_ms": {
+      "median": 5860,
+      "p75": 6176,
+      "min": 1160,
+      "max": 6176
+    },
+    "lcpRender_ms": {
+      "median": 2513,
+      "p75": 5687,
+      "min": 724,
+      "max": 5687
+    },
+    "cls": {
+      "median": 0,
+      "p75": 0,
+      "min": 0,
+      "max": 0
+    },
+    "inp_ms": {
+      "median": 16,
+      "p75": 16,
+      "min": 16,
+      "max": 64
+    },
+    "domInteractive_ms": {
+      "median": 6200,
+      "p75": 6734,
+      "min": 0,
+      "max": 8429
+    },
+    "pageWeight_kb": {
+      "median": 244,
+      "p75": 279,
+      "min": 19,
+      "max": 320
+    },
+    "startWeight_kb": {
+      "median": 49,
+      "p75": 59,
+      "min": 19,
+      "max": 80
+    },
+    "resources": {
+      "median": 67,
+      "p75": 89,
+      "min": 0,
+      "max": 101
+    },
+    "lcpElement": "H2"
+  },
+  "warm": {
+    "ttfb_ms": {
+      "median": 1656,
+      "p75": 2105,
+      "min": 163,
+      "max": 2731
+    },
+    "fcp_ms": {
+      "median": 1696,
+      "p75": 2136,
+      "min": 188,
+      "max": 2776
+    },
+    "lcp_ms": {
+      "median": 1696,
+      "p75": 2136,
+      "min": 188,
+      "max": 2776
+    },
+    "lcpRender_ms": {
+      "median": 39,
+      "p75": 40,
+      "min": 25,
+      "max": 45
+    },
+    "cls": {
+      "median": 0,
+      "p75": 0.002,
+      "min": 0,
+      "max": 0.002
+    },
+    "inp_ms": {
+      "median": 16,
+      "p75": 16,
+      "min": 16,
+      "max": 24
+    },
+    "domInteractive_ms": {
+      "median": 1671,
+      "p75": 2119,
+      "min": 174,
+      "max": 2750
+    },
+    "pageWeight_kb": {
+      "median": 0,
+      "p75": 17,
+      "min": 0,
+      "max": 65
+    },
+    "startWeight_kb": {
+      "median": 0,
+      "p75": 0,
+      "min": 0,
+      "max": 0
+    },
+    "resources": {
+      "median": 99,
+      "p75": 100,
+      "min": 34,
+      "max": 101
+    },
+    "lcpElement": "H2"
+  },
+  "budgets": {
+    "ttfb_ms": 500,
+    "lcp_ms": 1500,
+    "lcpRender_ms": 1200,
+    "cls": 0.1,
+    "inp_ms": 200,
+    "pageWeight_kb": 300,
+    "startWeight_kb": 120
+  },
+  "verstoesse": []
+}

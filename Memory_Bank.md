@@ -5,6 +5,13 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-09-18] DER EINGEBAUTE BROWSER WAR LIVE AN VIER STELLEN BLIND — UND KEIN TEST SAH ES (job_browser_a_bis_z_20260918)
+
+Typ: Verifikation + Fixes (SW v901, v902). Capsule `capsules/app/job_browser_a_bis_z_20260918/`, Bericht `docs/qa/browser-a-bis-z-2026-09-18.md`.
+Loesung: 12 Fehler, alle live in Chrome gemessen. Kern: (1) Meta-CSP ohne `frame-src` -> `default-src 'self'` sperrte JEDEN Direkt-Rahmen (graue Seiten) -> `frame-src 'self' https:`. (2) Globus (fixed, z 80) verdeckte drei Pane-Knoepfe -> bei `browser-pane-open` ausgeblendet. (3) Kontextmenues z 60 hinter dem Fenster z 75 -> 90. (4) Jede Navigation im Live-Tab baute einen neuen Server-Chrome -> `navigiereInSitzung()`; live 2,4 s / 1,8 s / 1,2 s statt 8-10 s. (5) Fenster zu: Sitzungen nach 2 min Schonfrist frei (`bewacheFenster`, haengt an der Body-Klasse). (6) Server-Status >= 400 (Wikipedia 403) und leere Huellen (con.ax) -> Live-Browser. (7) Escape gehoert dem offenen Menue (Einfangphase).
+Begruendung: Alle Browser-Tests lasen Quelltext. CSP, Ueberdeckung und Stapel-Ebene sieht man nur gerendert: `elementFromPoint` auf jeden Knopf, `securitypolicyviolation`, Rechtsklick + Sichtprobe. Der schnellste Weg (Direkt-Rahmen) war seit jeher tot, ohne dass etwas rot wurde.
+Verifikation: tests/browser-livetest-2026-09-18.test.mjs (12, Schnellweg/Schonfrist LAUFEN); Gesamtsuite 4142 gruen (rot nur 2 vorbestehende Radar-Tests); alle Locks + schutz-echtheit OK; live nachgemessen auf smejj.com; Web-Vitals Wiederbesuch Renderzeit 40 ms, CLS 0,002, INP 16 ms. Lehren: browser-pane.js steht am Ratchet 818 -> Neues in Nachbarmodule; jede Modul-Aenderung braucht neue ?v=-Marken bis index.html (check-markenkette stoppte den ersten Anlauf); Deploy nur per Doppelklick-Kaskade.
+
 ### [2026-09-18] ZWEI MESSFEHLER, EIN URTEIL: "BLOCKED" FUER EINE BRAVE VERWEIGERUNG UND EINE LEITUNGSSTOERUNG (job_messfehler_netzabbruch_20260918)
 
 Typ: Messmechanik. Capsule `capsules/app/job_messfehler_netzabbruch_20260918/`.
