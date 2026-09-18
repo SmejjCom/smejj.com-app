@@ -37,7 +37,9 @@ dem Server, ein JPEG je Aktion über HTTP — kein Videostrom).
 | B7 | **Vollbild fehlte** ganz. | mittel | neu: Fullscreen API übers Menü; Menüs erscheinen auch im Vollbild |
 | B8 | Escape schloss ein Menü nicht mehr, sobald vorher irgendeine andere Taste gedrückt war (`once:true`). | klein | behoben |
 | B9 | `tab.history` wuchs im Speicher unbegrenzt. | klein | behoben: Deckel 200 |
-| B10 | con.ax/en/register bleibt im Proxy-Modus **leer** (Seite baut sich per Skript auf, Proxy entfernt Skripte). | mittel | offen — Vorschlag V1 |
+| B10 | con.ax/en/register bleibt im Proxy-Modus **leer** (16 KB Quelltext, 15 Zeichen sichtbar — Proxy entfernt Skripte). | mittel | behoben: `istLeereHuelle()` → Live-Browser |
+| B15 | Escape schloss bei offenem Menü auch das ganze Browser-Fenster (panel-backdrop.js hört auf dasselbe Escape). Gefunden im Nachtest v901. | mittel | behoben v902: Menü-Haken in der Einfangphase mit Stopp |
+| B16 | de.wikipedia.org blieb nach dem CSP-Fix **weiß**: Wikimedia weist unseren Server mit 403 ab, Antwort trug trotzdem `embeddable:true`; Wikipedia zeigt in jedem fremden Rahmen nur Weiß (auch ohne Sandbox gemessen). | hoch | behoben v902: Server-Status ≥ 400 → Live-Browser |
 | B11 | Bedienknöpfe am Handy 22×22 px (Hausregel: 44 px). | mittel | offen — Vorschlag V2 |
 | B12 | Live-Browser: **kein Download, kein Upload** (Server kennt beides nicht). | mittel | offen — Vorschlag V3 |
 | B13 | Größenänderung des Fensters im Live-Tab baut eine neue Sitzung (9 s) statt den Viewport zu ändern. | klein | offen — Vorschlag V4 |
@@ -66,7 +68,6 @@ Fehlt weiter: Downloads/Uploads im Live-Browser, Drucken, Lesemodus, Videostrom 
 
 ## Vorschläge (nicht umgesetzt — brauchen Server-Umbau oder Design-Entscheid)
 
-- V1 Proxy-Antwort mit fast leerem Text → automatisch Live-Browser.
 - V2 Trefferflächen der Panel-Knöpfe am Handy auf 44 px (unsichtbar vergrößert).
 - V3 Downloads/Uploads im Live-Browser (Größengrenze, Virenprüfung, Ablage in smejjCloud).
 - V4 Worker-Aktion `viewport` statt neuer Sitzung; warmer Chromium-Vorrat (Start 9 s → ~2 s);
@@ -77,3 +78,28 @@ Fehlt weiter: Downloads/Uploads im Live-Browser, Drucken, Lesemodus, Videostrom 
 `tests/browser-livetest-2026-09-18.test.mjs` (9 Tests, Schnellweg und Schonfrist laufen wirklich),
 `tests/csp-hosts.test.mjs` (+1). Browser-Familie 243/243 grün, Gesamtsuite 4139/4143 — rot sind
 die zwei Lock-Tests bis zum Stempel und zwei Radar-Tests, die schon vorher rot waren.
+
+## Live-Nachtest nach der Auslieferung (18.09., Chrome, smejj.com)
+
+Ausgeliefert in zwei Runden per Doppelklick-Kaskade: **SW v901** (Frontend e349d75, Bauzweig 6bb83947,
+Anker `schutz-100-2026-09-18-browser*`) und **SW v902** (Frontend 13e561d, Bauzweig ef9285c1, App ee3234d1,
+Anker `schutz-100-2026-09-18-browser-v902*`). Alle ausgelieferten Dateien live byte-gleich nachgewiesen.
+Der erste Anlauf brach VOR jeder Auslieferung an check-markenkette ab (vier Module ohne neue ?v=-Marke) — geheilt.
+
+| Prüfpunkt | Ergebnis live |
+|---|---|
+| example.com (Direkt-Rahmen) | erscheint — vorher graues „blockiert"-Symbol |
+| de.wikipedia.org/wiki/Berlin | erscheint im Live-Browser, Titel „Berlin – Wikipedia" — vorher grau, dann weiß |
+| Neue Adresse im Live-Tab | **ein** Aufruf `session/act`, 2,4 s — vorher neue Sitzung 7,5–9,7 s |
+| Zurück im Live-Tab | 1,8 s, „Vorwärts" danach aktiv |
+| Neu laden im Live-Tab | 1,2 s |
+| Globus bei offenem Browser | ausgeblendet; „Maus beauftragen", ≡ und ✕ per `elementFromPoint` frei |
+| Tab-Kontextmenü (Rechtsklick) | sichtbar, 5 Einträge — vorher hinter dem Fenster |
+| Hauptmenü ≡ per echtem Klick | sichtbar, 9 Einträge |
+| Escape bei offenem Menü | Menü zu, Browser bleibt offen |
+| Konsole | keine Fehler |
+| Handybreite 375 px (lokale Pages-Kopie) | kein Überlauf, alle Kopfknöpfe frei, Menü im Fenster |
+
+Nicht live bestätigbar: **Vollbild** (Chrome verweigert es unter Fernsteuerung mit „not granted"; der Klick
+meldet das jetzt) und Klicks/Scrollen IN der Live-Bühne (der Chrome-Automat erreicht sandboxed Rahmen nicht).
+Hinweis zur Messung: das gewöhnliche Bildschirmfoto des Automaten zeigt fremde Rahmen weiß — die Zoom-Aufnahme zeigt sie richtig.
