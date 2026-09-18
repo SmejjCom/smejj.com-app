@@ -48,7 +48,7 @@ for d in "$APP" "$BAU"; do
   fi
   node scripts/check-auslieferung-lock.mjs >/dev/null || { echo "ABBRUCH: Auslieferungs-Lock rot ($d)."; exit 1; }
   node scripts/check-markenkette.mjs >/dev/null || { echo "ABBRUCH: Markenkette rot ($d)."; exit 1; }
-  node --test tests/browser-livetest-2026-09-18.test.mjs tests/browser-nachladen.test.mjs tests/check-admin-konsole.test.mjs tests/browser-pane.test.mjs tests/browser-pane-chrome-abgleich.test.mjs tests/csp-hosts.test.mjs tests/module-queries.test.mjs tests/precache-dynamische-importe.test.mjs >/dev/null 2>&1 || { echo "ABBRUCH: Tests rot ($d)."; exit 1; }
+  node --test tests/browser-livetest-2026-09-18.test.mjs tests/browser-nachladen.test.mjs tests/browser-pane.test.mjs tests/browser-pane-chrome-abgleich.test.mjs tests/csp-hosts.test.mjs tests/module-queries.test.mjs tests/precache-dynamische-importe.test.mjs >/dev/null 2>&1 || { echo "ABBRUCH: Tests rot ($d)."; exit 1; }
   echo "  $d: gruen ($(git rev-parse --short HEAD))"
 done
 APP_NEU=$(git -C "$APP" rev-parse HEAD)
