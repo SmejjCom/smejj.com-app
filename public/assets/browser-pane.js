@@ -45,6 +45,7 @@ import {
   shouldOpenInRealBrowser, shouldPreferRealBrowserUrl, shortHost
 } from "./browser-pane-adressen.js?v=browser-pane-20260820-2";
 import { applyZoom, baueZoomHaken } from "./browser-pane-zoom.js?v=1";
+import { verdrahteHauptmenue } from "./browser-pane-hauptmenue.js?v=1";
 // E2E-Pruefung 14.09.2026: fehlte — Rechtsklick auf Zurueck/Vor warf ReferenceError.
 import { zeigeVerlaufMenue } from "./browser-pane-menue.js?v=browser-pane-20260709-2";
 // Der Zoom lebt in browser-pane-zoom.js; hier nur seine drei Anschluesse.
@@ -139,7 +140,7 @@ const sessionHooks = {
 // Fern-Browser-Wege (Live-Session, Remote-Worker, "echter Browser"-Karte)
 // liegen seit 2026-08-19 in browser-pane-fernwege.js — mit ihnen stand diese
 // Datei ueber der 800-Zeilen-Grenze. Zustandsnahes kommt als Baustein hinein.
-const { tryLiveBrowser, tryRemoteBrowser, echterBrowserWeg, remoteBrowserViewport } = baueFernwege({
+const { tryLiveBrowser, navigiereInSitzung, tryRemoteBrowser, echterBrowserWeg, remoteBrowserViewport } = baueFernwege({
   sessionClient,
   refs,
   routes: CLIENT_ROUTES,
@@ -338,7 +339,7 @@ function mountOnce() {
     // Sitzung mitten im Lauf verloren? Die Maus baut sie hier neu auf.
     erneuere: async () => { const t = activeTab(); if (!t?.url) return false; return tryLiveBrowser(t, t.url, { push: false }); }
   });
-  refs.menu.addEventListener("click", backToMenu);
+  verdrahteHauptmenue({ knopf: refs.menu, flaeche: document.getElementById("browserPanel"), activeTab, addTab, oeffneSuche: () => suche?.oeffne(), zurUebersicht: backToMenu, nachZoom: () => { render(); schedulePersist(); }, zeigeHinweis: showHint });
   refs.close.addEventListener("click", closePane);
 
   // Zoom wie in Chrome: Strg/Cmd mit +, - oder 0 (50–200 %).
@@ -362,6 +363,7 @@ function mountOnce() {
   }
 
   restoreTabs();
+  sessionClient.bewacheFenster(() => (mausLaeuft() ? [] : state.tabs)); // Fenster zu: Server-Chrome nach Schonfrist freigeben
 }
 
 // Enter in der Adressleiste: navigieren und den Fokus wie Chrome an die Seite
@@ -472,13 +474,14 @@ function switchTab(delta) {
 
 export function commitHistory(tab, url, push) {
   if (!push) return;
-  tab.history = tab.history.slice(0, tab.historyIndex + 1);
-  tab.history.push(url);
+  // Deckel 200: der Verlauf wuchs im Speicher unbegrenzt (gespeichert werden ohnehin nur 50).
+  tab.history = [...tab.history.slice(0, tab.historyIndex + 1), url].slice(-200);
   tab.historyIndex = tab.history.length - 1;
 }
 
 async function navigate(tab, url, { push = true } = {}) {
-  // Neue Navigation beendet eine bestehende Live-Session dieses Tabs.
+  // Live-Tab: in DERSELBEN Sitzung weiter (2,8 s statt 9 s) — sonst endet sie hier.
+  if (await navigiereInSitzung(tab, url, { push })) return;
   if (tab.sessionId) { sessionClient.close(tab.sessionId); tab.sessionId = ""; }
   tab.status = "loading";
   tab.url = url;

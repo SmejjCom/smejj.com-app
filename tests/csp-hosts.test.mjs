@@ -72,3 +72,19 @@ test("jeder erlaubte BYOK-Host steht in connect-src", () => {
       `BYOK-Host ${host} aus securityPolicy.js fehlt in der connect-src der CSP.`);
   }
 });
+
+// BEFUND 2026-09-18 (Live-Test des eingebauten Browsers in Chrome): example.com
+// und de.wikipedia.org blieben grau mit Chromes "blockiert"-Symbol. Der Server
+// meldete beide als einbettbar, browser-pane.js setzte sie als Direkt-iframe —
+// und die EIGENE Meta-CSP sperrte ihn: ohne frame-src greift default-src 'self',
+// fremde Rahmen sind damit verboten. Genau der schnellste Weg des Browsers
+// (native Seite, natives Scrollen, keine Serverlast) war live tot.
+// https: statt *: kein http-Rahmen, kein data:/blob:-Rahmen. Der Rahmen selbst
+// bleibt sandboxed (browser-pane.js, setFrame) und bekommt kein allow-Attribut —
+// Kamera, Mikrofon und Standort sind fuer fremde Rahmen damit weiter gesperrt.
+test("die CSP erlaubt dem eingebauten Browser https-Rahmen — und nur die", () => {
+  const csp = cspMatch[1];
+  const frameSrc = csp.split(";").map((t) => t.trim()).find((t) => t.startsWith("frame-src "));
+  assert.ok(frameSrc, "frame-src fehlt — dann greift default-src 'self' und jede direkt eingebettete Seite bleibt grau.");
+  assert.deepEqual(frameSrc.split(/\s+/).slice(1).sort(), ["'self'", "https:"]);
+});
