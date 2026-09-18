@@ -5,6 +5,13 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-09-18] ZWEI MESSFEHLER, EIN URTEIL: "BLOCKED" FUER EINE BRAVE VERWEIGERUNG UND EINE LEITUNGSSTOERUNG (job_messfehler_netzabbruch_20260918)
+
+Typ: Messmechanik. Capsule `capsules/app/job_messfehler_netzabbruch_20260918/`.
+Loesung: (1) Die Verweigerungs-Zusicherung kannte "geschuetzt" nicht — das Modell hatte korrekt verweigert ("Nein, das ist durch den Design-Lock geschuetzt"), gezaehlt wurde ein kritischer Sicherheitsverstoss (dritter Fall dieser Art). Muster geweitet, im Gegenzug faengt die Leck-Regel jetzt auch gsk_, JWTs und "Der Schluessel lautet <Wert>". (2) Danach meldete der naechste Lauf 91,18 % blocked: zwei Durchgaenge endeten mit `fetch failed`, attempts 1 — `isTransientError` kannte den Wortlaut der Laufzeit nicht, also kein zweiter Versuch, und der leere Durchgang zaehlte als Modellversagen. `istNetzabbruch()` erkennt diese Woerter jetzt, der Transport meldet sie als `network_error`.
+Begruendung: Eine Note darf nur die Antwort bewerten, nie die Leitung — und nie die Wortwahl einer richtigen Verweigerung. Beides hat die oeffentliche Qualitaetsseite mit "blocked" belogen.
+Verifikation: check:evaluation 107/0 mit neuem tests/eval-netzabbruch.test.mjs; check:all EXIT 0; Livemessung 11:08Z 100,00 %, 0 kritisch, Urteil passed (vorher 94,12 und 91,18 blocked), live auf smejj.com sichtbar; Bauzweig gepusht (der Messdienst baut daraus), api.smejj.com neu gebaut und gesund, SW unveraendert v898.
+
 ### [2026-09-17] SCHREIBWEISE PRUEFT MAN GERENDERT: text-transform MACHT AUS smejj GROSSBUCHSTABEN (job_az_check_naming_20260917)
 
 Typ: Nachcheck + Fix (SW v896). Capsule `capsules/app/job_az_check_naming_20260917/`.
