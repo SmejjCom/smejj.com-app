@@ -1,17 +1,17 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-18T22:37:32.699Z",
-  "confirmation": "Betreiber 18.09.2026 schriftlich im Chat: 'Oeffne https://smejj.com/ im Chrome-Browser und pruefe unseren smejj Browser vollstaendig von A bis Z. … Erst alle Probleme und Verbesserungspunkte auflisten, danach vollstaendig umsetzen und anschliessend alles erneut mit realen Tests pruefen. Keine funktionierende bestehende Funktion darf dabei beschaedigt werden.' Umsetzung: CSP frame-src https:, Globus bei offenem Browser ausgeblendet, Menue-Ebene 90, Schnellweg in derselben Live-Sitzung, Schonfrist fuer Server-Sitzungen, Hauptmenue mit Vollbild, SW smejj-shell-v903 (Runde 3 nach dem A-bis-Z-Test der ganzen App am 19.09.: Nachlader fuer den Browser-Knopf der Seitenleiste, 44-px-Kopfknoepfe am Handy). Betreiber dazu am 18.09. schriftlich: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Per Doppelklick ausgeloest.",
+  "frozenAt": "2026-09-18T23:02:24.189Z",
+  "confirmation": "Betreiber 18.09.2026 schriftlich im Chat: 'Oeffne https://smejj.com/ im Chrome-Browser und pruefe unseren smejj Browser vollstaendig von A bis Z. … Erst alle Probleme und Verbesserungspunkte auflisten, danach vollstaendig umsetzen und anschliessend alles erneut mit realen Tests pruefen. Keine funktionierende bestehende Funktion darf dabei beschaedigt werden.' Umsetzung: CSP frame-src https:, Globus bei offenem Browser ausgeblendet, Menue-Ebene 90, Schnellweg in derselben Live-Sitzung, Schonfrist fuer Server-Sitzungen, Hauptmenue mit Vollbild, SW smejj-shell-v904 (Runde 4: Nachlader haelt den Klick ganz an; Betreiber 19.09. schriftlich: 'Sprachwelle. Ganz oben rechte Seite. X soll ohne Hintergrund sein. Transparent.'). Betreiber dazu am 18.09. schriftlich: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Per Doppelklick ausgeloest.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "8bf63cd450d026f5fbefafad768380c3dd85d5f61657d04b474780f243998202",
+    "public/index.html": "1457e2a1220ef034a72a6962dc754f3622891c1af75e9574c33341d0f6f6437e",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
-    "public/start-styles.css": "1827d395fd020fa65c7a0ac1f6b5c92615c23cc0a93854d4b01c1bbb93dc2ce9",
+    "public/start-styles.css": "122323d76ba5fae79ad0b8666820eaf74dc9ef77b99ab9251a32f08cfe13f141",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "10ba77e36d5b6e57b90245a559b2451db1ec256ff9d5aa8004677c9236a76b59",
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
-    "public/composer-tools.css": "f8d1dd861c8168a7baf59d0dbc7a0210a6f5f0cbbd494d887f2f801c195473ad",
+    "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "a2de84280465570316b3062061a6e9359c953d35f4d02a719975b2b28afb9b8c",
     "public/app.js": "98c2ddba975df2f9436059f587d764abbdf93806c4fe041c96ad90320d1cdf1d",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "614fb4fbb8f157afe9f34868aaac819a262376d0222a049a13b1fd1cb2dfe9fc",
+    "public/sw.js": "ca76877a9b7c722ef3460ed0177e8e4efa233e330fa230a9fe9617d5f5e522a2",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
