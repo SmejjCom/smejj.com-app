@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-17T21:50:30.609Z",
-  "confirmation": "Betreiber 18.09.2026 im Chat: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Wurzelursache des schwarzen Balkens behoben: Landeseite und Anmeldeseiten tragen jetzt apple-mobile-web-app-status-bar-style black-translucent, SW v898.",
+  "frozenAt": "2026-09-18T14:55:35.393Z",
+  "confirmation": "Wenn du Fehler findest, behebe sie sofort, deploye erneut und teste live weiter, bis alles stabil, sicher und zuverlaessig funktioniert. (Betreiber 18.09.2026 — Offline-Band-Fix, SW v899, Bauzweig)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "04c063c2baa35c98471a81f9ba612991d469c8416759d7111c99dce7fd6aefc2",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "cc34bfc8df63227eb8c6a6be7ee7289059fd21cdb2ac747d8be965d7dc0e829e",
+    "public/sw.js": "85972954912801467bc459a5f1b5c4d248d07b04670d995e50b3d2ffb0aa0a0e",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
