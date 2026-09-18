@@ -91,9 +91,9 @@ und erneut „Zum Home-Bildschirm" hinzufuegen. Danach beim zweiten Start ist v8
 
 check:frontend 695/695, check:voice gruen, check:markenkette, check:auslieferung-lock,
 check:precache-imports, check:modul-syntax, check:guidelines, assets-sync gruen.
-check:start-lock ist bis zum Stempel im `.command` erwartbar rot. Vorbestehend rot und
-nicht Teil dieses Auftrags: `tests/mobil-dock.test.mjs` „Antworten tragen dieselben
-Menuepunkte" (auch im sauberen Medien-Worktree rot).
+check:start-lock ist bis zum Stempel im `.command` erwartbar rot.
+Vorbestehend rot war `tests/mobil-dock.test.mjs` „Antworten tragen dieselben Menuepunkte"
+(auch im sauberen Medien-Worktree) — am 18.09. behoben, siehe Nachtrag Abschnitt 6.
 
 ## Auslieferung
 
@@ -196,3 +196,41 @@ Codeberg-Sicherung angestoßen.
 Das alte App-Symbol auf dem iPhone trägt den alten Balken weiterhin — der Wert ist beim
 Installieren eingebrannt und ändert sich nie. Einmal löschen und smejj.com neu „Zum
 Home-Bildschirm" hinzufügen; ab dann ist es Vollbild. Neue Nutzer bekommen es sofort richtig.
+
+## 6. Nachtrag 18.09. — der letzte rote Test
+
+Bei der Abschlussfrage des Betreibers („bist du 100 % sicher fertig?") fiel der letzte rote
+Test auf: `tests/mobil-dock.test.mjs` „Antworten tragen dieselben Menuepunkte". Er war seit
+dem 16.09. rot und stammt nicht aus dieser Arbeit.
+
+**Ursache:** Der Test las den Quelltext von `chat-actions-menu.js` als Zeichenkette und suchte
+`copy`/`speak`/`regen` in der Konstante `MENU_KOPF.assistant`. Am 16.09. wanderten Kopieren und
+Vorlesen von dort in die `KACHELN` (die vier Kacheln oben im Menue, fuer beide Rollen). Die
+Zusage hielt also die ganze Zeit — `menuItemsFor("assistant")` liefert
+`copy, share, speak, pin, reply, quote, forward, translate, select-text, regen, copy-plain,
+fork, remove` — nur der Test schaute an der alten Stelle.
+
+**Fix:** Der Test ruft jetzt die echte Schnittstelle `menuItemsFor()` auf, wie es
+`tests/chat-message-actions.test.mjs` schon tut. Damit haelt er die Zusage fest, egal wo die
+Punkte im Code stehen. 22/22 gruen.
+
+**Lehre:** Tests, die Quelltext als Zeichenkette absuchen, werden bei jeder Umstellung falsch
+rot oder — schlimmer — falsch gruen. Wo es eine exportierte Funktion gibt, diese pruefen.
+
+**Endstand 18.09.:** check:frontend 695/0, voice 20/0, platform 7/0, users 32/0, passkey 7/0,
+abuse 7/0; alle elf Sperren und Waechter gruen (auch schutz-echtheit gegen die Live-Seite).
+Arbeitszweig a66132b5, Bauzweig dffd9168, Frontend f30765f, Codeberg-Lauf 35286763896 gruen.
+
+**Geraete gegen LIVE v898:** iPhone-17-Pro-Simulator, installierte App im Kaltstart — Vollbild
+ohne Balken (Webclip `LegacyBlackTranslucent`, `FullScreen = true`). Android-Emulator,
+angemeldet — „Hauptstadt von Japan" → „Tokio" in 4,0 s, Diktat viermal an/aus, Menue 13 Punkte
+im Bild mit Kopieren und Vorlesen, null Konsolenfehler, nur Cache v898.
+
+**Ehrlich nicht pruefbar:** Diktat mit echter Stimme (Simulator und Emulator haben keine echte
+Tonaufnahme mit Spracherkennung; ersatzweise 11 Logiktests und viermal Umschalten) und der
+angemeldete Chat INNERHALB der iOS-App auf live (keine Zugangsdaten; ersatzweise das
+Chat-Layout mit derselben Fassung ueber die Test-Kopie und der angemeldete Live-Chat auf Android).
+
+**Falle fuer spaeter:** Im temporaeren Bau-Worktree ohne `node_modules` faellt
+`tests/branding-presentation.test.mjs` („byte-reproducible") mit
+`ERR_MODULE_NOT_FOUND @resvg/resvg-js` — kein Codefehler, nur eine fehlende Abhaengigkeit dort.
