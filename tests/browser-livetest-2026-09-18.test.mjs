@@ -176,3 +176,18 @@ test("Leere Huelle: skriptgebaute Seiten gehen in den echten Browser statt als l
   assert.equal(istLeereHuelle(""), false);
   assert.equal(istLeereHuelle("<html><body>normale Seite</body></html>"), false, "winzige Seiten sind keine Huelle");
 });
+
+test("Server sah nur eine Fehlerseite (Wikipedia: 403): der echte Browser entscheidet, nicht der Direkt-Rahmen", () => {
+  const fehlerseite = "<html><head><title>Wikimedia Error</title></head><body><h1>Error</h1><p>Our servers are currently under maintenance or experiencing a technical issue.</p></body></html>";
+  assert.equal(shouldOpenInRealBrowser(fehlerseite, "https://de.wikipedia.org/wiki/Berlin", 403), true);
+  assert.equal(shouldOpenInRealBrowser(fehlerseite, "https://de.wikipedia.org/wiki/Berlin", 200), false);
+  assert.equal(shouldOpenInRealBrowser(fehlerseite, "https://de.wikipedia.org/wiki/Berlin"), false, "ohne Status bleibt alles wie bisher");
+  assert.match(lies("public/browser-pane.js"), /shouldOpenInRealBrowser\(data\.html, finalUrl, data\.status\)/);
+});
+
+test("Escape gehoert dem offenen Menue — das Fenster dahinter bleibt offen", () => {
+  const quelle = lies("public/browser-pane-menue.js");
+  assert.match(quelle, /e\.stopImmediatePropagation\(\);\s*\n\s*schliesseMenue\(\);/);
+  assert.match(quelle, /addEventListener\("keydown", tastenHaken, true\)/, "Einfangphase: VOR dem Escape-Haken von panel-backdrop.js");
+  assert.match(quelle, /removeEventListener\("keydown", tastenHaken, true\)/, "mit demselben Schalter wieder entfernen, sonst bleibt der Haken haengen");
+});
