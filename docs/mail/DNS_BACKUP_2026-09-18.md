@@ -95,3 +95,19 @@ sind die offiziellen von GitHub Pages, geprüft per `dig AAAA smejjcom.github.io
 **Wichtig für später:** Wechselt einer der Dienste den Zertifikat-Aussteller (z. B. Zeabur auf
 eine andere CA), muss der CAA-Eintrag erweitert werden — sonst schlägt die Zertifikats-Erneuerung
 fehl. Heute stellen beide über Let's Encrypt aus.
+
+## Betreiber-Entscheidung 18.09.2026: DMARC bleibt auf p=none
+
+Dem Betreiber wurden drei Wege vorgelegt: (1) Google Workspace (~6 €/Monat, eigener DKIM,
+Absender bleibt s@smejj.com, danach DMARC scharf), (2) kostenlos über smejjcom@gmail.com
+versenden mit Antwortadresse s@smejj.com und danach DMARC scharf, (3) alles so lassen.
+
+**Gewählt: (3) alles so lassen.** Damit gilt:
+- Absender bleibt `s@smejj.com` über das kostenlose Gmail „Senden als".
+- `_dmarc.smejj.com` bleibt `v=DMARC1; p=none; rua=mailto:s@smejj.com` — Berichte laufen weiter,
+  abgewiesen wird nichts.
+- Bekanntes Restrisiko, bewusst getragen: Fremde können Mails mit Absender @smejj.com fälschen,
+  ohne dass empfangende Postfächer sie deshalb abweisen.
+
+Diese Zeile ist die schriftliche Freigabe für den Zustand. Keine spätere Sitzung stellt DMARC
+schärfer, ohne dass der Betreiber das ausdrücklich neu entscheidet.
