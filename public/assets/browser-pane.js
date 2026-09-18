@@ -12,7 +12,7 @@
 // abweichende Spezifizierer liess config.js ein zweites Mal laden — zwei Modul-
 // instanzen mit getrennten CLIENT_ROUTES.
 import { CLIENT_ROUTES } from "./config.js";
-import { baueFernwege } from "./browser-pane-fernwege.js?v=browser-pane-20260918-1";
+import { baueFernwege } from "./browser-pane-fernwege.js?v=browser-pane-20260918-2";
 import {
   buildExternalFallbackHtml,
   buildLiveBrowserHtml,
@@ -43,9 +43,9 @@ import { buildErrorPageHtml, buildPaneShellHtml } from "./browser-pane-render.js
 import {
   clampZoom, clampViewport, normalizeAddress, normalizeAgentBrowserUrl,
   shouldOpenInRealBrowser, shouldPreferRealBrowserUrl, shortHost
-} from "./browser-pane-adressen.js?v=browser-pane-20260820-2";
-import { applyZoom, baueZoomHaken } from "./browser-pane-zoom.js?v=1";
-import { verdrahteHauptmenue } from "./browser-pane-hauptmenue.js?v=1";
+} from "./browser-pane-adressen.js?v=browser-pane-20260820-3";
+import { applyZoom, baueZoomHaken } from "./browser-pane-zoom.js?v=2";
+import { verdrahteHauptmenue } from "./browser-pane-hauptmenue.js?v=2";
 // E2E-Pruefung 14.09.2026: fehlte — Rechtsklick auf Zurueck/Vor warf ReferenceError.
 import { zeigeVerlaufMenue } from "./browser-pane-menue.js?v=browser-pane-20260918-1";
 // Der Zoom lebt in browser-pane-zoom.js; hier nur seine drei Anschluesse.
