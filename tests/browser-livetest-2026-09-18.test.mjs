@@ -216,10 +216,12 @@ test("Nachlader: der Browser-Knopf der Seitenleiste laedt das Modul und klickt d
   haengeBrowserNachladerEin(dokument, fenster, async () => { geladen += 1; });
   let nochmal = 0; let verhindert = 0;
   const knopf = { click: () => { nochmal += 1; } };
-  const ereignis = { target: { closest: (s) => (s === "[data-browser-oeffnen]" ? knopf : null) }, preventDefault: () => { verhindert += 1; } };
+  let angehalten = 0;
+  const ereignis = { target: { closest: (s) => (s === "[data-browser-oeffnen]" ? knopf : null) }, preventDefault: () => { verhindert += 1; }, stopPropagation: () => { angehalten += 1; }, stopImmediatePropagation: () => { angehalten += 1; } };
   klick.forEach((fn) => fn(ereignis));
   await new Promise((r) => setTimeout(r, 5));
   assert.deepEqual([geladen, nochmal, verhindert], [1, 1, 1], "laden, EINMAL nachklicken");
+  assert.equal(angehalten, 2, "der Seiten-Router darf den Klick nicht sehen — live sprang die Mitte sonst auf die Fehlerseite");
   klick.forEach((fn) => fn(ereignis));
   await new Promise((r) => setTimeout(r, 5));
   assert.deepEqual([geladen, nochmal], [1, 1], "ist das Modul da, haelt sich der Nachlader heraus — browser-pane.js uebernimmt");
