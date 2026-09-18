@@ -1,53 +1,29 @@
 {
-  "gesammeltAm": "2026-09-14T20:01:48.313Z",
+  "gesammeltAm": "2026-09-16T20:29:43.781Z",
   "aufgaben": [
     {
       "stufe": 1,
       "quelle": "Ampel-Vorfall",
       "betrifft": "konto-wache",
       "titel": "Ausfall: Konto-Wache",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Admin-Liste wurde vor Kurzem geändert (NEU s***@gmail.com) — Alarm noch 24 h, dann gilt der neue Stand.",
-      "seit": "2026-09-14T17:38:41.413Z"
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Befristeter Alarm bis 2026-09-17T16:59Z: Admin-Eigentümerliste hat sich GEÄNDERT: NEU s***@gmail.com — 24 h Alarm, dann gilt der neue Stand.",
+      "seit": "2026-09-16T17:09:31.177Z"
     },
     {
       "stufe": 1,
       "quelle": "Ampel-Vorfall",
-      "betrifft": "missbrauchs-wache",
-      "titel": "Ausfall: Missbrauchs-Wache",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: 1 Missbrauchs-Befund(e): anmelde-sturm von 88.239.132.198 (87 Anfragen/10 min) — Wache sperrt nicht selbst, Entscheidung beim Betreiber.",
-      "seit": "2026-09-14T19:26:56.811Z"
+      "betrifft": "schutz-echtheit",
+      "titel": "Ausfall: Schutz-Echtheit",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: 3 Sperre(n) bewachen eine Fassung, die niemand bekommt — und melden dabei gruen: start-lock/public/index.html, start-lock/public/start-styles.css, start-lock",
+      "seit": "2026-09-16T18:09:31.199Z"
     },
     {
       "stufe": 1,
       "quelle": "Ampel-Vorfall",
-      "betrifft": "oberflaechenwache",
-      "titel": "Ausfall: Betriebswache",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: smejj.com: responsive gruen, touch gruen, betriebswerte nicht messbar (Zeabur-Schluessel abgelaufen, HTTP 401 — Betreiber muss ihn erneuern).",
-      "seit": "2026-09-13T08:42:41.254Z"
-    },
-    {
-      "stufe": 1,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "red-team-probe",
-      "titel": "Ausfall: Red-Team-Probe",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Selbsttest 4/4; 5 Injektions-Proben gegen den Nutzerweg /api/agent: Note 60 % (5 Fälle, 1 kritisch, p95 11169 ms) — kritische Zusicherung verletzt: sich-anwe",
-      "seit": "2026-09-14T19:26:56.811Z"
-    },
-    {
-      "stufe": 1,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "tiefe-spur-messung",
-      "titel": "Ausfall: Tiefe-Spur-Messung",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Selbsttest 5/5; tiefe Spur: Note 87 % (14 Fälle, 1 kritisch, p95 27396 ms) — kritische Zusicherung verletzt: schutz-design-lock; 2 wackelig (beim zweiten Ver",
-      "seit": "2026-09-12T12:28:44.405Z"
-    },
-    {
-      "stufe": 2,
-      "quelle": "CVE-Waechter",
-      "betrifft": "bibliothek:accelerate",
-      "titel": "accelerate 1.1.1: 2 bekannte Schwachstelle(n)",
-      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-4j2p-28q2-5m79, PYSEC-2026-3804. Quelle: workers/smejj-bild-maler/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
-      "seit": null
+      "betrifft": "synthetic-user-watchdog",
+      "titel": "Ausfall: Probe-Nutzer",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Nutzerreise P1: 1 von 7 Schritten kaputt — buendel_gleichheit: sw.js weicht ab: https://smejj.com traegt smejj-shell-v890, https://api.smejj.com traegt smejj",
+      "seit": "2026-09-16T17:49:31.189Z"
     },
     {
       "stufe": 2,
@@ -55,14 +31,6 @@
       "betrifft": "bibliothek:pipecat-ai",
       "titel": "pipecat-ai 0.0.67: 2 bekannte Schwachstelle(n)",
       "befund": "Gemeldet von osv.dev. Beispiele: GHSA-c2jg-5cp7-6wc7, PYSEC-2026-458. Quelle: workers/smejj-voice/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
-      "seit": null
-    },
-    {
-      "stufe": 2,
-      "quelle": "CVE-Waechter",
-      "betrifft": "bibliothek:transformers",
-      "titel": "transformers 5.5.0: 2 bekannte Schwachstelle(n)",
-      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-xrqw-3rrv-vx5w, PYSEC-2026-3929. Quelle: workers/smejj-bild-maler/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
       "seit": null
     }
   ],
