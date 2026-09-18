@@ -1,7 +1,7 @@
 {
   "webcredentials": {
     "apps": [
-      "REPLACE_APPLE_TEAM_ID.com.smejj.app"
+      "443R27FNHX.com.smejj.app"
     ]
   },
   "applinks": {
@@ -9,7 +9,7 @@
     "details": [
       {
         "appIDs": [
-          "REPLACE_APPLE_TEAM_ID.com.smejj.app"
+          "443R27FNHX.com.smejj.app"
         ],
         "components": [
           { "/": "/*" }

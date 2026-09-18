@@ -6,7 +6,7 @@ Fuer **Web-Passkeys** (Safari/Chrome) werden sie NICHT gebraucht — die funktio
 sofort. Erst fuer die nativen iOS/Android-Apps muessen die Platzhalter ersetzt werden.
 
 ## apple-app-site-association
-- `REPLACE_APPLE_TEAM_ID` → Apple Developer Team-ID (Membership-Seite).
+- `443R27FNHX` → Apple Developer Team-ID (Membership-Seite).
 - `com.smejj.app` → tatsaechliche Bundle-ID der iOS-App (Capacitor-Projekt).
 - In der iOS-App unter Signing & Capabilities die Associated Domain
   `webcredentials:smejj.com` (und optional `applinks:smejj.com`) eintragen.
