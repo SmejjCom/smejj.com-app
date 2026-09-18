@@ -27,7 +27,15 @@ test("Pages-Liste: kaputte Proben fallen auf, gesunde gehen durch", () => {
 /** Lädt console-stage10.js in eine Sandbox und schreibt die Abrufe mit. */
 async function radarAbrufe(hostname, antworten = {}) {
   const gerufen = [];
-  const fenster = { adminViewsStage10: { radar: () => "" } };
+  // Seit dem 16.09. ("Deine Entscheidungen") fragt die Seite zuerst den Server nach
+  // lebenden Vorschlaegen (adminApi.hole) und zeichnet sie ueber dem Archiv. Der Test
+  // kannte beides nicht und starb an "reading 'hole'", bevor er das pruefte, wofuer er
+  // da ist: die Reihenfolge der Archiv-Abrufe. Der Server antwortet hier bewusst mit
+  // "nicht erreichbar" — das Archiv muss trotzdem geladen werden.
+  const fenster = {
+    adminViewsStage10: { radar: () => "", entscheidungen: () => "" },
+    adminApi: { hole: async () => ({ ok: false, fehler: "test" }), sende: async () => ({ ok: false, fehler: "test" }) }
+  };
   const sandbox = {
     window: fenster,
     location: { hostname },
