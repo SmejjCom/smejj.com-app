@@ -65,3 +65,33 @@ laufende Ausgabe, also eine Entscheidung des Betreibers.
 ## Rollback
 Die fünf neuen Einträge in der Spaceship-Oberfläche löschen. Alles andere bleibt unberührt;
 der Stand oben ist der Zustand davor.
+
+## Ergebnis der Änderung (18.09.2026, live geprüft)
+
+Eingetragen über die Spaceship-Oberfläche, alle fünf Einträge in der „Default record group"
+(dort liegen auch die A-Einträge). Spaceship warnt beim Anlegen generisch vor „widersprüchlichen
+AAAA-Einträgen", weil A und AAAA denselben Host tragen — genau so sieht es die
+GitHub-Pages-Anleitung vor.
+
+Direkt bei den Nameservern (launch1.spaceship.net) abgefragt:
+- `AAAA smejj.com` → 2606:50c0:8000::153, :8001::153, :8002::153, :8003::153
+- `CAA smejj.com` → `0 issue "letsencrypt.org"`
+- Öffentlich über 8.8.8.8 ebenfalls sichtbar.
+
+Unverändert nachgewiesen: 4 A-Einträge, MX (beide), SPF (zusammengeführt), DMARC (`p=none`),
+google-site-verification, CNAME www/api/cloud, admin-Weiterleitung.
+
+Nachkontrolle:
+- `https://smejj.com/` weiterhin HTTP 200 (IPv4 und über die IPv6-fähige Anfrage).
+- Zertifikate unverändert gültig, Aussteller weiterhin Let's Encrypt (smejj.com bis 25.11.2026,
+  api.smejj.com bis 21.11.2026). Damit passt die CAA-Regel zu beiden Zertifikaten.
+- `npm run verify:free-stack:live-dns` → **Live-DNS-Guard: OK**.
+- Service Worker live unverändert v898 auf beiden Ursprüngen.
+
+Nicht beweisbar von hier: ein echter IPv6-Abruf über eine IPv6-Leitung — der Mac hängt an einem
+IPv4-Anschluss (die Anfrage lief über eine IPv4-abgebildete Adresse). Die eingetragenen Adressen
+sind die offiziellen von GitHub Pages, geprüft per `dig AAAA smejjcom.github.io`.
+
+**Wichtig für später:** Wechselt einer der Dienste den Zertifikat-Aussteller (z. B. Zeabur auf
+eine andere CA), muss der CAA-Eintrag erweitert werden — sonst schlägt die Zertifikats-Erneuerung
+fehl. Heute stellen beide über Let's Encrypt aus.
