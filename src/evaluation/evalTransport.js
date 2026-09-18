@@ -95,6 +95,19 @@ export const TRANSPORTS = Object.freeze(["control", "provider"]);
 export const THINKING_MIN_TOKEN_BUDGET = 2000;
 
 /**
+ * Erkennt einen Netzabbruch an seinem Wortlaut. `fetch` wirft je nach Ursache
+ * "fetch failed", "socket hang up", "terminated" oder einen errno-Code; keiner
+ * davon ist eine Aussage ueber das Modell.
+ *
+ * @param {string} grund Fehlertext.
+ * @returns {boolean}
+ */
+export function istNetzabbruch(grund) {
+  return /fetch failed|socket hang up|terminated|other side closed|network|ECONNRESET|ECONNREFUSED|ECONNABORTED|ENOTFOUND|EAI_AGAIN|EPIPE|ETIMEDOUT|UND_ERR/i
+    .test(String(grund || ""));
+}
+
+/**
  * Unterscheidet Infrastrukturrauschen von einem echten Modellversagen.
  * Ohne diese Unterscheidung wird ein einzelner 503 der Bruecke faelschlich als
  * "Modell hat versagt" gezaehlt und verfaelscht jede Modellentscheidung.
@@ -102,6 +115,12 @@ export const THINKING_MIN_TOKEN_BUDGET = 2000;
 export function isTransientError(error) {
   const reason = String(error || "");
   if (reason === "timeout" || reason === "network_error" || reason === "empty_response") return true;
+  // Netzabbruch im Wortlaut der Laufzeit. Gemessen 2026-09-18 im taeglichen
+  // Lauf: ein Durchgang endete mit "fetch failed" (undici), wurde NICHT als
+  // voruebergehend erkannt, also nicht wiederholt — und zaehlte als
+  // KRITISCHER Sicherheitsverstoss. Die Qualitaetsseite meldete daraufhin
+  // 91,18 % und "blocked" fuer eine Leitungsstoerung.
+  if (istNetzabbruch(reason)) return true;
   // Der Notfall-Assistent ist ein KONFIGURATIONSZUSTAND, kein Modellversagen.
   // Wuerde er als Modellfehler gezaehlt, saehe eine falsch eingestellte Spur wie
   // ein schlechtes Modell aus — genau die Verwechslung, die dieses Modul verhindert.
@@ -170,7 +189,10 @@ export async function callViaControl(evalCase, {
       error: stream.text.trim().length > 0 ? null : "empty_response"
     };
   } catch (error) {
-    const reason = error?.name === "AbortError" ? "timeout" : String(error?.message || error).slice(0, 120);
+    const roh = error?.name === "AbortError" ? "timeout" : String(error?.message || error).slice(0, 120);
+    // Netzabbrueche tragen den Namen "network_error", damit sie oben als
+    // voruebergehend erkannt und wiederholt werden statt als Modellversagen zu zaehlen.
+    const reason = roh !== "timeout" && istNetzabbruch(roh) ? "network_error" : roh;
     return failure(reason, now() - started, { backend: "control", modelId });
   } finally {
     clearTimeout(timer);
@@ -213,8 +235,9 @@ export async function callViaProvider(evalCase, {
     timeoutMs
   });
   if (!outcome?.ok) {
-    const reason = outcome?.attempts?.[outcome.attempts.length - 1]?.error || "all_backends_failed";
-    return failure(String(reason).slice(0, 120), now() - started, { backend: "provider", modelId });
+    const roh = String(outcome?.attempts?.[outcome.attempts.length - 1]?.error || "all_backends_failed").slice(0, 120);
+    const reason = istNetzabbruch(roh) ? "network_error" : roh;
+    return failure(reason, now() - started, { backend: "provider", modelId });
   }
   let payload;
   try {
