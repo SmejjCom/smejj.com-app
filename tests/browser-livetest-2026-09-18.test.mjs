@@ -12,6 +12,8 @@ import { baueFernwege } from "../public/browser-pane-fernwege.js";
 import { createBrowserSessionClient } from "../public/browser-pane-session.js";
 import { hauptmenueEintraege, zoomNachWahl, schalteVollbild } from "../public/browser-pane-hauptmenue.js";
 
+import { istLeereHuelle, shouldOpenInRealBrowser } from "../public/browser-pane-adressen.js";
+
 const lies = (pfad) => fs.readFileSync(pfad, "utf8");
 
 function fernwegeMit({ antwort, bereit = true }) {
@@ -162,4 +164,15 @@ test("Verdrahtung: browser-pane.js nutzt Schnellweg, Schonfrist, Hauptmenue und 
   assert.match(lies("public/sw.js"), /"\/assets\/browser-pane-hauptmenue\.js"/, "neues Modul gehoert in den Vorrat, sonst fehlt es offline");
   assert.match(lies("public/browser-pane-menue.js"), /\(document\.fullscreenElement \|\| document\.body\)\.appendChild\(menue\)/,
     "im Vollbild zeichnet der Browser nur den Vollbild-Teilbaum");
+});
+
+test("Leere Huelle: skriptgebaute Seiten gehen in den echten Browser statt als leeres Blatt in den Proxy", () => {
+  const conax = `<!doctype html><html><head><title>con.ax Register</title><style>body{background:#0b1020}${".x{color:red}".repeat(200)}</style></head><body><a href="#main">Skip to content</a><div id="root"></div></body></html>`;
+  assert.equal(istLeereHuelle(conax), true, "live gemessen: 15 Zeichen sichtbarer Text");
+  assert.equal(shouldOpenInRealBrowser(conax, "https://con.ax/en/register"), true);
+  const beispiel = `<html><body><h1>Example Domain</h1><p>This domain is for use in documentation examples without needing permission. Avoid use in operations.</p><a href="#">Learn more</a></body></html>`;
+  assert.equal(istLeereHuelle(beispiel), false, "kurze, aber echte Seiten bleiben auf dem schnellen Weg");
+  assert.equal(istLeereHuelle(`<html><body><img src="a.png"></body></html>`), false, "eine Bildseite ist nicht leer");
+  assert.equal(istLeereHuelle(""), false);
+  assert.equal(istLeereHuelle("<html><body>normale Seite</body></html>"), false, "winzige Seiten sind keine Huelle");
 });
