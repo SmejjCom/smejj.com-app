@@ -40,7 +40,7 @@ test("auth pages expose honest professional sign-in paths", async () => {
   assert.match(css, /\.auth-button \{[\s\S]*width: 100%/);
   assert.doesNotMatch(css, /#657cff|#8056df|#6d4cff/);
   assert.match(js, /authConfig/);
-  assert.match(js, /Apple-OAuth-Konfiguration/);
+  assert.match(js, /startAppleLogin/); // Knopf ist verdrahtet, erscheint aber nur bei serverseitiger Konfiguration
   assert.doesNotMatch(login, /<script[^>]+src="\/app\.js"/);
   assert.doesNotMatch(register, /<script[^>]+src="\/app\.js"/);
 });

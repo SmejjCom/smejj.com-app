@@ -188,6 +188,8 @@ export const ROUTES = {
     authGoogle: "/api/auth/google",
     authGithub: "/api/auth/github",
     authGithubCallback: "/api/auth/github/callback",
+    authApple: "/api/auth/apple",
+    authAppleCallback: "/api/auth/apple/callback",
     authMagicLinkRequest: "/api/auth/magic-link/request",
     authMagicLinkVerify: "/api/auth/magic-link/verify",
     authMe: "/api/auth/me",

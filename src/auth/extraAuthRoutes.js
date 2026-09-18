@@ -11,6 +11,11 @@ import {
   exchangeGithubCode, fetchGithubUser, githubAuthorizeUrl,
   signGithubAuthState, verifyGithubAuthState
 } from "./githubAuth.js";
+import { createAppleAuthHandlers } from "./appleAuthRoutes.js";
+import {
+  appleAuthorizeUrl, appleConfigFromEnv, appleNameFromUserField, exchangeAppleCode,
+  leseAppleAuthState, signAppleAuthState, verifyAppleIdToken
+} from "./appleAuth.js";
 
 export function createExtraAuthRouter({
   config, json, readJson, SECURITY_HEADERS,
@@ -29,6 +34,13 @@ export function createExtraAuthRouter({
   const github = createGithubAuthHandlers({
     ...shared, config,
     signGithubAuthState, verifyGithubAuthState, githubAuthorizeUrl, exchangeGithubCode, fetchGithubUser
+  });
+  // Apple liest seine Konfiguration bei jedem Aufruf aus der Umgebung: ein neu
+  // gesetzter Schluessel wirkt nach dem Neustart, ohne dass hier etwas haengt.
+  const apple = createAppleAuthHandlers({
+    ...shared, config, appleConfig: () => appleConfigFromEnv(env),
+    signAppleAuthState, leseAppleAuthState, appleAuthorizeUrl, exchangeAppleCode,
+    verifyAppleIdToken, appleNameFromUserField
   });
   const magic = createMagicLinkHandlers({
     ...shared, readJson, sessionSecret: () => config.sessionSecret
@@ -49,6 +61,9 @@ export function createExtraAuthRouter({
     try {
       if (read && url.pathname === ROUTES.api.authGithub) { await github.handleGithubAuthStart(req, res, url); return true; }
       if (read && url.pathname === ROUTES.api.authGithubCallback) { await github.handleGithubCallback(req, res, url); return true; }
+      if (read && url.pathname === ROUTES.api.authApple) { await apple.handleAppleAuthStart(req, res, url); return true; }
+      // Apple antwortet mit einem POST-Formular (response_mode=form_post).
+      if (req.method === "POST" && url.pathname === ROUTES.api.authAppleCallback) { await apple.handleAppleCallback(req, res, url); return true; }
       if (req.method === "POST" && url.pathname === ROUTES.api.authMagicLinkRequest) { await magic.handleMagicLinkRequest(req, res, url); return true; }
       if (read && url.pathname === ROUTES.api.authMagicLinkVerify) { await magic.handleMagicLinkVerify(req, res, url); return true; }
     } catch (error) {
