@@ -79,7 +79,9 @@ test("E14: API-Bereich-Aktionen kennen ihre Konstanten und Helfer", () => {
 });
 
 test("E16–E19: Browser-Rechtsklick, Code-Anhang, Coding-Rueckfall, Admin-Ausweichhost", () => {
-  assert.match(lies("browser-pane.js"), /import \{ zeigeVerlaufMenue \} from "\.\/browser-pane-menue\.js\?v=browser-pane-20260709-2";/);
+  // Die Marke ist bewusst NICHT festgeschrieben (18.09.): sie muss bei jeder Aenderung des
+  // Moduls steigen (check-markenkette) — geprueft wird, dass der Import DA ist.
+  assert.match(lies("browser-pane.js"), /import \{ zeigeVerlaufMenue \} from "\.\/browser-pane-menue\.js\?v=[\w-]+";/);
   assert.match(lies("code-anhaenge.js"), /export function anhaengeZahl\(\)/);
   assert.match(lies("code-flaeche.js"), /!anhaengeZahl\(\)/);
   assert.doesNotMatch(lies("code-flaeche.js"), /!anhaenge\.length/);
