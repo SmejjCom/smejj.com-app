@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-19T22:17:42.527Z",
-  "confirmation": "Betreiber 18.09.2026 schriftlich im Chat: 'Oeffne https://smejj.com/ im Chrome-Browser und pruefe unseren smejj Browser vollstaendig von A bis Z. … Erst alle Probleme und Verbesserungspunkte auflisten, danach vollstaendig umsetzen und anschliessend alles erneut mit realen Tests pruefen. Keine funktionierende bestehende Funktion darf dabei beschaedigt werden.' Umsetzung: CSP frame-src https:, Globus bei offenem Browser ausgeblendet, Menue-Ebene 90, Schnellweg in derselben Live-Sitzung, Schonfrist fuer Server-Sitzungen, Hauptmenue mit Vollbild, SW smejj-shell-v905 (Runde 5: Fenstergroesse des Live-Browsers ohne neuen Server-Chrome; Betreiber 19./20.09. schriftlich: 'Mach komplett 100 % fertig, lass nichts offen.' und 'Weiter'). Betreiber dazu am 18.09. schriftlich: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Per Doppelklick ausgeloest.",
+  "frozenAt": "2026-09-19T23:47:55.785Z",
+  "confirmation": "Betreiber-Auftrag 20.09.2026 (schriftlich): Schreibfeld ganz unten fest und transparent ohne Balken, oben bei Uhrzeit/Netz/Akku kein Hintergrund, echtes Vollbild oben bis unten auf iOS, Android, PWA, Simulator und Emulator, Feld bleibt beim Scrollen fixiert.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "f48b45873d23a8daf512bab65a8256fecf6d2f19a0c9fbc89b284a4f645686ee",
+    "public/index.html": "8bf8bdcd195864d9c1409ce2486c98728f3d69a3b6ab4fc76fb9b66a6340443d",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
-    "public/start-styles.css": "122323d76ba5fae79ad0b8666820eaf74dc9ef77b99ab9251a32f08cfe13f141",
+    "public/start-styles.css": "80b6a7f931dc3a4814f5d95ebc5dc27f4bff2168716f105179272937c71b747f",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "10ba77e36d5b6e57b90245a559b2451db1ec256ff9d5aa8004677c9236a76b59",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "876577942a8d034ee3a273af91501fef0e9dbffee577fdf8f7733ecd3bd0395b",
+    "public/sw.js": "e385ac13b9a206299260f0826caba954c5ac44b98fafb74cf3ce5aad7f95d55f",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
