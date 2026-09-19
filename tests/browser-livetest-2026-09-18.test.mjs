@@ -250,3 +250,50 @@ test("Handy: Kopfknoepfe des Browsers sind 44 px — nur fuer Finger, und was we
   assert.ok(ids.includes("vor") && ids.includes("extern"), "Vorwaerts und extern bleiben ueber das Menue erreichbar");
   assert.match(lies("public/browser-pane.css"), /--bp-control-size:\s*22px;/, "der Desktop behaelt die kompakte Leiste");
 });
+
+// --- Fenstergroesse ohne neuen Server-Chrome (19./20.09.) -----------------------
+import { createSessionEngine, validateSessionAction } from "../workers/remote-browser/session-engine.js";
+import { buildPageOptions as workerSeitenOptionen, isAllowedTarget as workerZielErlaubt } from "../workers/remote-browser/worker.js";
+
+function viewportMaschine(log) {
+  const page = {
+    currentUrl: "https://example.com/", setDefaultTimeout: () => {}, goto: async () => ({ status: () => 200 }),
+    waitForLoadState: async () => {}, waitForTimeout: async () => {}, title: async () => "Example", url: () => page.currentUrl,
+    screenshot: async () => Buffer.from("jpg"), setViewportSize: async (v) => log.push(["setViewportSize", v.width, v.height])
+  };
+  const browser = { newPage: async () => page, close: async () => {} };
+  return createSessionEngine({
+    isAllowedTarget: workerZielErlaubt, buildPageOptions: workerSeitenOptionen,
+    assertPublicHostname: async () => {}, assertPublicRequest: async () => {},
+    playwrightLoader: async () => ({ chromium: { launch: async () => browser } }), dnsLookup: async () => [{ address: "93.184.216.34" }]
+  });
+}
+
+test("Worker: 'viewport' aendert die Groesse der LAUFENDEN Sitzung — geklemmt, und nie ueber die Handy/Desktop-Grenze", async () => {
+  assert.deepEqual(validateSessionAction({ type: "viewport", width: 900.4, height: 700 }, {}), { ok: true, action: { type: "viewport", width: 900, height: 700 } });
+  assert.equal(validateSessionAction({ type: "viewport", width: "breit", height: 700 }, {}).ok, false);
+  const log = [];
+  const maschine = viewportMaschine(log);
+  const offen = await maschine.open({ url: "https://example.com/", viewport: { width: 1000, height: 700 } });
+  assert.equal(offen.ok, true);
+  const groesser = await maschine.act({ sessionId: offen.sessionId, action: { type: "viewport", width: 5000, height: 900 } });
+  assert.equal(groesser.ok, true);
+  assert.deepEqual(log.at(-1), ["setViewportSize", 1920, 900], "auf die Grenzen von buildPageOptions geklemmt");
+  assert.deepEqual(groesser.viewport, { width: 1920, height: 900 }, "Klicks rechnen danach mit der neuen Groesse");
+  assert.equal(groesser.sessionId, offen.sessionId, "dieselbe Sitzung — kein neuer Chrome");
+  const handy = await maschine.act({ sessionId: offen.sessionId, action: { type: "viewport", width: 400, height: 800 } });
+  assert.equal(handy.ok, false, "Desktop-Sitzung wird nicht zur Handy-Sitzung: User-Agent und Touch stehen seit dem Start fest");
+  assert.match(String(handy.error), /viewport_klasse_wechsel/);
+});
+
+test("Client: Panel groesser gezogen → erst die Sitzung anpassen, nur bei Ablehnung neu aufbauen", async () => {
+  const mit = (antwort) => { const rufe = []; const wege = baueFernwege({ sessionClient: { ready: () => true, actUndWarte: async (t, a) => { rufe.push(a); return antwort; } }, refs: { content: { getBoundingClientRect: () => ({ width: 1100, height: 820 }) } }, routes: { api: {} }, setFrame() {}, setFallbackFrame() {}, commitHistory() {}, showHint() {}, persistTabs() {}, render() {} }); return { wege, rufe }; };
+  const gut = mit({ ok: true, screenshot: "x", viewport: { width: 1100, height: 820 } });
+  const tab = liveTab({ remoteViewport: { width: 600, height: 700 } });
+  assert.equal(await gut.wege.passeSitzungAn(tab), true);
+  assert.deepEqual(gut.rufe[0], { type: "viewport", width: 1100, height: 820, fristMs: 15_000 });
+  assert.deepEqual(tab.remoteViewport, { width: 1100, height: 820 });
+  assert.equal(await mit({ ok: false, error: "action_unknown" }).wege.passeSitzungAn(liveTab()), false, "alter Worker: der bisherige Weg uebernimmt");
+  assert.equal(await mit({ ok: true, screenshot: "x" }).wege.passeSitzungAn(liveTab({ mode: "proxy" })), false);
+  assert.match(lies("public/browser-pane.js"), /passeSitzungAn\(tab\)\.then\(\(ok\) => \{ if \(!ok\) return oeffneImLiveBrowser\(tab\.url\); \}\)/);
+});

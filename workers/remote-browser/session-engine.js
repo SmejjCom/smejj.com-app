@@ -238,6 +238,15 @@ export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
     case "forward":
     case "reload":
       return { ok: true, action: { type: action.type } };
+    // FENSTERGROESSE OHNE NEUEN CHROME (19.09., live gemessen): zog der Nutzer das Panel
+    // groesser, baute der Client eine NEUE Sitzung (8-10 s, Anmeldung der Seite weg).
+    // Die Grenzen setzt buildPageOptions beim Ausfuehren — hier nur: sind es Zahlen?
+    case "viewport": {
+      const width = Number(action.width);
+      const height = Number(action.height);
+      if (!Number.isFinite(width) || !Number.isFinite(height)) return { ok: false, error: "viewport_invalid" };
+      return { ok: true, action: { type: "viewport", width: Math.round(width), height: Math.round(height) } };
+    }
     default:
       return { ok: false, error: "action_unknown" };
   }
@@ -695,6 +704,17 @@ export function createSessionEngine({
       case "reload":
         await page.reload({ waitUntil: "domcontentloaded", timeout: cfg.navTimeoutMs }).catch(() => {});
         return;
+      case "viewport": {
+        const neu = buildPageOptions({ width: action.width, height: action.height });
+        // Handy- und Desktop-Kennung (User-Agent, Touch) stehen seit dem Start der Sitzung
+        // fest. Wechselt die Breite die Klasse, waere die Seite halb Handy, halb Desktop —
+        // dann lieber ehrlich ablehnen; der Client baut in dem Fall wie bisher neu auf.
+        if (neu.isMobile !== buildPageOptions(session.viewport).isMobile) throw new Error("viewport_klasse_wechsel");
+        await page.setViewportSize(neu.viewport);
+        session.viewport = neu.viewport;
+        await page.waitForTimeout?.(200)?.catch?.(() => {});
+        return;
+      }
       default:
         throw new Error("action_unknown");
     }
