@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-18T23:02:23.793Z",
-  "confirmation": "Betreiber 18.09.2026 schriftlich im Chat: 'Oeffne https://smejj.com/ im Chrome-Browser und pruefe unseren smejj Browser vollstaendig von A bis Z. … Erst alle Probleme und Verbesserungspunkte auflisten, danach vollstaendig umsetzen und anschliessend alles erneut mit realen Tests pruefen. Keine funktionierende bestehende Funktion darf dabei beschaedigt werden.' Umsetzung: CSP frame-src https:, Globus bei offenem Browser ausgeblendet, Menue-Ebene 90, Schnellweg in derselben Live-Sitzung, Schonfrist fuer Server-Sitzungen, Hauptmenue mit Vollbild, SW smejj-shell-v904 (Runde 4: Nachlader haelt den Klick ganz an; Betreiber 19.09. schriftlich: 'Sprachwelle. Ganz oben rechte Seite. X soll ohne Hintergrund sein. Transparent.'). Betreiber dazu am 18.09. schriftlich: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Per Doppelklick ausgeloest. || ZUSAMMENFUEHRUNG 20.09.2026: public/config.js traegt den Stempel der Parallelsitzung (frozenAt 2026-09-18T23:02:53.638Z, Betreiber 19.09.: Apple-Login) — beide Stempel stammen aus Betreiber-Doppelklicks, hier nur vereinigt.",
+  "frozenAt": "2026-09-19T22:17:41.146Z",
+  "confirmation": "Betreiber 18.09.2026 schriftlich im Chat: 'Oeffne https://smejj.com/ im Chrome-Browser und pruefe unseren smejj Browser vollstaendig von A bis Z. … Erst alle Probleme und Verbesserungspunkte auflisten, danach vollstaendig umsetzen und anschliessend alles erneut mit realen Tests pruefen. Keine funktionierende bestehende Funktion darf dabei beschaedigt werden.' Umsetzung: CSP frame-src https:, Globus bei offenem Browser ausgeblendet, Menue-Ebene 90, Schnellweg in derselben Live-Sitzung, Schonfrist fuer Server-Sitzungen, Hauptmenue mit Vollbild, SW smejj-shell-v905 (Runde 5: Fenstergroesse des Live-Browsers ohne neuen Server-Chrome; Betreiber 19./20.09. schriftlich: 'Mach komplett 100 % fertig, lass nichts offen.' und 'Weiter'). Betreiber dazu am 18.09. schriftlich: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Per Doppelklick ausgeloest.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "1457e2a1220ef034a72a6962dc754f3622891c1af75e9574c33341d0f6f6437e",
+    "public/index.html": "f48b45873d23a8daf512bab65a8256fecf6d2f19a0c9fbc89b284a4f645686ee",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "122323d76ba5fae79ad0b8666820eaf74dc9ef77b99ab9251a32f08cfe13f141",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "a2de84280465570316b3062061a6e9359c953d35f4d02a719975b2b28afb9b8c",
-    "public/app.js": "98c2ddba975df2f9436059f587d764abbdf93806c4fe041c96ad90320d1cdf1d",
+    "public/app.js": "e94de0876b9ec71ec4afbca2fe842fb2120bef8dee0a5f9ade20e1d7705c35c0",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "27acbbbbe2a23a81f25b8fdab7e5204cb4e5ecc1217f6ef1af8ee7a12831e3df",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -24,7 +24,7 @@
     "public/composer-tools.js": "42ce85b6157517ae851829b6041d182d907f638860e5aa76d4322de21e56b631",
     "public/composer-plus-menu.js": "6ed1aa1fd93321870f65786fd60288bfe2b4622ee62dd0f0517f4d9bac089493",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "f9740d1a57b2a948b19bfab88b141bbf9e430383fd131224812295a91b23d156",
+    "public/browser-pane.js": "ec45c67eb6c1488418d34fbebc377ee7d2ec601076670c0a6473dd0ffee9aa4b",
     "public/browser-pane-render.js": "f6a0df7abdd279f737b41d836722385b8bcdbcebc260fc5d5aa7a0262ae3d49c",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "ca76877a9b7c722ef3460ed0177e8e4efa233e330fa230a9fe9617d5f5e522a2",
+    "public/sw.js": "876577942a8d034ee3a273af91501fef0e9dbffee577fdf8f7733ecd3bd0395b",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
