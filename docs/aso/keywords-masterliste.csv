@@ -1,0 +1,56 @@
+cluster,keyword,lang,country,intent,competition,winnability,placement,custom_listing,rank_2026-09-19,note
+coding-agent,ai coding agent,en,US,funktion,mittel,hoch,title+short+long,csl-coding,>30,Top-Treffer tragen den Begriff woertlich im Titel
+coding-agent,coding agent,en,US,funktion,mittel,hoch,title+long,csl-coding,,
+coding-agent,ai code agent,en,US,funktion,niedrig,hoch,long,csl-coding,,
+coding-agent,autonomous coding agent,en,US,funktion,niedrig,hoch,long,csl-coding,,
+coding-agent,autonomous ai agent,en,US,funktion,mittel,mittel,long,csl-coding,>30,
+coding-agent,ai programmer,en,US,funktion,mittel,mittel,long,csl-coding,>30,
+coding-agent,ai coding assistant,en,US,funktion,hoch,mittel,long,csl-coding,,
+coding-agent,coding assistant,en,US,funktion,hoch,mittel,long,csl-coding,>30,
+coding-agent,ai code generator,en,US,funktion,hoch,mittel,long,csl-coding,>30,
+coding-agent,code generator,en,US,funktion,hoch,niedrig,long,csl-coding,>30,
+coding-agent,vibe coding,en,US,trend,hoch,mittel,long,csl-coding,>30,Trendbegriff 2025/26
+coding-agent,ai app builder,en,US,funktion,hoch,niedrig,-,-,>30,Funktion fehlt (keine App-Bau-Umgebung) - nicht bewerben
+coding-agent,debug code ai,en,US,problem,mittel,mittel,long,csl-coding,>30,
+coding-agent,github ai,en,US,funktion,mittel,mittel,long,csl-coding,>30,GitHub-Anbindung vorhanden
+coding-agent,python ai,en,US,funktion,mittel,mittel,long,csl-coding,>30,
+coding-agent,javascript ai,en,US,funktion,mittel,mittel,long,csl-coding,>30,
+coding-agent,ai developer tools,en,US,funktion,mittel,mittel,long,csl-coding,>30,
+chat,ai chat,en,US,allgemein,sehr hoch,niedrig,title(alt)+short,csl-chat,>30,nicht gewinnbar ohne Installs
+chat,ai assistant,en,US,allgemein,sehr hoch,niedrig,short+long,csl-chat,>30,
+chat,ai chatbot,en,US,allgemein,sehr hoch,niedrig,long,csl-chat,>30,
+chat,chatgpt,en,US,marke,sehr hoch,nicht gewinnbar,-,-,>30,Fremdmarke - NICHT verwenden
+chat,ai chat and coding,en,US,funktion,niedrig,hoch,short+long,csl-chat,>30,Nischenkombination
+chat,talk to ai,en,US,alltag,mittel,mittel,long,csl-voice,>30,
+chat,llm chat,en,US,fach,niedrig,mittel,long,csl-chat,>30,
+chat,ai writing assistant,en,US,funktion,hoch,niedrig,long,csl-chat,>30,
+search,ai web search,en,US,funktion,mittel,mittel,long,csl-chat,>30,
+search,ai search,en,US,funktion,hoch,niedrig,long,csl-chat,>30,
+browser,browser automation,en,US,funktion,mittel,hoch,long,csl-browser,>30,Kernunterschied
+browser,ai browser,en,US,funktion,hoch,mittel,long,csl-browser,>30,
+browser,web automation,en,US,funktion,mittel,hoch,long,csl-browser,>30,
+browser,automate tasks ai,en,US,problem,mittel,hoch,long,csl-browser,>30,
+browser,ai task scheduler,en,US,funktion,niedrig,hoch,long,csl-browser,>30,Zeitplan-Funktion vorhanden
+browser,ai screen share,en,US,funktion,niedrig,hoch,long,csl-browser,>30,Bildschirm teilen vorhanden
+create,ai image generator,en,US,funktion,sehr hoch,niedrig,long,csl-create,>30,
+create,text to image,en,US,funktion,sehr hoch,niedrig,long,csl-create,>30,
+create,ai video generator,en,US,funktion,sehr hoch,niedrig,long,csl-create,>30,
+create,text to video,en,US,funktion,sehr hoch,niedrig,long,csl-create,>30,
+voice,ai voice assistant,en,US,funktion,hoch,mittel,long,csl-voice,>30,
+voice,voice chat ai,en,US,funktion,mittel,mittel,long,csl-voice,>30,
+marke,smejj,en,US,marke,keine,hoch,title,-,1,Platz 1 gemessen
+marke,smejj.com,en,US,marke,keine,hoch,title,-,>30,Punkt-Suche findet die App nicht - beobachten
+DE,ki coding agent,de,DE,funktion,niedrig,hoch,title+short,csl-coding-de,,
+DE,ki chat,de,DE,allgemein,hoch,niedrig,short,csl-chat-de,,
+DE,ki assistent,de,DE,allgemein,hoch,niedrig,short,csl-chat-de,,
+DE,programmieren mit ki,de,DE,alltag,mittel,mittel,long,csl-coding-de,,
+DE,code generator,de,DE,funktion,mittel,mittel,long,csl-coding-de,,
+DE,ki browser automatisierung,de,DE,funktion,niedrig,hoch,long,csl-browser-de,,
+DE,ki bildgenerator,de,DE,funktion,hoch,niedrig,long,csl-create-de,,
+DE,ki videogenerator,de,DE,funktion,hoch,niedrig,long,csl-create-de,,
+TR,yapay zeka kodlama,tr,TR,funktion,mittel,mittel,long,-,,
+TR,yapay zeka sohbet,tr,TR,allgemein,hoch,niedrig,short,-,,
+ES,agente de codigo ia,es,ES,funktion,niedrig,hoch,long,-,,
+ES,chat ia,es,ES,allgemein,hoch,niedrig,short,-,,
+FR,agent de codage ia,fr,FR,funktion,niedrig,hoch,long,-,,
+FR,chat ia,fr,FR,allgemein,hoch,niedrig,short,-,,
