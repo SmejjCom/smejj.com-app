@@ -67,8 +67,13 @@ export const SOURCES = Object.freeze([
   // Kaskaden-Ende bleiben, sie legt sich ueber V11/V12.
   "design-v13-kompakt.css",
   // Vollbild-Chat am Handy (Betreiber-Auftrag 17.09.2026, iPhone-PWA): Verlauf
-  // unter der Statusleiste, schwebendes Feld. Das neue Kaskaden-Ende.
-  "design-v14-vollbild-chat.css"
+  // unter der Statusleiste, schwebendes Feld.
+  "design-v14-vollbild-chat.css",
+  // Chat ohne sichtbare Flaechen (Betreiber-Auftrag 20.09.2026): das Feld sitzt
+  // fest unten und ist transparent, oben liegt nichts mehr ueber Uhrzeit, Netz
+  // und Akku. Nimmt V14 nur die zwei Glasflaechen weg und ist darum das neue
+  // Kaskaden-Ende.
+  "design-v15-transparent-chat.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.

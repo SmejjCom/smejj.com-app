@@ -1,0 +1,108 @@
+/* smejj.com — Design V15: Chat ohne sichtbare Flaechen (Betreiber-Auftrag 20.09.2026).
+ *
+ * WORTLAUT DES AUFTRAGS:
+ *   - Das Schreibfeld muss ganz unten fest positioniert sein.
+ *   - Das Schreibfeld soll transparent sein, ohne sichtbaren Hintergrund oder
+ *     Balken — aehnlich wie bei ChatGPT.
+ *   - Ganz oben bei Uhrzeit, Netz/WLAN und Akku darf ebenfalls kein Hintergrund
+ *     sichtbar sein; der Inhalt darunter bleibt sichtbar.
+ *   - Die ganze Ansicht ist von ganz oben bis ganz unten echtes Vollbild und
+ *     funktioniert auf iOS, Android, PWA, Simulator und Emulator.
+ *   - Beim Scrollen bleibt das Schreibfeld unten fixiert, der Chat-Inhalt
+ *     bleibt dahinter sichtbar und scrollbar.
+ *   - Danach auf verschiedenen Bildschirmgroessen pruefen: keine schwarzen
+ *     oder festen Hintergrundflaechen oben oder unten.
+ *
+ * WAS SICH GEGENUEBER V14 AENDERT — und warum es eine eigene Datei ist:
+ * V14 (17.09.) hat das Vollbild und das schwebende Feld gebracht, aber BEIDE
+ * sichtbaren Flaechen behalten: das Feld trug eine Glasplatte
+ * (rgba(18,22,27,.8) + Rahmen + Schatten), oben lag der Glasstreifen
+ * .mobil-kopfglas. Genau die beiden Flaechen meint der Auftrag. V14 bleibt
+ * unveraendert stehen (100-%-Schutz: kein Rueckbau fremder Schichten); diese
+ * Datei ist das neue Kaskaden-Ende und nimmt nur die Flaechen weg.
+ *
+ * LESBARKEIT OHNE FLAECHE: Ohne Platte steht das Feld direkt auf dem Verlauf.
+ * Statt einen Balken zurueckzuholen, bekommen Text und Symbole des Feldes
+ * einen weichen Schatten (text-shadow / drop-shadow) — das traegt auf hellen
+ * Bildinhalten genauso wie auf dunklem Grund und erzeugt keine Kante.
+ *
+ * WARUM position: absolute BLEIBT (und nicht fixed wird): In iOS-WebKit
+ * verrutscht ein `fixed` Element, sobald die Bildschirmtastatur den
+ * Layout-Viewport verkleinert — genau der Fehler, den mobil-dock.js mit
+ * html.tastatur-offen ausgleicht. Die Huelle des Chats ist 100dvh hoch, das
+ * Feld sitzt absolut an ihrer Unterkante: dadurch steht es fest unten, der
+ * Verlauf scrollt dahinter durch, und die Tastatur-Regel aus V14 greift weiter.
+ */
+
+@media (max-width: 600px) {
+  /* ---- 1. Schreibfeld: fest unten, ohne jede Flaeche --------------------- */
+  html body #start.has-start-chat .prompt-glass.prompt-glass.prompt-glass,
+  html body #start:not(.has-start-chat) .home-feed.home-feed > .prompt-glass.prompt-glass {
+    background: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  /* Ganz unten heisst ganz unten: nur der Home-Balken bleibt frei (auf Geraeten
+     ohne Home-Balken ist --sa-bottom 0, dann liegt das Feld auf der Kante). */
+  html body #start.has-start-chat .prompt-glass.prompt-glass.prompt-glass {
+    bottom: var(--sa-bottom, 0px);
+    padding-bottom: 4px;
+  }
+  html body #start:not(.has-start-chat) .home-feed.home-feed > .prompt-glass.prompt-glass {
+    margin-bottom: var(--sa-bottom, 0px);
+    padding-bottom: 4px;
+  }
+  /* Ohne Platte braucht der Inhalt des Feldes eigenen Halt gegen den Verlauf. */
+  html body #start .prompt-glass .prompt-input,
+  html body #start .prompt-glass textarea,
+  html body #start .prompt-glass .prompt-actions {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+  }
+  html body #start .prompt-glass .prompt-actions svg,
+  html body #start .prompt-glass .ghost-button.icon-button svg,
+  html body #start .prompt-glass .send-button svg {
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
+  }
+  /* Die Knoepfe im Feld hatten eigene kleine Platten — auch die sind Flaeche. */
+  html body #start .prompt-glass .prompt-actions .ghost-button.icon-button {
+    background: none !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* ---- 2. Oben: kein Hintergrund ueber Uhrzeit, Netz und Akku ------------ */
+  /* Der Verlauf laeuft weiter unter der Statusleiste durch (Polster aus V14),
+     aber es liegt nichts mehr darueber. */
+  html body .mobil-kopfglas.mobil-kopfglas.mobil-kopfglas {
+    display: none !important;
+  }
+  /* Logo und Browser-Icon behalten Groesse und Platz, verlieren aber ihre
+     Glasplatte; der Schatten haelt sie auf hellem Inhalt lesbar. */
+  html body .glass-icon.glass-icon.glass-icon.glass-icon {
+    background: none !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  html body .glass-icon.glass-icon svg {
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
+  }
+
+  /* ---- 3. Vollbild ohne feste Flaechen oben und unten -------------------- */
+  /* Gilt fuer jede Auslieferung gleich: Browser-Tab, installierte PWA (iOS und
+     Android), Simulator und Emulator. Die Huelle traegt im Chat keinen Rand
+     mehr (V14); hier kommt dazu, dass auch nichts mehr eine eigene Farbe
+     malt — der Seitenverlauf von <body> reicht bis an beide Kanten. */
+  html body:has(#start.view.is-active) main.shell.shell,
+  html body:has(#start.view.is-active) .workspace,
+  html body #start.view.is-active,
+  html body #start .home-feed.home-feed {
+    background: none;
+  }
+  html body #start.has-start-chat #startLog.start-log.start-log {
+    background: none;
+  }
+}
