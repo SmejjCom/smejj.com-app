@@ -1,0 +1,71 @@
+{
+ "jobId": "job_app_a_bis_z_20260919",
+ "createdAt": "2026-09-19T00:30:00.000Z",
+ "closedAt": "2026-09-20T00:00:00.000Z",
+ "owner": "smejj.com autonomous coding (Betreiber 19.09.: 'teste die gesamte App, Web, PWA, iOS mit Simulator, Android mit Emulator, von A bis Z … Danach alles 100% schuetzen'; 'Sprachwelle … X soll ohne Hintergrund sein. Transparent.')",
+ "title": "A-bis-Z-Test der ganzen App: toter Browser-Knopf, 44-px-Ziele am Handy, transparentes X der Sprachwelle — SW v903 + v904 live",
+ "befunde": [
+  {
+   "nr": "A1",
+   "befund": "'Browser bedienen' fuehrte nach frischem Laden auf die Fehlerseite / tat nichts",
+   "ursache": "browser-nachladen.js kannte nur den Globus als Ausloeser; Klick wurde nicht angehalten, der Router sah ihn",
+   "fix": "Ausloeser [data-browser-oeffnen] + smejj:browser-request; preventDefault+stopPropagation+stopImmediatePropagation, danach Klick wiederholen",
+   "commit": "ba2e079b, 91529f29"
+  },
+  {
+   "nr": "A2",
+   "befund": "Browser-Kopfknoepfe am Handy 22x22 px",
+   "fix": "@media (max-width:680px) and (pointer:coarse): 44x44, Tab-Kreuz 36x44, Adresse 16 px; Vorwaerts/extern ins Menue",
+   "commit": "ba2e079b"
+  },
+  {
+   "nr": "A3",
+   "befund": "2 Radar-Tests seit 16.09. rot",
+   "fix": "Testaufbau um adminApi/entscheidungen ergaenzt, Produkt unveraendert",
+   "commit": "ba2e079b"
+  },
+  {
+   "nr": "A4",
+   "befund": "Betreiber-Wunsch: X der Sprachwelle ohne Hintergrund",
+   "fix": ".voice-mode-close transparent, kein Rand, helles X, Fokusring",
+   "commit": "91529f29"
+  }
+ ],
+ "verifikation": {
+  "web": "Chrome live v904: Kaltstart-Klick oeffnet Browser, Pfad bleibt, keine Fehlerseite, 0 Konsolenfehler; X gerendert rgba(0,0,0,0)/0px/rgb(246,243,238)/48x48; Chat richtig, erstes Zeichen 4,4 s",
+  "android": "Pixel-Emulator Chrome 124: live v902/v903 Browser ok; lokale Kopie 44x44 frei, Adresse 197 px/16 px, kein Ueberlauf",
+  "ios": "iPhone 17 Pro Max WebKit: Landeseite live sauber; lokale Kopie 44x44 frei, Menue im Fenster, Escape richtig, 0 Fehler",
+  "tests": "Gesamtsuite 4167 gruen; rot nur schutz-echtheit wegen des noch nicht ausgelieferten Apple-Logins der Parallelsitzung",
+  "waechter": "start-lock, markenkette, assets, guidelines OK nach Zusammenfuehrung"
+ },
+ "auslieferung": {
+  "v903": {
+   "app": "a9a133ae",
+   "bauzweig": "0249ecc2",
+   "frontend": "aabc94e"
+  },
+  "v904": {
+   "app": "d070f925",
+   "bauzweig": "31602004",
+   "frontend": "6643254"
+  },
+  "anker": [
+   "schutz-100-2026-09-19-app-v903*",
+   "schutz-100-2026-09-19-app-v904*"
+  ],
+  "zusammenfuehrung": "c183438f (v904 + Apple-Login 687fb37f im Hauptordner), fd0a3192 (i18n-Kopien)"
+ },
+ "offen": [
+  "Chat erstes Zeichen 4,4 s gegen Budget 1,0 s (Modellanbieter)",
+  "Android-Live-Nachmessung v904 der 44-px-Knoepfe (Emulator nach Mac-Neustart aus)",
+  "Live-Browser: Downloads/Uploads, Screencast, Viewport-Aktion, warmer Chromium (Server-Umbau)",
+  "Apple-Login der Parallelsitzung nicht ausgeliefert"
+ ],
+ "rollback": "Anker schutz-100-2026-09-18-browser-v902* (Stand vor diesem Auftrag)",
+ "belege": [
+  "docs/qa/app-a-bis-z-2026-09-19.md",
+  "~/Desktop/smejj-app-a-bis-z-runde3.log",
+  "~/Desktop/smejj-app-a-bis-z-runde4.log"
+ ],
+ "qualitaet": "bestanden — alle vier Befunde behoben und live bzw. am Geraet nachgemessen"
+}

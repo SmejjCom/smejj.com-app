@@ -5,6 +5,13 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-09-19] NACHLADER: WER EIN MODUL SPAETER HOLT, MUSS JEDEN WEG DORTHIN KENNEN — UND DEN KLICK GANZ ANHALTEN (job_app_a_bis_z_20260919)
+
+Typ: Verifikation + Fixes (SW v903, v904). Capsule `capsules/app/job_app_a_bis_z_20260919/`, Bericht `docs/qa/app-a-bis-z-2026-09-19.md`.
+Loesung: (1) "Browser bedienen" war nach frischem Laden tot bzw. fuehrte auf die Fehlerseite: browser-nachladen.js kannte nur den Globus. Neue Ausloeser `[data-browser-oeffnen]` und `smejj:browser-request`; der Klick wird mit preventDefault + stopPropagation + stopImmediatePropagation angehalten und nach dem Laden wiederholt — nur preventDefault reichte NICHT, der Router sah den Klick und zeigte "Das geht gerade nicht" (erst im Live-Nachtest v903 gesehen). (2) Browser-Kopf am Handy 44x44 nur fuer Finger (`pointer: coarse`); Inline-Groessen aus JS brauchen `!important`. (3) X der Sprachwelle transparent (Betreiber-Wunsch). (4) Zwei alte rote Radar-Tests: Testaufbau nachgezogen.
+Begruendung: Ein nachgeladenes Modul hinterlaesst an jedem Einstieg, den der Nachlader nicht kennt, einen toten Knopf — und nichts wird rot. Geraete-Messweg ohne Anmeldung: lokale Pages-Kopie + selbstmessende Seite (POST /__qa) im Simulator, DevTools-Protokoll im Android-Chrome in EIGENEM Tab (Parallelsitzungen teilen sich den Emulator).
+Verifikation: Chrome live v904 (Kaltstart-Klick, gerenderter Stil des X), Android-Chrome und iPhone-WebKit gegen die byte-gleiche Kopie; Gesamtsuite 4167 gruen bis auf schutz-echtheit (Apple-Login der Parallelsitzung noch nicht live). Lehre Parallelarbeit: bei fremden ungesicherten Dateien im Hauptordner in eine eigene Arbeitskopie umziehen und die Kaskade dorthin zeigen lassen; /private/tmp ueberlebt keinen Mac-Neustart — vorher pushen.
+
 ### [2026-09-18] DER EINGEBAUTE BROWSER WAR LIVE AN VIER STELLEN BLIND — UND KEIN TEST SAH ES (job_browser_a_bis_z_20260918)
 
 Typ: Verifikation + Fixes (SW v901, v902). Capsule `capsules/app/job_browser_a_bis_z_20260918/`, Bericht `docs/qa/browser-a-bis-z-2026-09-18.md`.
