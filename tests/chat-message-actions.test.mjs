@@ -344,7 +344,7 @@ test('"Quellen anzeigen" erscheint nur mit echter Quelle', () => {
   // "Quellen anzeigen" fuehrt weiterhin die Liste darunter an.
   const liste = mitQuelle.filter((i) => !i.kachel);
   assert.equal(liste[0].act, "sources", "mit Beleg steht er ganz oben in der Liste");
-  assert.equal(mitQuelle.length, 14, "4 Kacheln + sources + 7 Listenpunkte + fork + remove");
+  assert.equal(mitQuelle.length, 15, "4 Kacheln + sources + 7 Listenpunkte + fork + report + remove");
   assert.ok(!menuItemsFor("user", true).some((i) => i.act === "sources"), "eigene Nachrichten haben keine Quellen");
 });
 
@@ -549,7 +549,7 @@ test("Menuepunkte je Rolle, Loeschen zuletzt und als Gefahr markiert", () => {
   // Anfragen genau sein." Kopieren und Vorlesen stehen zwar sichtbar in der Leiste, aber wer sie
   // bei der eigenen Frage im Menue sucht, sucht sie dort auch bei der Antwort. Einheitliche
   // Bedienung schlaegt die aeltere Regel "keine doppelten Wege" (ZCode-Abgleich 2026-08-16).
-  assert.deepEqual(assistant.map((item) => item.act), ["copy", "share", "speak", "pin", "reply", "quote", "forward", "translate", "select-text", "regen", "copy-plain", "fork", "remove"]);
+  assert.deepEqual(assistant.map((item) => item.act), ["copy", "share", "speak", "pin", "reply", "quote", "forward", "translate", "select-text", "regen", "copy-plain", "fork", "report", "remove"]);
   assert.equal(assistant.at(-1).danger, true);
   assert.ok(!assistant.some((item) => item.act === "sources"), "keine Quellenliste, solange keine Quellen erfasst werden");
 });
@@ -603,7 +603,7 @@ test("buildMenu erzeugt bedienbare Menuepunkte mit Trennlinie vor dem Loeschen",
   assert.ok(kacheln, "Kachelreihe vorhanden");
   assert.deepEqual(kacheln.children.map((k) => k.dataset.act), ["copy", "share", "speak", "pin"]);
   const items = [...kacheln.children, ...menu.children.filter((node) => String(node.className).includes("msg-menu-item"))];
-  assert.equal(items.length, 13);
+  assert.equal(items.length, 14, "seit 20.09.2026 zusaetzlich 'Inhalt melden' (Google-Play-Pflicht)");
   for (const item of items) {
     assert.equal(item.type, "button", "Menuepunkte sind echte Knoepfe und damit fokussierbar");
     assert.equal(item.attributes.role, "menuitem");
