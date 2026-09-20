@@ -41,6 +41,10 @@ const composerTools = fs.readFileSync(path.join(publicDir, "composer-tools.js"),
 const schritteAnzeige = fs.readFileSync(path.join(publicDir, "ai", "chat-schritte-anzeige.js"), "utf8");
 const arbeitsflaeche = fs.readFileSync(path.join(publicDir, "arbeitsflaeche.js"), "utf8");
 const fuehrung = fs.readFileSync(path.join(publicDir, "fuehrung.js"), "utf8");
+// Nachrichten-Menue und "Inhalt melden" (Geraetetest 20.09.2026, iPhone + Android): die Labels
+// stehen deutsch in chat-actions-menu.js, uebersetzt wird beim Einhaengen (chat-menue-mehr.js).
+const nachrichtenMenue = fs.readFileSync(path.join(publicDir, "chat-actions-menu.js"), "utf8");
+const inhaltMelden = fs.readFileSync(path.join(publicDir, "inhalt-melden.js"), "utf8");
 const apiCenterSurface = fs.readFileSync(path.join(publicDir, "api-center-surface.js"), "utf8")
   + fs.readFileSync(path.join(publicDir, "api-center-helfer.js"), "utf8")
   // Die vier Listen-Aktionen liegen seit dem 04.09. in einem eigenen Modul (800-Zeilen-Regel);
@@ -86,7 +90,8 @@ test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer ueb
     + profileDock + profilePictureControl + profilePictureStore + startChips + startHtml
     + searchOverlay + onboardingWelcome + spurStart + apiCenterSurface + chatActionsWoerter + ersteSchritte
     + voiceOverlayUi + voiceRealtime + composerTools
-    + schritteAnzeige + arbeitsflaeche + fuehrung;
+    + schritteAnzeige + arbeitsflaeche + fuehrung
+    + nachrichtenMenue + inhaltMelden;
   // HTML schreibt Zeichen als Entitaet ("Hilfe &amp; Rueckmeldung"), der Text-
   // knoten im Browser traegt aber das Zeichen selbst — und genau der ist der
   // Uebersetzungsschluessel. Darum wird zusaetzlich die entschluesselte Fassung
