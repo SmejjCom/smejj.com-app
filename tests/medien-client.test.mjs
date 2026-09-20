@@ -130,8 +130,13 @@ test("interne Adressen verlassen den Chat nie als Text", () => {
 
 test("Kopieren, Teilen und Markdown-Export sind verdrahtet", () => {
   const aktionen = lies("../public/chat-actions.js");
-  assert.match(aktionen, /copy: \(entry, button\) => copyText\(ohneMedienAdressen\(rawOf\(entry\)\)/);
-  assert.match(aktionen, /img\[data-smejj-adresse\], video/, "kopiertes HTML traegt keine Medien-Adressen");
+  assert.match(aktionen, /const roh = ohneMedienAdressen\(rawOf\(entry\)\);/);
+  assert.match(aktionen, /copyText\(roh, button, htmlOf\(entry, roh\)\)/);
+  // htmlOf() liegt seit dem 20.09.2026 in einem eigenen Modul (800-Zeilen-Regel);
+  // die Medien-Sperre wandert mit der Funktion, nicht mit der Datei.
+  const kopiertext = lies("../public/chat-actions-text.js");
+  assert.match(aktionen, /await import\("\/assets\/chat-actions-text\.js/, "htmlOf muss nachgeladen werden, sonst waechst das Startgewicht");
+  assert.match(kopiertext, /img\[data-smejj-adresse\], video/, "kopiertes HTML traegt keine Medien-Adressen");
   const menue = lies("../public/chat-menue-mehr.js");
   assert.match(menue, /oeffneTeilenBlatt\(medium, \{ text \}\)/, "Teilen mit Medium oeffnet das Teilen-Blatt");
   const verlauf = lies("../public/chat-history-text.js");

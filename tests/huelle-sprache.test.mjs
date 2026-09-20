@@ -23,6 +23,17 @@ test("Nutzer- und Modell-Inhalte sind gesperrt", () => {
   for (const tag of ["TEXTAREA", "PRE", "CODE"]) assert.ok(quelle.includes(`"${tag}"`), `Tag-Sperre ohne ${tag}`);
 });
 
+// GEMESSEN 20.09.2026 an der ausgelieferten Seite: die Tag-Sperre sprang ueber
+// das GANZE Element und damit auch ueber seine Attribute. Der Platzhalter jedes
+// Eingabefeldes blieb deutsch — auch "Frag mich alles" auf der Startseite.
+test("ein gesperrtes Tag schuetzt seinen Inhalt, nicht seine Beschriftung", () => {
+  assert.match(quelle, /const nurBeschriftung = GESPERRTE_TAGS\.has\(el\.tagName\)/);
+  // Die Attribut-Schleife steht VOR dem Ausstieg, die Textknoten-Schleife dahinter.
+  const nachAttribut = quelle.indexOf("if (nurBeschriftung) continue;");
+  assert.ok(quelle.indexOf("for (const name of ATTRIBUTE)") < nachAttribut, "Attribute muessen vor dem Ausstieg laufen");
+  assert.ok(nachAttribut < quelle.indexOf("for (const knoten of el.childNodes)"), "Textknoten muessen nach dem Ausstieg stehen");
+});
+
 test("nur der erste eigene Textknoten wird ersetzt — der Wert daneben bleibt", () => {
   assert.match(quelle, /nodeType !== 3/);
   assert.match(quelle, /break;/);
