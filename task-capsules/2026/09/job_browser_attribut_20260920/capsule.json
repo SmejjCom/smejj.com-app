@@ -1,0 +1,22 @@
+{
+  "job_id": "job_browser_attribut_20260920",
+  "datum": "2026-09-20",
+  "typ": "Geraetetest + Fix + Auslieferung",
+  "titel": "Browser: Adressleiste zeigte t(\"Suchen, iPhone-App: Fenster unter der Statusleiste (SW v924)",
+  "vorgaenger": "job_app_seitentitel_20260920",
+  "befunde": [
+    "title=t(\"…\") ohne ${} in Template-Strings (10 Attribute, live v921-v923, alle Nutzer)",
+    "browser-panel top:0 + padding:0 unter der iOS-Statusleiste"
+  ],
+  "loesung": "=\"${escapeHtml(t(…))}\", Waechter-Test, padding-top env(safe-area-inset-top)",
+  "commits": {
+    "app": "1a4a5be5",
+    "bauzweig": "4592673c",
+    "frontend": "779aa50"
+  },
+  "anker": "schutz-100-2026-09-20-app-v924",
+  "nachtest": "Android-Chrome + iPhone-App live v924",
+  "lehre": "Mechanisches Umschreiben von Zeichenketten zu t() trifft auch HTML-Attribute in Templates; nur das Geraet mit offenem Fenster zeigt es",
+  "bericht": "docs/qa/app-a-bis-z-2026-09-19.md",
+  "rollback": "schutz-100-2026-09-20-app-v917*"
+}
