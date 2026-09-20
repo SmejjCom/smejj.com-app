@@ -19,10 +19,8 @@ set -uo pipefail
 APP="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 BAU="$HOME/smejj-bau-melden"
 KLON="/Users/alanbest/smejj-app-frontend"
-BASIS="d0bb3169"
 ARBEITS_ZWEIG="feature/design-start-chat-2026-09-13"
 BAU_ZWEIG="feature/auth-redesign-github-magiclink"
-SW_NEU="smejj-shell-v911"
 WORTLAUT="Google Play hat das Update am 20.09.2026 abgelehnt: 'Violation of AI-Generated Content policy — Your app lacks in-app features for users to report or flag offensive content.' Betreiber am 20.09.2026 schriftlich im Chat: 'Was hast du gemacht? Warum ist Abgelehnt? geh chrome browser und erledige,' Umsetzung: Menuepunkt 'Inhalt melden' bei Antworten, Melde-Dialog mit sechs Gruenden ohne Verlassen der App, POST /api/inhalt-meldung (angemeldet, PII-bereinigt), Nachreichen ohne Netz, SW smejj-shell-v911. Per Doppelklick ausgeloest."
 export GIT_TERMINAL_PROMPT=0
 export DEVELOPER_DIR=/Library/Developer/CommandLineTools
@@ -32,7 +30,50 @@ echo "== 0. Vorbedingungen"
 cd "$APP" || { echo "ABBRUCH: $APP fehlt."; exit 1; }
 [ -z "$(git status --porcelain --untracked-files=no -- public scripts tests src control-server)" ] || { echo "ABBRUCH: ungesicherte Aenderungen in public/scripts/tests/src/control-server."; exit 1; }
 git fetch -q origin "$ARBEITS_ZWEIG" "$BAU_ZWEIG" || { echo "ABBRUCH: origin nicht erreichbar."; exit 1; }
-git merge-base --is-ancestor "origin/$ARBEITS_ZWEIG" HEAD || { echo "ABBRUCH: Arbeitszweig ist weitergelaufen (Parallelsitzung) — erst neu aufsetzen."; exit 1; }
+
+# PARALLELSITZUNG: zweimal am 20.09. ist der Zweig zwischen Vorbereitung und Doppelklick
+# weitergelaufen (v908, v909, v910 wurden nacheinander von einer anderen Sitzung belegt).
+# Darum setzt sich diese Kaskade selbst neu auf, statt abzubrechen. Der EINZIGE Konflikt,
+# den sie allein loest, ist die Cache-Nummer in sw.js — alles andere bricht ab.
+if ! git merge-base --is-ancestor "origin/$ARBEITS_ZWEIG" HEAD; then
+  echo "  Arbeitszweig ist weitergelaufen — meine Commits werden neu aufgesetzt"
+  if ! git rebase "origin/$ARBEITS_ZWEIG" >/dev/null 2>&1; then
+    if grep -lq "^<<<<<<<" public/sw.js public/assets/sw.js 2>/dev/null \
+       && [ -z "$(git diff --name-only --diff-filter=U | grep -v 'sw\.js$')" ]; then
+      for f in public/sw.js public/assets/sw.js; do
+        perl -0pi -e 's/<<<<<<< HEAD\n(const CACHE_NAME = "[^"]*";)\n=======\nconst CACHE_NAME = "[^"]*";\n>>>>>>> [^\n]*\n/$1\n/' "$f"
+      done
+      grep -q "^<<<<<<<" public/sw.js public/assets/sw.js && { git rebase --abort; echo "ABBRUCH: sw.js-Konflikt blieb stehen."; exit 1; }
+      git add public/sw.js public/assets/sw.js
+      GIT_EDITOR=true git rebase --continue >/dev/null 2>&1 || { git rebase --abort; echo "ABBRUCH: Aufsetzen fehlgeschlagen."; exit 1; }
+      echo "  aufgesetzt (sw.js-Nummer der anderen Sitzung uebernommen)"
+    else
+      git rebase --abort >/dev/null 2>&1
+      echo "ABBRUCH: Aufsetzen brauchte eine Entscheidung (nicht nur sw.js) — von Hand pruefen."; exit 1
+    fi
+  fi
+fi
+
+# Die Cache-Nummer muss HOEHER sein als alles, was es schon gibt (Zweige und live).
+hoechste() { printf '%s\n' "$@" | grep -o '[0-9]*' | sort -n | tail -1; }
+SW_ORIGIN=$(git show "origin/$ARBEITS_ZWEIG:public/sw.js" | grep -o 'smejj-shell-v[0-9]*' | head -1)
+SW_BAU_REMOTE=$(git show "origin/$BAU_ZWEIG:public/sw.js" | grep -o 'smejj-shell-v[0-9]*' | head -1)
+LIVE_SW=$(curl -s -m 20 "https://smejj.com/sw.js?n=$RANDOM" | grep -o 'smejj-shell-v[0-9]*' | head -1)
+SW_MEIN=$(grep -o 'smejj-shell-v[0-9]*' public/sw.js | head -1)
+MAX=$(hoechste "$SW_ORIGIN" "$SW_BAU_REMOTE" "$LIVE_SW")
+echo "  Nummern: origin $SW_ORIGIN | bauzweig $SW_BAU_REMOTE | live $LIVE_SW | meine $SW_MEIN"
+if [ "$(printf '%s' "$SW_MEIN" | grep -o '[0-9]*')" -le "$MAX" ]; then
+  SW_NEU="smejj-shell-v$((MAX + 1))"
+  echo "  meine Nummer war belegt — neu: $SW_NEU"
+  sed -i '' "s/$SW_MEIN/$SW_NEU/" public/sw.js public/assets/sw.js
+  git add public/sw.js public/assets/sw.js
+  git "${autor[@]}" commit -q --amend --no-edit || { echo "ABBRUCH: Nummer konnte nicht gesetzt werden."; exit 1; }
+else
+  SW_NEU="$SW_MEIN"
+fi
+ANKER="schutz-100-2026-09-20-melden-${SW_NEU#smejj-shell-}"
+BASIS=$(git merge-base "origin/$ARBEITS_ZWEIG" HEAD)
+echo "  ausgeliefert wird $SW_NEU (Basis ${BASIS:0:8})"
 
 # Der Bauzweig bekommt eine eigene Arbeitskopie: die Runden davor hatten je eine.
 if [ ! -d "$BAU" ]; then
@@ -42,16 +83,35 @@ if [ ! -d "$BAU" ]; then
 fi
 cd "$BAU" || { echo "ABBRUCH: $BAU fehlt."; exit 1; }
 git fetch -q origin "$BAU_ZWEIG"
-git merge-base --is-ancestor "origin/$BAU_ZWEIG" HEAD || { echo "ABBRUCH: Bauzweig ist weitergelaufen (Parallelsitzung)."; exit 1; }
+git reset -q --hard "origin/$BAU_ZWEIG" || { echo "ABBRUCH: Bauzweig-Kopie nicht auf origin setzbar."; exit 1; }
+cd "$APP"
 
-LIVE_SW=$(curl -s -m 20 "https://smejj.com/sw.js?n=$RANDOM" | grep -o 'smejj-shell-v[0-9]*' | head -1)
-echo "live smejj.com: $LIVE_SW"
-
-echo "== 1. Die Aenderung dieser Runde auf den Bauzweig uebertragen"
+echo "== 1. Die Aenderungen dieser Runde auf den Bauzweig uebertragen"
 cd "$BAU"
-git cherry-pick -x "$(git -C "$APP" rev-parse HEAD)" >/dev/null 2>&1 \
-  || { git cherry-pick --abort >/dev/null 2>&1; echo "ABBRUCH: cherry-pick auf den Bauzweig fehlgeschlagen — von Hand pruefen."; exit 1; }
-echo "  Bauzweig traegt die Aenderung: $(git rev-parse --short HEAD)"
+# ALLE Commits dieser Runde, nicht nur den letzten: die Runde besteht aus Fix + Doku + Nachzug.
+MEINE=($(git -C "$APP" rev-list --reverse "$BASIS..$(git -C "$APP" rev-parse HEAD)"))
+echo "  ${#MEINE[@]} Commits"
+for c in "${MEINE[@]}"; do
+  if ! git cherry-pick -x "$c" >/dev/null 2>&1; then
+    # Auch hier ist der einzige erwartete Konflikt die Cache-Nummer in sw.js.
+    if [ -z "$(git diff --name-only --diff-filter=U | grep -v 'sw\.js$')" ] && [ -n "$(git diff --name-only --diff-filter=U)" ]; then
+      for f in public/sw.js public/assets/sw.js; do
+        [ -f "$f" ] || continue
+        perl -0pi -e 's/<<<<<<< HEAD\nconst CACHE_NAME = "[^"]*";\n=======\n(const CACHE_NAME = "[^"]*";)\n>>>>>>> [^\n]*\n/$1\n/' "$f"
+      done
+      grep -q "^<<<<<<<" public/sw.js public/assets/sw.js 2>/dev/null && { git cherry-pick --abort >/dev/null 2>&1; echo "ABBRUCH: sw.js-Konflikt im Bauzweig blieb stehen."; exit 1; }
+      git add public/sw.js public/assets/sw.js
+      GIT_EDITOR=true git cherry-pick --continue >/dev/null 2>&1 || { git cherry-pick --abort >/dev/null 2>&1; echo "ABBRUCH: cherry-pick $c."; exit 1; }
+    else
+      git cherry-pick --abort >/dev/null 2>&1
+      echo "ABBRUCH: cherry-pick $c brauchte eine Entscheidung — von Hand pruefen."; exit 1
+    fi
+  fi
+done
+# Beide Zweige MUESSEN dieselbe Cache-Nummer tragen (api.smejj.com ist der Rueckfallweg).
+BAU_SW=$(grep -o 'smejj-shell-v[0-9]*' public/sw.js | head -1)
+[ "$BAU_SW" = "$SW_NEU" ] || { echo "ABBRUCH: Bauzweig traegt $BAU_SW, erwartet $SW_NEU."; exit 1; }
+echo "  Bauzweig traegt die Aenderung: $(git rev-parse --short HEAD) ($BAU_SW)"
 
 echo "== 2. Stempel und Tests (beide Arbeitskopien)"
 for d in "$APP" "$BAU"; do
@@ -153,7 +213,6 @@ code=$(curl -s -m 20 -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: ap
 node scripts/check-schutz-echtheit.mjs || echo "(Schutz-Echtheit: nach dem Rand-Cache erneut laufen lassen)"
 
 echo "== 7. Schutz-Anker"
-ANKER="schutz-100-2026-09-20-melden-v911"
 cd "$APP" && { git tag -l "$ANKER" | grep -q . || git tag -a "$ANKER" -m "Inhalt melden (Google-Play-Ablehnung 20.09.2026), SW $SW_NEU" "$APP_NEU"; }
 git push -q origin "refs/tags/$ANKER" 2>/dev/null && echo "  Anker App: $ANKER -> ${APP_NEU:0:8}" || echo "  (Anker App schon drueben oder Push nicht moeglich)"
 cd "$BAU" && { git tag -l "$ANKER-bauzweig" | grep -q . || git tag -a "$ANKER-bauzweig" -m "Bauzweig zu $ANKER, SW $SW_NEU" "$BAU_NEU"; }
