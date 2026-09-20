@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-20T07:21:16.405Z",
-  "confirmation": "Betreiber-Auftrag 20.09.2026 (schriftlich): 'Mach englische und iPad-Bilder fertig und hochladen' sowie 'Mach von unserer Seite alles fertig, soll nichts offen bleiben.' Umsetzung: der Sprachmodus war die einzige Ansicht ohne Uebersetzung (deutsche Texte auf englischer Oberflaeche) - seine sichtbaren Texte laufen jetzt ueber t() aus i18n/ui.js, Uebersetzungen in allen 14 Sprachen ergaenzt. SW smejj-shell-v907.",
+  "frozenAt": "2026-09-20T09:10:38.174Z",
+  "confirmation": "Betreiber 18.09.2026 schriftlich im Chat: 'Oeffne https://smejj.com/ im Chrome-Browser und pruefe unseren smejj Browser vollstaendig von A bis Z. … Erst alle Probleme und Verbesserungspunkte auflisten, danach vollstaendig umsetzen und anschliessend alles erneut mit realen Tests pruefen. Keine funktionierende bestehende Funktion darf dabei beschaedigt werden.' Umsetzung: CSP frame-src https:, Globus bei offenem Browser ausgeblendet, Menue-Ebene 90, Schnellweg in derselben Live-Sitzung, Schonfrist fuer Server-Sitzungen, Hauptmenue mit Vollbild, SW smejj-shell-v908 (Runde 6: Proxy-Seiten des eingebauten Browsers als eigenes Dokument mit eigener Sicherheitsregel, https zuerst; Betreiber 20.09. schriftlich: 'Checke nochmal Browser von A bis Z muss besser als Chrome Browser sein.'). Betreiber dazu am 18.09. schriftlich: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Per Doppelklick ausgeloest.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "8bf8bdcd195864d9c1409ce2486c98728f3d69a3b6ab4fc76fb9b66a6340443d",
+    "public/index.html": "224bcac1b20784d9522a0db7f8cdaecd4b0d0c009a62409e18ee88096c822b4d",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "80b6a7f931dc3a4814f5d95ebc5dc27f4bff2168716f105179272937c71b747f",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "a2de84280465570316b3062061a6e9359c953d35f4d02a719975b2b28afb9b8c",
-    "public/app.js": "e94de0876b9ec71ec4afbca2fe842fb2120bef8dee0a5f9ade20e1d7705c35c0",
+    "public/app.js": "055374b54d06e9d6034e21536740afc1a31f2ddf2db8b192caf6186ed5c47fb5",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "27acbbbbe2a23a81f25b8fdab7e5204cb4e5ecc1217f6ef1af8ee7a12831e3df",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -24,7 +24,7 @@
     "public/composer-tools.js": "c7a0a269ff676a9131e17f577a37ea36e69b6b899209a3dbdcd08a47351dc46a",
     "public/composer-plus-menu.js": "6ed1aa1fd93321870f65786fd60288bfe2b4622ee62dd0f0517f4d9bac089493",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "ec45c67eb6c1488418d34fbebc377ee7d2ec601076670c0a6473dd0ffee9aa4b",
+    "public/browser-pane.js": "afa2762bc6834f5ff0eb744d4c0d6de02dc71d31d4fe2e9c04fc84e6c1413c52",
     "public/browser-pane-render.js": "f6a0df7abdd279f737b41d836722385b8bcdbcebc260fc5d5aa7a0262ae3d49c",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "6c481703b54317e5d9a5144525faa1a30400d49c30667c0f7edc1e22168d7c81",
+    "public/sw.js": "83922f39606effee2ed478d2cbe393ecf702dff2a651a5f865bc9ba2498b912b",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
