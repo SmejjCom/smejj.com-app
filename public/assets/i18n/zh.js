@@ -1,5 +1,15 @@
 // smejj.com — UI-Uebersetzung 中文 (Quellsprache Deutsch als Schluessel).
 export default {
+  // Sprachmodus (20.09.2026): die Texte des Overlays laufen jetzt ueber t().
+  "Ich höre zu …": "正在聆听 …",
+  "Ich spreche …": "正在说话 …",
+  "Mikrofon stumm": "麦克风已静音",
+  "Sprich einfach — beenden mit X oder Escape.": "直接说就行 — 按 X 或 Escape 结束。",
+  "Sprich einfach — Mikrofon stummschalten mit dem Mikrofon-Button, beenden mit X oder Escape.": "直接说就行 — 用麦克风按钮静音，按 X 或 Escape 结束。",
+  "Frage schreiben …": "输入问题 …",
+  "Stummschalten": "静音",
+  "Stummschaltung aufheben": "取消静音",
+  "Mikrofon stummschalten": "麦克风静音",
   "Einstellungen": "设置",
   "Passe smejj.com an deine Arbeitsweise an. Änderungen bleiben sicher auf diesem Gerät.": "让 smejj.com 适应你的工作方式。更改将安全地保存在本设备上。",
   "Lokal gespeichert": "已本地保存",

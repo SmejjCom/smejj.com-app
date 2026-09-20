@@ -1,5 +1,15 @@
 // smejj.com — UI-Uebersetzung Türkçe (Quellsprache Deutsch als Schluessel).
 export default {
+  // Sprachmodus (20.09.2026): die Texte des Overlays laufen jetzt ueber t().
+  "Ich höre zu …": "Dinliyorum …",
+  "Ich spreche …": "Konuşuyorum …",
+  "Mikrofon stumm": "Mikrofon sessiz",
+  "Sprich einfach — beenden mit X oder Escape.": "Konuşman yeterli — X veya Escape ile kapat.",
+  "Sprich einfach — Mikrofon stummschalten mit dem Mikrofon-Button, beenden mit X oder Escape.": "Konuşman yeterli — mikrofon düğmesiyle sesi kapat, X veya Escape ile kapat.",
+  "Frage schreiben …": "Soru yaz …",
+  "Stummschalten": "Sesi kapat",
+  "Stummschaltung aufheben": "Sesi aç",
+  "Mikrofon stummschalten": "Mikrofonu kapat",
   "Einstellungen": "Ayarlar",
   "Passe smejj.com an deine Arbeitsweise an. Änderungen bleiben sicher auf diesem Gerät.": "smejj.com'u çalışma tarzına göre uyarla. Değişiklikler bu cihazda güvenle saklanır.",
   "Lokal gespeichert": "Yerel olarak kaydedildi",

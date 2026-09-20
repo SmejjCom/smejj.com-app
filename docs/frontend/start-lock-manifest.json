@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-19T23:22:49.102Z",
-  "confirmation": "Betreiber-Auftrag 20.09.2026 (schriftlich): Das Schreibfeld muss ganz unten fest positioniert sein. Das Schreibfeld soll transparent sein, ohne sichtbaren Hintergrund oder Balken - aehnlich wie bei ChatGPT. Ganz oben bei Uhrzeit, Netz/WLAN und Akku darf ebenfalls kein Hintergrund sichtbar sein. Die gesamte Ansicht soll von ganz oben bis ganz unten echtes Vollbild sein und auf iOS, Android, PWA, Simulator und Emulator sauber funktionieren. Beim Scrollen bleibt das Schreibfeld unten fixiert, waehrend der Chat-Inhalt dahinter weiter sichtbar und scrollbar bleibt.",
+  "frozenAt": "2026-09-20T07:21:16.405Z",
+  "confirmation": "Betreiber-Auftrag 20.09.2026 (schriftlich): 'Mach englische und iPad-Bilder fertig und hochladen' sowie 'Mach von unserer Seite alles fertig, soll nichts offen bleiben.' Umsetzung: der Sprachmodus war die einzige Ansicht ohne Uebersetzung (deutsche Texte auf englischer Oberflaeche) - seine sichtbaren Texte laufen jetzt ueber t() aus i18n/ui.js, Uebersetzungen in allen 14 Sprachen ergaenzt. SW smejj-shell-v907.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "8bf8bdcd195864d9c1409ce2486c98728f3d69a3b6ab4fc76fb9b66a6340443d",
@@ -21,7 +21,7 @@
     "public/autonomous-coding.js": "95a765c2888895d5e48458a289bda3ab29595ac5871a1edc95d992a45e027164",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "db3547aa1f9aa4860dc0377cfb4991747e22ed77afdedd97e68dd30003209b7a",
-    "public/composer-tools.js": "42ce85b6157517ae851829b6041d182d907f638860e5aa76d4322de21e56b631",
+    "public/composer-tools.js": "c7a0a269ff676a9131e17f577a37ea36e69b6b899209a3dbdcd08a47351dc46a",
     "public/composer-plus-menu.js": "6ed1aa1fd93321870f65786fd60288bfe2b4622ee62dd0f0517f4d9bac089493",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "ec45c67eb6c1488418d34fbebc377ee7d2ec601076670c0a6473dd0ffee9aa4b",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "e385ac13b9a206299260f0826caba954c5ac44b98fafb74cf3ce5aad7f95d55f",
+    "public/sw.js": "6c481703b54317e5d9a5144525faa1a30400d49c30667c0f7edc1e22168d7c81",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }

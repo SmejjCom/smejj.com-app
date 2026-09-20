@@ -1,5 +1,15 @@
 // smejj.com — UI-Uebersetzung Bahasa Indonesia (Quellsprache Deutsch als Schluessel).
 export default {
+  // Sprachmodus (20.09.2026): die Texte des Overlays laufen jetzt ueber t().
+  "Ich höre zu …": "Saya mendengarkan …",
+  "Ich spreche …": "Saya sedang berbicara …",
+  "Mikrofon stumm": "Mikrofon dibisukan",
+  "Sprich einfach — beenden mit X oder Escape.": "Bicara saja — tutup dengan X atau Escape.",
+  "Sprich einfach — Mikrofon stummschalten mit dem Mikrofon-Button, beenden mit X oder Escape.": "Bicara saja — bisukan dengan tombol mikrofon, tutup dengan X atau Escape.",
+  "Frage schreiben …": "Tulis pertanyaan …",
+  "Stummschalten": "Bisukan",
+  "Stummschaltung aufheben": "Bunyikan",
+  "Mikrofon stummschalten": "Bisukan mikrofon",
   "Einstellungen": "Pengaturan",
   "Passe smejj.com an deine Arbeitsweise an. Änderungen bleiben sicher auf diesem Gerät.": "Sesuaikan smejj.com dengan cara kerja Anda. Perubahan tersimpan aman di perangkat ini.",
   "Lokal gespeichert": "Tersimpan secara lokal",

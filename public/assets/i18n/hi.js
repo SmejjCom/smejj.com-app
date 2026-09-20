@@ -1,5 +1,15 @@
 // smejj.com — UI-Uebersetzung हिन्दी (Quellsprache Deutsch als Schluessel).
 export default {
+  // Sprachmodus (20.09.2026): die Texte des Overlays laufen jetzt ueber t().
+  "Ich höre zu …": "मैं सुन रहा हूँ …",
+  "Ich spreche …": "मैं बोल रहा हूँ …",
+  "Mikrofon stumm": "माइक्रोफ़ोन म्यूट",
+  "Sprich einfach — beenden mit X oder Escape.": "बस बोलिए — X या Escape से बंद करें।",
+  "Sprich einfach — Mikrofon stummschalten mit dem Mikrofon-Button, beenden mit X oder Escape.": "बस बोलिए — माइक्रोफ़ोन बटन से म्यूट करें, X या Escape से बंद करें।",
+  "Frage schreiben …": "प्रश्न लिखें …",
+  "Stummschalten": "म्यूट करें",
+  "Stummschaltung aufheben": "म्यूट हटाएँ",
+  "Mikrofon stummschalten": "माइक्रोफ़ोन म्यूट करें",
   "Einstellungen": "सेटिंग्स",
   "Passe smejj.com an deine Arbeitsweise an. Änderungen bleiben sicher auf diesem Gerät.": "smejj.com को अपने काम करने के तरीके के अनुसार ढालें। बदलाव इस डिवाइस पर सुरक्षित रहते हैं।",
   "Lokal gespeichert": "स्थानीय रूप से सहेजा गया",

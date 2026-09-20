@@ -1,5 +1,15 @@
 // smejj.com — UI-Uebersetzung 한국어 (Quellsprache Deutsch als Schluessel).
 export default {
+  // Sprachmodus (20.09.2026): die Texte des Overlays laufen jetzt ueber t().
+  "Ich höre zu …": "듣고 있어요 …",
+  "Ich spreche …": "말하고 있어요 …",
+  "Mikrofon stumm": "마이크 음소거됨",
+  "Sprich einfach — beenden mit X oder Escape.": "그냥 말하세요 — X 또는 Escape로 종료합니다.",
+  "Sprich einfach — Mikrofon stummschalten mit dem Mikrofon-Button, beenden mit X oder Escape.": "그냥 말하세요 — 마이크 버튼으로 음소거하고, X 또는 Escape로 종료합니다.",
+  "Frage schreiben …": "질문 쓰기 …",
+  "Stummschalten": "음소거",
+  "Stummschaltung aufheben": "음소거 해제",
+  "Mikrofon stummschalten": "마이크 음소거",
   "Einstellungen": "설정",
   "Passe smejj.com an deine Arbeitsweise an. Änderungen bleiben sicher auf diesem Gerät.": "smejj.com을 나의 작업 방식에 맞게 조정하세요. 변경 사항은 이 기기에 안전하게 저장됩니다.",
   "Lokal gespeichert": "로컬에 저장됨",
