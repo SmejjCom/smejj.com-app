@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Einmal-Kaskade 20.09.2026 — "Inhalt melden" ausliefern (SW v909).
+# Einmal-Kaskade 20.09.2026 — "Inhalt melden" ausliefern (SW v911).
 #
 # ANLASS: Google Play hat das Update am 20.09.2026 ABGELEHNT.
 #   "Issue found: Violation of AI-Generated Content policy —
@@ -8,8 +8,8 @@
 # ein neues AAB (und damit der Keystore) ist NICHT noetig. Erst nach dieser Auslieferung darf
 # der Store-Eintrag erneut zur Pruefung eingereicht werden.
 #
-# ACHTUNG Parallelsitzung: v908 ist von einer anderen Sitzung belegt (~/smejj-bau-runde6),
-# darum traegt diese Runde v909. Vor dem Lauf wird geprueft, dass die Zweige nicht
+# ACHTUNG Parallelsitzung: v908-v910 sind von einer anderen Sitzung belegt (~/smejj-bau-runde6),
+# darum traegt diese Runde v911. Vor dem Lauf wird geprueft, dass die Zweige nicht
 # weitergelaufen sind.
 #
 # Gleicher Ablauf wie app-a-bis-z-runde5-2026-09-20.sh: beide Zweige stempeln,
@@ -19,11 +19,11 @@ set -uo pipefail
 APP="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 BAU="$HOME/smejj-bau-melden"
 KLON="/Users/alanbest/smejj-app-frontend"
-BASIS="fb42eaaf"
+BASIS="d0bb3169"
 ARBEITS_ZWEIG="feature/design-start-chat-2026-09-13"
 BAU_ZWEIG="feature/auth-redesign-github-magiclink"
-SW_NEU="smejj-shell-v909"
-WORTLAUT="Google Play hat das Update am 20.09.2026 abgelehnt: 'Violation of AI-Generated Content policy — Your app lacks in-app features for users to report or flag offensive content.' Betreiber am 20.09.2026 schriftlich im Chat: 'Was hast du gemacht? Warum ist Abgelehnt? geh chrome browser und erledige,' Umsetzung: Menuepunkt 'Inhalt melden' bei Antworten, Melde-Dialog mit sechs Gruenden ohne Verlassen der App, POST /api/inhalt-meldung (angemeldet, PII-bereinigt), Nachreichen ohne Netz, SW smejj-shell-v909. Per Doppelklick ausgeloest."
+SW_NEU="smejj-shell-v911"
+WORTLAUT="Google Play hat das Update am 20.09.2026 abgelehnt: 'Violation of AI-Generated Content policy — Your app lacks in-app features for users to report or flag offensive content.' Betreiber am 20.09.2026 schriftlich im Chat: 'Was hast du gemacht? Warum ist Abgelehnt? geh chrome browser und erledige,' Umsetzung: Menuepunkt 'Inhalt melden' bei Antworten, Melde-Dialog mit sechs Gruenden ohne Verlassen der App, POST /api/inhalt-meldung (angemeldet, PII-bereinigt), Nachreichen ohne Netz, SW smejj-shell-v911. Per Doppelklick ausgeloest."
 export GIT_TERMINAL_PROMPT=0
 export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 autor=(-c user.name="Wof Kadavanich" -c user.email=smejjcom@gmail.com)
@@ -153,7 +153,7 @@ code=$(curl -s -m 20 -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: ap
 node scripts/check-schutz-echtheit.mjs || echo "(Schutz-Echtheit: nach dem Rand-Cache erneut laufen lassen)"
 
 echo "== 7. Schutz-Anker"
-ANKER="schutz-100-2026-09-20-melden-v909"
+ANKER="schutz-100-2026-09-20-melden-v911"
 cd "$APP" && { git tag -l "$ANKER" | grep -q . || git tag -a "$ANKER" -m "Inhalt melden (Google-Play-Ablehnung 20.09.2026), SW $SW_NEU" "$APP_NEU"; }
 git push -q origin "refs/tags/$ANKER" 2>/dev/null && echo "  Anker App: $ANKER -> ${APP_NEU:0:8}" || echo "  (Anker App schon drueben oder Push nicht moeglich)"
 cd "$BAU" && { git tag -l "$ANKER-bauzweig" | grep -q . || git tag -a "$ANKER-bauzweig" -m "Bauzweig zu $ANKER, SW $SW_NEU" "$BAU_NEU"; }

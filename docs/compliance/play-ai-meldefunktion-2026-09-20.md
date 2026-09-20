@@ -57,7 +57,7 @@ nicht eingereicht** — erst muss die Funktion live sein.
 
 ## Was noch zu tun ist
 
-1. **Doppelklick auf `smejj.com Inhalt-melden ausliefern.command`** (Auto-Modus sperrt Stempel und Deploys). Liefert Server + smejj.com aus, SW v909.
+1. **Doppelklick auf `smejj.com Inhalt-melden ausliefern.command`** (Auto-Modus sperrt Stempel und Deploys). Liefert Server + smejj.com aus, SW v911.
 2. Danach in der Konsole unter **Veröffentlichungen – Übersicht** die Änderungen erneut zur Überprüfung einreichen.
 3. Erst nach der Freigabe die Custom Store Listings anlegen (`docs/aso/custom-listings-plan.md`).
 
