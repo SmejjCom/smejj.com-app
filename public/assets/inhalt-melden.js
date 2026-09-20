@@ -9,7 +9,7 @@
 // Gruenden und Versand ist ein eigener Belang und ohne DOM pruefbar (GRUENDE, meldungsNutzlast).
 // Der Menuepunkt selbst steht in chat-actions-menu.js (act "report").
 import { metaOf, rawOf } from "/assets/chat-messages.js?v=3";
-import { toPlainText } from "/assets/chat-actions-menu.js?v=12";
+import { toPlainText } from "/assets/chat-actions-menu.js?v=13";
 import { showToast } from "/assets/components.js?v=b48";
 
 // Dieselben Kennungen wie in chat-actions.js (Daumen-Signal) — ein Schluesselwechsel
@@ -72,7 +72,21 @@ async function sende(nutzlast) {
   return antwort.json().catch(() => ({ ok: true }));
 }
 
+
+// Der Stil wird ERST beim Oeffnen eingehaengt, nicht ueber start-styles.css: das Buendel der
+// Startseite steht 2 KB unter der Messlatte (check-startgewicht.mjs), und ein Dialog, den die
+// meisten nie oeffnen, gehoert nicht ins Startgewicht. Gleiches Muster wie chat-actions-woerter.js.
+const STIL_ID = "smejj-melden-stil";
+function sorgeFuerStil(doc = document) {
+  if (doc.getElementById(STIL_ID)) return;
+  const stil = doc.createElement("style");
+  stil.id = STIL_ID;
+  stil.textContent = ".melden-blatt{position:fixed;inset:0;z-index:95;display:flex;align-items:flex-end;justify-content:center;background:rgba(0, 0, 0, 0.55);}.melden-kasten{display:flex;flex-direction:column;gap:10px;width:min(560px, 100%);max-height:calc(100dvh - env(safe-area-inset-top, 0px) - 24px);overflow-y:auto;padding:14px 14px calc(env(safe-area-inset-bottom, 0px) + 14px);border-radius:12px 12px 0 0;background:#15181c;box-shadow:0 -12px 40px rgba(0, 0, 0, 0.5);}.melden-titel{font-size:18px;color:#f2f5f4;}.melden-hinweis{margin:0;font-size:15px;line-height:1.45;color:rgba(242, 245, 244, 0.7);}.melden-gruende{display:flex;flex-direction:column;gap:6px;}.melden-grund{min-height:44px;padding:0 14px;border:1px solid rgba(255, 255, 255, 0.12);border-radius:8px;background:rgba(255, 255, 255, 0.04);color:#f2f5f4;font:inherit;font-size:16px;text-align:left;cursor:pointer;}.melden-grund.ist-gewaehlt{border-color:#5ee7d6;background:rgba(94, 231, 214, 0.14);}.melden-notiz{padding:10px 12px;border:1px solid rgba(255, 255, 255, 0.12);border-radius:8px;background:rgba(255, 255, 255, 0.04);color:#f2f5f4;font:inherit;font-size:16px;resize:vertical;}.melden-reihe{display:flex;gap:8px;justify-content:flex-end;}.melden-knopf{min-height:44px;padding:0 16px;border:0;border-radius:8px;background:rgba(255, 255, 255, 0.08);color:#f2f5f4;font:inherit;font-size:16px;cursor:pointer;}.melden-knopf.ist-primaer{background:#ffffff;color:#0a0f16;font-weight:700;}.melden-knopf[disabled]{opacity:0.45;cursor:default;}";
+  doc.head.append(stil);
+}
+
 export function oeffneMeldeBlatt(eintrag) {
+  sorgeFuerStil();
   document.getElementById("smejjMelden")?.remove();
   const blatt = document.createElement("div");
   blatt.id = "smejjMelden";
