@@ -134,9 +134,15 @@ test("Avatar-Menue: Ausloggen ist einen Klick entfernt", () => {
   // Menue schliesst per Escape und Klick nach aussen.
   assert.match(dockMenu, /event\.key === "Escape"/);
   assert.match(dockMenu, /!menu\.contains\(event\.target\)/);
-  // Beschriftungen nutzen bestehende i18n-Schluessel (keine neuen Texte).
-  assert.match(dockMenu, /t\("Konto"\)/);
-  assert.match(dockMenu, /t\("Ausloggen"\)/);
+  // Beschriftungen: JEDER Menuepunkt laeuft durch t(), nicht mehr nur drei
+  // (Befund 20.09.2026 — "Sprache", "Mein Plan", "Verbrauch", "Papierkorb",
+  // "Systemzustand" und "Hilfe & Rueckmeldung" blieben in der englischen
+  // Oberflaeche deutsch stehen).
+  assert.match(dockMenu, /menu\.querySelectorAll\("\[role=\\"menuitem\\"\]"\)/);
+  assert.match(dockMenu, /nodeType === 3/);
+  // Und der Wert rechts in der Zeile bleibt stehen: nur der Textknoten wird
+  // ersetzt, nicht der ganze Inhalt (textContent haette den Span geloescht).
+  assert.ok(!/item\.textContent = label/.test(dockMenu), "Wert-Span darf nicht ueberschrieben werden");
 });
 
 test("Abmelden verwirft die Session, behaelt aber das Profilbild", () => {

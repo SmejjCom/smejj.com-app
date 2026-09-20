@@ -36,6 +36,11 @@ const ersteSchritte = fs.readFileSync(path.join(publicDir, "erste-schritte.js"),
 const voiceOverlayUi = fs.readFileSync(path.join(publicDir, "voice-overlay-ui.js"), "utf8");
 const voiceRealtime = fs.readFileSync(path.join(publicDir, "voice-realtime.js"), "utf8");
 const composerTools = fs.readFileSync(path.join(publicDir, "composer-tools.js"), "utf8");
+// Oberflaechen-Reste (20.09.2026): Schrittzeile, Arbeitsflaechen-Karte, Erste
+// Fuehrung — bis dahin feste deutsche Texte, jetzt uebersetzbar.
+const schritteAnzeige = fs.readFileSync(path.join(publicDir, "ai", "chat-schritte-anzeige.js"), "utf8");
+const arbeitsflaeche = fs.readFileSync(path.join(publicDir, "arbeitsflaeche.js"), "utf8");
+const fuehrung = fs.readFileSync(path.join(publicDir, "fuehrung.js"), "utf8");
 const apiCenterSurface = fs.readFileSync(path.join(publicDir, "api-center-surface.js"), "utf8")
   + fs.readFileSync(path.join(publicDir, "api-center-helfer.js"), "utf8")
   // Die vier Listen-Aktionen liegen seit dem 04.09. in einem eigenen Modul (800-Zeilen-Regel);
@@ -80,9 +85,15 @@ test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer ueb
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
     + profileDock + profilePictureControl + profilePictureStore + startChips + startHtml
     + searchOverlay + onboardingWelcome + spurStart + apiCenterSurface + chatActionsWoerter + ersteSchritte
-    + voiceOverlayUi + voiceRealtime + composerTools;
+    + voiceOverlayUi + voiceRealtime + composerTools
+    + schritteAnzeige + arbeitsflaeche + fuehrung;
+  // HTML schreibt Zeichen als Entitaet ("Hilfe &amp; Rueckmeldung"), der Text-
+  // knoten im Browser traegt aber das Zeichen selbst — und genau der ist der
+  // Uebersetzungsschluessel. Darum wird zusaetzlich die entschluesselte Fassung
+  // durchsucht (20.09.2026).
+  const combinedText = combined.replace(/&amp;/g, "&").replace(/&nbsp;/g, "\u00a0");
   for (const key of Object.keys(await loadMessages("en"))) {
-    assert.ok(combined.includes(key), `Verwaister Schluessel (nicht im Quellcode): ${key}`);
+    assert.ok(combined.includes(key) || combinedText.includes(key), `Verwaister Schluessel (nicht im Quellcode): ${key}`);
   }
 });
 
