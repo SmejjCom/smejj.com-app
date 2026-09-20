@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-20T16:36:19.434Z",
-  "confirmation": "Betreiber-Auftrag 20.09.2026 'alle Stufen'. Nachtrag zu Stufe 1: Modul-Marken aller geaenderten Bausteine erhoeht, sonst laedt der Browser die alten Dateien weiter (Hinweis der Parallelsitzung). SW smejj-shell-v919.",
+  "frozenAt": "2026-09-20T18:10:33.814Z",
+  "confirmation": "Betreiber-Auftrag 20.09.2026 'alle Stufen'. Stufe 2: deutsch-klartext.js germanisiert nicht mehr fremde Sprachen (Sperre haengt jetzt an der Sprach-Laufzeit statt an <html lang>), und huelle-sprache.js uebersetzt die Beschriftungen der App-Huelle zur Laufzeit; 55 neue Schluessel in allen 14 Sprachen. SW smejj-shell-v920.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "95788907dda0b65aa13ee77c1161f80d05ee74da22b7e22fa3a4353095aaf3be",
+    "public/index.html": "73af02c3c7da31a635949be14e8cc075576c1afa2b500fedf1c9f034b46d6e47",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "80b6a7f931dc3a4814f5d95ebc5dc27f4bff2168716f105179272937c71b747f",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "b52024542a2681cb1c41bcb465c2748bc6e5bb7a7e2dfa891f5e4140f817bbc7",
+    "public/sw.js": "1d55d30078a23c07663d7fab4b8f69674b9b8c4c8c5c777d8e647f9502538627",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
