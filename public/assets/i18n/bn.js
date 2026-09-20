@@ -1,5 +1,15 @@
 // smejj.com — UI-Uebersetzung বাংলা (Quellsprache Deutsch als Schluessel).
 export default {
+  // Sprachmodus (20.09.2026): die Texte des Overlays laufen jetzt ueber t().
+  "Ich höre zu …": "আমি শুনছি …",
+  "Ich spreche …": "আমি বলছি …",
+  "Mikrofon stumm": "মাইক্রোফোন মিউট",
+  "Sprich einfach — beenden mit X oder Escape.": "শুধু বলুন — X বা Escape দিয়ে বন্ধ করুন।",
+  "Sprich einfach — Mikrofon stummschalten mit dem Mikrofon-Button, beenden mit X oder Escape.": "শুধু বলুন — মাইক্রোফোন বোতাম দিয়ে মিউট করুন, X বা Escape দিয়ে বন্ধ করুন।",
+  "Frage schreiben …": "প্রশ্ন লিখুন …",
+  "Stummschalten": "মিউট",
+  "Stummschaltung aufheben": "মিউট বন্ধ",
+  "Mikrofon stummschalten": "মাইক্রোফোন মিউট",
   "Einstellungen": "সেটিংস",
   "Passe smejj.com an deine Arbeitsweise an. Änderungen bleiben sicher auf diesem Gerät.": "smejj.com-কে আপনার কাজের ধরনের সঙ্গে মানিয়ে নিন। পরিবর্তনগুলো এই ডিভাইসে নিরাপদে থাকে।",
   "Lokal gespeichert": "স্থানীয়ভাবে সংরক্ষিত",

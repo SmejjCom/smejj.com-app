@@ -1,5 +1,15 @@
 // smejj.com — UI-Uebersetzung Français (Quellsprache Deutsch als Schluessel).
 export default {
+  // Sprachmodus (20.09.2026): die Texte des Overlays laufen jetzt ueber t().
+  "Ich höre zu …": "J'écoute …",
+  "Ich spreche …": "Je parle …",
+  "Mikrofon stumm": "Micro coupé",
+  "Sprich einfach — beenden mit X oder Escape.": "Parlez simplement — fermez avec X ou Échap.",
+  "Sprich einfach — Mikrofon stummschalten mit dem Mikrofon-Button, beenden mit X oder Escape.": "Parlez simplement — coupez le micro avec le bouton du micro, fermez avec X ou Échap.",
+  "Frage schreiben …": "Écrire une question …",
+  "Stummschalten": "Couper le micro",
+  "Stummschaltung aufheben": "Réactiver le micro",
+  "Mikrofon stummschalten": "Couper le microphone",
   "Einstellungen": "Paramètres",
   "Passe smejj.com an deine Arbeitsweise an. Änderungen bleiben sicher auf diesem Gerät.": "Adaptez smejj.com à votre façon de travailler. Les modifications restent en sécurité sur cet appareil.",
   "Lokal gespeichert": "Enregistré localement",

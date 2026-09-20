@@ -31,6 +31,11 @@ const spurStart = fs.readFileSync(path.join(publicDir, "spur-start.js"), "utf8")
 const chatActionsWoerter = fs.readFileSync(path.join(publicDir, "chat-actions-woerter.js"), "utf8");
 // Erste-Schritte-Karten auf der leeren Startseite (UI/UX-Programm 02.09., Nr. 9).
 const ersteSchritte = fs.readFileSync(path.join(publicDir, "erste-schritte.js"), "utf8");
+// Sprachmodus (20.09.2026): seine Texte laufen jetzt ueber t() — damit werden
+// seine deutschen Quelltexte zu gueltigen Uebersetzungsschluesseln.
+const voiceOverlayUi = fs.readFileSync(path.join(publicDir, "voice-overlay-ui.js"), "utf8");
+const voiceRealtime = fs.readFileSync(path.join(publicDir, "voice-realtime.js"), "utf8");
+const composerTools = fs.readFileSync(path.join(publicDir, "composer-tools.js"), "utf8");
 const apiCenterSurface = fs.readFileSync(path.join(publicDir, "api-center-surface.js"), "utf8")
   + fs.readFileSync(path.join(publicDir, "api-center-helfer.js"), "utf8")
   // Die vier Listen-Aktionen liegen seit dem 04.09. in einem eigenen Modul (800-Zeilen-Regel);
@@ -74,7 +79,8 @@ test("alle Uebersetzungswerte sind nicht-leere Strings", async () => {
 test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer uebersetzten Oberflaeche", async () => {
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
     + profileDock + profilePictureControl + profilePictureStore + startChips + startHtml
-    + searchOverlay + onboardingWelcome + spurStart + apiCenterSurface + chatActionsWoerter + ersteSchritte;
+    + searchOverlay + onboardingWelcome + spurStart + apiCenterSurface + chatActionsWoerter + ersteSchritte
+    + voiceOverlayUi + voiceRealtime + composerTools;
   for (const key of Object.keys(await loadMessages("en"))) {
     assert.ok(combined.includes(key), `Verwaister Schluessel (nicht im Quellcode): ${key}`);
   }

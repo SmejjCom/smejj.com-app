@@ -1,5 +1,15 @@
 // smejj.com — UI-Uebersetzung العربية (Quellsprache Deutsch als Schluessel, RTL).
 export default {
+  // Sprachmodus (20.09.2026): die Texte des Overlays laufen jetzt ueber t().
+  "Ich höre zu …": "أستمع إليك …",
+  "Ich spreche …": "أتحدث …",
+  "Mikrofon stumm": "الميكروفون صامت",
+  "Sprich einfach — beenden mit X oder Escape.": "تحدّث ببساطة — أغلق بالزر X أو Escape.",
+  "Sprich einfach — Mikrofon stummschalten mit dem Mikrofon-Button, beenden mit X oder Escape.": "تحدّث ببساطة — اكتم الصوت بزر الميكروفون، وأغلق بالزر X أو Escape.",
+  "Frage schreiben …": "اكتب سؤالاً …",
+  "Stummschalten": "كتم الصوت",
+  "Stummschaltung aufheben": "إلغاء كتم الصوت",
+  "Mikrofon stummschalten": "كتم الميكروفون",
   "Einstellungen": "الإعدادات",
   "Passe smejj.com an deine Arbeitsweise an. Änderungen bleiben sicher auf diesem Gerät.": "خصّص smejj.com بما يناسب طريقة عملك. تبقى التغييرات محفوظة بأمان على هذا الجهاز.",
   "Lokal gespeichert": "محفوظ محليًا",
