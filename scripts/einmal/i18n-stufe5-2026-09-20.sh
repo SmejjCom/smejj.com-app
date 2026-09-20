@@ -29,16 +29,16 @@ echo "== 0. Stand holen"
 cd "$APP" || { echo "ABBRUCH: $APP fehlt."; exit 1; }
 git fetch -q origin "$ARBEITS_ZWEIG" "$BAU_ZWEIG" || { echo "ABBRUCH: origin nicht erreichbar."; exit 1; }
 WT_NEU=$(git rev-parse "origin/$ARBEITS_ZWEIG")
-WT_BASIS=$(git rev-parse "origin/$ARBEITS_ZWEIG^")
+WT_BASIS=$(git rev-parse "${BASIS_UEBERSCHREIBEN:-origin/$ARBEITS_ZWEIG^}")
 MEINE=($(git rev-list --reverse "$WT_BASIS..$WT_NEU"))
-[ ${#MEINE[@]} -eq 1 ] || { echo "ABBRUCH: erwartet genau 1 Commit, gefunden ${#MEINE[@]}."; exit 1; }
+[ ${#MEINE[@]} -ge 1 ] || { echo "ABBRUCH: kein Commit zum Ausliefern."; exit 1; }
 echo "  Commit ${MEINE[1]:0:8} auf $ARBEITS_ZWEIG"
 
 # Beim zweiten Lauf traegt die Arbeitskopie den Commit schon (der cherry-pick
 # brauchte beim ersten Mal eine Entscheidung: package.json-Testliste). Dann
 # wird NICHT zurueckgesetzt — sonst ist die Handarbeit weg.
 SCHON=0
-if [ -d "$BAU" ] && git -C "$BAU" log -1 --pretty=%s 2>/dev/null | grep -q "Stufe 5"; then
+if [ -d "$BAU" ] && git -C "$BAU" log -1 --pretty=%s 2>/dev/null | grep -q "Stufe 5b"; then
   SCHON=1
   echo "  $BAU traegt den Commit schon ($(git -C "$BAU" rev-parse --short HEAD))"
 fi
@@ -56,7 +56,19 @@ fi
 echo "== 1. Commit in den Bauzweig uebertragen"
 cd "$BAU"
 if [ "$SCHON" = "0" ]; then
-  git cherry-pick -x "${MEINE[1]}" >/dev/null 2>&1 || { git cherry-pick --abort >/dev/null 2>&1; echo "ABBRUCH: cherry-pick brauchte eine Entscheidung."; exit 1; }
+  for c in "${MEINE[@]}"; do
+    git cherry-pick -x "$c" >/dev/null 2>&1 && continue
+    # EINZIGER Konflikt, der hier automatisch loesbar ist: das Start-Lock-
+    # Manifest. Es ist reines Ergebnis (Hashes) und wird zwei Schritte spaeter
+    # ohnehin neu gestempelt. Alles andere braucht einen Menschen.
+    OFFEN=$(git diff --name-only --diff-filter=U)
+    if [ "$OFFEN" = "docs/frontend/start-lock-manifest.json" ]; then
+      git checkout --ours docs/frontend/start-lock-manifest.json && git add docs/frontend/start-lock-manifest.json
+      GIT_EDITOR=true git cherry-pick --continue >/dev/null 2>&1 && continue
+    fi
+    git cherry-pick --abort >/dev/null 2>&1
+    echo "ABBRUCH: cherry-pick ${c:0:8} brauchte eine Entscheidung."; exit 1
+  done
 fi
 echo "  $(git rev-parse --short HEAD)"
 
@@ -76,7 +88,7 @@ echo "  arbeitszweig $SW_A | bauzweig $SW_B | live $LIVE_SW  ->  $SW_NEU"
 if [ "$SW_NEU" != "$SW_IST" ]; then
   echo "ABBRUCH: $SW_IST ist belegt — im Arbeitszweig auf $SW_NEU heben und erneut starten."; exit 1
 fi
-ANKER="schutz-100-2026-09-20-i18n5-${SW_NEU#smejj-shell-}"
+ANKER="schutz-100-2026-09-20-i18n5b-${SW_NEU#smejj-shell-}"
 
 echo "== 3. Waechter im Bauzweig"
 cd "$BAU"
