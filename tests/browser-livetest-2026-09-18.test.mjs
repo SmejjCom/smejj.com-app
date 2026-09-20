@@ -381,3 +381,31 @@ test("Proxy-Seite wird komprimiert ausgeliefert — 305 KB HTML brauchten live 1
   assert.equal(roh.kopf["Content-Encoding"], undefined, "ohne Angebot des Aufrufers bleibt es unkomprimiert");
   assert.match(String(roh.rumpf), /<script nonce=/);
 });
+
+// --- Dateien im eingebauten Browser (Live-Test 20.09., v909) --------------------------
+import { dateiAnsicht } from "../control-server/src/routes/browserPageRoute.js";
+
+test("Dateien: Bild und Text werden gezeigt, PDF und ZIP bekommen EINEN Knopf in eine neue Registerkarte — live blieb alles leer", async () => {
+  const bild = dateiAnsicht({ finalUrl: "https://raw.example/a/logo%20neu.png", contentType: "image/png", text: null, groesse: 0 });
+  assert.match(bild, /<img src="https:\/\/raw\.example\/a\/logo%20neu\.png" alt="logo neu\.png">/, "das Bild laedt direkt vom Original — der Server ist kein Bild-Proxy");
+  const txt = dateiAnsicht({ finalUrl: "https://x.example/rfc.txt", contentType: "text/plain;charset=utf-8", text: "Zeile <script>alert(1)</script>", groesse: 0 });
+  assert.match(txt, /<pre>Zeile &lt;script&gt;alert\(1\)&lt;\/script&gt;<\/pre>/, "fremder Text wird maskiert, nie als HTML eingesetzt");
+  const pdf = dateiAnsicht({ finalUrl: "https://x.example/doku.pdf", contentType: "application/octet-stream", text: null, groesse: 1_572_864 });
+  assert.match(pdf, /PDF öffnen/); assert.match(pdf, /1,5 MB/);
+  const zip = dateiAnsicht({ finalUrl: "https://x.example/paket.zip?x=\"><b>", contentType: "application/zip", text: null, groesse: 2048 });
+  assert.match(zip, /<a class="knopf" href="[^"]*" target="_blank" rel="noopener noreferrer">Herunterladen<\/a>/);
+  assert.doesNotMatch(zip, /"><b>/, "die Adresse landet maskiert im Attribut");
+  assert.doesNotMatch(zip + pdf + txt + bild, /<script/i, "KEIN Skript in der Dateiansicht — unser Navigationsskript finge den Knopf sonst ab");
+
+  const res = antwortAttrappe();
+  const zipVomNetz = async () => ({ url: "https://x.example/paket.zip", status: 200, headers: { get: (n) => ({ "content-type": "application/zip", "content-length": "2048" })[n.toLowerCase()] || null }, text: async () => { throw new Error("eine ZIP-Datei darf der Server nicht lesen"); } });
+  await handleBrowserPage(new URL("https://api.example/api/browser/page?url=https%3A%2F%2Fx.example%2Fpaket.zip"), res, { fetchImpl: zipVomNetz, req: { headers: { "sec-fetch-dest": "iframe" }, socket: {} }, limiter: null, env: {} });
+  assert.equal(res.status, 200);
+  assert.match(res.rumpf, /Herunterladen/); assert.match(res.rumpf, /2 KB/);
+  assert.match(res.kopf["Content-Security-Policy"], /allow-popups-to-escape-sandbox/, "sonst liefe die neue Registerkarte weiter in der Sandbox und duerfte nichts herunterladen");
+
+  const quelle = lies("public/browser-pane.js");
+  assert.match(quelle, /data\?\.ok && \(data\.html \? !data\.embeddable : data\.html === null\)/, "Nicht-HTML geht in die Dateiansicht statt in den leeren Direkt-Rahmen");
+  const ohneRoute = baueFernwege({ sessionClient: { ready: () => false }, refs: {}, routes: { api: {} }, setFrame() {}, setFallbackFrame() {}, commitHistory() {}, showHint() {}, persistTabs() {}, render() {} });
+  assert.deepEqual(ohneRoute.proxyRahmen("https://x.example/paket.zip", null), { src: "https://x.example/paket.zip", mode: "direct" }, "ohne Route bleibt der alte Weg");
+});

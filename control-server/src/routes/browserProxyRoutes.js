@@ -130,14 +130,24 @@ export async function ladeBrowserSeite(parsed, { fetchImpl = fetch, jetzt = Date
   const contentType = String(response.headers.get("content-type") || "").toLowerCase();
   const embeddable = isEmbeddable(response.headers);
   let html = null;
-  if (contentType.includes("text/html") || contentType.includes("application/xhtml")) {
+  // Reiner Text (txt, json, xml, csv …) wird mitgelesen: /api/browser/page zeigt ihn an. Alles
+  // andere Nicht-HTML (Bild, PDF, ZIP) wird NICHT geladen — der Server ist kein Datei-Proxy.
+  let text = null;
+  const istHtml = contentType.includes("text/html") || contentType.includes("application/xhtml");
+  const istText = !istHtml && (/^text\//.test(contentType) || /application\/(json|xml|javascript|x-yaml|yaml)/.test(contentType));
+  if (istHtml || istText) {
     try {
-      html = await readCapped(response, MAX_HTML_BYTES);
+      const inhalt = await readCapped(response, MAX_HTML_BYTES);
+      if (istHtml) html = inhalt; else text = inhalt;
     } catch (error) {
       return { ok: false, code: 502, error: `Seite konnte nicht gelesen werden: ${String(error?.message || error).slice(0, 200)}` };
     }
   }
-  const seite = { ok: true, finalUrl, status: response.status, contentType, embeddable, html };
+  const groesse = Number(response.headers.get("content-length")) || 0;
+  // Der Name, den der Server der Datei gibt (codeload.github.com/…/master heisst in Wahrheit Hello-World-master.zip).
+  const ablage = String(response.headers.get("content-disposition") || "");
+  const dateiname = (ablage.match(/filename\*=UTF-8''([^;]+)/i)?.[1] ? decodeURIComponent(ablage.match(/filename\*=UTF-8''([^;]+)/i)[1]) : ablage.match(/filename="?([^";]+)"?/i)?.[1] || "").slice(0, 160);
+  const seite = { ok: true, finalUrl, status: response.status, contentType, embeddable, html, text, groesse, dateiname };
   if (vorrat) {
     if (SEITEN_VORRAT.size >= SEITEN_VORRAT_MAX) SEITEN_VORRAT.delete(SEITEN_VORRAT.keys().next().value);
     SEITEN_VORRAT.set(schluessel, { zeit: jetzt(), seite });

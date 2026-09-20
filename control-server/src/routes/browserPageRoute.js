@@ -61,6 +61,51 @@ export function seitenRegel({ nonce, erlaubteEinbetter }) {
   ].join("; ");
 }
 
+const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const esc = (wert) => String(wert ?? "").replace(/[&<>"']/g, (z) => ESC[z]);
+
+function groesseLesbar(bytes) {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1_048_576) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1_048_576).toFixed(1).replace(".", ",")} MB`;
+}
+
+/**
+ * DATEIEN STATT LEERER FLAECHE (Live-Test 20.09., v909): PDF, ZIP, Bild und Textdatei landeten als
+ * abgeschotteter Direkt-Rahmen im Panel — Bild: Sperrsymbol, alles andere: weiss. Kein Hinweis,
+ * kein Download. Chrome zeigt Bilder und Texte an, oeffnet PDFs und laedt den Rest herunter.
+ * - Bild: wird direkt vom Original in DIESES Dokument geladen (img-src * — keine Serverlast).
+ * - Text: steht lesbar im Dokument (der Server hat ihn ohnehin gelesen, gedeckelt).
+ * - Alles andere: eine Karte mit EINEM Knopf. Er oeffnet die Adresse in einer neuen Registerkarte
+ *   (der Rahmen erlaubt Popups, die der Sandbox entkommen) — dort zeigt der Browser des Nutzers
+ *   das PDF an oder laedt die Datei herunter, mit seiner eigenen Sicherheitspruefung.
+ * Bewusst OHNE unser Navigationsskript: es finge den Klick auf den Knopf ab und fuehrte im Kreis.
+ */
+export function dateiAnsicht(seite) {
+  const adresse = seite.finalUrl;
+  const name = seite.dateiname || (() => { try { return decodeURIComponent(new URL(adresse).pathname.split("/").filter(Boolean).pop() || new URL(adresse).hostname); } catch { return adresse; } })();
+  const art = String(seite.contentType || "").split(";")[0] || "unbekannt";
+  const kopf = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(name)}</title><style>
+    html,body{margin:0;min-height:100%;background:#101113;color:#f6f3ee;font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+    .bild{display:grid;place-items:center;min-height:100vh;padding:16px;box-sizing:border-box;background:#0b0c0e}
+    .bild img{max-width:100%;max-height:calc(100vh - 32px);height:auto;background:repeating-conic-gradient(#2a2c30 0% 25%,#1d1f22 0% 50%) 0 0/20px 20px}
+    pre{margin:0;padding:18px 20px;white-space:pre-wrap;word-break:break-word;font:15px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+    .karte{max-width:560px;margin:12vh auto 0;padding:0 24px}
+    h1{margin:0 0 6px;font-size:24px;word-break:break-word}
+    p{margin:0 0 22px;color:rgba(246,243,238,.72)}
+    a.knopf{display:inline-block;padding:14px 22px;border:1px solid rgba(159,231,212,.55);border-radius:8px;background:rgba(159,231,212,.14);color:#f6f3ee;font-weight:700;font-size:18px;text-decoration:none}
+    a.knopf:hover,a.knopf:focus-visible{background:rgba(159,231,212,.26);outline:none}
+    small{display:block;margin-top:18px;color:rgba(246,243,238,.55);font-size:14.5px;word-break:break-all}
+  </style></head><body>`;
+  if (art.startsWith("image/")) return `${kopf}<div class="bild"><img src="${esc(adresse)}" alt="${esc(name)}"></div></body></html>`;
+  if (seite.text !== null && seite.text !== undefined) return `${kopf}<pre>${esc(seite.text)}</pre></body></html>`;
+  const istPdf = art === "application/pdf" || /\.pdf$/i.test(name);
+  return `${kopf}<div class="karte"><h1>${esc(name)}</h1><p>${esc(istPdf ? "PDF-Dokument" : `Datei (${art})`)}${seite.groesse ? ` · ${esc(groesseLesbar(seite.groesse))}` : ""}</p>
+    <a class="knopf" href="${esc(adresse)}" target="_blank" rel="noopener noreferrer">${istPdf ? "PDF öffnen" : "Herunterladen"}</a>
+    <small>${esc(adresse)}</small></div></body></html>`;
+}
+
 export async function handleBrowserPage(url, res, { fetchImpl = fetch, req = null, limiter = defaultLimiter, env = process.env } = {}) {
   if (req && !isAllowedBrowserCaller(req, env)) return text(res, 403, "Origin nicht erlaubt.");
   // Nur in einen Rahmen. Browser setzen diese Kopfzeile selbst; ein Skript kann sie nicht faelschen.
@@ -74,10 +119,8 @@ export async function handleBrowserPage(url, res, { fetchImpl = fetch, req = nul
   if (!parsed.ok) return text(res, 400, String(parsed.error));
   const seite = await ladeBrowserSeite(parsed, { fetchImpl });
   if (!seite.ok) return text(res, seite.code, String(seite.error));
-  if (seite.html === null) return text(res, 415, "Kein HTML-Dokument.");
-
   const nonce = crypto.randomBytes(16).toString("base64");
-  const html = rewriteBrowserHtml(seite.html, seite.finalUrl, { nonce });
+  const html = seite.html === null ? dateiAnsicht(seite) : rewriteBrowserHtml(seite.html, seite.finalUrl, { nonce });
   // KOMPRIMIEREN (Live-Messung 20.09., v908): github.com = 305 KB HTML. Das erste Byte kam nach
   // 1 s, die UEBERTRAGUNG brauchte ueber die langsame Leitung des Betreibers 15-30 s — so lange
   // blieb der Rahmen weiss. HTML schrumpft mit Brotli auf rund ein Siebtel. Stufe 5 wie in
