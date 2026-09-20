@@ -11,6 +11,22 @@
 //      Kommentaren, und nur wenn sie nicht schon in t(...) stehen.
 //   3. Es meldet jede Zeichenkette, die es nicht gefunden hat — statt sie
 //      stillschweigend zu uebergehen.
+//   4. Es fasst NICHTS an, was in einem Template-Literal als HTML steht.
+//
+// ZU 4. — DER FEHLER, DER DIESE REGEL ERZWUNGEN HAT (20.09.2026, live auf
+// Android gemessen): In einem Template-String begrenzen Anfuehrungszeichen
+// oft kein JavaScript, sondern ein HTML-Attribut. Aus
+//     `<button title="Zurueck">`
+// wurde mechanisch
+//     `<button title=t("Zurueck")>`
+// und der Browser zeigte dann woertlich t("Zurueck" an — in der Adressleiste
+// des eingebauten Browsers stand `t("Suchen`. Zehn Attribute in zwei Dateien,
+// sichtbar fuer ALLE Nutzer, auch deutsche. Richtig waere
+//     title="${escapeHtml(t("Zurueck"))}"
+// gewesen — mit Anfuehrungszeichen UND Escaping, weil Uebersetzungen
+// Apostrophe enthalten (fr "d'ici", en "doesn't"). Das kann dieses Werkzeug
+// nicht sicher raten: es haengt an der Escape-Funktion der jeweiligen Datei.
+// Darum wird eine solche Stelle jetzt GEMELDET und NICHT angefasst.
 //
 // Aufruf: node scripts/i18n/uebersetzbar-machen.mjs <auftrag.json> [--probe]
 // Auftrag: { "public/datei.js": ["Text eins", "Text zwei"], ... }
@@ -28,12 +44,31 @@ function istKommentar(zeile) {
   return s.startsWith("//") || s.startsWith("*") || s.startsWith("/*");
 }
 
+/**
+ * Steht die Fundstelle in einem Template-Literal als HTML — also als Attribut
+ * (title="…") oder als Textknoten (>…<)? Dann darf hier NICHT ersetzt werden:
+ * die Anfuehrungszeichen gehoeren dem HTML, nicht dem JavaScript.
+ *
+ * Bewusst grob und lieber einmal zu vorsichtig: eine gemeldete Stelle kostet
+ * eine Minute Handarbeit, eine falsch ersetzte steht live in der Oberflaeche.
+ */
+function istHtmlStelle(zeile, roh) {
+  if (!zeile.includes("`")) return false;
+  const stelle = zeile.indexOf(roh);
+  if (stelle < 0) return false;
+  const davor = zeile.slice(0, stelle);
+  const danach = zeile.slice(stelle + roh.length);
+  if (/[A-Za-z-]+=$/.test(davor)) return true;          // title="…"
+  if (/>\s*$/.test(davor) && /^\s*</.test(danach)) return true; // >…<
+  return false;
+}
+
 function importPfad(datei) {
   const tiefe = datei.replace(/^public\//, "").split("/").length - 1;
   return `${tiefe === 0 ? "." : "..".concat("/..".repeat(tiefe - 1))}/i18n/ui.js?v=3`;
 }
 
-let geaendert = 0; let fehlend = 0;
+let geaendert = 0; let fehlend = 0; let htmlStellen = 0;
 for (const [datei, texte] of Object.entries(auftrag)) {
   let quelle = readFileSync(datei, "utf8");
   const vorher = quelle;
@@ -50,6 +85,12 @@ for (const [datei, texte] of Object.entries(auftrag)) {
       for (const q of ['"', "'"]) {
         const roh = `${q}${text}${q}`;
         if (!zeilen[i].includes(roh)) continue;
+        if (istHtmlStelle(zeilen[i], roh)) {
+          console.error(`  HTML-STELLE, nicht angefasst — ${datei}:${i + 1}: ${text.slice(0, 50)}`);
+          console.error(`    von Hand: title="\${escapeHtml(t("…"))}" (Escape-Funktion der Datei nehmen)`);
+          htmlStellen += 1;
+          continue;
+        }
         // TEUER GELERNT (20.09.2026): ein schlichtes includes("t(" + roh + ")")
         // haelt auch `showToast("…")` fuer bereits uebersetzt — in "showToast"
         // steckt ein "t(". Deshalb muss vor dem t( ein Zeichen stehen, das
@@ -65,5 +106,5 @@ for (const [datei, texte] of Object.entries(auftrag)) {
   quelle = zeilen.join("\n");
   if (quelle !== vorher) { geaendert += 1; if (!probe) writeFileSync(datei, quelle); }
 }
-console.log(`${probe ? "PROBE — " : ""}${geaendert} Datei(en) geaendert, ${fehlend} Zeichenkette(n) nicht gefunden.`);
-process.exit(fehlend ? 1 : 0);
+console.log(`${probe ? "PROBE — " : ""}${geaendert} Datei(en) geaendert, ${fehlend} nicht gefunden, ${htmlStellen} HTML-Stelle(n) uebersprungen.`);
+process.exit(fehlend || htmlStellen ? 1 : 0);
