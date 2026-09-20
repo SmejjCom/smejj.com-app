@@ -8,7 +8,7 @@ const API = "https://api.zeabur.com/graphql";
 const SERVICE_ID = "6a6680070d0b094201bb9ce4";
 const UMGEBUNG_ID = "6a6666895f062718bc7b1ab2";
 const GESUNDHEIT = "https://smejj-chat-bridge.zeabur.app/health";
-const ERWARTET = "20260920-v158-sprache";
+const ERWARTET = "20260920-v159-sprachverlauf";
 loadSecureLocalEnv();
 if (!process.env.ZEABUR_API_TOKEN) {
   const k = schluesselKandidaten()[0];

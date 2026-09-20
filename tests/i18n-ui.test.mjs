@@ -43,8 +43,15 @@ const arbeitsflaeche = fs.readFileSync(path.join(publicDir, "arbeitsflaeche.js")
 const fuehrung = fs.readFileSync(path.join(publicDir, "fuehrung.js"), "utf8");
 // Nachrichten-Menue und "Inhalt melden" (Geraetetest 20.09.2026, iPhone + Android): die Labels
 // stehen deutsch in chat-actions-menu.js, uebersetzt wird beim Einhaengen (chat-menue-mehr.js).
-const nachrichtenMenue = fs.readFileSync(path.join(publicDir, "chat-actions-menu.js"), "utf8");
 const inhaltMelden = fs.readFileSync(path.join(publicDir, "inhalt-melden.js"), "utf8");
+// Stufe 1 der Uebersetzungs-Inventur (20.09.2026): Chat-Oberflaeche.
+const chatActions = fs.readFileSync(path.join(publicDir, "chat-actions.js"), "utf8");
+const chatActionsMenu = fs.readFileSync(path.join(publicDir, "chat-actions-menu.js"), "utf8");
+const chatHistoryCards = fs.readFileSync(path.join(publicDir, "chat-history-cards.js"), "utf8");
+const chatHistoryView = fs.readFileSync(path.join(publicDir, "chat-history-view.js"), "utf8");
+const composerChips = fs.readFileSync(path.join(publicDir, "composer-anhang-chips.js"), "utf8");
+const chatStream = fs.readFileSync(path.join(publicDir, "ai", "chat-stream.js"), "utf8");
+const medienAnsicht = fs.readFileSync(path.join(publicDir, "chat-medien-ansicht.js"), "utf8");
 const apiCenterSurface = fs.readFileSync(path.join(publicDir, "api-center-surface.js"), "utf8")
   + fs.readFileSync(path.join(publicDir, "api-center-helfer.js"), "utf8")
   // Die vier Listen-Aktionen liegen seit dem 04.09. in einem eigenen Modul (800-Zeilen-Regel);
@@ -91,7 +98,9 @@ test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer ueb
     + searchOverlay + onboardingWelcome + spurStart + apiCenterSurface + chatActionsWoerter + ersteSchritte
     + voiceOverlayUi + voiceRealtime + composerTools
     + schritteAnzeige + arbeitsflaeche + fuehrung
-    + nachrichtenMenue + inhaltMelden;
+    + inhaltMelden
+    + chatActions + chatActionsMenu + chatHistoryCards + chatHistoryView
+    + composerChips + chatStream + medienAnsicht;
   // HTML schreibt Zeichen als Entitaet ("Hilfe &amp; Rueckmeldung"), der Text-
   // knoten im Browser traegt aber das Zeichen selbst — und genau der ist der
   // Uebersetzungsschluessel. Darum wird zusaetzlich die entschluesselte Fassung
