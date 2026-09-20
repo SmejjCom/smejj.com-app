@@ -229,6 +229,7 @@ export const ROUTES = {
     modelsStatus: "/api/models/status",
     workerPreflight: "/api/workers/preflight",
     browserFetch: "/api/browser/fetch",
+    browserPage: "/api/browser/page",
     browserRemote: "/api/browser/remote",
     browserSession: "/api/browser/session",
     browserSessionAct: "/api/browser/session/act",

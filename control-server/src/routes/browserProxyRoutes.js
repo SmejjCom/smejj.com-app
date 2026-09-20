@@ -97,6 +97,54 @@ export function parseBrowserTarget(rawUrl) {
   return { ok: true, url: target };
 }
 
+// EIN ABRUF FUER ZWEI ANTWORTEN (2026-09-20). /api/browser/fetch entscheidet den Weg
+// (JSON), /api/browser/page liefert dieselbe Seite gleich danach als eigenes Dokument.
+// Ohne diesen Kurz-Vorrat holte der Server jede Proxy-Seite ZWEIMAL vom Original. Er ist
+// reine Beschleunigung: 45 s, hoechstens 24 Seiten, je Instanz — fehlt ein Eintrag (andere
+// Instanz, abgelaufen), wird schlicht neu geholt. Kein Zustand, auf den sich jemand verlaesst.
+const SEITEN_VORRAT = new Map();
+const SEITEN_VORRAT_MS = 45_000;
+const SEITEN_VORRAT_MAX = 24;
+
+export async function ladeBrowserSeite(parsed, { fetchImpl = fetch, jetzt = Date.now, vorrat = fetchImpl === fetch } = {}) {
+  const schluessel = parsed.url.toString();
+  // Nur mit dem ECHTEN fetch merken: Tests reichen Attrappen herein und erwarten jeden Aufruf frisch.
+  const gemerkt = vorrat ? SEITEN_VORRAT.get(schluessel) : null;
+  if (gemerkt && jetzt() - gemerkt.zeit < SEITEN_VORRAT_MS) return gemerkt.seite;
+  let response;
+  try {
+    response = await fetchImpl(schluessel, {
+      redirect: "follow",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      headers: {
+        "user-agent": USER_AGENT,
+        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "de-DE,de;q=0.9,en;q=0.8"
+      }
+    });
+  } catch (error) {
+    return { ok: false, code: 502, error: `Seite nicht erreichbar: ${String(error?.message || error).slice(0, 200)}` };
+  }
+  const finalUrl = String(response.url || schluessel);
+  if (!parseBrowserTarget(finalUrl).ok) return { ok: false, code: 400, error: "Redirect auf blockierten Host gestoppt." };
+  const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+  const embeddable = isEmbeddable(response.headers);
+  let html = null;
+  if (contentType.includes("text/html") || contentType.includes("application/xhtml")) {
+    try {
+      html = await readCapped(response, MAX_HTML_BYTES);
+    } catch (error) {
+      return { ok: false, code: 502, error: `Seite konnte nicht gelesen werden: ${String(error?.message || error).slice(0, 200)}` };
+    }
+  }
+  const seite = { ok: true, finalUrl, status: response.status, contentType, embeddable, html };
+  if (vorrat) {
+    if (SEITEN_VORRAT.size >= SEITEN_VORRAT_MAX) SEITEN_VORRAT.delete(SEITEN_VORRAT.keys().next().value);
+    SEITEN_VORRAT.set(schluessel, { zeit: jetzt(), seite });
+  }
+  return seite;
+}
+
 export async function handleBrowserFetch(url, res, { fetchImpl = fetch, req = null, limiter = defaultLimiter, env = process.env } = {}) {
   if (req && !isAllowedBrowserCaller(req, env)) {
     return json(res, 403, { ok: false, error: "Origin nicht erlaubt." });
@@ -112,45 +160,12 @@ export async function handleBrowserFetch(url, res, { fetchImpl = fetch, req = nu
   const parsed = parseBrowserTarget(url.searchParams.get("url"));
   if (!parsed.ok) return json(res, 400, { ok: false, error: parsed.error });
 
-  let response;
-  try {
-    response = await fetchImpl(parsed.url.toString(), {
-      redirect: "follow",
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: {
-        "user-agent": USER_AGENT,
-        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "accept-language": "de-DE,de;q=0.9,en;q=0.8"
-      }
-    });
-  } catch (error) {
-    return json(res, 502, { ok: false, error: `Seite nicht erreichbar: ${String(error?.message || error).slice(0, 200)}` });
-  }
-
-  const finalUrl = String(response.url || parsed.url.toString());
-  const finalParsed = parseBrowserTarget(finalUrl);
-  if (!finalParsed.ok) return json(res, 400, { ok: false, error: "Redirect auf blockierten Host gestoppt." });
-
-  const contentType = String(response.headers.get("content-type") || "").toLowerCase();
-  const embeddable = isEmbeddable(response.headers);
-
-  if (!contentType.includes("text/html") && !contentType.includes("application/xhtml")) {
-    return json(res, 200, {
-      ok: true,
-      finalUrl,
-      status: response.status,
-      contentType,
-      embeddable,
-      html: null,
-      title: finalUrl
-    });
-  }
-
-  let html = "";
-  try {
-    html = await readCapped(response, MAX_HTML_BYTES);
-  } catch (error) {
-    return json(res, 502, { ok: false, error: `Seite konnte nicht gelesen werden: ${String(error?.message || error).slice(0, 200)}` });
+  const seite = await ladeBrowserSeite(parsed, { fetchImpl });
+  if (!seite.ok) return json(res, seite.code, { ok: false, error: seite.error });
+  const { finalUrl, contentType, embeddable, html } = seite;
+  const response = { status: seite.status };
+  if (html === null) {
+    return json(res, 200, { ok: true, finalUrl, status: seite.status, contentType, embeddable, html: null, title: finalUrl });
   }
 
   // Favicon mitliefern (als data:, weil img-src fremde Adressen sperrt).
@@ -210,7 +225,7 @@ export function extractTitle(html) {
 // Umschreiben fuer die srcdoc-Darstellung: Scripts/Inline-Handler raus,
 // CSP-Metas raus, <base> rein (relative Ressourcen laden vom Original),
 // eigenes Navigations-Script rein (Links/Formulare -> postMessage an die App).
-export function rewriteBrowserHtml(html, baseUrl) {
+export function rewriteBrowserHtml(html, baseUrl, { nonce = "" } = {}) {
   let out = String(html || "");
   out = out.replace(/<script\b[\s\S]*?<\/script\s*>/gi, "");
   out = out.replace(/<script\b[^>]*\/>/gi, "");
@@ -225,7 +240,7 @@ export function rewriteBrowserHtml(html, baseUrl) {
     out = `${baseTag}\n${out}`;
   }
 
-  const navScript = buildNavigationScript();
+  const navScript = buildNavigationScript(nonce);
   if (/<\/body\s*>/i.test(out)) {
     out = out.replace(/<\/body\s*>/i, `${navScript}\n</body>`);
   } else {
@@ -234,9 +249,11 @@ export function rewriteBrowserHtml(html, baseUrl) {
   return out;
 }
 
-function buildNavigationScript() {
+function buildNavigationScript(nonce = "") {
   return [
-    "<script>(function () {",
+    // Nonce: als eigenes Dokument (/api/browser/page) erlaubt die CSP genau DIESES Skript.
+    // Im alten srcdoc-Weg erbte die Seite script-src 'self' und das Skript lief nie.
+    `<script${nonce ? ` nonce="${escapeAttribute(nonce)}"` : ""}>(function () {`,
     '  function go(url, neuerTab) { parent.postMessage({ type: "smejj.browser.navigate", url: String(url), neuerTab: !!neuerTab }, "*"); }',
     // Cmd/Strg-Klick, Mausradklick und target="_blank" gehoeren in einen NEUEN
     // Tab — das ist eine der haeufigsten Handbewegungen ueberhaupt. Vorher

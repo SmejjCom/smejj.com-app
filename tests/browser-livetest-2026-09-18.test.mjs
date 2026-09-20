@@ -297,3 +297,64 @@ test("Client: Panel groesser gezogen → erst die Sitzung anpassen, nur bei Able
   assert.equal(await mit({ ok: true, screenshot: "x" }).wege.passeSitzungAn(liveTab({ mode: "proxy" })), false);
   assert.match(lies("public/browser-pane.js"), /passeSitzungAn\(tab\)\.then\(\(ok\) => \{ if \(!ok\) return oeffneImLiveBrowser\(tab\.url\); \}\)/);
 });
+
+// --- Proxy-Seite als eigenes Dokument + HTTPS zuerst (Live-Test 20.09., v907) ---------
+import { handleBrowserPage, seitenRegel } from "../control-server/src/routes/browserPageRoute.js";
+import { rewriteBrowserHtml, ladeBrowserSeite, parseBrowserTarget as torZiel } from "../control-server/src/routes/browserProxyRoutes.js";
+import { normalizeAddress, normalizeAgentBrowserUrl } from "../public/browser-pane-adressen.js";
+
+function antwortAttrappe() {
+  return { status: 0, kopf: {}, rumpf: "", writeHead(s, k) { this.status = s; this.kopf = k; }, end(b) { this.rumpf = String(b || ""); } };
+}
+const seiteVomNetz = (html, kopf = {}) => async () => ({ url: "https://github.com/torvalds/linux", status: 200, headers: { get: (n) => ({ "content-type": "text/html; charset=utf-8", ...kopf })[n.toLowerCase()] || null }, text: async () => html });
+
+test("Proxy-Seite: eigenes Dokument mit EIGENER Regel — Stil und Bilder vom Original, Skript nur unseres, nie als Registerkarte", async () => {
+  const html = '<html><head><link rel="stylesheet" href="/a.css"><script>boese()</script></head><body onload="x()"><a href="/y">y</a></body></html>';
+  const res = antwortAttrappe();
+  const req = { headers: { "sec-fetch-dest": "iframe" }, socket: { remoteAddress: "203.0.113.9" } };
+  await handleBrowserPage(new URL("https://api.example/api/browser/page?url=https%3A%2F%2Fgithub.com%2Ftorvalds%2Flinux"), res, { fetchImpl: seiteVomNetz(html), req, limiter: null, env: { SMEJJ_ALLOWED_ORIGINS: "https://smejj.com" } });
+  assert.equal(res.status, 200);
+  assert.match(res.kopf["Content-Type"], /text\/html/);
+  const regel = res.kopf["Content-Security-Policy"];
+  const nonce = regel.match(/script-src 'nonce-([^']+)'/)?.[1];
+  assert.ok(nonce, "genau EIN Skript ist erlaubt: unseres, per Nonce");
+  assert.match(regel, /style-src \* 'unsafe-inline'/, "live erschien github.com ohne ein einziges Stylesheet");
+  assert.match(regel, /img-src \* data: blob:/);
+  assert.match(regel, /sandbox allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox$/, "OHNE allow-same-origin: kein Zugriff auf Cookies von api.smejj.com");
+  assert.match(regel, /frame-ancestors /);
+  assert.match(regel, /connect-src 'none'/);
+  assert.equal(res.kopf["X-Frame-Options"], undefined, "DENY wuerde genau den Rahmen verbieten, fuer den die Antwort gebaut ist");
+  assert.doesNotMatch(res.rumpf, /boese\(\)|onload=/, "Skripte und Inline-Handler der Seite bleiben entfernt");
+  assert.match(res.rumpf, new RegExp(`<script nonce="${nonce.replace(/[+/=]/g, "\\$&")}">`), "das Navigationsskript traegt den Nonce der Regel");
+  assert.match(res.rumpf, /<base href="https:\/\/github\.com\/torvalds\/linux"/);
+
+  const tab = antwortAttrappe();
+  await handleBrowserPage(new URL("https://api.example/api/browser/page?url=https%3A%2F%2Fgithub.com%2F"), tab, { fetchImpl: seiteVomNetz(html), req: { headers: { "sec-fetch-dest": "document" }, socket: {} }, limiter: null, env: {} });
+  assert.equal(tab.status, 403, "als eigene Registerkarte stuende fremder Inhalt unter unserem Namen im Adressfeld");
+  const intern = antwortAttrappe();
+  await handleBrowserPage(new URL("https://api.example/api/browser/page?url=http%3A%2F%2F192.168.1.1%2F"), intern, { fetchImpl: seiteVomNetz(html), req, limiter: null, env: {} });
+  assert.equal(intern.status, 400, "dieselbe Zielpruefung wie /api/browser/fetch — private Netze bleiben zu");
+  assert.match(seitenRegel({ nonce: "n", erlaubteEinbetter: [] }), /frame-ancestors 'none'/, "ohne bekannte Einbetter: niemand");
+});
+
+test("Proxy-Seite: Kurz-Vorrat nur mit dem echten fetch — Attrappen bekommen jeden Abruf frisch", async () => {
+  let rufe = 0;
+  const holen = async () => { rufe += 1; return { url: "https://example.com/", status: 200, headers: { get: () => "text/html" }, text: async () => "<html></html>" }; };
+  const ziel = torZiel("https://example.com/");
+  await ladeBrowserSeite(ziel, { fetchImpl: holen }); await ladeBrowserSeite(ziel, { fetchImpl: holen });
+  assert.equal(rufe, 2);
+  await ladeBrowserSeite(ziel, { fetchImpl: holen, vorrat: true }); await ladeBrowserSeite(ziel, { fetchImpl: holen, vorrat: true });
+  assert.equal(rufe, 3, "mit Vorrat: /fetch und /page teilen sich EINEN Abruf vom Original");
+  assert.doesNotMatch(rewriteBrowserHtml("<html><body></body></html>", "https://example.com/"), /nonce=/, "ohne Nonce bleibt der alte srcdoc-Weg unveraendert");
+});
+
+test("Client: Proxy-Seiten kommen als Dokument von /api/browser/page, mit strenger Sandbox; http wird zu https", () => {
+  const wege = (seite) => baueFernwege({ sessionClient: { ready: () => false }, refs: {}, routes: { api: { browserPage: seite } }, setFrame() {}, setFallbackFrame() {}, commitHistory() {}, showHint() {}, persistTabs() {}, render() {} });
+  assert.deepEqual(wege("https://api.smejj.com/api/browser/page").proxyRahmen("https://github.com/a?b=1", "<html>"), { src: "https://api.smejj.com/api/browser/page?url=https%3A%2F%2Fgithub.com%2Fa%3Fb%3D1", mode: "proxy" });
+  assert.deepEqual(wege("/api/browser/page").proxyRahmen("https://github.com/", "<html>"), { srcdoc: "<html>", mode: "proxy" }, "ohne absolute Route (lokal, alter Server) bleibt der srcdoc-Rueckfall");
+  const quelle = lies("public/browser-pane.js");
+  assert.match(quelle, /setFrame\(tab, proxyRahmen\(finalUrl, data\.html\)\);/);
+  assert.match(quelle, /const usesSrcdoc = Boolean\(srcdoc\) \|\| mode === "proxy";/, "das Proxy-Dokument bekommt dieselbe strenge Sandbox wie srcdoc (ohne allow-same-origin)");
+  assert.equal(normalizeAddress("http://example.com/x"), "https://example.com/x", "live blieb der http-Rahmen grau");
+  assert.equal(normalizeAgentBrowserUrl("http://example.com/x"), "", "der Agent bekommt kein stilles Anheben");
+});

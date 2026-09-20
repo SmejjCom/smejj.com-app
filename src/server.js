@@ -25,6 +25,7 @@ import { handleSaladCreate, handleSaladGpuClasses, handleSaladPlan, handleSaladS
 import { recoverWorkerRuntimeOnStartup } from "../control-server/src/orchestrator/startupRecovery.js";
 import { handleStoragePresign } from "../control-server/src/routes/storagePresignRoutes.js";
 import { handleBrowserFetch } from "../control-server/src/routes/browserProxyRoutes.js";
+import { handleBrowserPage } from "../control-server/src/routes/browserPageRoute.js";
 import { handleBrowserRemote, handleBrowserRemoteHealth } from "../control-server/src/routes/browserRemoteRoutes.js";
 import { handleBrowserSession } from "../control-server/src/routes/browserSessionRoutes.js";
 import { handleMausRun, handleMausStatus, istMausEngineToken } from "../control-server/src/routes/mausEngineRoutes.js";
@@ -304,6 +305,7 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && url.pathname === ROUTES.api.ragSearch) return await handleRagSearch(url, res);
     if (readMethod && url.pathname === ROUTES.api.webSearch) return await handleWebSearch(req, url, res);
     if (readMethod && url.pathname === ROUTES.api.browserFetch) return await handleBrowserFetch(url, res, { req });
+    if (readMethod && url.pathname === ROUTES.api.browserPage) return await handleBrowserPage(url, res, { req });
     if (readMethod && url.pathname === `${ROUTES.api.browserRemote}/health`) return await handleBrowserRemoteHealth(res);
     if (readMethod && url.pathname === ROUTES.api.browserRemote) return await handleBrowserRemote(url, res, { req });
     if (req.method === "POST" && url.pathname === ROUTES.api.browserSession) return await handleBrowserSession("open", req, res);
