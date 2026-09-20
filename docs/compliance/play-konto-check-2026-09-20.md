@@ -56,3 +56,28 @@ neu. Erst nach der Freigabe nachziehen.
    Installationen". Darum nicht eigenmächtig aktiviert.
 6. Entscheidung Betreiber: Play Integrity API (0/7) und Betrugsschutz (0/4) brauchen Aufrufe IN
    der App. Die App ist eine TWA — das ginge nur mit einem nativen Rebuild (Keystore nötig).
+
+## Nachtrag 20.09. abends — Sprachen nachgezogen und alles eingereicht
+
+Der Verstoß gegen die KI-Inhalte-Richtlinie steht seit **20.09. 16:27 auf „Verstoß behoben"**.
+Die Einreichung um 16:02 war noch abgelehnt worden, weil die Beanstandung zu dem Zeitpunkt
+offen war — nicht wegen eines neuen Mangels.
+
+Danach alle Sprachen nachgezogen: **29 Store-Einträge** (en-US + 28 Übersetzungen) tragen jetzt
+Titel und Kurzbeschreibung im neuen Schnitt. Beim Durchgehen kam eine Sprache dazu, die in der
+ersten Zählung fehlte: **Spanisch (Lateinamerika), es-419**.
+
+Eingereicht: **62 Änderungen** = 29 Titel + 29 Kurzbeschreibungen + Langbeschreibung +
+Screenshots Telefon/7"/10". Vor dem Absenden geprüft: **keine einzige Zeile „Sprache entfernen"**.
+
+Texte liegen in `docs/aso/sprachen-titel-kurz.json` (Titel ≤ 30, Kurzbeschreibung ≤ 80,
+Markenname `smejj.com` in jedem Titel unübersetzt).
+
+### Wie die Konsole dabei zu bedienen war
+- Der Sprachwechsel reagiert **nicht** auf `element.click()` aus JavaScript (Material-Menü).
+  Was geht: echter Mausklick auf den Sprach-Chip, dann `Up`×32 (ganz nach oben) und `Down`×N
+  auf die Zielsprache, dann `Enter`.
+- Bildschirm- und Seitenkoordinaten unterscheiden sich um den Faktor 1,201 (1219 / innerWidth).
+- „Als Entwurf speichern" hält Änderungen aus der Veröffentlichungs-Übersicht heraus. Erst ein
+  einziges „Speichern" am Ende übernimmt den gesamten Entwurf **aller** Sprachen auf einmal —
+  aus 6 Zeilen wurden so 62.

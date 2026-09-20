@@ -1,0 +1,118 @@
+{
+ "ar": {
+  "t": "smejj.com AI دردشة كود فيديو",
+  "k": "دردشة ذكية ووكيل برمجة: كود وصور وفيديو وصوت ومتصفح خاص به."
+ },
+ "cs-CZ": {
+  "t": "smejj.com AI: chat, kód, video",
+  "k": "AI chat a kódovací agent: kód, obrázky, video, hlas a vlastní prohlížeč."
+ },
+ "da-DK": {
+  "t": "smejj.com AI-chat, kode, video",
+  "k": "AI-chat og kodeagent: kode, billeder, video, stemme og egen browser."
+ },
+ "de-DE": {
+  "t": "smejj.com KI-Chat, Code, Video",
+  "k": "KI-Chat & Coding-Agent: Code, Bilder, Video, Sprache und eigener Browser."
+ },
+ "en-US": {
+  "t": "smejj.com AI Chat, Code, Video",
+  "k": "AI chat & coding agent: code, images, video, voice and its own web browser."
+ },
+ "es-419": {
+  "t": "smejj.com IA chat código video",
+  "k": "Chat con IA y agente de código: código, imágenes, video, voz y navegador."
+ },
+ "es-ES": {
+  "t": "smejj.com IA chat código vídeo",
+  "k": "Chat con IA y agente de código: código, imágenes, vídeo, voz y navegador."
+ },
+ "fi-FI": {
+  "t": "smejj.com AI chat koodi video",
+  "k": "Tekoälychat ja koodiagentti: koodi, kuvat, video, ääni ja oma selain."
+ },
+ "fr-FR": {
+  "t": "smejj.com IA chat, code, vidéo",
+  "k": "Chat IA et agent de code : code, images, vidéo, voix et son navigateur."
+ },
+ "hi-IN": {
+  "t": "smejj.com AI चैट, कोड, वीडियो",
+  "k": "AI चैट और कोडिंग एजेंट: कोड, इमेज, वीडियो, आवाज़ और अपना ब्राउज़र।"
+ },
+ "hu-HU": {
+  "t": "smejj.com MI: chat, kód, videó",
+  "k": "MI-chat és kódoló ügynök: kód, képek, videó, hang és saját böngésző."
+ },
+ "id": {
+  "t": "smejj.com AI Chat, Kode, Video",
+  "k": "Chat AI & agen koding: kode, gambar, video, suara, dan browser sendiri."
+ },
+ "it-IT": {
+  "t": "smejj.com IA chat codice video",
+  "k": "Chat IA e agente di codice: codice, immagini, video, voce e browser."
+ },
+ "iw-IL": {
+  "t": "smejj.com AI: צ'אט, קוד, וידאו",
+  "k": "צ'אט AI וסוכן קוד: קוד, תמונות, וידאו, קול ודפדפן משלו."
+ },
+ "ja-JP": {
+  "t": "smejj.com AIチャット・コード・動画",
+  "k": "AIチャットとコーディングエージェント。コード、画像、動画、音声、専用ブラウザ。"
+ },
+ "ko-KR": {
+  "t": "smejj.com AI 채팅, 코드, 영상",
+  "k": "AI 채팅과 코딩 에이전트: 코드, 이미지, 영상, 음성, 자체 브라우저까지."
+ },
+ "nl-NL": {
+  "t": "smejj.com AI-chat, code, video",
+  "k": "AI-chat en codeeragent: code, beelden, video, spraak en eigen browser."
+ },
+ "no-NO": {
+  "t": "smejj.com AI-chat, kode, video",
+  "k": "AI-chat og kodeagent: kode, bilder, video, stemme og egen nettleser."
+ },
+ "pl-PL": {
+  "t": "smejj.com AI: czat, kod, wideo",
+  "k": "Czat AI i agent kodowania: kod, obrazy, wideo, głos i własna przeglądarka."
+ },
+ "pt-BR": {
+  "t": "smejj.com IA chat código vídeo",
+  "k": "Chat com IA e agente de código: código, imagens, vídeo, voz e navegador."
+ },
+ "ro": {
+  "t": "smejj.com AI: chat, cod, video",
+  "k": "Chat AI și agent de cod: cod, imagini, video, voce și browser propriu."
+ },
+ "ru-RU": {
+  "t": "smejj.com ИИ: чат, код, видео",
+  "k": "ИИ-чат и агент для кода: код, картинки, видео, голос и свой браузер."
+ },
+ "sk": {
+  "t": "smejj.com AI: chat, kód, video",
+  "k": "AI chat a kódovací agent: kód, obrázky, video, hlas a vlastný prehliadač."
+ },
+ "sv-SE": {
+  "t": "smejj.com AI-chatt, kod, video",
+  "k": "AI-chatt och kodagent: kod, bilder, video, röst och egen webbläsare."
+ },
+ "th": {
+  "t": "smejj.com AI แชท โค้ด วิดีโอ",
+  "k": "แชท AI และเอเจนต์เขียนโค้ด: โค้ด รูปภาพ วิดีโอ เสียง และเบราว์เซอร์ของตัวเอง"
+ },
+ "tr-TR": {
+  "t": "smejj.com AI sohbet kod video",
+  "k": "AI sohbet ve kodlama ajanı: kod, görsel, video, ses ve kendi tarayıcısı."
+ },
+ "uk": {
+  "t": "smejj.com ШІ: чат, код, відео",
+  "k": "ШІ-чат і агент для коду: код, зображення, відео, голос і власний браузер."
+ },
+ "vi": {
+  "t": "smejj.com AI chat, code, video",
+  "k": "Trò chuyện AI và tác nhân lập trình: code, ảnh, video, giọng nói, trình duyệt."
+ },
+ "zh-CN": {
+  "t": "smejj.com AI 聊天、代码、视频",
+  "k": "AI 聊天与编程智能体：写代码、生成图片和视频、语音，还有自带浏览器。"
+ }
+}
