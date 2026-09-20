@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-20T13:46:32.666Z",
-  "confirmation": "Betreiber-Auftrag 20.09.2026 (schriftlich): 'Jetzt die restlichen deutschen Texte uebersetzen.' Umsetzung: Schrittzeile, Arbeitsflaechen-Karte, Erste Fuehrung, Profilmenue und die Mikrofon-Meldung laufen jetzt ueber t(); 34 neue Schluessel in allen 14 Sprachen. SW smejj-shell-v914.",
+  "frozenAt": "2026-09-20T14:27:17.143Z",
+  "confirmation": "Betreiber 18.09.2026 schriftlich im Chat: 'Oeffne https://smejj.com/ im Chrome-Browser und pruefe unseren smejj Browser vollstaendig von A bis Z. … Erst alle Probleme und Verbesserungspunkte auflisten, danach vollstaendig umsetzen und anschliessend alles erneut mit realen Tests pruefen. Keine funktionierende bestehende Funktion darf dabei beschaedigt werden.' Umsetzung: CSP frame-src https:, Globus bei offenem Browser ausgeblendet, Menue-Ebene 90, Schnellweg in derselben Live-Sitzung, Schonfrist fuer Server-Sitzungen, Hauptmenue mit Vollbild, SW smejj-shell-v911 (Runde 9: Frage-Erfassung repariert; Sicherheits-Lock fuer src/shared/controlAccessPolicy.js nachgestempelt — dort steht seit Runde 6 die Route /api/browser/page als offene Lese-Route, Sprachzeile der Chat-Bruecke (Betreiber 20.09.), gleichrangig zu /api/browser/fetch; Betreiber 20.09. schriftlich: 'Wenn du Fehler findest, behebe sie sofort, deploye erneut … Danach alles 100% schuetzen'; zuvor Runde 8: Dateiansicht fuer Bild, Text, PDF und Downloads; Betreiber 20.09.: 'Weiter'; zuvor Runde 7: Proxy-Seite komprimiert; zuvor Runde 6: Proxy-Seiten des eingebauten Browsers als eigenes Dokument mit eigener Sicherheitsregel, https zuerst; Betreiber 20.09. schriftlich: 'Checke nochmal Browser von A bis Z muss besser als Chrome Browser sein.'). Betreiber dazu am 18.09. schriftlich: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Dazu die Melde-Funktion: Google Play hat das Update am 20.09.2026 abgelehnt ('Your app lacks in-app features for users to report or flag offensive content'), Betreiber hat deren Auslieferung am 20.09. per Doppelklick ausgeloest (brach an der Markenkette ab). Runde 10: Betreiber 20.09. schriftlich: 'Teste v913 jetzt auch auf Android und iPhone' — dabei gefunden: Nachrichten-Menue und Melde-Dialog blieben in englischer App deutsch; 29 Texte in 14 Sprachen, Marken von v914 geheilt. Per Doppelklick ausgeloest.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "251d49e8fb60977a6356de00e37a5e14f7d9209623c3c497037d7235309f6a6b",
+    "public/index.html": "aa6e299a1d29a8336ffd4483b12425b238f0bbce49317ba543dab486d72cce7d",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "80b6a7f931dc3a4814f5d95ebc5dc27f4bff2168716f105179272937c71b747f",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "a2de84280465570316b3062061a6e9359c953d35f4d02a719975b2b28afb9b8c",
-    "public/app.js": "78d1ed24d494b8a7145e360f2ee0c69ba25efaedad46ca835741399f910e78d6",
+    "public/app.js": "31f6e9a60bb85853d6f81eda6ad08a6f3e0be2db2748d14a290c6cd52e7a05dc",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "27acbbbbe2a23a81f25b8fdab7e5204cb4e5ecc1217f6ef1af8ee7a12831e3df",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "226ef36ef5a69979fa0e6651ff63d7d910738ee770d549029ce30bbee80c8aae",
+    "public/sw.js": "b892fb073d441a81e77e9064841e6287e88e63ed8ba68c41599efc343de21ff3",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
