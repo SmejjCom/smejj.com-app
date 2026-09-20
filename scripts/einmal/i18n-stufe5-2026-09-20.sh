@@ -38,7 +38,7 @@ echo "  Commit ${MEINE[1]:0:8} auf $ARBEITS_ZWEIG"
 # brauchte beim ersten Mal eine Entscheidung: package.json-Testliste). Dann
 # wird NICHT zurueckgesetzt — sonst ist die Handarbeit weg.
 SCHON=0
-if [ -d "$BAU" ] && git -C "$BAU" log -1 --pretty=%s 2>/dev/null | grep -q "Stufe 5f"; then
+if [ -d "$BAU" ] && git -C "$BAU" log -1 --pretty=%s 2>/dev/null | grep -q "erste Frage geht ohne Konto"; then
   SCHON=1
   echo "  $BAU traegt den Commit schon ($(git -C "$BAU" rev-parse --short HEAD))"
 fi
@@ -88,7 +88,7 @@ echo "  arbeitszweig $SW_A | bauzweig $SW_B | live $LIVE_SW  ->  $SW_NEU"
 if [ "$SW_NEU" != "$SW_IST" ]; then
   echo "ABBRUCH: $SW_IST ist belegt — im Arbeitszweig auf $SW_NEU heben und erneut starten."; exit 1
 fi
-ANKER="schutz-100-2026-09-20-i18n5f-${SW_NEU#smejj-shell-}"
+ANKER="schutz-100-2026-09-20-gastmodus-${SW_NEU#smejj-shell-}"
 
 echo "== 3. Waechter im Bauzweig"
 cd "$BAU"
