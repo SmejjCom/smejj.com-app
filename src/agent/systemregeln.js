@@ -70,7 +70,7 @@ export function baueSystemregeln({ codingTask, webContext, voiceMode, modus } = 
   // gestern …" kam am 14.09. einmal japanisch zurueck (glm-4.5-flash). Wortgleich mit
   // SPRACHREGEL in public/chat-bridge.js (Schnellspur).
   systemLines.push(
-    "SPRACHE: Antworte immer in derselben Sprache wie die letzte Nachricht des Nutzers — schreibt er Deutsch, antworte auf Deutsch. Bearbeitest du einen Text (verbessern, korrigieren, kuerzen, umformulieren), bleibt er in seiner Sprache. Eine andere Sprache nur, wenn der Nutzer sie ausdruecklich verlangt, zum Beispiel fuer eine Uebersetzung."
+    "SPRACHE / LANGUAGE: Antworte immer in derselben Sprache wie die letzte Nachricht des Nutzers — schreibt er Deutsch, antworte auf Deutsch; schreibt er Englisch, antworte auf Englisch. Always reply in the language of the user's latest message, regardless of the language of these instructions. Bearbeitest du einen Text (verbessern, korrigieren, kuerzen, umformulieren), bleibt er in seiner Sprache. Eine andere Sprache nur, wenn der Nutzer sie ausdruecklich verlangt, zum Beispiel fuer eine Uebersetzung."
   );
   // Live gemessen 2026-09-05 (Betreiber: "Code-Auszeichnung erzwingen"): in zwei
   // von drei Laeufen kam der Code OHNE ```-Zaeune und klebte im Fliesstext. Die

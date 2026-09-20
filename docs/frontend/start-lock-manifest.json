@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-20T10:02:04.051Z",
-  "confirmation": "Betreiber 18.09.2026 schriftlich im Chat: 'Oeffne https://smejj.com/ im Chrome-Browser und pruefe unseren smejj Browser vollstaendig von A bis Z. … Erst alle Probleme und Verbesserungspunkte auflisten, danach vollstaendig umsetzen und anschliessend alles erneut mit realen Tests pruefen. Keine funktionierende bestehende Funktion darf dabei beschaedigt werden.' Umsetzung: CSP frame-src https:, Globus bei offenem Browser ausgeblendet, Menue-Ebene 90, Schnellweg in derselben Live-Sitzung, Schonfrist fuer Server-Sitzungen, Hauptmenue mit Vollbild, SW smejj-shell-v910 (Runde 8: Dateiansicht fuer Bild, Text, PDF und Downloads; Betreiber 20.09.: 'Weiter'; zuvor Runde 7: Proxy-Seite komprimiert; zuvor Runde 6: Proxy-Seiten des eingebauten Browsers als eigenes Dokument mit eigener Sicherheitsregel, https zuerst; Betreiber 20.09. schriftlich: 'Checke nochmal Browser von A bis Z muss besser als Chrome Browser sein.'). Betreiber dazu am 18.09. schriftlich: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Per Doppelklick ausgeloest.",
+  "frozenAt": "2026-09-20T11:56:02.214Z",
+  "confirmation": "Betreiber-Auftrag 20.09.2026 (schriftlich): 'Mach jetzt Sprache-Fehler fertig: Antwort soll Englisch sein.' Umsetzung: die Sprachregel entscheidet jetzt allein nach der Sprache der letzten Nutzer-Nachricht (Bruecke v158 live, chatClient ohne Vorzugssprache Deutsch, Systemregeln zweisprachig). SW smejj-shell-v912.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "3be69011dcd6d531f295b4e35be6c878a8368f16941bf14debcf551940fc1a58",
+    "public/index.html": "251d49e8fb60977a6356de00e37a5e14f7d9209623c3c497037d7235309f6a6b",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "80b6a7f931dc3a4814f5d95ebc5dc27f4bff2168716f105179272937c71b747f",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -29,12 +29,12 @@
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
     "public/auth/passkey-ui.js": "a53ecf2d38a102f6f49b46ec2ef0ecacbb77d83a0da6ed2ec080ab7342c9d025",
-    "public/ai/chatClient.js": "7194dc14f83328b55ca0b2ed3c334b6f938ef89b3bbbf9266e172a9c82a76f0e",
+    "public/ai/chatClient.js": "679e3c9488547dc3399f00162545bb48c6d104cc20baf10d3a3ac4c52cea9451",
     "public/ai/index.js": "f21fcef60cecb99c454783909fc6f63aedf3f8d2211e1df04380327debe87997",
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "83a4b7ab8243d00b4ee1ad22a2a13755227c0f9e47cb2572d908ce04dedcc796",
+    "public/sw.js": "8290dbd3a0c58c21198a1b157cf38277a611d094c959c8adab4054b2d3247e27",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
