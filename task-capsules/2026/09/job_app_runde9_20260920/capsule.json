@@ -1,0 +1,19 @@
+{
+  "job_id": "job_app_runde9_20260920",
+  "datum": "2026-09-20",
+  "typ": "Verifikation + Fix + Auslieferung",
+  "titel": "Runde 9: Offline-Speicher geheilt, Inhalt melden live, Frage-Erfassung repariert (SW v913)",
+  "vorgaenger": "job_app_a_bis_z_20260919",
+  "befund": "v912 verlangte live fehlende /assets/inhalt-melden.js (404) — Offline-Speicher alles-oder-nichts, v912 installierte sich nirgends",
+  "behebung": "Runde 9: Melde-Funktion + Frage-Erfassungs-Fix + Sicherheits-Lock-Stempel zusammen ausgeliefert",
+  "commits": {
+    "app": "aa7bc028",
+    "bauzweig": "540b437d",
+    "frontend": "a776657"
+  },
+  "anker": "schutz-100-2026-09-20-app-v913",
+  "nachtest": "Cache v913 243 Eintraege, EN-Antwort, Erfassung ohne CSP-Verstoss, Meldung angekommen, Browser /api/browser/page ok",
+  "lehre": "Nach jeder sw.js-Lieferung jede Datei der Offline-Liste live abrufen",
+  "bericht": "docs/qa/app-a-bis-z-2026-09-19.md",
+  "rollback": "schutz-100-2026-09-20-browser-v910*"
+}
