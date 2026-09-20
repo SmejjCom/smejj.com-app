@@ -16,6 +16,7 @@ const sw = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
 const css = readFileSync(new URL("../public/design-v13-kompakt.css", import.meta.url), "utf8");
 const buendel = readFileSync(new URL("../public/start-styles.css", import.meta.url), "utf8");
 const server = readFileSync(new URL("../src/server.js", import.meta.url), "utf8");
+const vollbild = readFileSync(new URL("../public/chat-medien-ansicht.js", import.meta.url), "utf8");
 
 // Wie in chat-menue-mehr.test.mjs: das Modul laedt ueber /assets/-Pfade (eine Modulinstanz im
 // Browser) und ist in node nicht direkt importierbar — die Importe werden durch Attrappen ersetzt.
@@ -44,6 +45,27 @@ test("Verdrahtung: nachgeladen, im Precache, gleiche Marke, Stil im Modul", () =
   assert.ok(modul.includes("sorgeFuerStil"), "Stil wird nicht eingehaengt");
   assert.ok(!buendel.includes(".melden-kasten"), "Stil gehoert NICHT ins Startbuendel (Startgewicht)");
   assert.ok(!css.includes(".melden-kasten"), "Stil gehoert nicht in die gebuendelte CSS-Quelle");
+});
+
+test("Menuepunkt traegt eine UEBERSETZTE Beschriftung", () => {
+  // Die ITEMS-Tabelle ist gemischt: einige Labels sind schon uebersetzt, "Inhalt melden" war es
+  // nicht. Ein englischsprachiger Pruefer sah damit deutschen Text im Menue — genau dieses Menue
+  // zeigt Googles Beleg zur Ablehnung vom 20.09.2026.
+  assert.match(menue, /label\.textContent = t\(item\.label\)/, "Beschriftungen muessen durch t()");
+});
+
+test("Auch im Vollbild laesst sich melden — und die Selektoren passen zur echten Ansicht", () => {
+  // Googles Beleg zeigte als viertes Bild das KI-Bild im Vollbild mit nur Herunterladen/Teilen/X.
+  // Der Knopf haengt sich von inhalt-melden.js aus ein (Blattmodul, keine Marken-Kaskade) —
+  // deshalb kann er still ins Leere greifen, wenn die Ansicht ihre Klassennamen aendert.
+  assert.ok(modul.includes(".smejj-vollbild-leiste"), "Knopf wird nicht eingehaengt");
+  assert.ok(vollbild.includes('className = "smejj-vollbild-leiste"'), "Klassenname der Leiste hat sich geaendert");
+  assert.ok(vollbild.includes('className = "smejj-vollbild"'), "Klassenname der Huelle hat sich geaendert");
+  assert.ok(modul.includes("MutationObserver"), "ohne Beobachter erscheint der Knopf nie");
+  assert.ok(modul.includes('closest?.("#startLog > .entry")'), "ohne gemerkten Eintrag meldet der Knopf das falsche Bild");
+  // Geschlossen wird ueber das Kreuz der Leiste, nicht per remove(): nur sein Klick raeumt
+  // Fokusfalle und Ueberlauf-Stil auf.
+  assert.ok(!/huelle\.remove\(\)/.test(modul), "Vollbild darf nicht roh entfernt werden");
 });
 
 test("Nutzlast: Grund geprueft, Text ohne Markdown, Laengen begrenzt", () => {
