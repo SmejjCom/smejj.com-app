@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-20T21:52:54.338Z",
+  "frozenAt": "2026-09-20T22:08:08.645Z",
   "confirmation": "Betreiber 20.09.2026 schriftlich im Chat: 'Jetzt die restlichen deutschen Texte uebersetzen' / 'Checke nochmal alles von A bis Z, ob noch was deutsch ist' / 'alle Stufen'. Stufe 5 (letzte): Inhalte der Ansichten uebersetzbar gemacht; an index.html nur die ?v=-Marken der geaenderten Module, kein Markup, kein Design.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "2412627a464736e549097f4b5ada9c04e2112a564a11908124d22999e38095ca",
+    "public/index.html": "698299548ef54dc15c688785b9850493bc120a9c8b96b3dde3b9063d9b797123",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "f78f9b57ebabbb9798ecf9142dfedd110094e85df676f86b18917c61e24fd3bc",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "7403ac7a7106cc72805268c9f139eb5e86e458880fa7d849a26a29ea99d0c3c4",
-    "public/app.js": "9375a24294bc2671a5405a43075705c943b19dcc93c31129374a6ffbee9c0ef9",
+    "public/app.js": "44053687e026a68feabb7d0cd07e0d6c4953ce27dd2f440115b288f1de712548",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "23d8ce8c091439eed3ac2436d700edfac9c15cec910d43a8157016ad063ab646",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -24,8 +24,8 @@
     "public/composer-tools.js": "fbd6180e50649dcfdc83f6602cc985291c3cfd26cbcf3eb051cfc3b6b8ac914a",
     "public/composer-plus-menu.js": "1e4937be8a89e8393bceedc81c0524c802708ec652505121e31f773b95666eba",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "dbc91a237ec1d26a532da87bcf5e0b3054b67ce5df641b697b7fdb688847eee8",
-    "public/browser-pane-render.js": "6de65909558afefb3752daa80d78792a12d35b7a799e2951fd1776aa28df4892",
+    "public/browser-pane.js": "621e180390a52794174216ed3473a23f92731e92cff09259603464543ea09a69",
+    "public/browser-pane-render.js": "0c0b9ff6f0bdfcddddb76450b567e61f9bdf07d584b201387e6f2e4f2dd2e10d",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
     "public/auth/passkey-ui.js": "a53ecf2d38a102f6f49b46ec2ef0ecacbb77d83a0da6ed2ec080ab7342c9d025",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "21ca9558fbd3e1a0f83d69501197a12dd49ee11aa7763c7dcb6cffc64dbcf6ae",
+    "public/sw.js": "f421cc2be9154b7273714a5f8416c2d43a23f873e659168ba2ffa0769cade01c",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
