@@ -5,6 +5,13 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-09-20] SRCDOC ERBT DIE REGEL DES EINBETTERS — PROXY-SEITEN GEHOEREN IN EIN EIGENES DOKUMENT (job_browser_proxy_dokument_20260920)
+
+Typ: Verifikation + Fixes (SW v908, v909). Capsule `capsules/app/job_browser_proxy_dokument_20260920/`, Bericht `docs/qa/browser-besser-als-chrome-2026-09-20.md`.
+Loesung: Jede Proxy-Seite des eingebauten Browsers erschien ohne Stil (github.com als Linkliste, Suchtreffer roh) und ihre Bedienung war tot — als `srcdoc` erbte sie `style-src/img-src/script-src 'self'`. Neu `GET /api/browser/page` (browserPageRoute.js): eigenes Dokument mit eigener Regel — Stil/Bilder vom Original (Server wird kein Bild-Proxy), Skript nur unseres per Nonce, sandbox ohne allow-same-origin, frame-ancestors nur unsere Seiten, Auslieferung nur in einen Rahmen (Sec-Fetch-Dest, sonst 403), komprimiert (305 KB -> 30,8 KB). Dazu https zuerst an der Adressleiste.
+Begruendung: Dieselbe Falle wie am 19.08. bei der Live-Buehne. Was in einem srcdoc-Rahmen laeuft, unterliegt UNSERER Regel — fremde Inhalte brauchen ein eigenes Dokument mit zugeschnittener Regel. Eine HTML-Route muss komprimieren wie json(): ueber eine langsame Leitung waren es 15-30 s Weiss.
+Verifikation: live 200/403/400, github.com im Original-Design, Suche gestylt, scrollState kommt an, Uebertragung 0,95-2,6 s; tests/browser-livetest 21/21. Lehre Kaskade: liegt im Arbeitszweig fremdes Unfertiges in einer Datei (config.js, Apple-Login), darf die eigene Lieferung diese Datei nicht anfassen — der Trockenlauf der Fremd-Pruefung findet das VOR dem Doppelklick.
+
 ### [2026-09-19] NACHLADER: WER EIN MODUL SPAETER HOLT, MUSS JEDEN WEG DORTHIN KENNEN — UND DEN KLICK GANZ ANHALTEN (job_app_a_bis_z_20260919)
 
 Typ: Verifikation + Fixes (SW v903, v904). Capsule `capsules/app/job_app_a_bis_z_20260919/`, Bericht `docs/qa/app-a-bis-z-2026-09-19.md`.

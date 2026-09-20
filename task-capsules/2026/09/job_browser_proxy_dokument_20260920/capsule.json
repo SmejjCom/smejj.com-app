@@ -1,0 +1,81 @@
+{
+ "jobId": "job_browser_proxy_dokument_20260920",
+ "createdAt": "2026-09-20T08:00:00.000Z",
+ "closedAt": "2026-09-20T10:30:00.000Z",
+ "owner": "smejj.com autonomous coding (Betreiber 20.09.: 'Checke nochmal Browser von A bis Z muss besser als Chrome Browser sein.')",
+ "title": "Proxy-Seiten des eingebauten Browsers als eigenes Dokument: Stil, Bilder, Bedienung; https zuerst; komprimiert — SW v908 + v909",
+ "befunde": [
+  {
+   "nr": "C1",
+   "befund": "Proxy-Seiten ohne Stil (github.com Linkliste, Suchtreffer roh)",
+   "ursache": "srcdoc erbt die CSP des Einbetters",
+   "fix": "GET /api/browser/page als eigenes Dokument mit eigener Regel",
+   "commit": "8eeee675"
+  },
+  {
+   "nr": "C2",
+   "befund": "Bedienung der Proxy-Seiten tot (keine Nachricht aus dem Rahmen)",
+   "ursache": "Inline-Navigationsskript von geerbter script-src blockiert",
+   "fix": "Nonce in eigener Regel",
+   "commit": "8eeee675"
+  },
+  {
+   "nr": "C3",
+   "befund": "http-Adresse blieb grau",
+   "fix": "https zuerst an der Adressleiste, Agent lehnt http weiter ab",
+   "commit": "8eeee675"
+  },
+  {
+   "nr": "C4",
+   "befund": "305 KB HTML unkomprimiert, 15-30 s Uebertragung",
+   "fix": "Brotli/Gzip, 30,8 KB",
+   "commit": "9ed3f236"
+  },
+  {
+   "nr": "C5",
+   "befund": "config.js traegt unfertigen Apple-Login -> Route aus browserFetch abgeleitet; composer-tools.js ohne Marke; Bauzweig ohne v907",
+   "fix": "b6ff5260 + Marken + Bauzweig zieht v907 nach"
+  }
+ ],
+ "verifikation": {
+  "live": {
+   "pageAlsRahmen": 200,
+   "pageAlsRegisterkarte": 403,
+   "privatesNetz": 400,
+   "github": "Original-Design im Panel",
+   "suche": "gestylt, scrollState kommt an",
+   "uebertragung": "30,8 KB br, 0,95-2,6 s (vorher 305 KB, 15-30 s)"
+  },
+  "tests": "browser-livetest 21/21; Browser-Familie 244+ gruen; vorbestehend rot: sprachwelle-layout, startgewicht (v906/v907, fremd)",
+  "waechter": "markenkette, assets, auslieferung-lock, start-lock OK in beiden Arbeitskopien"
+ },
+ "auslieferung": {
+  "v908": {
+   "app": "3b75c715",
+   "bauzweig": "b040d15a",
+   "frontend": "cc2d299"
+  },
+  "v909": {
+   "app": "197d97d8",
+   "bauzweig": "11b0d69c",
+   "frontend": "2df808a"
+  },
+  "anker": [
+   "schutz-100-2026-09-20-browser-v908*",
+   "schutz-100-2026-09-20-browser-v909*"
+  ]
+ },
+ "offen": [
+  "Downloads/Uploads im Live-Browser",
+  "Videostrom statt Einzelbildern, warmer Chromium",
+  "Ladeanzeige bis zum load-Ereignis des Proxy-Rahmens (browser-pane.js steht am Zeilendeckel)",
+  "Hauptordner liegt hinter origin (Parallelsitzung arbeitet dort mit ungesicherten Dateien)"
+ ],
+ "rollback": "Anker schutz-100-2026-09-20-app-v905* bzw. srcdoc-Rueckfall bleibt im Code",
+ "belege": [
+  "docs/qa/browser-besser-als-chrome-2026-09-20.md",
+  "~/Desktop/smejj-browser-runde6.log",
+  "~/Desktop/smejj-browser-runde7.log"
+ ],
+ "qualitaet": "bestanden — live nachgemessen"
+}
