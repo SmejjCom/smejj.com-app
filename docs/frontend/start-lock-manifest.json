@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-20T11:56:02.214Z",
-  "confirmation": "Betreiber-Auftrag 20.09.2026 (schriftlich): 'Mach jetzt Sprache-Fehler fertig: Antwort soll Englisch sein.' Umsetzung: die Sprachregel entscheidet jetzt allein nach der Sprache der letzten Nutzer-Nachricht (Bruecke v158 live, chatClient ohne Vorzugssprache Deutsch, Systemregeln zweisprachig). SW smejj-shell-v912.",
+  "frozenAt": "2026-09-20T12:47:33.620Z",
+  "confirmation": "Betreiber 18.09.2026 schriftlich im Chat: 'Oeffne https://smejj.com/ im Chrome-Browser und pruefe unseren smejj Browser vollstaendig von A bis Z. … Erst alle Probleme und Verbesserungspunkte auflisten, danach vollstaendig umsetzen und anschliessend alles erneut mit realen Tests pruefen. Keine funktionierende bestehende Funktion darf dabei beschaedigt werden.' Umsetzung: CSP frame-src https:, Globus bei offenem Browser ausgeblendet, Menue-Ebene 90, Schnellweg in derselben Live-Sitzung, Schonfrist fuer Server-Sitzungen, Hauptmenue mit Vollbild, SW smejj-shell-v911 (Runde 9: Frage-Erfassung repariert; Sicherheits-Lock fuer src/shared/controlAccessPolicy.js nachgestempelt — dort steht seit Runde 6 die Route /api/browser/page als offene Lese-Route, Sprachzeile der Chat-Bruecke (Betreiber 20.09.), gleichrangig zu /api/browser/fetch; Betreiber 20.09. schriftlich: 'Wenn du Fehler findest, behebe sie sofort, deploye erneut … Danach alles 100% schuetzen'; zuvor Runde 8: Dateiansicht fuer Bild, Text, PDF und Downloads; Betreiber 20.09.: 'Weiter'; zuvor Runde 7: Proxy-Seite komprimiert; zuvor Runde 6: Proxy-Seiten des eingebauten Browsers als eigenes Dokument mit eigener Sicherheitsregel, https zuerst; Betreiber 20.09. schriftlich: 'Checke nochmal Browser von A bis Z muss besser als Chrome Browser sein.'). Betreiber dazu am 18.09. schriftlich: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Dazu die Melde-Funktion: Google Play hat das Update am 20.09.2026 abgelehnt ('Your app lacks in-app features for users to report or flag offensive content'), Betreiber hat deren Auslieferung am 20.09. per Doppelklick ausgeloest (brach an der Markenkette ab). Per Doppelklick ausgeloest.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "251d49e8fb60977a6356de00e37a5e14f7d9209623c3c497037d7235309f6a6b",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "8290dbd3a0c58c21198a1b157cf38277a611d094c959c8adab4054b2d3247e27",
+    "public/sw.js": "eb8f909b971a9e9d054564f7021e9b9f006030f49d1fb1084e8db07981f0948c",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
