@@ -54,8 +54,8 @@
       "finger": "8b7694bbae73355f"
     },
     "sendepfad-nachladen.js": {
-      "marke": "32",
-      "finger": "2b0a346b234accc9"
+      "marke": "33",
+      "finger": "387a675364fb9239"
     },
     "panel-backdrop.js": {
       "marke": "panel-backdrop-20260803",
@@ -146,20 +146,20 @@
       "finger": "91bbf639d6aef94e"
     },
     "browser-pane.js": {
-      "marke": "browser-pane-20260918-9",
-      "finger": "71a1bff601bcc6e4"
+      "marke": "browser-pane-20260918-10",
+      "finger": "73dbd4dbf79af723"
     },
     "browser-pane-backdrop.js": {
       "marke": "2",
       "finger": "3144f0486fe13e2f"
     },
     "maus-panel.js": {
-      "marke": "45",
-      "finger": "eb851285db46dea9"
+      "marke": "46",
+      "finger": "4937f72cf019f017"
     },
     "browser-pane-render.js": {
-      "marke": "browser-pane-20260906-7",
-      "finger": "a30cfc1c62367785"
+      "marke": "browser-pane-20260906-8",
+      "finger": "f849ed7ddc1f3a31"
     },
     "browser-pane-adressen.js": {
       "marke": "browser-pane-20260820-5",
@@ -190,8 +190,8 @@
       "finger": "9b3eadb7c3805ab7"
     },
     "browser-pane-fernwege.js": {
-      "marke": "browser-pane-20260918-8",
-      "finger": "91bf154b7bdf8717"
+      "marke": "browser-pane-20260918-9",
+      "finger": "7f9bfccb99a941ab"
     },
     "browser-pane-session.js": {
       "marke": "browser-pane-20260918-1",
@@ -394,16 +394,16 @@
       "finger": "8276ed29524c354c"
     },
     "app.js": {
-      "marke": "b198",
-      "finger": "9715a23b2ed4bce8"
+      "marke": "b199",
+      "finger": "ab0bb0c4be974aa5"
     },
     "pwa-schnellstart.js": {
       "marke": "24",
       "finger": "2f8ceaf2819f9cba"
     },
     "browser-nachladen.js": {
-      "marke": "31",
-      "finger": "31e29f79fad5b3c5"
+      "marke": "32",
+      "finger": "1d8a53a045dcaf09"
     },
     "view-chrome.js": {
       "marke": "view-chrome-20260716-2",
@@ -414,8 +414,8 @@
       "finger": "a4125345c1da0073"
     },
     "chat-actions.js": {
-      "marke": "b73",
-      "finger": "a742a009b60fea46"
+      "marke": "b74",
+      "finger": "2c860df8a9e40f88"
     },
     "panel-status.js": {
       "marke": "1",
@@ -438,8 +438,8 @@
       "finger": "80e0ae4f88643d95"
     },
     "maus-absicht.js": {
-      "marke": "51",
-      "finger": "96f641768ae255e1"
+      "marke": "52",
+      "finger": "c57a6c2681d148b9"
     },
     "maus-replay.js": {
       "marke": "maus-replay-20260715-3",
