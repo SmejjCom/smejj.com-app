@@ -1,6 +1,12 @@
 #!/bin/zsh
 # Einmal-Kaskade 18.09.2026, RUNDE 9 — Frage-Erfassung repariert + Sicherheits-Lock gestempelt (SW v913):
-# BASIS ist der ausgelieferte Stand v912 der Parallelarbeit (3407ceda: Sprache, Inhalt melden): ausgeliefert wird damit
+# LIVE-FEHLER 20.09. (gemessen): die v912-Auslieferung der Parallelarbeit brachte eine sw.js live, die
+# /assets/inhalt-melden.js in den Offline-Speicher holen will — die Datei gibt es live nicht (404). Der
+# Offline-Speicher ist alles-oder-nichts: v912 installiert sich bei NIEMANDEM, alle bleiben auf v910 haengen.
+# Die Melde-Funktion selbst (Google-Play-Ablehnung 20.09.) wurde nie ausgeliefert: ihre eigene Kaskade brach
+# an der Markenkette ab und findet seit dem Push ihrer Commits "keine eigenen Commits" mehr.
+# Darum liefert diese Runde ZUSAMMEN aus: Melde-Funktion (fertig gebaut + getestet) + Erfassungs-Fix.
+# chat-bridge.js bleibt draussen (die Bruecke wird getrennt gebuendelt, live v158). Ausgeliefert wird
 # nur der Unterschied dieser Runde — der Apple-Login der Parallelsitzung bleibt ausdruecklich draussen.
 # Der Fern-Browser-Dienst baut beim Push auf den Bauzweig von selbst neu (gemessen 19.09.).
 #
@@ -16,13 +22,14 @@ set -uo pipefail
 APP="$HOME/smejj-app-runde6"
 BAU="$HOME/smejj-bau-runde6"
 KLON="/Users/alanbest/smejj-app-frontend"
-BASIS="3407ceda"
+BASIS="5fd78734"          # letzter von dieser Kaskaden-Reihe ausgelieferte Stand (v910)
+LIVE_ZWISCHEN="3407ceda"  # v912 der Parallelarbeit: lieferte NUR sw.js + ai/chatClient.js aus
 BAU_BASIS="e8fb5826"
 ARBEITS_ZWEIG="feature/design-start-chat-2026-09-13"
 BAU_ZWEIG="feature/auth-redesign-github-magiclink"
 SW_VORHER="smejj-shell-v912"
 SW_NEU="smejj-shell-v913"
-WORTLAUT="Betreiber 18.09.2026 schriftlich im Chat: 'Oeffne https://smejj.com/ im Chrome-Browser und pruefe unseren smejj Browser vollstaendig von A bis Z. … Erst alle Probleme und Verbesserungspunkte auflisten, danach vollstaendig umsetzen und anschliessend alles erneut mit realen Tests pruefen. Keine funktionierende bestehende Funktion darf dabei beschaedigt werden.' Umsetzung: CSP frame-src https:, Globus bei offenem Browser ausgeblendet, Menue-Ebene 90, Schnellweg in derselben Live-Sitzung, Schonfrist fuer Server-Sitzungen, Hauptmenue mit Vollbild, SW smejj-shell-v911 (Runde 9: Frage-Erfassung repariert; Sicherheits-Lock fuer src/shared/controlAccessPolicy.js nachgestempelt — dort steht seit Runde 6 die Route /api/browser/page als offene Lese-Route, Sprachzeile der Chat-Bruecke (Betreiber 20.09.), gleichrangig zu /api/browser/fetch; Betreiber 20.09. schriftlich: 'Wenn du Fehler findest, behebe sie sofort, deploye erneut … Danach alles 100% schuetzen'; zuvor Runde 8: Dateiansicht fuer Bild, Text, PDF und Downloads; Betreiber 20.09.: 'Weiter'; zuvor Runde 7: Proxy-Seite komprimiert; zuvor Runde 6: Proxy-Seiten des eingebauten Browsers als eigenes Dokument mit eigener Sicherheitsregel, https zuerst; Betreiber 20.09. schriftlich: 'Checke nochmal Browser von A bis Z muss besser als Chrome Browser sein.'). Betreiber dazu am 18.09. schriftlich: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Per Doppelklick ausgeloest."
+WORTLAUT="Betreiber 18.09.2026 schriftlich im Chat: 'Oeffne https://smejj.com/ im Chrome-Browser und pruefe unseren smejj Browser vollstaendig von A bis Z. … Erst alle Probleme und Verbesserungspunkte auflisten, danach vollstaendig umsetzen und anschliessend alles erneut mit realen Tests pruefen. Keine funktionierende bestehende Funktion darf dabei beschaedigt werden.' Umsetzung: CSP frame-src https:, Globus bei offenem Browser ausgeblendet, Menue-Ebene 90, Schnellweg in derselben Live-Sitzung, Schonfrist fuer Server-Sitzungen, Hauptmenue mit Vollbild, SW smejj-shell-v911 (Runde 9: Frage-Erfassung repariert; Sicherheits-Lock fuer src/shared/controlAccessPolicy.js nachgestempelt — dort steht seit Runde 6 die Route /api/browser/page als offene Lese-Route, Sprachzeile der Chat-Bruecke (Betreiber 20.09.), gleichrangig zu /api/browser/fetch; Betreiber 20.09. schriftlich: 'Wenn du Fehler findest, behebe sie sofort, deploye erneut … Danach alles 100% schuetzen'; zuvor Runde 8: Dateiansicht fuer Bild, Text, PDF und Downloads; Betreiber 20.09.: 'Weiter'; zuvor Runde 7: Proxy-Seite komprimiert; zuvor Runde 6: Proxy-Seiten des eingebauten Browsers als eigenes Dokument mit eigener Sicherheitsregel, https zuerst; Betreiber 20.09. schriftlich: 'Checke nochmal Browser von A bis Z muss besser als Chrome Browser sein.'). Betreiber dazu am 18.09. schriftlich: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Dazu die Melde-Funktion: Google Play hat das Update am 20.09.2026 abgelehnt ('Your app lacks in-app features for users to report or flag offensive content'), Betreiber hat deren Auslieferung am 20.09. per Doppelklick ausgeloest (brach an der Markenkette ab). Per Doppelklick ausgeloest."
 export GIT_TERMINAL_PROMPT=0
 autor=(-c user.name="Wof Kadavanich" -c user.email=smejjcom@gmail.com)
 
@@ -57,7 +64,11 @@ for d in "$APP" "$BAU"; do
   fi
   node scripts/check-auslieferung-lock.mjs >/dev/null || { echo "ABBRUCH: Auslieferungs-Lock rot ($d)."; exit 1; }
   node scripts/check-markenkette.mjs >/dev/null || { echo "ABBRUCH: Markenkette rot ($d)."; exit 1; }
-  node --test tests/browser-livetest-2026-09-18.test.mjs tests/browser-nachladen.test.mjs tests/frage-erfassung-adresse.test.mjs tests/remote-browser-session.test.mjs tests/browser-pane.test.mjs tests/browser-pane-chrome-abgleich.test.mjs tests/csp-hosts.test.mjs tests/module-queries.test.mjs tests/precache-dynamische-importe.test.mjs >/dev/null 2>&1 || { echo "ABBRUCH: Tests rot ($d)."; exit 1; }
+  node scripts/check-modul-syntax.mjs >/dev/null || { echo "ABBRUCH: Modul-Syntax rot ($d)."; exit 1; }
+  node scripts/check-precache-imports.mjs >/dev/null || { echo "ABBRUCH: Precache rot ($d)."; exit 1; }
+  node scripts/check-startgewicht.mjs >/dev/null || { echo "ABBRUCH: Startgewicht rot ($d)."; exit 1; }
+  node scripts/check-guidelines.mjs >/dev/null || { echo "ABBRUCH: Zeilen-/Namensregel rot ($d)."; exit 1; }
+  node --test tests/browser-livetest-2026-09-18.test.mjs tests/browser-nachladen.test.mjs tests/frage-erfassung-adresse.test.mjs tests/inhalt-melden.test.mjs tests/chat-message-actions.test.mjs tests/chat-menue-mehr.test.mjs tests/precache-dynamische-importe.test.mjs tests/touch-ziele.test.mjs tests/remote-browser-session.test.mjs tests/browser-pane.test.mjs tests/browser-pane-chrome-abgleich.test.mjs tests/csp-hosts.test.mjs tests/module-queries.test.mjs tests/precache-dynamische-importe.test.mjs >/dev/null 2>&1 || { echo "ABBRUCH: Tests rot ($d)."; exit 1; }
   echo "  $d: gruen ($(git rev-parse --short HEAD))"
 done
 APP_NEU=$(git -C "$APP" rev-parse HEAD)
@@ -89,7 +100,7 @@ if git merge-base --is-ancestor "$APP_NEU" "origin/$ARBEITS_ZWEIG"; then echo "(
 fi
 
 echo "== 4. Frontend (smejj.com)"
-DATEIEN=($(git -C "$APP" diff --name-only --diff-filter=ACMR "$BASIS" "$APP_NEU" -- public/ | grep -v '^public/assets/' | sed 's|^public/||'))
+DATEIEN=($(git -C "$APP" diff --name-only --diff-filter=ACMR "$BASIS" "$APP_NEU" -- public/ | grep -v '^public/assets/' | grep -v '^public/chat-bridge\.js$' | sed 's|^public/||'))
 echo "Dateien (${#DATEIEN[@]}): ${DATEIEN[*]}"
 if [ "$LIVE_SW" = "$SW_NEU" ]; then
   echo "(Frontend ist schon $SW_NEU — uebersprungen)"
@@ -104,6 +115,8 @@ else
       b=$(git show "origin/main:$f" 2>/dev/null | shasum -a 256 | cut -c1-16)
       c=$(git show "origin/main:assets/$f" 2>/dev/null | shasum -a 256 | cut -c1-16)
       [ "$f" = "index.html" ] || [ "$f" = "sw.js" ] && c="$a"
+      z=$(git -C "$APP" show "$LIVE_ZWISCHEN:public/$f" 2>/dev/null | shasum -a 256 | cut -c1-16)
+      if [ "$z" = "$b" ] && [ "$z" != "$a" ]; then echo "  gleich  $f (Stand v912 der Parallelarbeit)"; continue; fi
       if [ "$a" = "$b" ] && { [ "$a" = "$c" ] || ! git show "origin/main:assets/$f" >/dev/null 2>&1; }; then echo "  gleich  $f"; else echo "  FREMD   $f"; FREMD=1; fi
     else
       if git show "origin/main:$f" >/dev/null 2>&1; then echo "  FREMD   $f (live vorhanden, bei uns neu)"; FREMD=1; else echo "  neu     $f"; fi
@@ -118,7 +131,7 @@ else
     git add "$f"
     if [ "$f" != "sw.js" ] && [ -d "$KLON/assets" ]; then mkdir -p "$KLON/assets/$(dirname "$f")"; git -C "$APP" show "$APP_NEU:public/$f" > "$KLON/assets/$f" && git add "assets/$f"; fi
   done
-  git "${autor[@]}" commit -q -m "deploy(browser): A-bis-Z-Livetest — CSP frame-src, Knoepfe frei, Menues sichtbar, Schnellweg in der Sitzung, Hauptmenue mit Vollbild; SW $SW_NEU — Quelle smejj.com-app ${APP_NEU:0:8}" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
+  git "${autor[@]}" commit -q -m "deploy(app): Inhalt melden (Google-Play-Richtlinie) + Frage-Erfassung repariert; heilt den Offline-Speicher (v912 verlangte eine fehlende Datei); SW $SW_NEU — Quelle smejj.com-app ${APP_NEU:0:8}" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
   git merge-base --is-ancestor origin/main HEAD || { echo "ABBRUCH: kein Fast-Forward."; exit 1; }
   git push -q origin main || { echo "ABBRUCH: Push auf main fehlgeschlagen."; exit 1; }
   echo "gepusht: $(git rev-parse --short HEAD)"
@@ -143,6 +156,7 @@ for i in $(seq 1 40); do
   if [ "$L" = "$SW_NEU" ]; then echo "LIVE api.smejj.com (Rueckfallweg): $L"; break; fi
   sleep 15
 done
+echo "  Offline-Liste live: /assets/inhalt-melden.js -> $(curl -s -o /dev/null -w '%{http_code}' -m 20 "https://smejj.com/assets/inhalt-melden.js?n=$RANDOM") (muss 200 sein)"
 curl -s -m 20 "https://smejj.com/assets/start-styles.css?n=$RANDOM" | grep -q "pointer: coarse" && echo "  Buendel live traegt die Globus-Regel" || echo "  (Buendel: Rand-Cache — Dateivergleich oben ist massgeblich)"
 node scripts/check-schutz-echtheit.mjs || echo "(Schutz-Echtheit: nach dem Rand-Cache erneut laufen lassen)"
 echo "== 6. Schutz-Anker (100 %-Schutz: Anker in allen drei Repos, Tags per Ruleset unloeschbar)"
