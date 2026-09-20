@@ -63,3 +63,48 @@ nicht eingereicht** — erst muss die Funktion live sein.
 
 **Achtung Parallelsitzung:** v908 ist von einer anderen Sitzung belegt (`~/smejj-bau-runde6`),
 diese Runde trägt deshalb v909.
+
+---
+
+## Runde 2 (20.09.2026 abends) — dritte Ablehnung, zwei echte Luecken
+
+Google hat die Einreichung vom 18:45 Uhr erneut mit derselben Richtlinie abgelehnt. Der
+Belegname im Ablehnungsschreiben ist identisch mit dem der vorigen Runde
+(`IN_APP_EXPERIENCE-4924.png`) — der Pruefer hat den Beleg also womoeglich wiederverwendet,
+bevor die Meldefunktion live war. Die Vollansicht des Belegs (URL mit `=w2400`) zeigt
+trotzdem zwei Stellen, an denen die erste Runde wirklich zu kurz griff:
+
+1. **Das Drei-Punkte-Menue stand auch in einer englischen App auf Deutsch.**
+   Die ITEMS-Tabelle in `chat-actions-menu.js` ist gemischt uebersetzt; die Beschriftung
+   lief roh in den DOM. Ein englischsprachiger Pruefer sah "Inhalt melden" und konnte es
+   nicht als Meldefunktion erkennen. Jetzt geht jede Beschriftung durch `t()`; die beiden
+   letzten fehlenden Woerter ("Hilfreich", "Nicht hilfreich") sind in allen 14 Sprachdateien
+   ergaenzt. Englisch: "Report content" bzw. "Report".
+
+2. **Das Bild im Vollbild hatte keinen Melde-Weg.** Das vierte Bild des Belegs zeigt genau
+   diese Ansicht: Herunterladen, Teilen, Schliessen. Google schreibt dazu ausdruecklich
+   "Dieses Problem tritt moeglicherweise auch an anderen Stellen auf. Pruefe alle Bereiche
+   deiner App". Die Leiste traegt jetzt einen Knopf "Melden" zwischen Teilen und dem Kreuz.
+
+**Warum der Knopf aus `inhalt-melden.js` kommt und nicht aus `chat-medien-ansicht.js`:**
+jene Datei liegt tief im Importbaum (chat-medien → chat-store → chat-sync …). Eine Aenderung
+dort zieht die Marke jedes ladenden Moduls hoch — beim ersten Versuch waren das rund 30
+Dateien fuer einen einzigen Knopf. `inhalt-melden.js` laedt niemand statisch: es ist ein
+Blatt, und ein Blatt kostet keine Kaskade. Der Preis dafuer ist, dass der Knopf still ins
+Leere greifen kann, wenn die Vollbild-Ansicht ihre Klassennamen aendert — dagegen wacht ein
+Test, der die Selektoren beider Dateien gegeneinander prueft.
+
+Geschlossen wird ueber den Klick auf das Kreuz der Leiste, nicht per `remove()`: nur dessen
+Handler raeumt Fokusfalle und Ueberlauf-Stil wieder auf. Welcher Chat-Eintrag gemeint ist,
+merkt sich ein Klick-Beobachter in der Erfassungsphase; ueber das `alt`-Attribut
+zurueckzusuchen waere bei zwei gleich betitelten Bildern falsch.
+
+**Auslieferung:** `scripts/einmal/melden-runde2-2026-09-20.sh`, per Doppelklick auf
+"smejj.com Melden Runde 2 ausliefern.command". Die Kaskade liest die Commits aus der eigenen
+Arbeitskopie `~/smejj-melden-runde2` — die Parallelsitzung hat die geteilte Arbeitskopie an
+diesem Tag mit ihrer eigenen Kaskade zurueckgesetzt und dabei ungesicherte Arbeit geloescht.
+
+**Erst nach dem Live-Nachweis erneut einreichen.** Die Einreichung vom 16:02 Uhr wurde
+abgelehnt, weil der Verstoss zu diesem Zeitpunkt noch offen stand und erst um 16:27 Uhr auf
+"Verstoss behoben" sprang. Reihenfolge also: ausliefern → Nachweis der Kaskade abwarten →
+Richtlinienstatus pruefen → einreichen.
