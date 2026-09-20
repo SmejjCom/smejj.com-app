@@ -12,7 +12,7 @@
 // abweichende Spezifizierer liess config.js ein zweites Mal laden — zwei Modul-
 // instanzen mit getrennten CLIENT_ROUTES.
 import { CLIENT_ROUTES } from "./config.js";
-import { baueFernwege } from "./browser-pane-fernwege.js?v=browser-pane-20260918-5";
+import { baueFernwege } from "./browser-pane-fernwege.js?v=browser-pane-20260918-6";
 import {
   buildExternalFallbackHtml,
   buildLiveBrowserHtml,

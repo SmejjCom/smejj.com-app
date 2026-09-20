@@ -352,6 +352,8 @@ test("Client: Proxy-Seiten kommen als Dokument von /api/browser/page, mit streng
   const wege = (seite) => baueFernwege({ sessionClient: { ready: () => false }, refs: {}, routes: { api: { browserPage: seite } }, setFrame() {}, setFallbackFrame() {}, commitHistory() {}, showHint() {}, persistTabs() {}, render() {} });
   assert.deepEqual(wege("https://api.smejj.com/api/browser/page").proxyRahmen("https://github.com/a?b=1", "<html>"), { src: "https://api.smejj.com/api/browser/page?url=https%3A%2F%2Fgithub.com%2Fa%3Fb%3D1", mode: "proxy" });
   assert.deepEqual(wege("/api/browser/page").proxyRahmen("https://github.com/", "<html>"), { srcdoc: "<html>", mode: "proxy" }, "ohne absolute Route (lokal, alter Server) bleibt der srcdoc-Rueckfall");
+  const ausFetch = baueFernwege({ sessionClient: { ready: () => false }, refs: {}, routes: { api: { browserFetch: "https://api.smejj.com/api/browser/fetch" } }, setFrame() {}, setFallbackFrame() {}, commitHistory() {}, showHint() {}, persistTabs() {}, render() {} });
+  assert.equal(ausFetch.proxyRahmen("https://github.com/", "<html>").src, "https://api.smejj.com/api/browser/page?url=https%3A%2F%2Fgithub.com%2F", "ohne eigenen Eintrag wird die Route aus browserFetch abgeleitet — config.js bleibt unberuehrt");
   const quelle = lies("public/browser-pane.js");
   assert.match(quelle, /setFrame\(tab, proxyRahmen\(finalUrl, data\.html\)\);/);
   assert.match(quelle, /const usesSrcdoc = Boolean\(srcdoc\) \|\| mode === "proxy";/, "das Proxy-Dokument bekommt dieselbe strenge Sandbox wie srcdoc (ohne allow-same-origin)");

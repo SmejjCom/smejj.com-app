@@ -114,8 +114,11 @@ export function baueFernwege({ sessionClient, refs, routes, setFrame, setFallbac
   // das Navigationsskript lief nie (Links, Scroll-Merken, Seitensuche tot; gemessen: keine einzige
   // Nachricht aus dem Rahmen). Von /api/browser/page kommt dieselbe Seite mit EIGENER Regel.
   // Ohne diese Route (alter Server, lokaler Betrieb) bleibt es beim srcdoc — schlechter, aber da.
+  // Die Adresse wird aus der vorhandenen Abruf-Route abgeleitet (…/fetch → …/page): config.js
+  // bleibt so unberuehrt — dort liegt seit dem 19.09. eine noch nicht ausgelieferte Aenderung
+  // einer anderen Arbeit, die mit dieser Lieferung nicht mitgehen darf.
   function proxyRahmen(url, html) {
-    const seite = routes.api.browserPage;
+    const seite = routes.api.browserPage || String(routes.api.browserFetch || "").replace(/\/fetch$/, "/page");
     if (typeof seite === "string" && seite.startsWith("https://")) return { src: `${seite}?url=${encodeURIComponent(url)}`, mode: "proxy" };
     return { srcdoc: html, mode: "proxy" };
   }
