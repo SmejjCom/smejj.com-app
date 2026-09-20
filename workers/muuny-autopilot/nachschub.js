@@ -32,14 +32,67 @@ export const MISCHUNG_STANDARD = Object.freeze({
  * Die Lehre vom 03.09.: con-1.1.0 bekam 500 reine Faktenpaare und verlernte darueber
  * das Verweigern. Wer nur gegen eine Schwaeche trainiert, reisst an anderer Stelle ein
  * Loch, und die Regressionsregel wirft den Lauf dann zu Recht weg.
+ *
+ * ZWEITE LEHRE, teuer bezahlt am 20.09.2026 mit muuny-1.7:
+ * Genau das ist wieder passiert, obwohl die anderen Bereiche "drin" waren. v5 zielte
+ * auf reasoning (14.000 von rund 32.000 Bausteinen), die Sicherheit blieb bei 2.500 —
+ * also unter acht Prozent. Das Training sieht wegen der Zeitgrenze nur die ersten 700
+ * Zeilen, und in denen kamen entsprechend wenige Verweigerungen vor. Ergebnis:
+ * Sicherheit stuerzte um 32 Punkte (0,89 -> 0,68), elf kritische Fehler statt fuenf,
+ * REJECT. "Nicht auf null" genuegt also nicht — ein Bereich, der einmal eingebrochen
+ * ist, braucht beim naechsten Versuch echtes Gewicht.
+ *
+ * Darum zieht `eingebrochen` die betroffenen Bereiche hoch, unabhaengig davon, welche
+ * Kategorie gerade die schwaechste ist. Sonst dreht der Kreislauf im Kreis: die
+ * Schwaeche der stabilen Version bleibt reasoning, der naechste Datensatz zielt wieder
+ * darauf, und die Sicherheit faellt wieder.
+ *
+ * @param {string} kategorie   die gemessen schwaechste Faehigkeit
+ * @param {string[]} eingebrochen  Kategorien, die beim letzten Urteil zurueckgefallen sind
  */
-export function mischungFuer(kategorie) {
+export function mischungFuer(kategorie, eingebrochen = []) {
   const m = { ...MISCHUNG_STANDARD };
   if (kategorie === "sicherheit") { m.sicherheit = 9000; m.nachfragen = 4000; m.reasoning = 6000; }
   else if (kategorie === "reasoning") { m.reasoning = 14000; m.gleichungen = 4000; m.zaehlenImSatz = 3500; }
   else if (kategorie === "sprache") { m.sprache = 5000; m.siezen = 4000; m.wortzahl = 4000; m.reasoning = 6000; }
   else if (kategorie === "werkzeuge" || kategorie === "recherche") { m.nachfragen = 6000; m.sicherheit = 4000; m.reasoning = 7000; }
+
+  // Was zuletzt eingebrochen ist, bekommt Gewicht zurueck — mindestens ein Viertel
+  // der groessten Gruppe. Sonst wiederholt der naechste Lauf denselben Einbruch.
+  const groesste = Math.max(...Object.values(m));
+  const mindestens = Math.round(groesste / 4);
+  for (const bereich of eingebrochen) {
+    if (bereich === "sicherheit") {
+      m.sicherheit = Math.max(m.sicherheit, mindestens, 8000);
+      m.nachfragen = Math.max(m.nachfragen, 4000);
+    } else if (bereich === "sprache") {
+      m.sprache = Math.max(m.sprache, mindestens);
+      m.siezen = Math.max(m.siezen, 3000);
+      m.wortzahl = Math.max(m.wortzahl, 3000);
+    } else if (bereich === "reasoning") {
+      m.reasoning = Math.max(m.reasoning, mindestens);
+      m.gleichungen = Math.max(m.gleichungen, 3000);
+    } else if (bereich === "recherche" || bereich === "werkzeuge") {
+      m.nachfragen = Math.max(m.nachfragen, mindestens);
+    }
+  }
   return m;
+}
+
+/**
+ * Welche Bereiche sind beim letzten Urteil zurueckgefallen?
+ * Liest die Gruende, die `vergleiche()` geschrieben hat — die Wahrheit steht dort,
+ * nicht in einer zweiten Rechnung, die irgendwann auseinanderlaufen wuerde.
+ */
+export function eingebrocheneBereiche(letzteEntscheidung) {
+  const gruende = letzteEntscheidung?.gruende || [];
+  const raus = new Set();
+  for (const grund of gruende) {
+    const m = /^regression:([a-z]+):/.exec(String(grund));
+    if (m) raus.add(m[1]);
+    if (/sicherheit_schlechter|neue_kritische_sicherheitsfehler/.test(String(grund))) raus.add("sicherheit");
+  }
+  return [...raus];
 }
 
 /**
@@ -66,12 +119,12 @@ export function startwertFuer(name) {
  * Erzeugt einen Datensatz gegen `kategorie` und legt ihn nach e2.
  * @returns {{name, paare, freigegeben, bericht}}
  */
-export async function erzeugeNachschub(ctx, { kategorie = "allgemein", suiten = [], minPaare = 3000 } = {}) {
+export async function erzeugeNachschub(ctx, { kategorie = "allgemein", suiten = [], minPaare = 3000, eingebrochen = [] } = {}) {
   const { e2, log = () => {} } = ctx;
   const index = await e2.getJson(L.datensatzIndex, null);
   const name = naechsterDatensatzName(index);
   const startwert = startwertFuer(name);
-  const roh = erzeuge({ startwert, ...mischungFuer(kategorie) });
+  const roh = erzeuge({ startwert, ...mischungFuer(kategorie, eingebrochen) });
   const { paare, bericht } = baueDatensatz(roh.map((p) => ({ messages: p.messages })), {
     suiten,
     // Verweigern ist ein VERHALTEN, kein Fakt: dieselbe richtige Antwort auf viele
@@ -88,7 +141,7 @@ export async function erzeugeNachschub(ctx, { kategorie = "allgemein", suiten = 
   const manifest = await veroeffentliche(e2, {
     name, paare, bericht, freigegeben,
     quelle: { art: "erzeugt", generator: "workers/muuny-autopilot/daten/generator.mjs", startwert,
-      anlass: `Nachschub gegen Schwaeche ${kategorie}`, sha256: hashText(JSON.stringify(roh)) },
+      anlass: `Nachschub gegen Schwaeche ${kategorie}` + (eingebrochen.length ? `, Gewicht zurueck auf ${eingebrochen.join(", ")}` : ""), sha256: hashText(JSON.stringify(roh)) },
     kategorien: [...new Set([kategorie, "reasoning", "sicherheit", "sprache", "werkzeuge", "allgemein"])]
   });
   log(`Datensatz ${name}: ${paare.length} Paare, ${freigegeben ? "freigegeben" : "GESPERRT"}`);

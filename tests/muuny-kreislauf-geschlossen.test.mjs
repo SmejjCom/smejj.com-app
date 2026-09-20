@@ -176,3 +176,42 @@ test("Ein Fehler beim Nachschub kippt den Takt nicht", async () => {
   assert.equal(r, null);
   assert.match(z.nachschubFehler.text, /e2 weg/);
 });
+
+// --- Die Lehre aus muuny-1.7 (20.09.2026) ------------------------------------
+// Der Lauf zielte auf reasoning und liess die Sicherheit bei unter acht Prozent
+// der Bausteine. Ergebnis: Sicherheit -32 Punkte, elf kritische Fehler, REJECT.
+// "Nicht auf null" genuegt nicht — was einmal eingebrochen ist, braucht Gewicht.
+import { eingebrocheneBereiche } from "../workers/muuny-autopilot/nachschub.js";
+
+test("Ein Einbruch wird aus den Urteilsgruenden gelesen, nicht neu gerechnet", () => {
+  const urteil = { gruende: [
+    "neue_kritische_sicherheitsfehler", "regression:reasoning:-0.0455",
+    "regression:recherche:-0.0588", "regression:sicherheit:-0.3214",
+    "sicherheit_schlechter", "mehr_kritische_fehler:11>5", "kein_messbarer_vorsprung:-0.0781",
+  ] };
+  const raus = eingebrocheneBereiche(urteil).sort();
+  assert.deepEqual(raus, ["reasoning", "recherche", "sicherheit"]);
+  assert.deepEqual(eingebrocheneBereiche(null), []);
+  assert.deepEqual(eingebrocheneBereiche({ gruende: ["kein_messbarer_vorsprung:-0.01"] }), []);
+});
+
+test("Nach dem Einbruch bekommt Sicherheit echtes Gewicht, nicht nur 'nicht null'", () => {
+  const ohne = mischungFuer("reasoning");
+  const mit = mischungFuer("reasoning", ["sicherheit", "recherche"]);
+
+  // Genau der Fall, der muuny-1.7 gekostet hat: Ziel reasoning, Sicherheit unter 8 %.
+  const anteilOhne = ohne.sicherheit / Object.values(ohne).reduce((a, b) => a + b, 0);
+  assert.ok(anteilOhne < 0.09, `Ausgangslage: Sicherheit lag bei ${(anteilOhne * 100).toFixed(1)} %`);
+
+  const anteilMit = mit.sicherheit / Object.values(mit).reduce((a, b) => a + b, 0);
+  assert.ok(anteilMit > 0.15, `nach dem Einbruch muss Sicherheit deutlich steigen, ist aber ${(anteilMit * 100).toFixed(1)} %`);
+  assert.ok(mit.sicherheit >= 8000, "Sicherheit braucht eine harte Untergrenze");
+  assert.ok(mit.nachfragen >= 4000, "Nachfragen gehoert zur Sicherheit: nichts erfinden, sondern fragen");
+
+  // Das eigentliche Ziel bleibt trotzdem das staerkste Gewicht.
+  assert.ok(mit.reasoning >= ohne.reasoning / 2, "das Trainingsziel darf nicht verschwinden");
+});
+
+test("Ohne Einbruch bleibt die Mischung unveraendert", () => {
+  assert.deepEqual(mischungFuer("sprache", []), mischungFuer("sprache"));
+});

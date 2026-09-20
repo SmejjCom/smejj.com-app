@@ -15,7 +15,7 @@ import { bucheEnde, bucheStart, darfStarten, leseGesamtverbrauch, leseTagesbuch,
 import { leseRegistry, naechsteVersion, promote, reject, schreibeRegistry, schwaechen, stabileVersion, trageKandidatEin, findeVersion, zusammenfassung } from "./registry.js";
 import { bereiteJobVor, gruppenZustand } from "./salad.js";
 import { befoerdereCanaryWennBewaehrt, rollbackWennNoetig, setzeCanary } from "./canary.js";
-import { erzeugeNachschub } from "./nachschub.js";
+import { eingebrocheneBereiche, erzeugeNachschub } from "./nachschub.js";
 import { FAMILIE, L, wert } from "./lager.js";
 
 export const ZUSTAND_KEY = L.zustand;
@@ -23,8 +23,20 @@ export const PHASEN = Object.freeze(["ueberwachen", "job_laeuft", "warten_auf_da
 const NACHFRIST_MINUTEN = 20;
 
 export async function ladeSuiten(dir) {
-  const namen = (await readdir(dir)).filter((n) => n.endsWith(".json")).sort();
-  return Promise.all(namen.map(async (n) => JSON.parse(await readFile(path.join(dir, n), "utf8"))));
+  // "._name.json" sind KEINE Pruefsuiten, sondern AppleDouble-Beiwerk, das macOS beim
+  // Packen mit tar danebenlegt. Sie enden auf .json, enthalten aber Binaerdaten mit
+  // "Mac OS X" darin. Am 20.09.2026 landeten 34 davon im Abbild; der Kreislauf las
+  // sie als Suite, warf bei JEDEM Takt "Unexpected token" und liess einen fertig
+  // trainierten Kandidaten vier Stunden unbewertet liegen.
+  const namen = (await readdir(dir)).filter((n) => n.endsWith(".json") && !n.startsWith("._")).sort();
+  return Promise.all(namen.map(async (n) => {
+    const roh = await readFile(path.join(dir, n), "utf8");
+    try { return JSON.parse(roh); }
+    // Eine kaputte Suite wird NICHT uebersprungen: sie ist Teil der Messlatte, und
+    // ohne sie waere jede Note eine andere. Der Name gehoert aber in die Meldung —
+    // "Unexpected token" allein sagt nicht, welche Datei gemeint ist.
+    catch (fehler) { throw new Error(`Pruefsuite ${n} ist kein gueltiges JSON: ${fehler.message}`); }
+  }));
 }
 
 export async function leseZustand(e2) {
@@ -353,7 +365,11 @@ export async function sorgeFuerNachschub(ctx, z, plan) {
   const minPaare = Number(process.env.MUUNY_MIN_PAARE) > 0 ? Number(process.env.MUUNY_MIN_PAARE) : 3000;
   try {
     const suiten = await ladeSuiten(konfig.suitesDir);
-    const r = await erzeugeNachschub(ctx, { kategorie, suiten, minPaare });
+    // Was beim letzten Urteil eingebrochen ist, bekommt Gewicht zurueck. Ohne das
+    // zielt der naechste Satz wieder nur auf die schwaechste Kategorie und reisst
+    // dasselbe Loch (muuny-1.7 am 20.09.: Sicherheit -32 Punkte).
+    const eingebrochen = eingebrocheneBereiche(z.letzteEntscheidung);
+    const r = await erzeugeNachschub(ctx, { kategorie, suiten, minPaare, eingebrochen });
     z.letzterNachschub = { zeit: jetzt().toISOString(), name: r.name, paare: r.paare,
       freigegeben: r.freigegeben, kategorie, grund: r.grund };
     delete z.nachschubWartet;
