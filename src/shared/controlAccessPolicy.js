@@ -181,6 +181,8 @@ const OEFFENTLICH_EXAKT = new Set([
   // Bis dahin bleiben sie hier eingetragen — sichtbar, begruendet, gebremst.
   ROUTES.api.webSearch,
   ROUTES.api.browserFetch,
+  // Dieselbe Seite wie browserFetch, nur als Dokument fuer den Rahmen (kein neuer Zugriff).
+  ROUTES.api.browserPage,
   ROUTES.api.browserRemote,
 
   // (d) Besucher-Puls (Nr. 81, 2026-09-04): Die Landeseite meldet EINMAL je
