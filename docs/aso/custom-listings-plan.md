@@ -1,22 +1,48 @@
-# Custom Store Listings – Plan (Keyword-Targeting), Stand 2026-09-20
+# Custom Store Listings mit Keyword-Targeting — angelegt 2026-09-20
 
-**Status:** NOCH NICHT ANGELEGT. Erst nach Freigabe der am 20.09. eingereichten Änderungen anlegen
-(jede Änderung im Store-Eintrag startet sonst die laufende Überprüfung neu).
+**Status: fünf Einträge liegen als ENTWURF in der Konsole.** Entwürfe sind nicht veröffentlicht und
+nicht Teil einer laufenden Überprüfung — sie gehen erst mit „Speichern" in die
+Veröffentlichungs-Übersicht und von dort zur Prüfung.
 
-Fakten (in der Konsole geprüft): Zielgruppe „Keyword für Suchanzeigen" = „Erreiche Nutzer auf Grundlage der Keywords, die sie bei
-Google Play eingeben". Bis 500 Keywords je Eintrag, max. 80 Zeichen je Keyword, Länderfilter optional, max. 50 Einträge je App.
-Kosten laut Google-Hilfe: keine genannt. Erstellen: Store-Einträge → Benutzerdefinierten Eintrag erstellen → „Vorhandenen Eintrag
-duplizieren" (Standard) → Details (Referenzname, Einführung 50–100 %) → Zielgruppe → Inhalte → Bewerten.
-Referenzname ist später NICHT änderbar. Erst „Als Entwurf speichern", dann Übersicht prüfen.
+## Was angelegt wurde
 
-| Referenzname | Keywords (Auszug, siehe keywords-masterliste.csv) | 1. Screenshot | Kurzbeschreibung (≤80) |
+| Referenzname | Keywords | App-Name im Eintrag | Kurzbeschreibung |
 |---|---|---|---|
-| csl-coding | ai coding agent, coding agent, ai code agent, autonomous coding agent, ai programmer, ai coding assistant, code generator, vibe coding, debug code ai, github ai | 01-coding | Autonomous AI coding agent: writes, runs and tests code until the task is done. |
-| csl-browser | browser automation, web automation, ai browser, automate tasks ai, ai task scheduler, ai screen share | 02-browser | AI agent that works in its own browser: automate web tasks and replay every step. |
-| csl-chat | ai chat, ai assistant, ai chatbot, ai chat and coding, llm chat, ai web search | 03-search | AI chat assistant with web search, sources, thinking mode and voice. |
-| csl-create | ai image generator, text to image, ai video generator, text to video | 04-image | Create images and narrated videos from a text description. |
-| csl-voice | ai voice assistant, voice chat ai, talk to ai | 06-voice | Talk to your AI: full voice mode, hands free, plus chat and code. |
+| csl-coding | 25 | smejj.com: AI Coding Agent | Autonomous AI coding agent: writes, runs and tests code until the task is done. |
+| csl-browser | 15 | smejj.com: AI Browser Agent | AI agent that works in its own browser: automate web tasks, replay every step. |
+| csl-chat | 15 | smejj.com: AI Chat Assistant | AI chat with web search and sources, thinking mode, voice — and it writes code. |
+| csl-create | 15 | smejj.com: AI Image & Video | Create images and narrated videos from a text description — plus AI chat. |
+| csl-voice | 15 | smejj.com: AI Voice Assistant | Talk to your AI: full voice mode, hands free — plus chat, code and video. |
 
-Regeln: keine Fremdmarken als Keyword (chatgpt, claude, gemini …), keine „#1/Best"-Claims, nur Funktionen, die die App wirklich hat.
-Reihenfolge der Screenshots je Eintrag: passendes Bild zuerst, Rest wie im Standard. Einführung 50 % (Test), nach 2 Wochen Daten prüfen.
-Deutsche Varianten (csl-coding-de usw.) erst anlegen, wenn Impressionen aus DE sichtbar sind.
+Zusammen **85 Keywords**. Alle Einträge: Zielgruppe „Keyword für Suchanzeigen", ohne Länderfilter,
+ohne Enddatum, **50 % der Zielgruppe**.
+
+## Warum 50 % und nicht 100 %
+
+Google empfiehlt 50 %, und der Prozentsatz lässt sich später **erhöhen, aber nie senken**. Bei
+50 % sieht die Hälfte der Suchenden den zugeschnittenen Eintrag, die andere Hälfte den Standard —
+genau das macht später messbar, ob der Zuschnitt wirklich besser wandelt. Ein Sprung auf 100 %
+wäre unumkehrbar und würde diese Vergleichsmöglichkeit zerstören, bevor auch nur ein Besucher da
+war. Sobald Zahlen vorliegen und der Zuschnitt gewinnt, kann man hochsetzen.
+
+## Keine Fremdmarken
+
+Bewusst NICHT als Keyword verwendet: chatgpt, claude, gemini, copilot, cursor, perplexity und
+jede andere fremde Marke. Das verstößt gegen die Google-Play-Metadatenrichtlinie.
+
+## Nächste Schritte
+
+1. Freigabe der am 20.09. eingereichten 62 Änderungen abwarten.
+2. Danach je Eintrag „Speichern" und zur Überprüfung einreichen.
+3. Nach 2–4 Wochen mit echten Besuchern: Conversion je Eintrag vergleichen, Gewinner auf 100 %
+   hochsetzen, Verlierer überarbeiten.
+4. Erst wenn Impressionen aus einem Land sichtbar sind, lohnen eigene Einträge je Sprache.
+
+## Wie die Konsole dabei zu bedienen war
+- Der Assistent ist nur über die direkte Adresse `…/store-listings/custom/create` erreichbar;
+  die Knöpfe auf der Übersichtsseite navigieren nicht zuverlässig.
+- Das „Eintrag auswählen"-Menü öffnet oft erst beim ZWEITEN echten Klick.
+- Keywords: `element.value` per JavaScript zu setzen reicht NICHT — Angular übernimmt den Wert
+  nicht, „Keywords hinzufügen" bleibt dann wirkungslos. Der Text muss echt getippt werden.
+- Die Zähler-Zeile „Ausgewählte Keywords (n/500)" steht unterhalb des sichtbaren Bereichs;
+  ohne Scrollen sieht man fälschlich 0.
