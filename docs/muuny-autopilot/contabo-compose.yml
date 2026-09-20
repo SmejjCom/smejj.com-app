@@ -33,3 +33,18 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
+    networks:
+      - default
+      # Das con.ax-Netz MUSS hier stehen, nicht nur per `docker network connect`:
+      # eine von Hand gesetzte Verbindung ueberlebt kein `up -d --force-recreate`.
+      # Gemessen am 20.09.: nach dem ersten Neubau meldete der Puls sofort
+      # "unerreichbar", weil der frische Container nur noch in muuny_default hing.
+      # Ueber dieses Netz geht beides: muuny meldet seinen Takt an conax-api-origin,
+      # und der Admin holt den Modellstand bei muuny-autopilot.
+      - conax
+
+networks:
+  default:
+  conax:
+    name: conax-contabo-core_core
+    external: true

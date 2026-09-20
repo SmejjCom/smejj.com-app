@@ -12,6 +12,7 @@ import { saladClient } from "./salad.js";
 import { tick, leseZustand } from "./kreislauf.js";
 import { baueStatus, dashboardHtml } from "./dashboard.js";
 import { aliasStand, waehleVersion } from "./canary.js";
+import { meldePuls } from "./puls.js";
 import { L } from "./lager.js";
 
 const konfig = leseKonfig(process.env);
@@ -30,6 +31,9 @@ async function einTakt(ausloeser) {
   try {
     const z = await tick({ konfig, e2, salad, log });
     letzterTick = { zeit: new Date().toISOString(), ausloeser, phase: z.phase };
+    // Puls an den con.ax-Autopiloten-Bildschirm. Nach dem Takt, nie davor:
+    // gemeldet wird, was WAR, nicht was vorhatte zu sein.
+    letzterTick.puls = await meldePuls(z, { log });
     return z;
   } finally { tickLaeuft = false; }
 }
