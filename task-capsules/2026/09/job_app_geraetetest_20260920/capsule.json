@@ -1,0 +1,35 @@
+{
+  "job_id": "job_app_geraetetest_20260920",
+  "datum": "2026-09-20",
+  "typ": "Geraetetest + Fix + Auslieferung",
+  "titel": "Android + iPhone: Menue und Inhalt melden in 14 Sprachen (v915), Melde-Dialog am iPhone lesbar (v916)",
+  "vorgaenger": "job_app_runde9_20260920",
+  "befunde": [
+    "Nachrichten-Menue und Melde-Dialog in jeder Sprache deutsch",
+    "v914 lieferte 4 Module ohne neue Marke, Bauzweig stand auf v913",
+    "iPhone: klebendes button:hover faerbte die beruehrte Zeile weiss"
+  ],
+  "commits": {
+    "v915": {
+      "app": "38bf3fa8",
+      "bauzweig": "307f7367",
+      "frontend": "3aa7210"
+    },
+    "v916": {
+      "app": "e0382b7f",
+      "bauzweig": "8848ade5",
+      "frontend": "b416329"
+    }
+  },
+  "anker": [
+    "schutz-100-2026-09-20-app-v915",
+    "schutz-100-2026-09-20-app-v916"
+  ],
+  "nachtest": "Android-Chrome (Touch ueber DevTools) und iPhone-App: Menue + Dialog englisch, 44-px-Ziele, 11 Ansichten sauber, Offline-Liste vollstaendig",
+  "lehren": [
+    "Nach Lieferung laedt die App selbst neu — erst ansehen, dann tippen",
+    "Offline-Liste nur mit Dateiendung pruefen, APP_ROUTEN sind absichtlich 404"
+  ],
+  "bericht": "docs/qa/app-a-bis-z-2026-09-19.md",
+  "rollback": "schutz-100-2026-09-20-app-v913*"
+}
