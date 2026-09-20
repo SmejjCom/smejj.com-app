@@ -51,13 +51,21 @@ test("uebersetzeMenue ersetzt die Woerter, laesst Symbole stehen und laeuft nur 
   const knopf = (text) => { const w = wort(text); return { w, querySelector: () => w }; };
   const knoepfe = [knopf("Inhalt melden"), knopf("Kopieren"), knopf("Unbekannt")];
   const attribute = { "aria-label": "Weitere Aktionen" };
-  const menu = { dataset: {}, getAttribute: (n) => attribute[n], setAttribute: (n, v) => { attribute[n] = v; }, querySelectorAll: () => knoepfe };
-  const woerter = { "Inhalt melden": "Report content", Kopieren: "Copy", "Weitere Aktionen": "More actions" };
+  const kopf = { textContent: "Heute, 17:36 · Auto" };
+  const menu = { dataset: {}, querySelector: () => kopf, getAttribute: (n) => attribute[n], setAttribute: (n, v) => { attribute[n] = v; }, querySelectorAll: () => knoepfe };
+  const woerter = { Heute: "Today", "Inhalt melden": "Report content", Kopieren: "Copy", "Weitere Aktionen": "More actions" };
   const zahl = uebersetzeMenue(menu, (k) => woerter[k] || k);
   assert.equal(zahl, 2);
   assert.equal(knoepfe[0].w.textContent, "Report content");
   assert.equal(knoepfe[2].w.textContent, "Unbekannt");
   assert.equal(attribute["aria-label"], "More actions");
+  assert.equal(kopf.textContent, "Today, 17:36 · Auto");
   assert.equal(uebersetzeMenue(menu, () => "X"), 0, "zweiter Lauf darf nichts mehr anfassen");
   assert.match(quelle, /observe\(document\.body, \{ childList: true \}\)/, "nur die Kinder des BODY beobachten — kein subtree");
+});
+
+test("der Melde-Dialog ueberschreibt das weisse button:hover aus styles.css (klebt am Handy an der Beruehrstelle)", () => {
+  const quelle = lies("inhalt-melden.js");
+  assert.match(quelle, /\.melden-grund:hover\{background:rgba\(255, 255, 255, 0\.08\);\}/);
+  assert.match(quelle, /\.melden-knopf:hover\{/);
 });
