@@ -230,16 +230,16 @@
       "finger": "cf46ade67b9303e7"
     },
     "huelle-sprache.js": {
-      "marke": "2",
-      "finger": "b5cd3a6498d7876e"
+      "marke": "3",
+      "finger": "2a983a63f2792cc8"
     },
     "chat-messages.js": {
       "marke": "3",
       "finger": "b790c8bc331b0c1a"
     },
     "chat-actions-menu.js": {
-      "marke": "17",
-      "finger": "568a1ac15208a399"
+      "marke": "18",
+      "finger": "d47a689ce68025b4"
     },
     "chat-neu-versuch.js": {
       "marke": "1",
@@ -248,6 +248,10 @@
     "voice-speech-queue.js": {
       "marke": "emojifrei-20260825",
       "finger": "72cebfa9838bcdcc"
+    },
+    "chat-actions-text.js": {
+      "marke": "1",
+      "finger": "23d958d0582aaaaf"
     },
     "chat-history-text.js": {
       "marke": "b47c3",
@@ -414,8 +418,8 @@
       "finger": "442942232d3d9868"
     },
     "chat-actions.js": {
-      "marke": "b77",
-      "finger": "ab1a6b942e4eb402"
+      "marke": "b79",
+      "finger": "75af4abdca207fee"
     },
     "panel-status.js": {
       "marke": "1",
