@@ -46,3 +46,20 @@ Vorbestehend rot und NICHT von dieser Arbeit: `sprachwelle-layout` (Hinweistext)
 
 Auslieferung: v908 (App 3b75c715, Bauzweig b040d15a, Frontend cc2d299), v909 (App 197d97d8, Bauzweig 11b0d69c, Frontend 2df808a);
 Anker `schutz-100-2026-09-20-browser-v908*` und `…-v909*`. Tests: `tests/browser-livetest-2026-09-18.test.mjs` (jetzt 21).
+
+## Nachtrag 20.09. — Dateien im eingebauten Browser (SW v910)
+
+| Nr. | Befund (live, v909) | Behoben |
+|---|---|---|
+| C6 | PDF, ZIP, Bild und Textdatei landeten als abgeschotteter Direkt-Rahmen: Bild = Sperrsymbol (raw.githubusercontent.com verbietet Rahmen), alles andere weiß — kein Hinweis, kein Download. | v910: `/api/browser/page` liefert für Nicht-HTML eine Dateiansicht |
+
+Dateiansicht (`dateiAnsicht()` in `browserPageRoute.js`): **Bild** direkt vom Original (keine Serverlast), **Text** lesbar und maskiert
+(der Server liest nur Text, gedeckelt — nie Bilder oder Archive), **PDF/ZIP/sonstiges** als Karte mit Name (aus `Content-Disposition`),
+Größe und EINEM Knopf in eine neue Registerkarte (Popups entkommen der Sandbox) — dort öffnet oder lädt der Browser des Nutzers mit
+seiner eigenen Prüfung. Bewusst ohne unser Navigationsskript. Client: `data.html === null` geht in die Dateiansicht statt in den Direkt-Rahmen.
+
+Live nachgewiesen (v910, api.smejj.com + Panel auf smejj.com): ZIP → Karte „Hello-World-master.zip · 351 B · Herunterladen" (0,51 s),
+PDF → Karte „… .pdf · 992 KB · PDF öffnen" (0,55 s, im Panel gesehen), PNG → Bild im Panel gesehen (0,57 s), TXT → Text (2,2 s); 0 Konsolenfehler.
+Nicht per Automat prüfbar: der Klick auf den Knopf (der Chrome-Automat erreicht abgeschottete Rahmen nicht) — das Verhalten
+(`target=_blank` + `allow-popups-to-escape-sandbox`) ist Browser-Standard.
+Auslieferung v910: App d0bb3169, Bauzweig 4af5d082, Frontend a9d8e9b; Anker `schutz-100-2026-09-20-browser-v910*`.
