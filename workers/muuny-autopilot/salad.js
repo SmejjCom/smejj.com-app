@@ -1,5 +1,16 @@
 // muuny AI — Salad-Steuerung (Single Responsibility: EINE Container-Gruppe als Job-Traeger).
 //
+// ZWEI EIGENHEITEN VON SALAD, die beide Geld und Zeit gekostet haben:
+//
+// 1. Die Prioritaet steht NUR beim Erstellen fest. Ein PATCH mit container.priority
+//    antwortet HTTP 200 und verwirft das Feld still (gemessen 11.09.). Wer sie aendern
+//    will, muss die Gruppe neu anlegen.
+// 2. Ein geloeschter Gruppenname bleibt BELEGT. Am 20.09. wurde muuny-job geloescht,
+//    um sie mit hoeherer Prioritaet neu anzulegen — jeder Versuch antwortete danach
+//    mit 400 "name_conflict", auch Minuten spaeter. Es half nur ein neuer Name
+//    (muuny-training). Wer die Prioritaet aendern will, plant also gleich einen
+//    neuen Namen ein; ein Loeschen gibt den alten nicht zurueck.
+//
 // Muster wie der fruehere LoRA-Trainer: pytorch-Basisabbild, Code als base64-
 // Buendel in einer Umgebungsvariablen, /health zuerst. Die Gruppe heisst
 // MUUNY_SALAD_GRUPPE (Standard muuny-job), wird EINMAL angelegt (replicas 0,

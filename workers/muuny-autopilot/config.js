@@ -14,12 +14,20 @@ export function leseKonfig(env = process.env) {
     organisation: String(env.SALAD_ORGANIZATION_NAME || "").trim(),
     projekt: String(env.SALAD_PROJECT_NAME || "").trim(),
     apiKey: String(env.SALAD_API_KEY || "").trim(),
-    gruppe: String(wert(env, "SALAD_GRUPPE") || "muuny-job").trim(),
+    gruppe: String(wert(env, "SALAD_GRUPPE") || "muuny-training").trim(),
     gpuKlassen: String(wert(env, "GPU_KLASSEN") || "").split(",").map((s) => s.trim()).filter(Boolean),
-    // "batch" ist die guenstigste Stufe (24-GB-Karten: 0,09-0,16 statt 0,20-0,25 USD/h).
-    // Der Preis dafuer ist Wartezeit, bis ein Rechner frei wird — und Warten kostet den
-    // Autopiloten nichts, er tickt ohnehin nur alle fuenf Minuten.
-    prioritaet: String(wert(env, "SALAD_PRIORITAET") || "batch").trim(),
+    // "low" statt "batch", gemessen am 20.09.2026.
+    //
+    // Auf "batch" (der guenstigsten Stufe, 0,09 USD/h) hing der Trainingslauf fuer
+    // muuny-1.7 fuenfzig Minuten in "deploying", und Salad meldete im Portal
+    // ausdruecklich: "trouble allocating your workload — try increasing the container
+    // group's priority". Es war kein Knoten zu bekommen. Wartezeit kostet den
+    // Autopiloten zwar nichts, aber eine Wartezeit ohne Ende ist kein guenstiger
+    // Lauf, sondern gar keiner.
+    //
+    // "low" kostet 0,143 statt 0,09 USD/h — ein Trainingslauf also rund 0,62 statt
+    // 0,43 USD. Das ist der Preis dafuer, dass er ueberhaupt stattfindet.
+    prioritaet: String(wert(env, "SALAD_PRIORITAET") || "low").trim(),
     image: String(wert(env, "SALAD_IMAGE") || "docker.io/pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime").trim(),
     speicherGb: Number(wert(env, "SALAD_SPEICHER_GB")) > 0 ? Number(wert(env, "SALAD_SPEICHER_GB")) : 150,
     ramMb: Number(wert(env, "SALAD_RAM_MB")) > 0 ? Number(wert(env, "SALAD_RAM_MB")) : 30720,
