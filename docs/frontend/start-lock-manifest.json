@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-20T23:28:37.055Z",
-  "confirmation": "Betreiber am 21.09.2026 im Chat gefragt und beantwortet: Apple hat die App nach Richtlinie 2.1 abgelehnt und einen Zugang verlangt; unsere Anmeldung ist passwortlos, einem Pruefer lassen sich keine Zugangsdaten geben. Vorgelegte Wahl: 'Gastmodus bauen (Empfehlung) — wer nicht angemeldet ist, darf sofort fragen; reine Frontend-Aenderung, kein neuer Anmeldeweg, kein Passwort; beruehrt die Landeseite (Design-Lock), darum brauche ich dein OK.' Der Betreiber hat GENAU DIESE Option gewaehlt. Umgesetzt: gast-frage.js beantwortet die erste Frage ohne Konto, die Anmeldung bleibt Rueckfallweg; der Satz unter dem Feld sagt jetzt die Wahrheit. SW v933.",
+  "frozenAt": "2026-09-20T23:52:06.004Z",
+  "confirmation": "Zuarbeit der Sitzung 'Smejj Browser Checken' vom 21.09.2026 (Geraetetest v931, strengerer Reste-Zaehler): vier verbliebene deutsche Stellen — Suchleiste des Browser-Fensters, Speicher-Status 'wird geprueft …', 'Google Login aktiv fuer' und das 'von' in der Schrittzeile. Betreiber-Auftrag 'Checke nochmal alles von A bis Z'. An index.html nur Marken und Cache-Nummer. SW v934.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "c6124324714fde30da9a25357bf93c144b6aeb9823e7ac21cdb2070a078a3d17",
+    "public/index.html": "3e2304f529d9d3c427da1f6617859e83b01721b52dbd94dc97f7aad5cfab3f47",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "f78f9b57ebabbb9798ecf9142dfedd110094e85df676f86b18917c61e24fd3bc",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "7403ac7a7106cc72805268c9f139eb5e86e458880fa7d849a26a29ea99d0c3c4",
-    "public/app.js": "44053687e026a68feabb7d0cd07e0d6c4953ce27dd2f440115b288f1de712548",
+    "public/app.js": "6c56af8fd390f018ffd7a6d945a1ce2b86e4942f99be0352865dea8957c75fe0",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "27acbbbbe2a23a81f25b8fdab7e5204cb4e5ecc1217f6ef1af8ee7a12831e3df",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -24,7 +24,7 @@
     "public/composer-tools.js": "fbd6180e50649dcfdc83f6602cc985291c3cfd26cbcf3eb051cfc3b6b8ac914a",
     "public/composer-plus-menu.js": "1e4937be8a89e8393bceedc81c0524c802708ec652505121e31f773b95666eba",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "621e180390a52794174216ed3473a23f92731e92cff09259603464543ea09a69",
+    "public/browser-pane.js": "726f4fbf109c2f4388284708be53248ebb3cdb1821e4b362f8bbd11e021eb463",
     "public/browser-pane-render.js": "0c0b9ff6f0bdfcddddb76450b567e61f9bdf07d584b201387e6f2e4f2dd2e10d",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "36863a2372e787f2264d4a9377634808ee6e0c6f391ae7ac0ddc3460301c9006",
+    "public/sw.js": "ed66e5e5ab565231fa6f13dd10020c1abbcfd454d1f2bb03cea36003b2787ab9",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
