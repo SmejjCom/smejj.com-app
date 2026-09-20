@@ -1,0 +1,35 @@
+# muuny AI — Dauerdienst auf Contabo (ersetzt den frueheren Zeabur-Dienst).
+#
+# Der Controller rechnet NICHTS: er tickt alle fuenf Minuten, liest den Zustand aus
+# iDrive e2, beobachtet einen laufenden Salad-Job oder plant den naechsten Schritt und
+# startet hoechstens EINEN Job. Kein torch, keine GPU, rund 80 MB Abbild.
+#
+# Alle Zugangsdaten stehen in muuny.env (Rechte 600), nie in dieser Datei.
+#
+#   docker compose -f /opt/muuny/compose.yml up -d
+#   docker compose -f /opt/muuny/compose.yml logs -f --tail=50
+#
+# NOTAUS:  MUUNY_NOTAUS=YES in muuny.env eintragen und `docker compose ... up -d`.
+#          Der naechste Takt stoppt dann alles, auch einen laufenden GPU-Job.
+services:
+  muuny-autopilot:
+    image: muuny-autopilot:latest
+    container_name: muuny-autopilot
+    restart: unless-stopped
+    env_file:
+      - /opt/muuny/muuny.env
+    ports:
+      # Nur auf die Schleife: der Alias geht spaeter ueber nginx nach aussen,
+      # damit das Dashboard nicht offen im Netz steht.
+      - "127.0.0.1:8096:8080"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
