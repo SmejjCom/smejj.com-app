@@ -360,3 +360,24 @@ test("Client: Proxy-Seiten kommen als Dokument von /api/browser/page, mit streng
   assert.equal(normalizeAddress("http://example.com/x"), "https://example.com/x", "live blieb der http-Rahmen grau");
   assert.equal(normalizeAgentBrowserUrl("http://example.com/x"), "", "der Agent bekommt kein stilles Anheben");
 });
+
+test("Proxy-Seite wird komprimiert ausgeliefert — 305 KB HTML brauchten live 15-30 s ueber eine langsame Leitung", async () => {
+  const { brotliDecompressSync, gunzipSync } = await import("node:zlib");
+  const html = "<html><head></head><body>" + "<p>smejj.com Browser Zeile</p>".repeat(4000) + "</body></html>";
+  const hole = async (kodierung) => {
+    const res = { status: 0, kopf: {}, rumpf: null, writeHead(s, k) { this.status = s; this.kopf = k; }, end(b) { this.rumpf = b; } };
+    await handleBrowserPage(new URL("https://api.example/api/browser/page?url=https%3A%2F%2Fgithub.com%2F"), res, { fetchImpl: seiteVomNetz(html), req: { headers: { "sec-fetch-dest": "iframe", ...(kodierung ? { "accept-encoding": kodierung } : {}) }, socket: {} }, limiter: null, env: {} });
+    return res;
+  };
+  const br = await hole("gzip, deflate, br");
+  assert.equal(br.kopf["Content-Encoding"], "br");
+  assert.ok(br.rumpf.length < html.length / 5, `Brotli: ${br.rumpf.length} von ${html.length} Bytes`);
+  assert.match(brotliDecompressSync(br.rumpf).toString("utf8"), /smejj\.com Browser Zeile/);
+  assert.equal(br.kopf["Content-Length"], br.rumpf.length);
+  const gz = await hole("gzip");
+  assert.equal(gz.kopf["Content-Encoding"], "gzip");
+  assert.match(gunzipSync(gz.rumpf).toString("utf8"), /<base href=/);
+  const roh = await hole("");
+  assert.equal(roh.kopf["Content-Encoding"], undefined, "ohne Angebot des Aufrufers bleibt es unkomprimiert");
+  assert.match(String(roh.rumpf), /<script nonce=/);
+});

@@ -23,6 +23,8 @@
 //     (Sec-Fetch-Dest: iframe). Als eigene Registerkarte aufgerufen gibt es 403 — sonst stuende
 //     fremder Inhalt unter unserem Namen im Adressfeld (Phishing-Vorlage).
 import crypto from "node:crypto";
+import { brotliCompressSync, gzipSync, constants as zlibKonstanten } from "node:zlib";
+import { waehleKodierung } from "../http/respond.js";
 import { allowedOriginsFromEnv } from "../http/cors.js";
 import { createRateLimiter, clientKeyFromRequest } from "../http/rateLimiter.js";
 import { isAllowedBrowserCaller, ladeBrowserSeite, parseBrowserTarget, rewriteBrowserHtml } from "./browserProxyRoutes.js";
@@ -75,8 +77,20 @@ export async function handleBrowserPage(url, res, { fetchImpl = fetch, req = nul
   if (seite.html === null) return text(res, 415, "Kein HTML-Dokument.");
 
   const nonce = crypto.randomBytes(16).toString("base64");
-  const rumpf = rewriteBrowserHtml(seite.html, seite.finalUrl, { nonce });
+  const html = rewriteBrowserHtml(seite.html, seite.finalUrl, { nonce });
+  // KOMPRIMIEREN (Live-Messung 20.09., v908): github.com = 305 KB HTML. Das erste Byte kam nach
+  // 1 s, die UEBERTRAGUNG brauchte ueber die langsame Leitung des Betreibers 15-30 s — so lange
+  // blieb der Rahmen weiss. HTML schrumpft mit Brotli auf rund ein Siebtel. Stufe 5 wie in
+  // respond.js: wenige Millisekunden Rechenzeit, fast so klein wie Stufe 11.
+  const kodierung = waehleKodierung(req?.headers?.["accept-encoding"]);
+  const roh = Buffer.from(html, "utf8");
+  const rumpf = kodierung === "br"
+    ? brotliCompressSync(roh, { params: { [zlibKonstanten.BROTLI_PARAM_QUALITY]: 5, [zlibKonstanten.BROTLI_PARAM_SIZE_HINT]: roh.length } })
+    : kodierung === "gzip" ? gzipSync(roh, { level: 6 }) : roh;
   res.writeHead(200, {
+    ...(kodierung ? { "Content-Encoding": kodierung } : {}),
+    "Content-Length": rumpf.length,
+    Vary: "Accept-Encoding",
     "Content-Type": "text/html; charset=utf-8",
     "Content-Security-Policy": seitenRegel({ nonce, erlaubteEinbetter: allowedOriginsFromEnv(env) }),
     "Cache-Control": "no-store",
