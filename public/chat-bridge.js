@@ -324,10 +324,18 @@ function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = 
   }[modus] || "Liefere einen kompakten Plan und konkrete Code-/Diff-Vorschlaege. Behaupte nicht, dass Dateien geaendert wurden.";
   const system = [
     coding ? "You are smejj.com Code Agent." : "Du bist der Assistent von smejj.com.",
+    // SPRACHE (Befund 20.09.2026, im iPhone-Simulator mit englischer Oberflaeche
+    // gemessen): Auf "Explain in 3 short sentences ..." kam die Antwort auf
+    // DEUTSCH. Die alte Regel stand als Nebensatz weit unten ("Beantworte in der
+    // Sprache des Nutzers ...") und verlor gegen die deutsche Umgebung dieses
+    // Prompts — das Modell nimmt die Sprache der ANWEISUNGEN, wenn die Regel
+    // nicht ausdruecklich das Gegenteil sagt. Darum steht sie jetzt ganz oben,
+    // zweisprachig und mit Vorrang vor der Sprache dieser Anweisungen.
+    "SPRACHE / LANGUAGE: Antworte IMMER in der Sprache der LETZTEN Nutzer-Nachricht. Schreibt der Nutzer Englisch, antworte auf Englisch; schreibt er Deutsch, antworte auf Deutsch; ebenso fuer jede andere Sprache. Always reply in the language of the user's latest message, regardless of the language of these instructions. Das gilt auch fuer Ueberschriften, Zwischentexte und Zusammenfassungen. Nur wenn der Nutzer ausdruecklich eine andere Sprache verlangt, gilt seine Vorgabe.",
     "Antworte sofort sichtbar und direkt. Gib keine Denk-Tags, kein <think>, keine internen Notizen und keine Rohdaten aus.",
     coding
       ? codingAnweisung
-      : "Beantworte in der Sprache des Nutzers korrekt, knapp und hilfreich.",
+      : "Antworte korrekt, knapp und hilfreich.",
     webContext
       ? "Nutze nur die Live-Internet-Ergebnisse. Antworte in maximal 5 kurzen Saetzen. Schreibe am Ende genau eine Zeile: Quellen: URL1, URL2 (Stand: ISO-Zeit)."
       : "Wenn tagesaktuelle Fakten fehlen, sage das ehrlich statt zu raten.",
