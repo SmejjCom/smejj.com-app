@@ -94,9 +94,9 @@ test("ein Ordner deckt alles unter sich ab, eine Datei nur sich selbst", () => {
 
 test("erkennt eine Datei, die .dockerignore aus dem Bau-Kontext sperrt", () => {
   // Genau die Falle vom 01.08.: "workers/*" schliesst alles Neue stumm aus.
-  const zeilen = ["node_modules", "workers/*", "!workers/con-autopilot", "!workers/con-autopilot/**"];
+  const zeilen = ["node_modules", "workers/*", "!workers/muuny-autopilot", "!workers/muuny-autopilot/**"];
   assert.equal(vonDockerignoreAusgeschlossen("workers/smejj-lora-loop/worker.mjs", zeilen), true);
-  assert.equal(vonDockerignoreAusgeschlossen("workers/con-autopilot/salad.js", zeilen), false);
+  assert.equal(vonDockerignoreAusgeschlossen("workers/muuny-autopilot/salad.js", zeilen), false);
 });
 
 test("die LETZTE passende Regel entscheidet — wie bei Docker", () => {
@@ -164,7 +164,7 @@ test("die beiden echten Dienste bestehen — Gegenprobe gegen ein GESUNDES Abbil
   // Bevor man einem Abbild Krankheit bescheinigt, misst man mit derselben
   // Methode gegen ein gesundes. Der con-Autopilot laeuft nachweislich.
   for (const dienst of [
-    { dockerfile: "Dockerfile.con-autopilot", einstieg: "workers/con-autopilot/server.mjs" },
+    { dockerfile: "Dockerfile.con-autopilot", einstieg: "workers/muuny-autopilot/server.mjs" },
     { dockerfile: "Dockerfile.smejj-lora-loop", einstieg: "workers/smejj-lora-loop/worker.mjs" }
   ]) {
     const b = pruefeDienst(dienst);

@@ -24,6 +24,7 @@ import os
 import subprocess
 import sys
 import urllib.request
+from lager import lager  # noqa: E402
 
 # Feste Fassung statt "main": ein Konverter, der sich ueber Nacht aendert, macht
 # aus einem reproduzierbaren Lauf ein Gluecksspiel. b6100 ist die Fassung, die
@@ -120,7 +121,7 @@ def wandle_und_sichere(adapter_dir, basis_dir, arbeit_dir, kandidat, e2, status=
     Adapter ist zu diesem Zeitpunkt gesichert, und eine misslungene Umwandlung
     darf den Lauf nicht kosten.
     """
-    prefix = f"con/versions/{kandidat}/adapter-gguf"
+    prefix = f"{lager()}versions/{kandidat}/adapter-gguf"
     try:
         beschreibung = wandle(
             adapter_dir, basis_dir, os.path.join(arbeit_dir, "gguf"), f"{kandidat}-lora",

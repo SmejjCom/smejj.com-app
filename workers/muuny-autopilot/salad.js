@@ -1,10 +1,10 @@
-// con-Autopilot — Salad-Steuerung (Single Responsibility: EINE Container-Gruppe als Job-Traeger).
+// muuny AI — Salad-Steuerung (Single Responsibility: EINE Container-Gruppe als Job-Traeger).
 //
 // Muster wie der fruehere LoRA-Trainer: pytorch-Basisabbild, Code als base64-
 // Buendel in einer Umgebungsvariablen, /health zuerst. Die Gruppe heisst
-// CON_SALAD_GRUPPE (Standard con-job), wird EINMAL angelegt (replicas 0,
+// MUUNY_SALAD_GRUPPE (Standard muuny-job), wird EINMAL angelegt (replicas 0,
 // autostart false, restart never) und je Job nur umkonfiguriert und gestartet.
-// Jeder Start traegt: Zeitgrenze (CON_JOB_MAX_MINUTEN im Job + Autopilot-Wache)
+// Jeder Start traegt: Zeitgrenze (MUUNY_JOB_MAX_MINUTEN im Job + Autopilot-Wache)
 // und Selbstabschaltung (SALAD_* im Job). Ohne beides wird nicht gestartet.
 import { baueBuendel } from "./tarball.js";
 
@@ -46,8 +46,8 @@ export const STARTBEFEHL = [
     "set -eu",
     "export PATH=\"/opt/conda/bin:$PATH\"",
     "mkdir -p /app /work && cd /app",
-    "printf %s \"$CON_JOB_BUNDLE_B64\" | base64 -d | tar xzf -",
-    "cd /app/con-job",
+    "printf %s \"$MUUNY_JOB_BUNDLE_B64\" | base64 -d | tar xzf -",
+    "cd /app/muuny-job",
     "pip install --no-cache-dir -q boto3 > /tmp/pip-boto3.log 2>&1",
     "exec python3 job.py"
   ].join("\n")
@@ -57,7 +57,7 @@ export const STARTBEFEHL = [
 export function gruppenPayload(konfig, { name = konfig.gruppe } = {}) {
   return {
     name,
-    display_name: "con-Autopilot Job Spiegel Messung Training",
+    display_name: "muuny AI Job Spiegel Messung Training",
     autostart_policy: false,
     restart_policy: "never",
     replicas: 1,
@@ -73,7 +73,7 @@ export function gruppenPayload(konfig, { name = konfig.gruppe } = {}) {
         shm_size: 1024
       },
       priority: konfig.prioritaet,
-      environment_variables: { PORT: "8080", CON_JOB_MODUS: "messung" }
+      environment_variables: { PORT: "8080", MUUNY_JOB_MODUS: "messung" }
     },
     networking: { protocol: "http", port: 8080, auth: true, load_balancer: "round_robin",
       client_request_timeout: 100000, server_response_timeout: 100000, single_connection_limit: false },
@@ -86,13 +86,14 @@ export function gruppenPayload(konfig, { name = konfig.gruppe } = {}) {
 export function jobUmgebung({ konfig, e2, salad, jobId, modus, parameter = {}, buendelB64, maxMinuten }) {
   return {
     PORT: "8080",
-    CON_JOB_ID: jobId,
-    CON_JOB_MODUS: modus,
-    CON_JOB_MAX_MINUTEN: String(maxMinuten),
-    CON_JOB_BUNDLE_B64: buendelB64,
-    CON_BASIS_REPO: konfig.basis.repo,
-    CON_BASIS_PREFIX: konfig.basis.prefix,
-    CON_SELBST_STOP: "YES",
+    MUUNY_JOB_ID: jobId,
+    MUUNY_JOB_MODUS: modus,
+    MUUNY_JOB_MAX_MINUTEN: String(maxMinuten),
+    MUUNY_JOB_BUNDLE_B64: buendelB64,
+    MUUNY_BASIS_REPO: konfig.basis.repo,
+    MUUNY_BASIS_PREFIX: konfig.basis.prefix,
+    MUUNY_LAGER_PREFIX: konfig.lagerPrefix,
+    MUUNY_SELBST_STOP: "YES",
     IDRIVE_E2_ENDPOINT: e2.endpoint,
     IDRIVE_E2_REGION: e2.region,
     IDRIVE_E2_BUCKET: e2.bucket,
@@ -167,5 +168,5 @@ export async function gruppenZustand(client) {
   if (!r.ok) return { ok: false, status: r.status, zustand: r.status === 404 ? "fehlt" : "unbekannt" };
   const d = r.daten || {};
   return { ok: true, zustand: d.current_state?.status || "unbekannt", replicas: d.replicas, instanzen: d.current_state?.instance_status_count || null,
-    aktualisiert: d.current_state?.update_time || null, jobId: d.container?.environment_variables?.CON_JOB_ID || null, modus: d.container?.environment_variables?.CON_JOB_MODUS || null };
+    aktualisiert: d.current_state?.update_time || null, jobId: d.container?.environment_variables?.MUUNY_JOB_ID || null, modus: d.container?.environment_variables?.MUUNY_JOB_MODUS || null };
 }

@@ -1,7 +1,7 @@
 // TUEV der Wache: sie muss bei GESUNDEM Stand gruen und bei KAPUTTEM Stand rot melden.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { gesamturteil, herzschlagUrteil, waehleDeckel, MAX_ALTER_MIN_STANDARD } from "../workers/con-autopilot/wache.js";
+import { gesamturteil, herzschlagUrteil, waehleDeckel, MAX_ALTER_MIN_STANDARD } from "../workers/muuny-autopilot/wache.js";
 
 test("Herzschlag: frisch gruen, veraltet rot, fehlend rot", () => {
   const jetzt = Date.parse("2026-09-04T12:00:00Z");

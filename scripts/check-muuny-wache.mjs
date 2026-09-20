@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// con-Autopilot — Wache (Single Responsibility: lebt der Kreislauf noch?).
+// muuny AI — Wache (Single Responsibility: lebt der Kreislauf noch?).
 //
 // Ein Dienst, der nie startet, sieht von aussen genauso aus wie einer, der nichts zu tun
-// hat — und ein Dienst, den es gar nicht gibt, ebenso. Am 04.09. stand der con-Autopilot
+// hat — und ein Dienst, den es gar nicht gibt, ebenso. Am 04.09. stand der muuny AI
 // zehn Stunden still, ohne dass irgendetwas Alarm schlug. Diese Wache prueft beides:
 //
 //   1. Antwortet der Dienst? (oeffentliches /health, ohne Zugangsdaten)
@@ -14,11 +14,11 @@
 //
 // Exit 0 = gruen, 1 = rot. Fuer Zeitplaene, Autopiloten und die Hand.
 import { readFile } from "node:fs/promises";
-import { gesamturteil, herzschlagUrteil, waehleDeckel } from "../workers/con-autopilot/wache.js";
+import { gesamturteil, herzschlagUrteil, waehleDeckel } from "../workers/muuny-autopilot/wache.js";
 import os from "node:os";
 import path from "node:path";
 
-const ADRESSE = process.env.CON_DIENST_URL || "https://smejj-con-autopilot.zeabur.app";
+const ADRESSE = process.env.MUUNY_DIENST_URL || process.env.CON_DIENST_URL || "https://smejj-con-autopilot.zeabur.app";
 const MAX_ALTER_MIN = Number(process.env.CON_WACHE_MAX_MINUTEN) > 0 ? Number(process.env.CON_WACHE_MAX_MINUTEN) : 20;
 
 async function envLocal() {
@@ -53,8 +53,8 @@ if (gesundheit) {
 
 // 2. Herzschlag in e2 — der eigentliche Beweis, dass der Takt laeuft.
 try {
-  const { leseKonfig } = await import("../workers/con-autopilot/config.js");
-  const { e2Client } = await import("../workers/con-autopilot/e2.js");
+  const { leseKonfig } = await import("../workers/muuny-autopilot/config.js");
+  const { e2Client } = await import("../workers/muuny-autopilot/e2.js");
   const konfig = leseKonfig(process.env);
   if (!konfig.e2.ok) {
     melde(false, `Herzschlag nicht pruefbar — e2-Zugang fehlt (${konfig.e2.fehlend.join(", ")})`);

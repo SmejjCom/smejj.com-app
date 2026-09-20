@@ -27,6 +27,7 @@ os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 import e2
 from regeln import bereits_vollstaendig
+from lager import umg  # noqa: E402
 
 
 def _lade_zeilen(pfad, max_zeilen=None):
@@ -107,7 +108,7 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
     tok = AutoTokenizer.from_pretrained(modellpfad)
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
-    ohne_quant = os.environ.get("CON_QUANT", "nf4") == "none"
+    ohne_quant = umg("QUANT", "nf4") == "none"
     quant = None if ohne_quant else BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4",
                                bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True)
     cuda = torch.cuda.is_available()
@@ -162,7 +163,7 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
     # die Menge nach der RESTZEIT, nicht nach einer Wunschzahl.
     rest_min = konfig.get("restMinuten")
     if rest_min is None:
-        frist = os.environ.get("CON_JOB_MAX_MINUTEN")
+        frist = umg("JOB_MAX_MINUTEN")
         rest_min = float(frist) if frist else 180.0
     mess_reserve = float(konfig.get("messReserveMinuten", 35))
     minuten_je_schritt = float(konfig.get("minutenJeSchritt", 2.5))
@@ -216,7 +217,7 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
     # Schritte, und gemessen worden waere die alte Arbeit unter neuem Namen.
     kennung = hashlib.sha256(json.dumps({
         "daten": os.path.abspath(datensatz_pfad),
-        "quelle": konfig.get("datensatzKennung") or os.environ.get("CON_DATENSATZ_PREFIX", ""),
+        "quelle": konfig.get("datensatzKennung") or umg("DATENSATZ_PREFIX", ""),
         "r": konfig.get("r"), "alpha": konfig.get("alpha"), "lr": konfig.get("lr"),
         "maxLen": max_len, "batch": batch, "gradAkk": grad_akk
     }, sort_keys=True).encode("utf-8")).hexdigest()[:12]
@@ -271,7 +272,7 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
                 # deshalb verworfen, obwohl der Adapter aus genau diesem Job stammte
                 # (Salad hatte den Rechenknoten mitten im Lauf gewechselt).
                 with open(os.path.join(pfad, "con-zwischenstand.json"), "w", encoding="utf-8") as f:
-                    json.dump({"jobId": os.environ.get("CON_JOB_ID", ""), "kennung": kennung,
+                    json.dump({"jobId": umg("JOB_ID", ""), "kennung": kennung,
                                "globalStep": state.global_step, "stand": time.time()}, f)
                 e2.lade_verzeichnis_hoch(pfad, f"{checkpoint_prefix.rstrip('/')}/checkpoint-{state.global_step}")
                 self.hochgeladen.add(pfad)
@@ -336,6 +337,6 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
             "ohneNeueSchritte": neue_schritte <= 0, "zwischenstandKennung": kennung,
             "zwischenstandJobId": zwischenstand_jobid,
             "bereitsVollstaendig": bereits_vollstaendig(neue_schritte, schritte, zwischenstand_jobid,
-                                                        os.environ.get("CON_JOB_ID", "")),
+                                                        umg("JOB_ID", "")),
             "trainLoss": getattr(ergebnis, "training_loss", None), "sekunden": round(dauer),
             "beispiele": len(beispiele), "abgebrochen": abbruch_gewuenscht, "zielModule": ziele}

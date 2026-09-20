@@ -336,7 +336,7 @@ export function befundeFuerRohpaare(roh) {
  */
 async function releaseModus() {
   const bau = await import(new URL("./training/smejj-1-1-datensatz-bauen.mjs", import.meta.url).href);
-  const { erzeuge } = await import(new URL("../workers/con-autopilot/daten/generator.mjs", import.meta.url).href);
+  const { erzeuge } = await import(new URL("../workers/muuny-autopilot/daten/generator.mjs", import.meta.url).href);
   const { echtePaare } = await import(new URL("./training/smejj-1-1-echte-paare.mjs", import.meta.url).href);
   const w = await import(new URL("./training/smejj-1-1-wissenspaare.mjs", import.meta.url).href);
   const quelle = readFileSync(new URL("./training/smejj-1-1-datensatz-bauen.mjs", import.meta.url), "utf8");

@@ -1,11 +1,11 @@
-// con-Autopilot — DER Kreislauf (Single Responsibility: ein Takt = beobachten, entscheiden, hoechstens EINEN Job bewegen).
+// muuny AI — DER Kreislauf (Single Responsibility: ein Takt = beobachten, entscheiden, hoechstens EINEN Job bewegen).
 //
 //   UEBERWACHEN -> FEHLER ANALYSIEREN -> SCHWAECHE ERKENNEN -> TRAININGSPLAN
 //   -> DATEN PRUEFEN -> TRAINIEREN (Salad) -> BEWERTEN -> VERGLEICHEN
 //   -> FREIGEBEN/VERWERFEN -> CANARY -> UEBERWACHEN ...
 //
-// Alles Bleibende liegt in e2: Zustand (con/autopilot/zustand.json), Aufgaben
-// (con/logs/tasks/), Kosten (con/logs/kosten/), Register (con/registry.json).
+// Alles Bleibende liegt in e2 unter dem Lager-Prefix (siehe lager.js): Zustand,
+// Aufgaben, Kosten, Register. Ein Neustart des Dienstes verliert nichts.
 // Ein Neustart des Dienstes verliert nichts. Es laeuft nie mehr als ein
 // Salad-Job zugleich — die einfachste Kostenbremse.
 import { readdir, readFile } from "node:fs/promises";
@@ -14,9 +14,11 @@ import { bewerteAntworten, schwaechsteKategorie, vergleiche } from "./bewertung.
 import { bucheEnde, bucheStart, darfStarten, leseGesamtverbrauch, leseTagesbuch, minutenFuer } from "./budget.js";
 import { leseRegistry, naechsteVersion, promote, reject, schreibeRegistry, schwaechen, stabileVersion, trageKandidatEin, findeVersion, zusammenfassung } from "./registry.js";
 import { bereiteJobVor, gruppenZustand } from "./salad.js";
-import { rollbackWennNoetig, setzeCanary } from "./canary.js";
+import { befoerdereCanaryWennBewaehrt, rollbackWennNoetig, setzeCanary } from "./canary.js";
+import { erzeugeNachschub } from "./nachschub.js";
+import { FAMILIE, L, wert } from "./lager.js";
 
-export const ZUSTAND_KEY = "con/autopilot/zustand.json";
+export const ZUSTAND_KEY = L.zustand;
 export const PHASEN = Object.freeze(["ueberwachen", "job_laeuft", "warten_auf_daten", "gestoppt"]);
 const NACHFRIST_MINUTEN = 20;
 
@@ -46,13 +48,13 @@ export function neueTaskId(art) {
 
 export async function schreibeTask(e2, task) {
   task.aktualisiert = new Date().toISOString();
-  await e2.putJson(`con/logs/tasks/${task.id}.json`, task);
-  const index = (await e2.getJson("con/logs/tasks/index.json", null)) || { tasks: [] };
+  await e2.putJson(`${L.tasks}/${task.id}.json`, task);
+  const index = (await e2.getJson(L.taskIndex, null)) || { tasks: [] };
   const i = index.tasks.findIndex((t) => t.id === task.id);
   const kurz = { id: task.id, ziel: task.ziel, status: task.status, jobId: task.jobId || null, aktualisiert: task.aktualisiert, ergebnis: task.ergebnisKurz || null };
   if (i >= 0) index.tasks[i] = kurz; else index.tasks.push(kurz);
   index.tasks = index.tasks.slice(-200);
-  await e2.putJson("con/logs/tasks/index.json", index);
+  await e2.putJson(L.taskIndex, index);
   return task;
 }
 
@@ -100,8 +102,8 @@ export async function tick(ctx) {
 async function beobachteJob(ctx, z) {
   const { e2, salad, jetzt = () => new Date(), log = () => {} } = ctx;
   const job = z.laufenderJob;
-  const status = await e2.getJson(`con/logs/jobs/${job.jobId}/status.json`, null);
-  const ergebnis = await e2.getJson(`con/logs/jobs/${job.jobId}/ergebnis.json`, null);
+  const status = await e2.getJson(`${L.jobs}/${job.jobId}/status.json`, null);
+  const ergebnis = await e2.getJson(`${L.jobs}/${job.jobId}/ergebnis.json`, null);
   const gruppe = salad ? await gruppenZustand(salad) : { ok: false, zustand: "kein_salad_client" };
   job.letzterStatus = status ? { phase: status.phase, aktualisiert: status.aktualisiert, laufzeitMinuten: status.laufzeitMinuten,
     fortschritt: status.erledigt != null ? `${status.erledigt}/${status.von}` : (status.fertigDateien != null ? `${status.fertigDateien}/${status.vonDateien} Dateien` : null),
@@ -152,7 +154,7 @@ async function beendeJob(ctx, z, grund, ergebnis) {
   } else {
     z.fehlschlaege = null;
   }
-  const task = (await e2.getJson(`con/logs/tasks/${job.taskId}.json`, null)) || { id: job.taskId, ziel: job.ziel, plan: [], status: "laeuft" };
+  const task = (await e2.getJson(`${L.tasks}/${job.taskId}.json`, null)) || { id: job.taskId, ziel: job.ziel, plan: [], status: "laeuft" };
   task.status = grund === "fertig" ? "fertig" : "fehlgeschlagen";
   task.fehler = grund === "fertig" ? null : grund;
   task.kosten = kosten;
@@ -198,7 +200,7 @@ async function rettteAdapter(ctx, z, job) {
   const { e2, konfig, log = () => {} } = ctx;
   const kandidat = job?.kandidat;
   if (!kandidat) return null;
-  const training = await e2.getJson(`con/versions/${kandidat}/training.json`, null);
+  const training = await e2.getJson(`${L.versionen}/${kandidat}/training.json`, null);
   if (!training) return null;
   // Ein Lauf, der keinen neuen Schritt gemacht hat, hat nichts trainiert. Seinen Adapter
   // zu retten hiesse, fremde Arbeit unter neuem Namen zu messen (05.09. live passiert).
@@ -215,7 +217,7 @@ async function rettteAdapter(ctx, z, job) {
     log(`Adapter ${kandidat} gehoert zu einem fremden Lauf (${training.jobId}) — ignoriert`);
     return null;
   }
-  const adapterPrefix = `con/versions/${kandidat}/adapter`;
+  const adapterPrefix = `${L.versionen}/${kandidat}/adapter`;
   const dateien = await e2.liste(`${adapterPrefix}/`);
   const hatGewichte = dateien.some((d) => /adapter_model\.(safetensors|bin)$/.test(d.key));
   if (!hatGewichte) return null;
@@ -296,11 +298,20 @@ async function planeUndStarte(ctx, z) {
   }
   const registry = await leseRegistry(e2);
   const stabil = stabileVersion(registry);
+  // Reihenfolge ist Absicht: erst pruefen, ob etwas ZURUECK muss, dann erst, ob etwas
+  // nach vorn darf. Andersherum koennte eine Version in derselben Sekunde befoerdert
+  // werden, in der ihre Betriebsdaten schon den Rollback verlangen.
   await rollbackWennNoetig(ctx, z, registry);
+  z.alias = await befoerdereCanaryWennBewaehrt(ctx, z).then((r) => r.befoerdert ? `befoerdert ${r.von} -> ${r.nach}` : r.grund);
   const plan = await planeNaechstenSchritt(ctx, z, registry);
   z.plan = plan;
   if (!plan.job) {
     z.phase = plan.phase || "warten_auf_daten";
+    // Kein Job, weil die Daten fehlen? Dann werden sie JETZT erzeugt, statt zu warten.
+    // Das ist der Unterschied zwischen einem Kreislauf und einer Warteschleife.
+    if (plan.phase === "warten_auf_daten" && plan.schritt === "trainingsplan") {
+      await sorgeFuerNachschub(ctx, z, plan);
+    }
     // Es steht gar kein Start an, also kann auch nichts blockiert sein. Ohne
     // dieses Loeschen bliebe eine alte Startsperre fuer immer stehen und die
     // Betreiber-Wache meldete rot, obwohl nichts klemmt (Falschrot).
@@ -318,6 +329,44 @@ async function planeUndStarte(ctx, z) {
   // voruebergehend (verwaister Container, Anbieter kurz weg) — sie duerfen die
   // Ampel nicht ueber den naechsten geglueckten Lauf hinaus rot faerben.
   delete z.startBlockiert;
+}
+
+/**
+ * Sorgt dafuer, dass der naechste Takt Daten vorfindet.
+ *
+ * Hoechstens EIN Datensatz je Takt und hoechstens einer je Stunde: das Erzeugen
+ * ist billig (kein Netz, keine GPU), das Hochladen nach e2 aber nicht umsonst, und
+ * ein Takt alle fuenf Minuten wuerde sonst zwoelf Datensaetze pro Stunde anlegen,
+ * von denen elf niemand je benutzt. Der Zeitstempel steht im Zustand, ueberlebt
+ * also einen Neustart des Dienstes.
+ */
+export const NACHSCHUB_ABSTAND_MS = 60 * 60_000;
+
+export async function sorgeFuerNachschub(ctx, z, plan) {
+  const { konfig, log = () => {}, jetzt = () => new Date() } = ctx;
+  const letzter = z.letzterNachschub?.zeit ? new Date(z.letzterNachschub.zeit).getTime() : 0;
+  if (jetzt().getTime() - letzter < NACHSCHUB_ABSTAND_MS) {
+    z.nachschubWartet = `Abstand laeuft (${Math.round((NACHSCHUB_ABSTAND_MS - (jetzt().getTime() - letzter)) / 60_000)} min)`;
+    return null;
+  }
+  const kategorie = plan.schwaeche?.kategorie || z.schwaechste?.kategorie || "allgemein";
+  const minPaare = Number(process.env.MUUNY_MIN_PAARE) > 0 ? Number(process.env.MUUNY_MIN_PAARE) : 3000;
+  try {
+    const suiten = await ladeSuiten(konfig.suitesDir);
+    const r = await erzeugeNachschub(ctx, { kategorie, suiten, minPaare });
+    z.letzterNachschub = { zeit: jetzt().toISOString(), name: r.name, paare: r.paare,
+      freigegeben: r.freigegeben, kategorie, grund: r.grund };
+    delete z.nachschubWartet;
+    notiere(z, `Datennachschub ${r.name}: ${r.paare} Paare gegen ${kategorie}, ${r.freigegeben ? "freigegeben" : "gesperrt (" + r.grund + ")"}`);
+    log(`Nachschub ${r.name} (${r.paare} Paare, ${kategorie})`);
+    return r;
+  } catch (fehler) {
+    // Ein Fehler beim Nachschub darf den Takt nicht kippen — er ist eine Zugabe,
+    // keine Voraussetzung. Er wird sichtbar vermerkt und beim naechsten Mal erneut versucht.
+    z.nachschubFehler = { zeit: jetzt().toISOString(), text: String(fehler?.message || fehler).slice(0, 300) };
+    notiere(z, "Datennachschub fehlgeschlagen: " + z.nachschubFehler.text);
+    return null;
+  }
 }
 
 /** Aktueller Stand der Pruefsuiten aus git: {suiteId: contentSha256}. */
@@ -353,7 +402,7 @@ export function trainingsKennung(konfig) {
 
 /** Die Trainingskonfiguration aus der Umgebung — an EINER Stelle, damit Plan und Sperre dieselbe sehen. */
 export function trainingsKonfigAusUmgebung(env = process.env) {
-  return JSON.parse(env.CON_TRAIN_KONFIG || '{"r":16,"alpha":32,"lr":0.0001,"epochen":1,"maxLen":1024,"checkpointMinuten":15,"batch":1,"gradAkk":8,"maxZeilen":700}');
+  return JSON.parse(wert(env, "TRAIN_KONFIG") || '{"r":16,"alpha":32,"lr":0.0001,"epochen":1,"maxLen":1024,"checkpointMinuten":15,"batch":1,"gradAkk":8,"maxZeilen":700}');
 }
 
 /**
@@ -390,11 +439,11 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   const basisKomplett = Boolean(basisManifest?.komplett);
   // 1. Keine stabile Version: Messlatte con-1.0.0 setzen (Basismodell unveraendert).
   if (!stabil) {
-    const version = "con-1.0";
+    const version = `${FAMILIE}-1.0`;
     const vorhanden = findeVersion(registry, version);
-    if (vorhanden?.status === "rejected") return { phase: "gestoppt", grund: "con-1.0.0 wurde verworfen — Betreiber-Entscheidung noetig" };
+    if (vorhanden?.status === "rejected") return { phase: "gestoppt", grund: `${version} wurde verworfen — Betreiber-Entscheidung noetig` };
     return { schritt: "messlatte", job: { modus: basisKomplett ? "messung" : "spiegel+messung", version, ziel: `Messlatte ${version} (Basis ${konfig.basis.repo}${basisKomplett ? "" : ", erst spiegeln"})`,
-      parameter: { CON_VERSION: version, CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };
+      parameter: { MUUNY_VERSION: version, MUUNY_WIEDERHOLUNGEN: konfig.wiederholungen } } };
   }
   // 1b. Latte hat sich geaendert: die stabile Version zuerst neu messen. Ein Kandidat gegen eine
   // Note zu halten, die mit einer anderen Suite entstanden ist, waere ein unfairer Vergleich.
@@ -412,9 +461,9 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
       : (veraendert.length ? `Stabile Version ${stabil.version} mit geaenderter Latte neu messen (${veraendert.join(", ")})` : `Kandidat ${kandidat.version} messen`);
     return { schritt: staende.length > 1 ? "latte_und_kandidat" : (veraendert.length ? "latte_neu_messen" : "kandidat_messen"),
       job: { modus: "messung", version: staende[0].version, adapterPrefix: staende[0].adapterPrefix, staende, ziel,
-        parameter: { CON_VERSION: staende[0].version, CON_MESS_VERSIONEN: JSON.stringify(staende),
-          ...(staende[0].adapterPrefix ? { CON_ADAPTER_PREFIX: staende[0].adapterPrefix } : {}),
-          CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };
+        parameter: { MUUNY_VERSION: staende[0].version, MUUNY_MESS_VERSIONEN: JSON.stringify(staende),
+          ...(staende[0].adapterPrefix ? { MUUNY_ADAPTER_PREFIX: staende[0].adapterPrefix } : {}),
+          MUUNY_WIEDERHOLUNGEN: konfig.wiederholungen } } };
   }
   // 3. Schwaeche -> Trainingsplan -> Daten pruefen -> Training.
   // Die Schwaeche der STABILEN Version zaehlt, nicht die des zuletzt Gemessenen. Nach einem
@@ -422,9 +471,9 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   // Lauf haette gegen eine Schwaeche trainiert, die es im gefuehrten Stand gar nicht gibt.
   const schwaeche = (stabil.benchmarks ? schwaechsteKategorie(stabil.benchmarks) : null) || z.schwaechste || null;
   const daten = await findeDatensatz(e2, schwaeche?.kategorie);
-  const minPaare = Number(process.env.CON_MIN_PAARE) > 0 ? Number(process.env.CON_MIN_PAARE) : 3000;
-  if (!daten) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Kein freigegebener Datensatz unter con/datasets/ fuer ${schwaeche?.kategorie || "allgemein"} (manifest.json mit qualitaet.ok=true, paare>=${minPaare})` };
-  if ((daten.paare || 0) < minPaare) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} hat ${daten.paare} Paare, noetig ${minPaare} (CON_MIN_PAARE)` };
+  const minPaare = Number(wert(process.env, "MIN_PAARE")) > 0 ? Number(wert(process.env, "MIN_PAARE")) : 3000;
+  if (!daten) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Kein freigegebener Datensatz unter ${L.datensaetze}/ fuer ${schwaeche?.kategorie || "allgemein"} (manifest.json mit qualitaet.ok=true, paare>=${minPaare})` };
+  if ((daten.paare || 0) < minPaare) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} hat ${daten.paare} Paare, noetig ${minPaare} (MUUNY_MIN_PAARE)` };
   if (stabil.datensatz === daten.name && stabil.trainingsKonfig) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} wurde fuer ${stabil.version} schon benutzt — neue Daten noetig` };
   // Ein Versuch, der schon einmal abgelehnt wurde, wird nicht wiederholt.
   // Gleiche Daten plus gleiche Konfiguration ergeben (bis auf Rauschen) dasselbe
@@ -452,11 +501,11 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
     wiederholungen: konfig.wiederholungen, jobMaxMinuten: konfig.grenzen?.jobMaxMinuten || 220 });
   return { schritt: "training", schwaeche, job: { modus: "training+messung", version, kandidat: version, datensatz: daten.name, trainingsKonfig: trainKonfig,
     ziel: `Training ${version} gegen Schwaeche ${schwaeche?.kategorie || "allgemein"} mit ${daten.name} (${daten.paare} Paare)`,
-    parameter: { CON_VERSION: stabil.version, CON_KANDIDAT: version, CON_DATENSATZ_PREFIX: daten.prefix, CON_TRAIN_KONFIG: JSON.stringify(trainKonfig), CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };
+    parameter: { MUUNY_VERSION: stabil.version, MUUNY_KANDIDAT: version, MUUNY_DATENSATZ_PREFIX: daten.prefix, MUUNY_TRAIN_KONFIG: JSON.stringify(trainKonfig), MUUNY_WIEDERHOLUNGEN: konfig.wiederholungen } } };
 }
 
 async function findeDatensatz(e2, kategorie) {
-  const index = await e2.getJson("con/datasets/index.json", null);
+  const index = await e2.getJson(L.datensatzIndex, null);
   const liste = (index?.datensaetze || []).filter((d) => d.qualitaet?.ok === true && d.freigegeben === true);
   if (!liste.length) return null;
   const passend = liste.filter((d) => !kategorie || (d.kategorien || []).includes(kategorie) || (d.kategorien || []).includes("allgemein"));
@@ -473,7 +522,7 @@ async function starteJob(ctx, z, jobPlan) {
   const minuten = minutenFuer(jobPlan.modus, konfig.grenzen);
   const pruefung = darfStarten({ grenzen: konfig.grenzen, tagesbuch, gesamt, gpuKlassen: konfig.salad.gpuKlassen, prioritaet: konfig.salad.prioritaet, minuten });
   if (!pruefung.ok) return { ok: false, gruende: pruefung.gruende };
-  const jobId = `con-${jetzt().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}-${jobPlan.modus.replace(/[^a-z]/g, "")}`;
+  const jobId = `${FAMILIE}-${jetzt().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}-${jobPlan.modus.replace(/[^a-z]/g, "")}`;
   const taskId = neueTaskId(jobPlan.modus.replace(/[^a-z]/g, ""));
   const task = { id: taskId, ziel: jobPlan.ziel, plan: ["Salad-Gruppe vorbereiten", `Job ${jobPlan.modus} starten (max ${minuten} min, Deckel ${pruefung.geplantUsd} USD)`, "Herzschlag beobachten", "Ergebnis bewerten", "Entscheidung ins Register"],
     status: "laeuft", jobId, abhaengigkeiten: ["e2", "salad"], werkzeuge: ["salad-job", "bewertung.js", "registry.js"], gestartet: jetzt().toISOString(), version: jobPlan.version };

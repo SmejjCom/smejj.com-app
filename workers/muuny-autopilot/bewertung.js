@@ -1,10 +1,10 @@
-// con-Autopilot — Bewertung der Rohantworten (Single Responsibility: Antworten -> Noten, deterministisch).
+// muuny AI — Bewertung der Rohantworten (Single Responsibility: Antworten -> Noten, deterministisch).
 //
 // Der Salad-Job liefert NUR Antworten; benotet wird hier, getrennt vom
 // Rechner, mit festen Regeln. Kein Modell-als-Richter. Die bestehenden
 // Erwartungstypen (contains_all, matches, json_parses, ...) kommen aus
 // src/evaluation/evalScoring.js — dieselbe Messstrecke wie die smejj-Suiten.
-// Neu und con-spezifisch: `code_tests` — der erste JavaScript-Block der
+// Eigenheit dieser Familie: `code_tests` — der erste JavaScript-Block der
 // Antwort wird in einem abgeschotteten Kindprozess mit den Tests ausgefuehrt
 // (Zeitgrenze, keine Netzwerkmodule, leere Umgebung).
 import { spawnSync } from "node:child_process";
@@ -33,7 +33,7 @@ process.on("uncaughtException", (e) => { console.error("FEHLER " + (e && e.messa
 
 export function fuehreCodeTestsAus(code, tests, { zeitgrenzeMs = 5000, nodeBin = process.execPath } = {}) {
   if (!code.trim()) return { ok: false, grund: "kein_code" };
-  const dir = mkdtempSync(path.join(tmpdir(), "con-code-"));
+  const dir = mkdtempSync(path.join(tmpdir(), "muuny-code-"));
   try {
     const datei = path.join(dir, "probe.cjs");
     writeFileSync(datei, `${CODE_VORSPANN}\n${code}\n;(function(){\n${tests}\n})();\nconsole.log("TESTS_OK");\n`);

@@ -1,4 +1,4 @@
-# con-Autopilot — Bau-Abbild fuer den Zeabur-Dienst 'con-autopilot'
+# muuny AI — Bau-Abbild fuer den Zeabur-Dienst 'muuny-autopilot'
 # (Dockerfile.<dienstname>: Zeabur waehlt es gezielt fuer genau diesen Dienst).
 # Keine npm-Abhaengigkeiten: nur Node-Bordmittel plus der geprueftem S3-Signierer
 # und die Eval-Bewertung des Control-Servers. Der Dienst steuert Salad von aussen,
@@ -7,21 +7,21 @@ FROM node:22-slim
 ENV NODE_ENV=production SMEJJ_HOST=0.0.0.0 PORT=8080
 WORKDIR /app
 COPY package.json ./
-COPY workers/con-autopilot ./workers/con-autopilot
+COPY workers/muuny-autopilot ./workers/muuny-autopilot
 COPY control-server/src/storage/s3Signer.js ./control-server/src/storage/s3Signer.js
 # s3Signer.js importiert hash.js. Ohne diese Zeile stirbt der Container beim Start mit
 # ERR_MODULE_NOT_FOUND und Zeabur antwortet 502 — am 04.09.2026 live gemessen.
-# Geprueft wird der vollstaendige Importbaum mit `npm run check:con-autopilot-abbild`.
+# Geprueft wird der vollstaendige Importbaum mit `npm run check:muuny-abbild`.
 COPY control-server/src/shared/hash.js ./control-server/src/shared/hash.js
 COPY src/evaluation/evalScoring.js ./src/evaluation/evalScoring.js
 COPY src/evaluation/evalSuite.js ./src/evaluation/evalSuite.js
 COPY src/evaluation/modelPromotion.js ./src/evaluation/modelPromotion.js
-# Pflicht-Env (fail-closed: ohne CON_AUTOPILOT_ENABLED=YES tickt nichts, ohne CON_SALAD_FREIGABE=YES startet kein Salad-Job):
-#   CON_AUTOPILOT_ENABLED=YES  CON_SALAD_FREIGABE=YES  CON_TAGESBUDGET_USD=5.5  CON_GESAMTDECKEL_USD=…
+# Pflicht-Env (fail-closed: ohne MUUNY_AUTOPILOT_ENABLED=YES tickt nichts, ohne MUUNY_SALAD_FREIGABE=YES startet kein Salad-Job):
+#   MUUNY_AUTOPILOT_ENABLED=YES  MUUNY_SALAD_FREIGABE=YES  MUUNY_TAGESBUDGET_USD=5.5  MUUNY_GESAMTDECKEL_USD=50
 #   IDRIVE_E2_ENDPOINT / IDRIVE_E2_BUCKET / IDRIVE_E2_REGION / IDRIVE_E2_ACCESS_KEY / IDRIVE_E2_SECRET_KEY
-#   SALAD_ORGANIZATION_NAME / SALAD_PROJECT_NAME / SALAD_API_KEY   CON_ADMIN_KEY (fuer POST /api/con/tick)
+#   SALAD_ORGANIZATION_NAME / SALAD_PROJECT_NAME / SALAD_API_KEY   MUUNY_ADMIN_KEY (fuer POST /api/muuny/tick)
 USER node
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-CMD ["node", "workers/con-autopilot/server.mjs"]
+CMD ["node", "workers/muuny-autopilot/server.mjs"]

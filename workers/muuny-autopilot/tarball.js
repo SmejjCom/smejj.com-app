@@ -1,4 +1,4 @@
-// con-Autopilot — Job-Buendel als tar.gz/base64 (Single Responsibility: Dateien -> Umgebungsvariable).
+// muuny AI — Job-Buendel als tar.gz/base64 (Single Responsibility: Dateien -> Umgebungsvariable).
 // Salad bekommt den Code des Jobs als smejj.com-Buendel in einer Umgebungsvariablen,
 // genau wie der fruehere LoRA-Trainer. Kein Registry-Abbild, kein Docker-Bau
 // auf dem Mac (dort gibt es kein Docker). Reines ustar ohne Abhaengigkeiten.
@@ -46,7 +46,7 @@ function sammle(wurzel, rel = "") {
  *
  * `zusatz` legt weitere Verzeichnisse unter einem eigenen Namen mit hinein.
  * Genutzt wird das fuer die Pruefsuiten: die liegen unter
- * workers/con-autopilot/suites und sind die EINZIGE Quelle. Bis zum 05.09. gab
+ * workers/muuny-autopilot/suites und sind die EINZIGE Quelle. Bis zum 05.09. gab
  * es eine zweite Kopie unter salad-job/suites. Beide waren zufaellig gleich —
  * die Sorte Falle, die erst auffaellt, wenn jemand nur eine Seite pflegt: der
  * Job antwortet dann auf alte Faelle, die Bewertung erwartet neue, und das
@@ -54,7 +54,7 @@ function sammle(wurzel, rel = "") {
  *
  * @returns {{ b64: string, sha256: string, dateien: string[], bytes: number }}
  */
-export function baueBuendel(verzeichnis, { wurzelname = "con-job", zusatz = {} } = {}) {
+export function baueBuendel(verzeichnis, { wurzelname = "muuny-job", zusatz = {} } = {}) {
   const dateien = sammle(verzeichnis);
   for (const [unterordner, quelle] of Object.entries(zusatz)) {
     // Nur .json: der Job liest das Verzeichnis mit os.listdir und parst jede

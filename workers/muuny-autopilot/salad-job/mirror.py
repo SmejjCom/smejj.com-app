@@ -22,6 +22,7 @@ import time
 import urllib.request
 
 import e2
+from lager import umg  # noqa: E402
 
 HF_API = "https://huggingface.co/api/models/"
 
@@ -188,7 +189,7 @@ def hole_aus_e2(prefix, arbeitsverzeichnis, status, parallel=None):
     dateien = manifest["dateien"]
     n = len(dateien)
     if parallel is None:
-        parallel = int(os.environ.get("CON_E2_DATEIEN_PARALLEL", "4"))
+        parallel = int(umg("E2_DATEIEN_PARALLEL", "4"))
     parallel = max(1, min(8, parallel))
 
     offen = []

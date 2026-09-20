@@ -1,13 +1,14 @@
-// con-Autopilot — Daten-Pipeline (Single Responsibility: Rohpaare -> geprueft, dedupliziert, versioniert in e2).
+// muuny AI — Daten-Pipeline (Single Responsibility: Rohpaare -> geprueft, dedupliziert, versioniert in e2).
 //
 // Sammeln -> Duplikate entfernen -> Spam/Fehler/Manipulation/Prompt-Injection/
 // Schluessel/personenbezogene Daten herausfiltern -> Qualitaetsbericht ->
-// versioniert nach con/datasets/<name>/ (train.jsonl, manifest.json mit sha256)
-// und Eintrag in con/datasets/index.json. Qualitaet vor Menge: je Antwort
+// versioniert nach <lager>/datasets/<name>/ (train.jsonl, manifest.json mit sha256)
+// und Eintrag in <lager>/datasets/index.json. Qualitaet vor Menge: je Antwort
 // hoechstens MAX_VARIANTEN Frageformen (die Lehre vom 06.08.: 15 Formen auf
 // 731 Fakten sind 731 Fakten). Die Pruefsuiten sind vom Training ausgeschlossen —
 // Fragen, die einem Suitenfall wortgleich entsprechen, fliegen raus.
 import { createHash } from "node:crypto";
+import { L } from "./lager.js";
 
 export const MAX_VARIANTEN = 3;
 const SCHLUESSEL = [/\bsk-[A-Za-z0-9_-]{12,}/, /\bAKIA[0-9A-Z]{16}\b/, /\bgh[pousr]_[A-Za-z0-9]{20,}/, /\bxox[baprs]-[A-Za-z0-9-]{10,}/, /-----BEGIN [A-Z ]*PRIVATE KEY-----/, /\b(api[_-]?key|secret|token|passwort|password)\s*[:=]\s*["']?[A-Za-z0-9_\-]{16,}/i];
@@ -140,16 +141,16 @@ export function mische(paare, startwert) {
 
 /** Datensatz nach e2 schreiben und im Index eintragen. */
 export async function veroeffentliche(e2, { name, paare, bericht, quelle, kategorien = ["allgemein"], freigegeben = true }) {
-  const prefix = `con/datasets/${name}`;
+  const prefix = `${L.datensaetze}/${name}`;
   const train = jsonl(mische(paare));
   const manifest = { schemaVersion: 1, name, prefix, erstellt: new Date().toISOString(), quelle, kategorien, paare: paare.length,
     dateien: [{ name: "train.jsonl", bytes: Buffer.byteLength(train), sha256: hashText(train) }], qualitaet: bericht,
     gemischt: true, freigegeben, eligibleForTraining: true };
   await e2.putText(`${prefix}/train.jsonl`, train, "application/x-ndjson");
   await e2.putJson(`${prefix}/manifest.json`, manifest);
-  const index = (await e2.getJson("con/datasets/index.json", null)) || { datensaetze: [] };
+  const index = (await e2.getJson(L.datensatzIndex, null)) || { datensaetze: [] };
   index.datensaetze = index.datensaetze.filter((d) => d.name !== name);
   index.datensaetze.push({ name, prefix, paare: paare.length, kategorien, erstellt: manifest.erstellt, freigegeben, qualitaet: { ok: bericht.ok, angenommen: bericht.angenommen, gelesen: bericht.gelesen }, sha256: manifest.dateien[0].sha256 });
-  await e2.putJson("con/datasets/index.json", index);
+  await e2.putJson(L.datensatzIndex, index);
   return manifest;
 }

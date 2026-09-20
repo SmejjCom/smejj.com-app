@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// con-Autopilot — Abbild-Waechter (Single Responsibility: enthaelt das Bau-Abbild alles, was der Dienst importiert?).
+// muuny AI — Abbild-Waechter (Single Responsibility: enthaelt das Bau-Abbild alles, was der Dienst importiert?).
 //
 // Warum es diese Pruefung gibt: Am 2026-09-04 fehlte im Dockerfile eine einzige Zeile
 // (control-server/src/shared/hash.js, von s3Signer.js importiert). Der Container startete
@@ -17,8 +17,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const DOCKERFILE = "Dockerfile.con-autopilot";
-const EINSTIEG = "workers/con-autopilot/server.mjs";
+const DOCKERFILE = "Dockerfile.muuny-autopilot";
+const EINSTIEG = "workers/muuny-autopilot/server.mjs";
 const PORT = 8431 + (process.pid % 200);
 
 async function importBaum(start) {
@@ -105,7 +105,7 @@ async function main() {
   }
   console.log("Stufe 1b gruen: .dockerignore sperrt nichts Gebrauchtes aus.");
 
-  const ziel = await mkdtemp(path.join(os.tmpdir(), "con-abbild-"));
+  const ziel = await mkdtemp(path.join(os.tmpdir(), "muuny-abbild-"));
   try {
     await cp(path.join(WURZEL, "package.json"), path.join(ziel, "package.json"));
     for (const q of quellen) {

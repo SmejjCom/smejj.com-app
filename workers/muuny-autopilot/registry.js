@@ -1,23 +1,27 @@
-// con-Autopilot — Versionsregister in e2 (Single Responsibility: registry.json lesen/schreiben, Versionsregel).
+// muuny AI — Versionsregister in e2 (Single Responsibility: registry.json lesen/schreiben, Versionsregel).
+//
+import { FAMILIE, L } from "./lager.js";
 //
 // Eine neue Nummer gibt es NUR ueber promote() nach einem PROMOTE-Urteil von
 // bewertung.vergleiche(). Nichts hier zaehlt blind hoch.
-export const REGISTRY_KEY = "con/registry.json";
+export const REGISTRY_KEY = L.registry;
 export const STATUS = Object.freeze({ CANDIDATE: "candidate", STABLE: "stable", REJECTED: "rejected", SUPERSEDED: "superseded" });
 
 /**
- * Versionsnummer der Familie con. ZWEI Stellen, so wie der Auftrag es vorgibt:
- * con 1.0 → con 1.1 → con 1.2 → … Eine dritte Stelle gibt es nicht.
- * Alte dreistellige Namen (con-1.0.0) werden noch GELESEN, damit vorhandene Staende
+ * Versionsnummer der Familie muuny. ZWEI Stellen, so wie der Auftrag es vorgibt:
+ * muuny 1.0 → muuny 1.1 → muuny 1.2 → … Eine dritte Stelle gibt es nicht.
+ * Alte dreistellige und alte con-Namen (con-1.0.0) werden noch GELESEN, damit vorhandene Staende
  * nicht verlorengehen — geschrieben wird ausschliesslich zweistellig.
  */
 export function parseVersion(v) {
-  const m = String(v || "").match(/^con-(\d+)\.(\d+)(?:\.(\d+))?$/);
+  // Alte con-Namen bleiben LESBAR: die Herkunft jeder Note haengt an ihnen.
+  // Geschrieben wird ausschliesslich muuny-X.Y.
+  const m = String(v || "").match(/^(?:muuny|con)-(\d+)\.(\d+)(?:\.(\d+))?$/);
   return m ? { major: +m[1], minor: +m[2] } : null;
 }
 
 export function formatVersion({ major, minor }) {
-  return `con-${major}.${minor}`;
+  return `${FAMILIE}-${major}.${minor}`;
 }
 
 /**
@@ -48,7 +52,7 @@ export function naechsteVersion(stabil, { basisPrefix, vergeben = [] } = {}) {
 
 export async function leseRegistry(e2) {
   const r = await e2.getJson(REGISTRY_KEY, null);
-  if (!r) throw new Error("con/registry.json fehlt in e2 — Struktur B nicht angelegt");
+  if (!r) throw new Error(`${REGISTRY_KEY} fehlt in e2 — Lager nicht angelegt`);
   r.versions ||= [];
   return r;
 }

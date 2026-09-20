@@ -36,7 +36,7 @@ const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..
 /** Dienste, die dieser Waechter kennt: Dockerfile -> Einstiegsdatei. */
 export const DIENSTE = Object.freeze([
   { dockerfile: "Dockerfile.smejj-lora-loop", einstieg: "workers/smejj-lora-loop/worker.mjs" },
-  { dockerfile: "Dockerfile.con-autopilot", einstieg: "workers/con-autopilot/server.mjs" }
+  { dockerfile: "Dockerfile.con-autopilot", einstieg: "workers/muuny-autopilot/server.mjs" }
 ]);
 
 /**

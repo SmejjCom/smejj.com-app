@@ -95,7 +95,7 @@ test("eine Wiederholung genuegt, solange die Messung deterministisch ist", async
 test("do_sample bleibt aus — sonst waere eine Wiederholung zu wenig", () => {
   // Der Grund für WIEDERHOLUNGEN = 1 steht im Messjob. Ändert ihn jemand,
   // muss der Wert zurück auf 3, und dieser Test fällt vorher auf.
-  const py = readFileSync("workers/con-autopilot/salad-job/evalrun.py", "utf8");
+  const py = readFileSync("workers/muuny-autopilot/salad-job/evalrun.py", "utf8");
   assert.match(py, /"do_sample":\s*False/, "die Messung muss deterministisch bleiben");
 });
 

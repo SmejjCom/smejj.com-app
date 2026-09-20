@@ -3,20 +3,20 @@
 
 Ein Job ist die Einheit, in der Geld ausgegeben wird. Darum gilt hier:
   1. /health antwortet SOFORT (Salads Startsonde, gemessen 2026-08-01).
-  2. Jede Minute ein Herzschlag nach e2 (con/logs/jobs/<id>/status.json) —
+  2. Jede Minute ein Herzschlag nach e2 (<lager>/logs/jobs/<id>/status.json) —
      der Autopilot auf Zeabur sieht daran, ob der Job lebt, und was er tut.
-  3. Harte Zeitgrenze CON_JOB_MAX_MINUTEN. Laeuft sie ab: Zustand sichern,
+  3. Harte Zeitgrenze MUUNY_JOB_MAX_MINUTEN. Laeuft sie ab: Zustand sichern,
      Ergebnis schreiben, abschalten. Nie einfach weiterrechnen.
   4. Am Ende — Erfolg, Fehler oder Zeitgrenze — schaltet der Job seine
      eigene Salad-Gruppe ab (stop). Klappt das nicht, beendet er sich mit
      Exit-Code; restart_policy=never verhindert den Neustart. Der Autopilot
      stoppt zusaetzlich von aussen (zwei unabhaengige Bremsen).
 
-Betriebsarten (CON_JOB_MODUS):
+Betriebsarten (MUUNY_JOB_MODUS):
   spiegel          Basismodell HF -> e2
   messung          Antworten fuer die Suiten (Basis oder Basis+Adapter)
   spiegel+messung  beides in einem Lauf (erster Lauf: con-1.0.0-Messlatte)
-  training         QLoRA -> Adapter nach e2 (con/versions/<kandidat>/adapter/)
+  training         QLoRA -> Adapter nach e2 (<lager>/versions/<kandidat>/adapter/)
   training+messung Training, danach Messung des frischen Adapters
 """
 import json
@@ -31,12 +31,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import e2  # noqa: E402
+from lager import lager, pflicht, umg  # noqa: E402
 
-JOB_ID = os.environ.get("CON_JOB_ID") or f"job-{int(time.time())}"
-MODUS = os.environ.get("CON_JOB_MODUS", "messung").strip().lower()
-MAX_MINUTEN = float(os.environ.get("CON_JOB_MAX_MINUTEN", "170"))
-ARBEIT = os.environ.get("CON_ARBEITSVERZEICHNIS", "/work")
-LOG_PREFIX = os.environ.get("CON_LOG_PREFIX", "con/logs/jobs") .rstrip("/") + "/" + JOB_ID
+JOB_ID = umg("JOB_ID") or f"job-{int(time.time())}"
+MODUS = umg("JOB_MODUS", "messung").strip().lower()
+MAX_MINUTEN = float(umg("JOB_MAX_MINUTEN", "170"))
+ARBEIT = umg("ARBEITSVERZEICHNIS", "/work")
+LOG_PREFIX = umg("LOG_PREFIX", lager() + "logs/jobs").rstrip("/") + "/" + JOB_ID
 START = time.time()
 _ABBRUCH = threading.Event()
 
@@ -181,16 +182,16 @@ def lauf():
     import mirror
     ergebnis = {"jobId": JOB_ID, "modus": MODUS}
     os.makedirs(ARBEIT, exist_ok=True)
-    basis_repo = os.environ.get("CON_BASIS_REPO", "Qwen/Qwen3.8-27B")
-    basis_prefix = os.environ.get("CON_BASIS_PREFIX", "con/base/qwen3.8-27b")
-    version = os.environ.get("CON_VERSION", "con-1.0.0")
+    basis_repo = umg("BASIS_REPO", "Qwen/Qwen3.8-27B")
+    basis_prefix = umg("BASIS_PREFIX", lager() + "base/qwen3.8-27b")
+    version = umg("VERSION", "con-1.0.0")
     modell_dir = os.path.join(ARBEIT, "basis")
     STATUS.setze(phase="vorbereitung", basisRepo=basis_repo, basisPrefix=basis_prefix, version=version,
                  freiGb=freier_platz_gb(ARBEIT))
 
-    braucht_gpu = any(t in MODUS for t in ("messung", "training")) and os.environ.get("CON_MESSWEG", "transformers") == "transformers"
+    braucht_gpu = any(t in MODUS for t in ("messung", "training")) and umg("MESSWEG", "transformers") == "transformers"
     if braucht_gpu:
-        pip_installieren(os.environ.get("CON_PIP_PAKETE", "transformers>=5.8 peft>=0.18 accelerate bitsandbytes>=0.48 safetensors").split())
+        pip_installieren(umg("PIP_PAKETE", "transformers>=5.8 peft>=0.18 accelerate bitsandbytes>=0.48 safetensors").split())
         ergebnis["gpu"] = gpu_bericht()
         STATUS.setze(gpu=ergebnis["gpu"])
         if not ergebnis["gpu"].get("cuda"):
@@ -209,13 +210,13 @@ def lauf():
         mirror.hole_aus_e2(basis_prefix, modell_dir, STATUS)
 
     adapter_dir = None
-    adapter_prefix = os.environ.get("CON_ADAPTER_PREFIX", "").strip()
+    adapter_prefix = umg("ADAPTER_PREFIX", "").strip()
     if "training" in MODUS:
         import train
         import gguf_adapter
-        datensatz_prefix = os.environ["CON_DATENSATZ_PREFIX"].rstrip("/")
-        kandidat = os.environ.get("CON_KANDIDAT", version)
-        konfig = json.loads(os.environ.get("CON_TRAIN_KONFIG", "{}"))
+        datensatz_prefix = pflicht("DATENSATZ_PREFIX").rstrip("/")
+        kandidat = umg("KANDIDAT", version)
+        konfig = json.loads(umg("TRAIN_KONFIG", "{}"))
         # Restzeit bis zur Frist, gemessen JETZT — nach dem Laden, nicht davor.
         konfig.setdefault("restMinuten", max(5.0, MAX_MINUTEN - (time.time() - START) / 60.0))
         daten_dir = os.path.join(ARBEIT, "daten")
@@ -224,17 +225,18 @@ def lauf():
         if not os.path.exists(train_pfad):
             raise RuntimeError(f"{datensatz_prefix}/train.jsonl fehlt")
         ausgabe = os.path.join(ARBEIT, "training")
-        checkpoint_prefix = f"{os.environ.get('CON_CHECKPOINT_PREFIX', 'con/checkpoints').rstrip('/')}/{kandidat}"
+        checkpoint_basis = umg("CHECKPOINT_PREFIX", lager() + "checkpoints").rstrip("/")
+        checkpoint_prefix = f"{checkpoint_basis}/{kandidat}"
         t = train.trainiere(modell_dir, train_pfad, ausgabe, checkpoint_prefix, STATUS, konfig, abbruch=_ABBRUCH.is_set)
         ergebnis["training"] = {k: v for k, v in t.items() if k != "adapterPfad"}
-        adapter_prefix = f"con/versions/{kandidat}/adapter"
+        adapter_prefix = f"{lager()}versions/{kandidat}/adapter"
         # Auch ein an der Zeitgrenze abgebrochener Lauf hinterlaesst einen brauchbaren Adapter.
         # Der Pfad gehoert ins Ergebnis, damit der Autopilot ihn ohne Suchen wiederfindet.
         ergebnis["training"]["adapterPrefix"] = adapter_prefix
         ergebnis["training"]["kandidat"] = kandidat
         STATUS.setze(phase="adapter_sichern")
         e2.lade_verzeichnis_hoch(t["adapterPfad"], adapter_prefix)
-        e2.put_json(f"con/versions/{kandidat}/training.json", {**ergebnis["training"], "basisPrefix": basis_prefix,
+        e2.put_json(f"{lager()}versions/{kandidat}/training.json", {**ergebnis["training"], "basisPrefix": basis_prefix,
                                                                 "datensatzPrefix": datensatz_prefix, "jobId": JOB_ID,
                                                                 "konfig": konfig, "stand": _iso(time.time())})
         adapter_dir = t["adapterPfad"]
@@ -276,13 +278,13 @@ def lauf():
         rest = max(5.0, MAX_MINUTEN - (time.time() - START) / 60.0)
         umgebung = dict(os.environ)
         umgebung.update({
-            "CON_JOB_MODUS": "messung",
-            "CON_JOB_MAX_MINUTEN": str(int(rest)),
-            "CON_VERSION": version,
-            "CON_ADAPTER_PREFIX": adapter_prefix or "",
-            "CON_SELBST_STOP": "NO",           # das Abschalten macht der Elternprozess
+            "MUUNY_JOB_MODUS": "messung",
+            "MUUNY_JOB_MAX_MINUTEN": str(int(rest)),
+            "MUUNY_VERSION": version,
+            "MUUNY_ADAPTER_PREFIX": adapter_prefix or "",
+            "MUUNY_SELBST_STOP": "NO",           # das Abschalten macht der Elternprozess
             "PORT": str(int(os.environ.get("PORT", "8080")) + 1),
-            "CON_KIND_PROZESS": "ja"
+            "MUUNY_KIND_PROZESS": "ja"
         })
         STATUS.setze(phase="messung_eigener_prozess", rest=round(rest, 1))
         import subprocess
@@ -291,7 +293,8 @@ def lauf():
         print((lauf.stdout or "")[-2000:], flush=True)
         if lauf.returncode != 0:
             raise RuntimeError("Messung im eigenen Prozess scheitert: " + ((lauf.stderr or lauf.stdout)[-500:]))
-        eval_prefix = f"{os.environ.get('CON_EVAL_PREFIX', 'con/evals').rstrip('/')}/{version}/{JOB_ID}"
+        eval_basis = umg("EVAL_PREFIX", lager() + "evals").rstrip("/")
+        eval_prefix = f"{eval_basis}/{version}/{JOB_ID}"
         antworten = e2.get_json(eval_prefix + "/antworten.json")
         if not antworten:
             raise RuntimeError("Messung lieferte keine antworten.json")
@@ -305,10 +308,10 @@ def lauf():
         suiten = evalrun.lade_suiten(os.path.join(os.path.dirname(os.path.abspath(__file__)), "suites"))
         if not suiten:
             raise RuntimeError("Keine Suiten im Job-Buendel")
-        messweg = os.environ.get("CON_MESSWEG", "transformers")
+        messweg = umg("MESSWEG", "transformers")
         # Mehrere Staende in EINEM Job: das Modell wird einmal geladen, die Adapter danach
         # angehaengt. Ein zweiter Job haette das 55-GB-Fundament erneut geholt (16 min + Miete).
-        auftraege = json.loads(os.environ.get("CON_MESS_VERSIONEN", "[]") or "[]")
+        auftraege = json.loads(umg("MESS_VERSIONEN", "[]") or "[]")
         if not auftraege:
             auftraege = [{"version": version, "adapterPrefix": adapter_prefix or None}]
         # Fundament zuerst — ein angehaengter Adapter laesst sich nicht mehr sauber abnehmen.
@@ -316,8 +319,8 @@ def lauf():
         if messweg == "openai":
             if len(auftraege) > 1:
                 raise RuntimeError("Der openai-Messweg kann nur EINEN Stand messen")
-            weg = evalrun.OpenAiWeg(os.environ["CON_MESS_ENDPUNKT"], os.environ.get("CON_MESS_MODELL", "default"),
-                                    os.environ.get("CON_MESS_KEY", ""))
+            weg = evalrun.OpenAiWeg(pflicht("MESS_ENDPUNKT"), umg("MESS_MODELL", "default"),
+                                    umg("MESS_KEY", ""))
         else:
             erster = auftraege[0]
             erster_adapter = None
@@ -328,7 +331,7 @@ def lauf():
                                                  lambda n: STATUS.setze(phase="adapter_laden", aktuell=n))
             STATUS.setze(phase="modell_laden")
             weg = evalrun.TransformersWeg(modell_dir, erster_adapter, STATUS)
-        wdh = int(os.environ.get("CON_WIEDERHOLUNGEN", "1"))
+        wdh = int(umg("WIEDERHOLUNGEN", "1"))
         ergebnis["messungen"] = []
         for i, auftrag in enumerate(auftraege):
             if _ABBRUCH.is_set():
@@ -341,7 +344,8 @@ def lauf():
                 e2.lade_verzeichnis_herunter(praefix, ziel, lambda n: STATUS.setze(aktuell=n))
                 weg.haenge_adapter_an(ziel)
             STATUS.setze(phase="messung", stand=stand, standNr=i + 1, staende=len(auftraege))
-            eval_prefix = f"{os.environ.get('CON_EVAL_PREFIX', 'con/evals').rstrip('/')}/{stand}/{JOB_ID}"
+            eval_basis = umg("EVAL_PREFIX", lager() + "evals").rstrip("/")
+            eval_prefix = f"{eval_basis}/{stand}/{JOB_ID}"
             teil_key = eval_prefix + "/teilstand.json"
             # WIEDERAUFNAHME. Wird der Knoten mitten in der Messung verdraengt,
             # faengt der neue Durchlauf sonst bei null an — am 10.09. bei 287
@@ -399,7 +403,7 @@ def main():
     except Exception as f2:  # noqa: BLE001
         print("Ergebnis nach e2 fehlgeschlagen:", str(f2)[:200], flush=True)
     STATUS.schreibe(erzwinge=True)
-    if os.environ.get("CON_SELBST_STOP", "YES") == "YES":
+    if umg("SELBST_STOP", "YES") == "YES":
         antwort = salad_stop()
         STATUS.setze(saladStop=antwort)
         STATUS.schreibe(erzwinge=True)

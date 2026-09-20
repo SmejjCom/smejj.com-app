@@ -1,10 +1,12 @@
-// con-Autopilot — Kostenwaechter (Single Responsibility: darf JETZT GPU-Zeit gekauft werden?).
+// muuny AI — Kostenwaechter (Single Responsibility: darf JETZT GPU-Zeit gekauft werden?).
 //
-// Tagesbudget (Standard 5 EUR ≈ CON_TAGESBUDGET_USD 5.5) und Gesamtdeckel je
-// Auftrag. Der Verbrauch wird in e2 fortgeschrieben (con/logs/kosten/JJJJ-MM-TT.json),
+// Tagesbudget (Standard 5 EUR ≈ MUUNY_TAGESBUDGET_USD 5.5) und Gesamtdeckel je
+// Auftrag. Der Verbrauch wird in e2 fortgeschrieben (<lager>/logs/kosten/JJJJ-MM-TT.json),
 // nie nur im Arbeitsspeicher — ein Neustart darf den Zaehler nicht auf null setzen.
 // Gerechnet wird mit der GEBUCHTEN Zeit (Gruppe laeuft), nicht mit Trainingsminuten:
 // die Lehre vom 2026-08-06 (Deckel zaehlte Arbeit, Karte lief rund um die Uhr).
+import { L, wert } from "./lager.js";
+
 export const GPU_KLASSEN = Object.freeze({
   // id -> {name, vramGb, usdProStunde je Prioritaet} — Stand Salad-API 2026-09-03
   "a5db5c50-cbcb-4596-ae80-6a0c8090d80f": { name: "RTX 3090 (24 GB)", vramGb: 24, preis: { high: 0.25, medium: 0.197, low: 0.143, batch: 0.09 } },
@@ -37,7 +39,7 @@ export function teuersterPreisProStunde(gpuKlassen = STANDARD_GPU_KLASSEN, prior
 }
 
 export function tagesschluessel(datum = new Date()) {
-  return `con/logs/kosten/${datum.toISOString().slice(0, 10)}.json`;
+  return `${L.kosten}/${datum.toISOString().slice(0, 10)}.json`;
 }
 
 /**
@@ -65,15 +67,15 @@ export function minutenFuer(modus, grenzen) {
 }
 
 export function leseGrenzen(env = process.env) {
-  const tages = Number(env.CON_TAGESBUDGET_USD);
-  const gesamt = Number(env.CON_GESAMTDECKEL_USD);
-  const jobMinuten = Number(env.CON_JOB_MAX_MINUTEN);
+  const tages = Number(wert(env, "TAGESBUDGET_USD"));
+  const gesamt = Number(wert(env, "GESAMTDECKEL_USD"));
+  const jobMinuten = Number(wert(env, "JOB_MAX_MINUTEN"));
   return {
     tagesbudgetUsd: Number.isFinite(tages) && tages > 0 ? tages : 5.5,
-    gesamtdeckelUsd: Number.isFinite(gesamt) && gesamt > 0 ? gesamt : 2.0,
+    gesamtdeckelUsd: Number.isFinite(gesamt) && gesamt > 0 ? gesamt : 50.0,
     jobMaxMinuten: Number.isFinite(jobMinuten) && jobMinuten > 0 ? Math.min(jobMinuten, 600) : 170,
-    notaus: String(env.CON_NOTAUS || "").toUpperCase() === "YES",
-    freigabe: String(env.CON_SALAD_FREIGABE || "").toUpperCase() === "YES"
+    notaus: String(wert(env, "NOTAUS") || "").toUpperCase() === "YES",
+    freigabe: String(wert(env, "SALAD_FREIGABE") || "").toUpperCase() === "YES"
   };
 }
 
@@ -84,7 +86,7 @@ export async function leseTagesbuch(e2, datum = new Date()) {
 }
 
 export async function leseGesamtverbrauch(e2) {
-  const g = await e2.getJson("con/logs/kosten/gesamt.json", null);
+  const g = await e2.getJson(L.kostenGesamt, null);
   return g || { summeUsd: 0, jobs: 0, seit: new Date().toISOString() };
 }
 
@@ -92,7 +94,7 @@ export async function leseGesamtverbrauch(e2) {
 export function darfStarten({ grenzen, tagesbuch, gesamt, gpuKlassen, prioritaet, minuten }) {
   const gruende = [];
   if (grenzen.notaus) gruende.push("notaus_aktiv");
-  if (!grenzen.freigabe) gruende.push("keine_salad_freigabe (CON_SALAD_FREIGABE=YES fehlt)");
+  if (!grenzen.freigabe) gruende.push("keine_salad_freigabe (MUUNY_SALAD_FREIGABE=YES fehlt)");
   const preis = teuersterPreisProStunde(gpuKlassen, prioritaet);
   if (!(preis > 0)) gruende.push("gpu_klasse_ohne_preis");
   const geplant = round((minuten / 60) * preis);
@@ -113,7 +115,7 @@ export async function bucheStart(e2, { jobId, gpuKlassen, prioritaet, minuten })
   const g = await leseGesamtverbrauch(e2);
   g.summeUsd = round((g.summeUsd || 0) + usd);
   g.jobs = (g.jobs || 0) + 1;
-  await e2.putJson("con/logs/kosten/gesamt.json", g);
+  await e2.putJson(L.kostenGesamt, g);
   return { usd, preis };
 }
 
@@ -133,7 +135,7 @@ export async function bucheEnde(e2, { jobId, gestartet, beendet = new Date() }) 
   await e2.putJson(tagesschluessel(start), buch);
   const g = await leseGesamtverbrauch(e2);
   g.summeUsd = round((g.summeUsd || 0) - alt + j.usd);
-  await e2.putJson("con/logs/kosten/gesamt.json", g);
+  await e2.putJson(L.kostenGesamt, g);
   return { minuten, usd: j.usd };
 }
 

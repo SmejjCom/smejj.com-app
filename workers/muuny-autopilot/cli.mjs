@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// con-Autopilot — Kommandozeile fuer den Betreiber-Mac (dieselben Module wie der Zeabur-Dienst).
-//   node workers/con-autopilot/cli.mjs status          Zustand, Register, Kosten (nur lesen)
-//   node workers/con-autopilot/cli.mjs tick            EIN Takt des Kreislaufs (startet ggf. einen Salad-Job — nur mit CON_SALAD_FREIGABE=YES)
-//   node workers/con-autopilot/cli.mjs plan            zeigt, was der naechste Takt taete (startet nichts)
-//   node workers/con-autopilot/cli.mjs bewerte <version> <jobId>   Antworten aus e2 neu benoten (ohne Register)
-//   node workers/con-autopilot/cli.mjs job:stop        Salad-Gruppe sofort stoppen (Notbremse)
-//   node workers/con-autopilot/cli.mjs rollback:probe  Rollback absichtlich ausloesen und beweisen
-//   node workers/con-autopilot/cli.mjs dashboard <datei.html>   Dashboard als Datei
+// muuny AI — Kommandozeile fuer den Betreiber-Mac (dieselben Module wie der Zeabur-Dienst).
+//   node workers/muuny-autopilot/cli.mjs status          Zustand, Register, Kosten (nur lesen)
+//   node workers/muuny-autopilot/cli.mjs tick            EIN Takt des Kreislaufs (startet ggf. einen Salad-Job — nur mit MUUNY_SALAD_FREIGABE=YES)
+//   node workers/muuny-autopilot/cli.mjs plan            zeigt, was der naechste Takt taete (startet nichts)
+//   node workers/muuny-autopilot/cli.mjs bewerte <version> <jobId>   Antworten aus e2 neu benoten (ohne Register)
+//   node workers/muuny-autopilot/cli.mjs job:stop        Salad-Gruppe sofort stoppen (Notbremse)
+//   node workers/muuny-autopilot/cli.mjs rollback:probe  Rollback absichtlich ausloesen und beweisen
+//   node workers/muuny-autopilot/cli.mjs dashboard <datei.html>   Dashboard als Datei
 // Zugangsdaten aus ~/.config/smejj.com/env.local, wenn nicht schon in der Umgebung (Werte werden nie ausgegeben).
 import { readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -18,7 +18,8 @@ import { tick, leseZustand, planeNaechstenSchritt, ladeSuiten } from "./kreislau
 import { leseRegistry, schreibeRegistry } from "./registry.js";
 import { bewerteAntworten, schwaechsteKategorie } from "./bewertung.js";
 import { baueStatus, dashboardHtml } from "./dashboard.js";
-import { fuehreRollbackAus, leseDeploy, pruefeRollback } from "./canary.js";
+import { fuehreRollbackAus, leseDeploy, pruefeRollback, DEPLOY_KEY } from "./canary.js";
+import { L } from "./lager.js";
 
 async function ladeEnvLocal() {
   try {
@@ -56,10 +57,10 @@ switch (befehl) {
   }
   case "bewerte": {
     const [version, jobId] = args;
-    const antworten = await e2.getJson(`con/evals/${version}/${jobId}/antworten.json`, null);
+    const antworten = await e2.getJson(`${L.evals}/${version}/${jobId}/antworten.json`, null);
     if (!antworten) throw new Error("antworten.json fehlt");
     const b = bewerteAntworten(antworten, await ladeSuiten(konfig.suitesDir));
-    await e2.putJson(`con/evals/${version}/${jobId}/bewertung.json`, b);
+    await e2.putJson(`${L.evals}/${version}/${jobId}/bewertung.json`, b);
     console.log(JSON.stringify({ gesamt: b.gesamt, kritisch: b.kritisch, kategorien: b.kategorien, leistung: b.leistung, schwaechste: schwaechsteKategorie(b), warnungen: b.warnungen, gefallen: b.faelleDetail.filter((f) => f.score < 1).map((f) => `${f.suite}/${f.id} ${f.score} ${f.gruende.join("; ").slice(0, 80)}`) }, null, 2));
     break;
   }
@@ -74,7 +75,7 @@ switch (befehl) {
     // Gruppe anlegen/aktualisieren OHNE Start (kostet nichts): prueft, ob Salad die Ressourcen (Speicher, RAM, GPU-Klassen) annimmt.
     if (!salad) throw new Error("Salad nicht konfiguriert");
     const { bereiteJobVor } = await import("./salad.js");
-    const r = await bereiteJobVor({ client: salad, konfig, e2: konfig.e2, jobId: "vorbereitung-ohne-start", modus: "messung", parameter: { CON_VERSION: "con-1.0.0" }, maxMinuten: 10, log });
+    const r = await bereiteJobVor({ client: salad, konfig, e2: konfig.e2, jobId: "vorbereitung-ohne-start", modus: "messung", parameter: { MUUNY_VERSION: "muuny-1.0" }, maxMinuten: 10, log });
     console.log(JSON.stringify({ vorbereitung: r, gruppe: await gruppenZustand(salad) }, null, 2));
     break;
   }
@@ -91,9 +92,9 @@ switch (befehl) {
     const probeVersion = `${d.stable}-rollback-probe`;
     const vorher = { stable: d.stable, canary: d.canary };
     d.canary = probeVersion; d.canarySeit = new Date().toISOString();
-    await e2.putJson("con/deploy.json", d);
+    await e2.putJson(DEPLOY_KEY, d);
     const metriken = { antworten: 50, fehlerrate: 0.4, sicherheitsvorfaelle: 0, kostenProAntwortUsd: 0.001, abstuerze: 0, probe: true, zeit: new Date().toISOString() };
-    await e2.putJson(`con/deploy-metriken/${probeVersion}.json`, metriken);
+    await e2.putJson(`${L.deployMetriken}/${probeVersion}.json`, metriken);
     const p = pruefeRollback(metriken);
     const r = await fuehreRollbackAus(e2, registry, d, p.gruende, log);
     const nachher = await leseDeploy(e2);
@@ -123,7 +124,7 @@ switch (befehl) {
       // "391" ist die vollstaendige richtige Antwort auf eine Rechenaufgabe. Die
       // Prosa-Schwelle von 8 Zeichen warf hier 3.084 korrekte Paare weg (gemessen 04.09.).
       // Die Richtigkeit dieser Daten haengt nicht an ihrer Laenge, sondern an
-      // tests/con-daten-generator.test.mjs, das jede Aufgabe nachrechnet.
+      // tests/muuny-daten-generator.test.mjs, das jede Aufgabe nachrechnet.
       mindestAntwortLaenge: 1,
       // Eigene Grenze fuer blanke Zahlen: "3" ist die vollstaendige richtige
       // Antwort auf beliebig viele Aufgaben, keine auswendig gelernte Floskel.
@@ -132,7 +133,7 @@ switch (befehl) {
       maxVariantenZahl: 80
     });
     const manifest = await veroeffentliche(e2, { name, paare, bericht,
-      quelle: { art: "erzeugt", generator: "workers/con-autopilot/daten/generator.mjs", startwert: Number(startwert) || 20260904, sha256: hashText(JSON.stringify(roh)) },
+      quelle: { art: "erzeugt", generator: "workers/muuny-autopilot/daten/generator.mjs", startwert: Number(startwert) || 20260904, sha256: hashText(JSON.stringify(roh)) },
       kategorien: ["reasoning", "sicherheit", "sprache", "werkzeuge", "allgemein"] });
     console.log(JSON.stringify({ name, paare: paare.length, bericht, sha256: manifest.dateien[0].sha256 }, null, 2));
     break;
@@ -151,8 +152,8 @@ switch (befehl) {
   }
   case "dashboard": {
     const html = dashboardHtml(await baueStatus({ konfig, e2, salad }));
-    await writeFile(args[0] || "con-dashboard.html", html);
-    console.log("geschrieben:", args[0] || "con-dashboard.html");
+    await writeFile(args[0] || "muuny-dashboard.html", html);
+    console.log("geschrieben:", args[0] || "muuny-dashboard.html");
     break;
   }
   default:

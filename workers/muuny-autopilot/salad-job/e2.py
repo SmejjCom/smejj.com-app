@@ -14,6 +14,7 @@ import boto3
 from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
 from botocore.exceptions import ClientError
+from lager import umg  # noqa: E402
 
 _LOCK = threading.Lock()
 _CLIENT = None
@@ -24,7 +25,7 @@ _BUCKET = None
 # Gemessen 03.09.: 4 Teile x 16 MiB ergaben nur ~5 MB/s vom Salad-Knoten nach e2.
 _TRANSFER = TransferConfig(multipart_threshold=64 * 1024 * 1024,
                            multipart_chunksize=32 * 1024 * 1024,
-                           max_concurrency=int(os.environ.get("CON_E2_PARALLEL", "10")),
+                           max_concurrency=int(umg("E2_PARALLEL", "10")),
                            use_threads=True)
 
 

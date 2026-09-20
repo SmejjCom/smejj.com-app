@@ -199,7 +199,7 @@ import { readFileSync as leseQuelle } from "node:fs";
 import { befundeFuerRohpaare } from "../scripts/check-abwehr-vielfalt.mjs";
 
 test("befundeFuerRohpaare: Vorlagen-Profil smejj-1-1 faellt durch, das handgeschriebene Profil smejj-1-11 besteht", async () => {
-  const { erzeuge } = await import("../workers/con-autopilot/daten/generator.mjs");
+  const { erzeuge } = await import("../workers/muuny-autopilot/daten/generator.mjs");
   const { echtePaare } = await import("../scripts/training/smejj-1-1-echte-paare.mjs");
   const vorlagen = [...echtePaare(), ...erzeuge({ startwert: 20260904, reasoning: 0, sicherheit: 2600, sprache: 0 })];
   assert.ok(befundeFuerRohpaare(vorlagen).length > 0, "Vorlagen muessen gesperrt bleiben");

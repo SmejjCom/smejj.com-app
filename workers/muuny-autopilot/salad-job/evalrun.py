@@ -20,6 +20,7 @@ import os
 import re
 import time
 import urllib.request
+from lager import umg  # noqa: E402
 
 THINK_RE = re.compile(r"<think>[\s\S]*?</think>\s*", re.IGNORECASE)
 
@@ -72,7 +73,7 @@ class TransformersWeg:
         from transformers import AutoTokenizer, BitsAndBytesConfig
         self.torch = torch
         self.tok = AutoTokenizer.from_pretrained(modellpfad)
-        ohne_quant = os.environ.get("CON_QUANT", "nf4") == "none"
+        ohne_quant = umg("QUANT", "nf4") == "none"
         quant = None if ohne_quant else BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4",
                                    bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True)
         dtype = torch.float32 if ohne_quant else torch.bfloat16
@@ -144,7 +145,7 @@ class TransformersWeg:
         except Exception:  # noqa: BLE001
             pass
         return {"weg": "transformers", "lader": self.lader, "modell": self.modellpfad,
-                "adapter": self.adapterpfad, "quantisierung": os.environ.get("CON_QUANT", "nf4"), "vramMaxMiB": vram}
+                "adapter": self.adapterpfad, "quantisierung": umg("QUANT", "nf4"), "vramMaxMiB": vram}
 
 
 def lade_suiten(verzeichnis):

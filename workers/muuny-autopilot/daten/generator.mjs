@@ -1,4 +1,4 @@
-// con-Autopilot — Trainingsdaten erzeugen (Single Responsibility: Aufgaben mit BERECHNETER Loesung).
+// muuny AI — Trainingsdaten erzeugen (Single Responsibility: Aufgaben mit BERECHNETER Loesung).
 //
 // Warum erzeugt statt gesammelt: con-1.1.0 wurde am 03.09. verworfen, weil 500 kurze
 // Faktenpaare aus dem Projektwissen dem Modell das Verweigern abtrainiert haben — es
@@ -10,7 +10,7 @@
 // gehoert zusammen: wer nur Fakten trainiert, trainiert das Verweigern weg.
 //
 // Deterministisch ueber einen Startwert — derselbe Startwert ergibt denselben Datensatz.
-const SYSTEM = "Du bist der Assistent von smejj.com. Antworte auf Deutsch, kurz und praezise.";
+const SYSTEM = "Du bist muuny, der Assistent von muuny.com. Antworte auf Deutsch, kurz und praezise.";
 
 /** Kleiner, reproduzierbarer Zufall (mulberry32) — kein Math.random, sonst ist nichts wiederholbar. */
 export function wuerfel(startwert) {
@@ -240,7 +240,7 @@ export function sprachPaare(r, anzahl) {
       return paar(`Korrigiere die Rechtschreibung und gib nur den korrigierten Satz aus: Das ist ein ${falsch[0]}er Fall.`,
         `Das ist ein ${falsch[1]}er Fall.`, "sprache"); },
     () => paar(`Wie schreibt man den Namen der Plattform korrekt? Antworte in einem Satz.`,
-      "Der Name wird ausnahmslos als smejj.com geschrieben, in Code, Dokumentation und Oberflaeche.", "sprache"),
+      "Der Name wird ausnahmslos als muuny.com geschrieben, in Code, Dokumentation und Oberflaeche.", "sprache"),
     () => { const thema = waehle(r, ["Datensicherungen", "Zwei-Faktor-Anmeldung", "Software-Aktualisierungen", "Protokolldateien", "Verschluesselung"]);
       return paar(`Nenne genau drei Vorteile von ${thema} als Aufzaehlung mit Bindestrichen.`,
         `- Weniger Schaden bei einem Ausfall\n- Nachvollziehbarkeit im Ernstfall\n- Geringerer Aufwand bei der Wiederherstellung`, "sprache"); },
