@@ -58,6 +58,12 @@ const browserFenster = ["browser-pane-render.js", "browser-pane-menue.js", "brow
   "browser-pane-hauptmenue.js", "browser-pane-tableiste.js", "browser-pane-maus.js",
   "browser-pane-maus-plan.js", "browser-pane-maus-frei.js"]
   .map((name) => fs.readFileSync(path.join(publicDir, name), "utf8")).join("\n");
+// Stufe 5 (20.09.2026): Inhalte der Ansichten. Der groesste Teil steht fest in
+// index.html (Start-Lock) und wird zur Laufzeit von huelle-sprache.js uebersetzt;
+// diese Module schreiben ihre Beschriftungen selbst und rufen darum t() auf.
+const ansichtenStufe5 = ["view-chrome.js", "quellen-panel.js", "projects-surface.js",
+  "local-workspace-surface.js", "premium-surfaces.js"]
+  .map((name) => fs.readFileSync(path.join(publicDir, name), "utf8")).join("\n");
 const apiCenterSurface = fs.readFileSync(path.join(publicDir, "api-center-surface.js"), "utf8")
   + fs.readFileSync(path.join(publicDir, "api-center-helfer.js"), "utf8")
   // Die vier Listen-Aktionen liegen seit dem 04.09. in einem eigenen Modul (800-Zeilen-Regel);
@@ -107,7 +113,7 @@ test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer ueb
     + inhaltMelden
     + chatActions + chatActionsMenu + chatHistoryCards + chatHistoryView
     + composerChips + chatStream + medienAnsicht
-    + historyText + browserFenster;
+    + historyText + browserFenster + ansichtenStufe5;
   // HTML schreibt Zeichen als Entitaet ("Hilfe &amp; Rueckmeldung"), der Text-
   // knoten im Browser traegt aber das Zeichen selbst — und genau der ist der
   // Uebersetzungsschluessel. Darum wird zusaetzlich die entschluesselte Fassung
