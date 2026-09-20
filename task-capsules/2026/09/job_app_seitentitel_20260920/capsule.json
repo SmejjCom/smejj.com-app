@@ -1,0 +1,19 @@
+{
+  "job_id": "job_app_seitentitel_20260920",
+  "datum": "2026-09-20",
+  "typ": "Fix + Auslieferung",
+  "titel": "Seitentitel und Ueberschriften der Ansichten in 14 Sprachen (SW v917)",
+  "vorgaenger": "job_app_geraetetest_20260920",
+  "auftrag": "Betreiber 20.09.: 'Mach die Seitentitel auch noch in allen Sprachen fertig'",
+  "loesung": "view-title.js uebersetzt Ueberschrift + document.title beim Ansichtswechsel, Quelle gemerkt; index.html unberuehrt; 12 Schluessel x 14 Sprachen",
+  "commits": {
+    "app": "3c458b32",
+    "bauzweig": "f88f6a6f",
+    "frontend": "a1f0bdd"
+  },
+  "anker": "schutz-100-2026-09-20-app-v917",
+  "nachtest": "Pages-Kopie lokal (EN + DE), live Chrome v917 (EN + JA, Wechsel ohne Reste)",
+  "lehre": "public/assets ist ein Teil-Spiegel — lokale Probe braucht echte Pages-Kopie",
+  "bericht": "docs/qa/app-a-bis-z-2026-09-19.md",
+  "rollback": "schutz-100-2026-09-20-app-v916*"
+}
