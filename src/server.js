@@ -179,8 +179,7 @@ const bildExternRoutes = createBildExternRoutes({ env: process.env, readSession,
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host}`);
-    // HSTS (E2E 14.09.2026): nur hinter dem HTTPS-Proxy (x-forwarded-proto), damit lokale
-    // http-Tests unberuehrt bleiben; ohne includeSubDomains, nur dieser Host.
+    // HSTS (E2E 14.09.2026): nur hinter dem HTTPS-Proxy, lokale http-Tests bleiben unberuehrt; ohne includeSubDomains.
     if (String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim() === "https") res.setHeader("Strict-Transport-Security", "max-age=15552000");
     if (await handlePublicApiRoute(req, url, res)) return; // /v1: Bearer statt Sitzung, muss VOR allem stehen (Grund dort)
     if (url.pathname.startsWith("/api/")) {
@@ -303,9 +302,7 @@ const server = http.createServer(async (req, res) => {
     if (await handleSupportRoute(req, url, res)) return;
     // Daten-Schwungrad Stufe 1: Daumen-Signale der Nutzer — feedbackRoutes.js.
     if (await handleFeedbackRoute(req, url, res)) return;
-    // Anstoessige KI-Inhalte melden — Pflicht der Google-Play-Richtlinie fuer
-    // KI-generierte Inhalte (Ablehnung 20.09.2026): inhaltMeldungRoutes.js.
-    if (await handleInhaltMeldungRoute(req, url, res)) return;
+    if (await handleInhaltMeldungRoute(req, url, res)) return; // KI-Inhalte melden: Pflicht der Google-Play-Richtlinie (Ablehnung 20.09.2026)
     // Adminbereich, Transparenzbericht, Einwilligung — Zustaendigkeit: adminSurfaceRoutes.js.
     if (await handleAdminSurface(req, url, res, { readSession, sessionStillValid })) return;
     // Adminbereich Stufe 1 (nur lesend): ohne frische Adminrolle aus dem Store => 403.
@@ -458,7 +455,6 @@ const GESTARTET_AM = new Date().toISOString();
 
 async function handleHealth(res, angemeldet = false) { // anonym ohne Innenleben (S6, anonymMaske.js)
   // ai spiegelt den echten Router-Zustand: Gate + Budget + Provider-Kette (fail-closed).
-  //
   // Proben im Hintergrund: ein ausgelastetes Hausmodell liess sonst Zeabur diesen Server ungesund melden (13.09.).
   void refreshModelRuntimeHealth(process.env).catch(() => {});
   const aiStatus = evaluateAiAvailability(process.env);
@@ -761,10 +757,8 @@ async function handleStorageStatus(res) {
     bucket,
     prefix: normalizedPrefix,
     objectCount: keys.length,
-    // E2E-Sicherheitspruefung 14.09.2026: hier stand die komplette Liste der
-    // Objektschluessel (158 interne Modell-Dateipfade) — sichtbar fuer JEDEN
-    // angemeldeten Nutzer ueber "IDrive e2 pruefen". Die Oberflaeche braucht nur
-    // die Anzahl; die Liste bleibt dem Admin-Speicherbereich vorbehalten.
+    // E2E-Sicherheitspruefung 14.09.2026: hier stand die ganze Liste der Objektschluessel (158 interne Modell-Dateipfade),
+    // sichtbar fuer JEDEN angemeldeten Nutzer. Die Oberflaeche braucht nur die Anzahl; die Liste bleibt dem Admin-Bereich.
     storageRole: STORAGE.role
   });
 }
