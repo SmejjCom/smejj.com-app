@@ -54,7 +54,7 @@ const chatStream = fs.readFileSync(path.join(publicDir, "ai", "chat-stream.js"),
 const medienAnsicht = fs.readFileSync(path.join(publicDir, "chat-medien-ansicht.js"), "utf8");
 // Stufe 3 (20.09.2026): Verlauf-Inhalte, Browser-Fenster und Maus.
 const historyText = fs.readFileSync(path.join(publicDir, "chat-history-text.js"), "utf8");
-const browserFenster = ["browser-pane-render.js", "browser-pane-sicherheit.js", "browser-pane-menue.js", "browser-pane-nachrichten.js",
+const browserFenster = ["browser-pane-render.js", "browser-pane-sicherheit.js", "browser-pane-suche.js", "google-login.js", "browser-pane-menue.js", "browser-pane-nachrichten.js",
   "browser-pane-hauptmenue.js", "browser-pane-tableiste.js", "browser-pane-maus.js",
   "browser-pane-maus-plan.js", "browser-pane-maus-frei.js"]
   .map((name) => fs.readFileSync(path.join(publicDir, name), "utf8")).join("\n");
