@@ -17,7 +17,7 @@ function menueLabels() {
   const anfang = quelle.indexOf("const ITEMS");
   const ende = quelle.indexOf("const BAR_SPECS");
   const teil = quelle.slice(anfang, ende) + quelle.slice(quelle.indexOf("const MENU_KOPF"), quelle.indexOf("const MENU_KOPF") + 900);
-  return [...new Set([...teil.matchAll(/label: "([^"]+)"/g)].map((m) => m[1]))];
+  return [...new Set([...teil.matchAll(/label: (?:t\()?"([^"]+)"\)?/g)].map((m) => m[1]))];
 }
 
 test("jedes Label des Nachrichten-Menues hat eine Uebersetzung in allen 14 Sprachen", async () => {
