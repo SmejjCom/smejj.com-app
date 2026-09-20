@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-20T22:38:04.060Z",
+  "frozenAt": "2026-09-20T23:12:03.143Z",
   "confirmation": "Betreiber 20.09.2026 schriftlich im Chat: 'Jetzt die restlichen deutschen Texte uebersetzen' / 'Checke nochmal alles von A bis Z, ob noch was deutsch ist' / 'alle Stufen'. Stufe 5 (letzte): Inhalte der Ansichten uebersetzbar gemacht; an index.html nur die ?v=-Marken der geaenderten Module, kein Markup, kein Design.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "698299548ef54dc15c688785b9850493bc120a9c8b96b3dde3b9063d9b797123",
+    "public/index.html": "c6124324714fde30da9a25357bf93c144b6aeb9823e7ac21cdb2070a078a3d17",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "f78f9b57ebabbb9798ecf9142dfedd110094e85df676f86b18917c61e24fd3bc",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "0d8a65b337feedfda9ef833a64e9f8e14b9476df65e226dee2928a8149a7e2d5",
+    "public/sw.js": "e635280303b727b64851ad60f76e47185e3dde3565d5a745ce8868fdf79e6a6c",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
