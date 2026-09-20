@@ -42,8 +42,6 @@ const API_PATHS = {
   voiceTranscribeFallback: "https://api.smejj.com/api/voice/transcribe",
   authConfig: "/api/auth/config",
   browserFetch: "/api/browser/fetch",
-  // Die Proxy-Seite als eigenes Dokument (eigene Sicherheitsregel statt der geerbten — 20.09.).
-  browserPage: "/api/browser/page",
   browserRemote: "/api/browser/remote",
   // Nur-Plan-Route der Maus: der Server plant und prueft, das Panel faehrt.
   mausRun: "/api/maus/run",
