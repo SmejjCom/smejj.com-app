@@ -52,6 +52,12 @@ const chatHistoryView = fs.readFileSync(path.join(publicDir, "chat-history-view.
 const composerChips = fs.readFileSync(path.join(publicDir, "composer-anhang-chips.js"), "utf8");
 const chatStream = fs.readFileSync(path.join(publicDir, "ai", "chat-stream.js"), "utf8");
 const medienAnsicht = fs.readFileSync(path.join(publicDir, "chat-medien-ansicht.js"), "utf8");
+// Stufe 3 (20.09.2026): Verlauf-Inhalte, Browser-Fenster und Maus.
+const historyText = fs.readFileSync(path.join(publicDir, "chat-history-text.js"), "utf8");
+const browserFenster = ["browser-pane-render.js", "browser-pane-menue.js", "browser-pane-nachrichten.js",
+  "browser-pane-hauptmenue.js", "browser-pane-tableiste.js", "browser-pane-maus.js",
+  "browser-pane-maus-plan.js", "browser-pane-maus-frei.js"]
+  .map((name) => fs.readFileSync(path.join(publicDir, name), "utf8")).join("\n");
 const apiCenterSurface = fs.readFileSync(path.join(publicDir, "api-center-surface.js"), "utf8")
   + fs.readFileSync(path.join(publicDir, "api-center-helfer.js"), "utf8")
   // Die vier Listen-Aktionen liegen seit dem 04.09. in einem eigenen Modul (800-Zeilen-Regel);
@@ -100,7 +106,8 @@ test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer ueb
     + schritteAnzeige + arbeitsflaeche + fuehrung
     + inhaltMelden
     + chatActions + chatActionsMenu + chatHistoryCards + chatHistoryView
-    + composerChips + chatStream + medienAnsicht;
+    + composerChips + chatStream + medienAnsicht
+    + historyText + browserFenster;
   // HTML schreibt Zeichen als Entitaet ("Hilfe &amp; Rueckmeldung"), der Text-
   // knoten im Browser traegt aber das Zeichen selbst — und genau der ist der
   // Uebersetzungsschluessel. Darum wird zusaetzlich die entschluesselte Fassung

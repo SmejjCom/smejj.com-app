@@ -145,9 +145,16 @@ test("?v=-Marken zeigen auf DIESELBE Kopie wie index.html", () => {
 });
 
 test("alle 14 Sprachen kennen die Vorlage", () => {
+  // Seit dem 20.09.2026 liegt jedes Woerterbuch in ZWEI Dateien: die
+  // Uebersetzungen wuchsen ueber die 800-Zeilen-Regel hinaus, darum laedt
+  // <code>.js den zweiten Teil <code>-2.js. Geprueft wird deshalb der
+  // gemeinsame Bestand, nicht eine einzelne Datei.
   for (const code of ["en", "es", "fr", "it", "pt", "ru", "tr", "id", "hi", "bn", "ar", "ja", "ko", "zh"]) {
-    const datei = fs.readFileSync(`public/i18n/${code}.js`, "utf8");
-    assert.ok(datei.includes('"Erledige mit der Maus im Browser:"'), `${code} fehlt`);
+    const teile = [`public/i18n/${code}.js`, `public/i18n/${code}-2.js`]
+      .filter((pfad) => fs.existsSync(pfad))
+      .map((pfad) => fs.readFileSync(pfad, "utf8"))
+      .join("\n");
+    assert.ok(teile.includes('"Erledige mit der Maus im Browser:"'), `${code} fehlt`);
   }
 });
 
