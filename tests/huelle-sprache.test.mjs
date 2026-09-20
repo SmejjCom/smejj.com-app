@@ -34,8 +34,28 @@ test("fail-safe: ohne Uebersetzung bleibt der deutsche Text stehen", () => {
 });
 
 test("deutsche Oberflaeche wird nicht angefasst", () => {
-  assert.match(quelle, /uiLanguage\(\)/);
   assert.match(quelle, /startsWith\("de"\)/);
+});
+
+// GEMESSEN 20.09.2026 mit leerem Speicher (Zuarbeit der Play-Sitzung): beim
+// ERSTEN Besuch in einer neuen Sprache liefert t() noch den deutschen
+// Quelltext, weil die Sprachdatei erst im Hintergrund laedt. uiLanguage() steht
+// in diesem Moment auf "de". Wer die Sperre daran haengt, steigt genau bei den
+// Nutzern aus, fuer die das Modul gebaut ist — und haengt die Wache nie ein:
+// die Huelle bliebe die ganze Sitzung deutsch.
+test("die Sperre fragt die GESPEICHERTE Wahl, nicht die gerade geladene Sprache", () => {
+  assert.match(quelle, /import \{[^}]*savedUiLanguage[^}]*\} from "\.\/i18n\/ui\.js/);
+  assert.match(quelle, /savedUiLanguage\(\) \|\| "de"/);
+  const codeOhneKommentare = quelle.replace(/\/\/[^\n]*/g, "");
+  assert.ok(!/\buiLanguage\(/.test(codeOhneKommentare), "uiLanguage() darf im Code nicht mehr entscheiden");
+});
+
+test("nach dem Nachladen der Sprachdatei wird einmal nachgezogen", () => {
+  const ui = fs.readFileSync(path.join(wurzel, "public", "i18n", "ui.js"), "utf8");
+  assert.match(ui, /new CustomEvent\("smejj:sprache"/, "ui.js meldet den Sprachwechsel nicht");
+  // Beide Wege muessen melden: die geladene Sprache UND der Rueckfall auf Deutsch.
+  assert.ok(ui.split("meldeSprache(").length - 1 >= 3, "nicht jeder Ausgang von loadUiLanguage meldet");
+  assert.match(quelle, /addEventListener\("smejj:sprache"/, "die Huelle zieht nicht nach");
 });
 
 test("die Huelle wird geladen und liegt im Offline-Vorrat", () => {
