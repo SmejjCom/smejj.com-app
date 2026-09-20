@@ -42,8 +42,7 @@ if (typeof document !== "undefined") {
   // Erweitertes Nachrichten-Menue (Betreiber 16.09.: Teilen, Antworten, Zitieren, Weiterleiten,
   // Text auswaehlen, Uebersetzen, Anpinnen) — die Handler leben dort, chat-actions.js steht bei 799 Zeilen.
   import("/assets/chat-menue-mehr.js").catch(() => {});
-  // "Inhalt melden" (Google-Play-Richtlinie fuer KI-generierte Inhalte, Ablehnung 20.09.2026):
-  // ohne dieses Modul ist der Menuepunkt tot — und die App wieder nicht richtlinienkonform.
+  // "Inhalt melden" (Google-Play-Pflicht): ohne dieses Modul ist der Menuepunkt tot.
   import("/assets/inhalt-melden.js").catch(() => {});
   // Verlauf steht nach dem Oeffnen ganz unten (Betreiber-Befund 03.09.) — erst, wenn ein Chat im Log steht.
   beiKindern(document.getElementById("startLog"), () => import("/assets/verlauf-unten.js").catch(() => {}));
@@ -94,9 +93,8 @@ const MEHR = Object.freeze({
   forward: { act: "forward", label: "Weiterleiten", icon: "forward" },
   translate: { act: "translate", label: "Übersetzen", icon: "translate" },
   select: { act: "select-text", label: "Text auswählen", icon: "select" },
-  // Pflicht der Google-Play-Richtlinie fuer KI-generierte Inhalte (Ablehnung 20.09.2026):
-  // Nutzer muessen anstoessige KI-Inhalte melden koennen, OHNE die App zu verlassen.
-  // Steht nur bei Antworten — gemeldet wird, was die KI erzeugt hat, nicht die eigene Frage.
+  // Google-Play-Pflicht fuer KI-Inhalte (Ablehnung 20.09.2026): melden ohne die App zu
+  // verlassen. Nur bei Antworten — die eigene Frage hat keine KI erzeugt.
   melden: { act: "report", label: "Inhalt melden", icon: "flag", danger: true }
 });
 
@@ -254,7 +252,7 @@ const ICONS = Object.freeze({
   quote: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11h4v6H4v-5a6 6 0 0 1 3-5"/><path d="M15 11h4v6h-5v-5a6 6 0 0 1 3-5"/></svg>',
   forward: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0-6 6v5"/></svg>',
   translate: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h9"/><path d="M8.5 3v2"/><path d="M11 5c-1 4-3.5 7-7 9"/><path d="M6 9c1.5 2.5 3.5 4 6 5"/><path d="m13 21 4-9 4 9"/><path d="M14.5 18h5"/></svg>',
-  flag: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 5h10l-1.5 3L15 11H5"/></svg>',
+  flag: '<svg viewBox="0 0 24 24"><path d="M5 21V4h10l-1.5 3L15 11H5"/></svg>',
   select: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H5v3"/><path d="M16 4h3v3"/><path d="M8 20H5v-3"/><path d="M16 20h3v-3"/><path d="M9 10h6"/><path d="M9 14h4"/></svg>'
 });
 

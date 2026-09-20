@@ -32,13 +32,18 @@ test("Menuepunkt 'Inhalt melden' steht bei Antworten, nicht bei eigenen Fragen",
   assert.ok(!frage.includes("report"), "die eigene Frage hat keine KI erzeugt");
 });
 
-test("Verdrahtung: nachgeladen, im Precache, gleiche Marke, Stil im Buendel", () => {
+test("Verdrahtung: nachgeladen, im Precache, gleiche Marke, Stil im Modul", () => {
   assert.match(menue, /import\("\/assets\/inhalt-melden\.js"\)\.catch\(\(\) => \{\}\)/);
   assert.ok(sw.includes('"/assets/inhalt-melden.js"'), "fehlt im Precache — offline tot");
   const marke = /chat-actions-menu\.js\?v=(\d+)/.exec(actions)?.[1];
   assert.ok(modul.includes(`/assets/chat-actions-menu.js?v=${marke}`), "gleiche Marke, sonst zweite Modulinstanz");
-  assert.ok(css.includes(".melden-kasten"), "Stil fehlt");
-  assert.ok(buendel.includes(".melden-kasten"), "Stil nicht im gebuendelten start-styles.css — live unsichtbar");
+  // Der Stil haengt IM Modul und wird erst beim Oeffnen eingesetzt: die Startseite steht dicht
+  // unter der Messlatte (check-startgewicht.mjs), ein selten geoeffneter Dialog gehoert nicht ins
+  // Startgewicht. Er darf deshalb gerade NICHT im Buendel stehen.
+  assert.ok(modul.includes(".melden-kasten{"), "Stil fehlt im Modul — Dialog waere ungestylt");
+  assert.ok(modul.includes("sorgeFuerStil"), "Stil wird nicht eingehaengt");
+  assert.ok(!buendel.includes(".melden-kasten"), "Stil gehoert NICHT ins Startbuendel (Startgewicht)");
+  assert.ok(!css.includes(".melden-kasten"), "Stil gehoert nicht in die gebuendelte CSS-Quelle");
 });
 
 test("Nutzlast: Grund geprueft, Text ohne Markdown, Laengen begrenzt", () => {
