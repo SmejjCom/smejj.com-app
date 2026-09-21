@@ -26,7 +26,10 @@ Seite erledigt und in App Store Connect gespeichert — es fehlt nur dieses Vide
 
 1. **Start vom Home-Bildschirm.** Erst den Home-Bildschirm zeigen, dann das
    App-Symbol antippen. Apple verlangt ausdrücklich, dass die Aufnahme mit dem
-   Starten der App beginnt.
+   Starten der App beginnt. **Danach 2–3 Sekunden warten, bevor du etwas
+   antippst** — direkt nach dem Start lädt die App ihre neue Fassung, und der
+   allererste Tipp kann ins Leere gehen (am Gerät gemessen). Im Video sähe das
+   aus wie ein Fehler.
 2. **Erste Frage ohne Konto.** Auf der Startseite ins Feld „Ask me anything"
    tippen, etwas Englisches eingeben, zum Beispiel
    `What is the capital of Portugal?` → Pfeil antippen → warten, bis die
