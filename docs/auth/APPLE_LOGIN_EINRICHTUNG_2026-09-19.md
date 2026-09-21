@@ -20,10 +20,13 @@ die Routen antworten 503. Es kann also nichts kaputtgehen, wenn vorher ausgelief
   Return URL `https://api.smejj.com/api/auth/apple/callback` — gespeichert und
   gegengeprüft.
 
-**Es fehlen genau zwei Handgriffe, und beide gehören dir**, weil sie einen geheimen
-Schlüssel anfassen: den `.p8`-Schlüssel erzeugen (Schritt 3) und die vier Variablen auf
-Zeabur setzen. Einen privaten Schlüssel gebe ich weder in ein Formular ein noch lade ich
-ihn herunter.
+**Es fehlt genau EIN Handgriff:** die vier Variablen auf Zeabur setzen. Dafür gibt es
+den Doppelklick **„smejj.com Apple-Login fertigstellen.command"** — er nennt dir die drei
+kurzen Werte, legt den langen Schlüssel in die Zwischenablage, öffnet Zeabur und prüft
+danach selbst nach, ob der Server „apple: true" meldet.
+
+Warum nicht automatisch: Der private Schlüssel ist ein Geheimnis; ich gebe ihn in kein
+Formular ein. Und bei Zeabur sind wir nicht angemeldet — diese Anmeldung gehört dir.
 
 ## Ablauf für Nutzer
 
@@ -46,7 +49,11 @@ Portal: developer.apple.com → Account → Certificates, IDs & Profiles.
    → Sign in with Apple → Configure mit Domain und Return URL.~~
    **Am 21.09.2026 erledigt** — `com.smejj.web`, Domain `api.smejj.com`, Return URL
    `https://api.smejj.com/api/auth/apple/callback`.
-3. **Schlüssel — DEIN Handgriff, offen.** developer.apple.com → Certificates, IDs &
+3. ~~**Schlüssel**~~ **Am 21.09.2026 erledigt.** Key „smejj web login",
+   **Key-ID `5833LBVT26`**, Datei liegt als `~/Downloads/AuthKey_5833LBVT26.p8`.
+   Apple bietet sie nur EINMAL an — nicht löschen, eine Sicherung anlegen.
+
+   ~~Der frühere Weg:~~ developer.apple.com → Certificates, IDs &
    Profiles → **Keys** → **+** → Name „smejj web login", **Sign in with Apple** anhaken →
    Configure → Primary App ID `smejj (443R27FNHX.com.smejj.app)` → Save → Continue →
    Register → **`.p8` herunterladen (nur EINMAL möglich!)** und die **Key-ID** notieren
@@ -58,7 +65,7 @@ Portal: developer.apple.com → Account → Certificates, IDs & Profiles.
 |---|---|
 | `SMEJJ_APPLE_LOGIN_SERVICES_ID` | `com.smejj.web` (steht fest, am 21.09. angelegt) |
 | `SMEJJ_APPLE_LOGIN_TEAM_ID` | `443R27FNHX` |
-| `SMEJJ_APPLE_LOGIN_KEY_ID` | Key-ID aus Schritt 3 |
+| `SMEJJ_APPLE_LOGIN_KEY_ID` | `5833LBVT26` (steht fest seit 21.09.) |
 | `SMEJJ_APPLE_LOGIN_PRIVATE_KEY` | Inhalt der `.p8` (PEM mit echten Zeilenumbrüchen, mit `\n` in einer Zeile, oder Base64 der Datei) |
 
 Variablen **nicht über den Roh-Editor löschen/ersetzen** (14.08.: zweimal die Control-Umgebung
