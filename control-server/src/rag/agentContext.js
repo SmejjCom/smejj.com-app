@@ -10,10 +10,9 @@ import { buildRagContextFromIndex, searchRagIndex } from "./ragContextBlock.js";
 // mit in den Index. Vorher schrieb der Harvester in eine Ablage, die niemand
 // las — jetzt weiss der Agent Neues, ohne dass jemand trainiert oder deployt.
 import { ladeErnteChunks } from "../autopilots/realtimeInternetHarvesterAutopilot.js";
-// smejj ai radar (Spur 2, 21.09.2026): die GEPRUEFTEN Wissenseintraege der
-// Recherche. Sie tragen Quelle, Stand und Pruefstatus im Text — damit der Agent
-// sagen kann, woher etwas stammt und wie sicher es ist.
-import { ladeRadarChunks } from "../autopilots/aiRadarAutopilot.js";
+// smejj ai radar hat einen eigenen Index mit eigener Schwelle (radarKontext.js);
+// hier nur durchgereicht, damit der Server EINE Wissensquelle einbindet.
+export { baueRadarKontext as radarKontextVon } from "./radarKontext.js";
 
 const INDEX_TTL_MS = 300_000; // 5 Minuten — Projektwissen aendert sich selten pro Sitzung.
 let cache = null;
@@ -24,8 +23,10 @@ export async function ensureKnowledgeIndex(projectRoot) {
     // Fail-soft ([] bei jedem Fehler): eine kranke Ernte-Ablage darf den
     // Repo-Index nie mitreissen — weniger Wissen ist kein kaputtes Wissen.
     const ernte = await ladeErnteChunks().catch(() => []);
-    const radar = await ladeRadarChunks().catch(() => []);
-    cache = { projectRoot, builtAt: Date.now(), index: buildIndex([...chunks, ...ernte, ...radar]) };
+    // smejj ai radar hat einen EIGENEN Weg (rag/radarKontext.js): seine kurzen
+    // tagesaktuellen Saetze erreichen die Schwelle dieses Index nie (gemessen
+    // 21.09.2026: Wert 3 gegen Schwelle 20) und wuerden hier nur verschwinden.
+    cache = { projectRoot, builtAt: Date.now(), index: buildIndex([...chunks, ...ernte]) };
   }
   return cache.index;
 }
