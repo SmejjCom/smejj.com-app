@@ -2,8 +2,8 @@
   "hinweis": "Fingerabdruck je Modul und Marke. Aendert sich der Inhalt, MUSS die Marke steigen.",
   "module": {
     "account-sessions.js": {
-      "marke": "b47",
-      "finger": "5e3495cba6a9e147"
+      "marke": "b48",
+      "finger": "e7d44caef1e65189"
     },
     "language-options.js": {
       "marke": "1",
@@ -78,8 +78,8 @@
       "finger": "518d644a4f3dc1f4"
     },
     "premium-surfaces.js": {
-      "marke": "b47v-6",
-      "finger": "7a8111b0e77ea6d6"
+      "marke": "b47v-7",
+      "finger": "063b29db5297ca62"
     },
     "composer-tools.js": {
       "marke": "werkzeuge-30",
@@ -398,8 +398,8 @@
       "finger": "224dace78b92459e"
     },
     "app.js": {
-      "marke": "model-picker-20260721",
-      "finger": "6c56af8fd390f018"
+      "marke": "model-picker-20260722",
+      "finger": "ff843234ec8d52f5"
     },
     "pwa-schnellstart.js": {
       "marke": "25",
@@ -414,8 +414,8 @@
       "finger": "3215e3b4b11aac80"
     },
     "profile-dock.js": {
-      "marke": "profile-dock-20260717-5",
-      "finger": "442942232d3d9868"
+      "marke": "profile-dock-20260717-6",
+      "finger": "4122dc20e84e5d91"
     },
     "chat-actions.js": {
       "marke": "b79",
@@ -458,16 +458,16 @@
       "finger": "e5c29e44da13a400"
     },
     "account-privacy.js": {
-      "marke": "4",
-      "finger": "9b8bc6ff7d0d75f5"
+      "marke": "5",
+      "finger": "8fdd3410e5affc5d"
     },
     "auth-gate.js": {
       "marke": "8",
       "finger": "92d706e95e9e2015"
     },
     "profile-dock-menu.js": {
-      "marke": "b51",
-      "finger": "34b3c8138f7bef3b"
+      "marke": "b52",
+      "finger": "c8667e8a434d9cca"
     },
     "quellen-panel.js": {
       "marke": "2",

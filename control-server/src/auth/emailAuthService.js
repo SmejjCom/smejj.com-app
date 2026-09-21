@@ -4,8 +4,8 @@
 import crypto from "node:crypto";
 import { hashPassword, passwordPolicyError, verifyPassword } from "./passwordHash.js";
 import {
-  addSessionToRecord, createUserRecord, findSession, getUserByEmail, hashToken,
-  isSessionDead, normalizeEmail, putUser, revokeSessions
+  DEFAULT_ROLE, addSessionToRecord, createUserRecord, findSession, getUserByEmail, hashToken,
+  isSessionDead, newUserId, normalizeEmail, putUser, revokeSessions
 } from "./emailUserStore.js";
 import { mailerConfig, sendAuthMail } from "./mailer.js";
 
@@ -196,15 +196,74 @@ export async function exportAccountData({ email }, env = process.env) {
   };
 }
 
-export async function deleteAccount({ email, password, confirmText }, env = process.env) {
-  // Zusaetzliche Sicherheitsbestaetigung: aktuelles Passwort UND woertliche Bestaetigung.
-  if (String(confirmText || "").trim() !== "KONTO LÖSCHEN") {
+/**
+ * Woertliche Loeschbestaetigung.
+ *
+ * Die Oberflaeche zeigt das Wort in der Sprache der Huelle (14 Sprachen seit
+ * i18n-Stufe 5). Bis zum 21.09.2026 verglich der Server hart gegen die deutsche
+ * Fassung — wer die App auf Englisch benutzte, sah "DELETE ACCOUNT", tippte es
+ * ab und bekam `delete_confirmation_required`. Beide Fassungen sind gueltig;
+ * verglichen wird in Grossschreibung, damit Tastaturen ohne Feststelltaste
+ * niemanden aussperren.
+ */
+const LOESCH_BESTAETIGUNGEN = new Set(["KONTO LÖSCHEN", "DELETE ACCOUNT"]);
+
+function loeschBestaetigt(confirmText) {
+  return LOESCH_BESTAETIGUNGEN.has(String(confirmText || "").trim().toLocaleUpperCase("de-DE"));
+}
+
+/**
+ * Grabstein fuer ein passwortloses Konto (Google, GitHub, Passkey).
+ *
+ * Diese Anmeldewege legen im Nutzerregister gar keinen Datensatz an — die
+ * Sitzung ist zustandslos signiert. Ohne Grabstein waere die Loeschung nicht
+ * nachweisbar; mit ihm bleibt sie auditierbar wie bei E-Mail-Konten.
+ */
+function grabsteinFuerPasswortlosesKonto({ email, name, method }) {
+  const jetzt = new Date().toISOString();
+  return {
+    version: 1,
+    userId: newUserId(),
+    email: normalizeEmail(email),
+    name: String(name || "").slice(0, 120),
+    method: String(method || "external"),
+    passwordHash: null,
+    emailVerifiedAt: null,
+    role: DEFAULT_ROLE,
+    status: "deleted",
+    createdAt: jetzt,
+    updatedAt: jetzt,
+    verify: null,
+    reset: null,
+    loginGuard: { failedCount: 0, lockedUntil: null },
+    sessions: []
+  };
+}
+
+/**
+ * Konto loeschen.
+ *
+ * `method` ist der Anmeldeweg der laufenden Sitzung, nicht die Wahl des
+ * Aufrufers — die Route reicht ihn aus dem geprueften Sitzungstoken durch.
+ * Fuer "email" bleibt die Zwei-Stufen-Bremse (Passwort UND Wort). Fuer die
+ * passwortlosen Wege KANN es kein Passwort geben; dort ist der Nachweis die
+ * gueltige Sitzung plus das Wort. Apple verlangt in Richtlinie 5.1.1(v), dass
+ * die Loeschung in der App startbar ist — vorher endete sie fuer diese Konten
+ * mit `account_delete_requires_email_login` und lief nur ueber den Support.
+ */
+export async function deleteAccount({ email, password, confirmText, name, method = "email" }, env = process.env) {
+  if (!loeschBestaetigt(confirmText)) {
     return { ok: false, status: 400, error: "delete_confirmation_required" };
   }
-  const record = await getUserByEmail(email, env);
-  if (!record?.passwordHash) return { ok: false, status: 404, error: "account_not_found" };
-  if (!(await verifyPassword(String(password || ""), record.passwordHash))) {
-    return { ok: false, status: 403, error: "current_password_invalid" };
+  const passwortlos = String(method || "email") !== "email";
+  const record = passwortlos
+    ? (await getUserByEmail(email, env)) || grabsteinFuerPasswortlosesKonto({ email, name, method })
+    : await getUserByEmail(email, env);
+  if (!passwortlos) {
+    if (!record?.passwordHash) return { ok: false, status: 404, error: "account_not_found" };
+    if (!(await verifyPassword(String(password || ""), record.passwordHash))) {
+      return { ok: false, status: 403, error: "current_password_invalid" };
+    }
   }
   // Soft-Delete (append-only-Philosophie): Login unmoeglich, Sessions beendet,
   // Tombstone bleibt auditierbar. Endgueltige Objektloeschung ist ein separater,
@@ -213,9 +272,10 @@ export async function deleteAccount({ email, password, confirmText }, env = proc
   record.deletedAt = new Date().toISOString();
   record.verify = null;
   record.reset = null;
+  record.status = "deleted";
   revokeSessions(record);
   await putUser(record, env);
-  return { ok: true, status: 200, deleted: true };
+  return { ok: true, status: 200, deleted: true, method: record.method };
 }
 
 function requireVerifiedEmail(env = process.env) {

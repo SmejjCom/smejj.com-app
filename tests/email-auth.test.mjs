@@ -248,6 +248,73 @@ test("Konto löschen: nur mit Passwort und wörtlicher Bestätigung, Soft-Delete
   assert.equal(record.passwordHash, null);
 });
 
+test("Route: der Anmeldeweg kommt aus der Sitzung, NIE aus dem Rumpf", async () => {
+  // Sonst haette ein E-Mail-Konto die Passwortpruefung mit method:"google"
+  // umgehen koennen — die Route darf dem Rumpf hier nichts glauben.
+  const email = "rumpf-probe@example.com";
+  await registerUser({ email, password: PASSWORD, origin: "https://smejj.com" }, ENV);
+  let currentUser = { email, sid: "s_test", method: "email", name: "Probe" };
+  const ctx = {
+    env: ENV,
+    readJson: async (req) => req.__body || {},
+    json: (res, status, payload) => { res.__status = status; res.__payload = payload; },
+    readSession: () => currentUser,
+    makeSessionCookie: () => "",
+    makeAccessToken: () => "",
+    requestOrigin: () => "https://smejj.com"
+  };
+  const anfrage = (body) => ({
+    req: { method: "POST", headers: { "user-agent": "TestUA" }, __body: body },
+    url: { pathname: "/api/auth/account/delete" },
+    res: { headers: {}, setHeader(name, value) { this.headers[name] = value; } }
+  });
+
+  // KAPUTTE Probe: E-Mail-Sitzung behauptet im Rumpf, passwortlos zu sein.
+  const getarnt = anfrage({ confirmText: "KONTO LÖSCHEN", method: "google" });
+  await handleEmailAuthRoutes(getarnt.req, getarnt.url, getarnt.res, ctx);
+  assert.equal(getarnt.res.__status, 403, "ohne Passwort muss die Loeschung scheitern");
+  assert.equal((await getUserByEmail(email, ENV)).deletedAt, undefined);
+
+  // GESUNDE Probe: dieselbe Anfrage aus einer echten Google-Sitzung.
+  currentUser = { email, sid: "s_test", method: "google", name: "Probe" };
+  const echt = anfrage({ confirmText: "DELETE ACCOUNT" });
+  await handleEmailAuthRoutes(echt.req, echt.url, echt.res, ctx);
+  assert.equal(echt.res.__status, 200);
+  assert.match(echt.res.headers["Set-Cookie"], /Max-Age=0/, "das Sitzungs-Cookie muss weg");
+});
+
+test("Konto löschen: passwortlose Anmeldewege kommen durch (Apple 5.1.1(v))", async () => {
+  // Google, GitHub und Passkey haben KEIN Passwort — bis 21.09.2026 endete die
+  // Loeschung dort mit `account_delete_requires_email_login` und lief nur ueber
+  // den Support. Apple verlangt in 5.1.1(v), dass sie in der App startet.
+  const { deleteAccount } = await import("../control-server/src/auth/emailAuthService.js");
+  const extern = "oauth-nutzer@example.com";
+
+  // Das Wort bleibt Pflicht — auch ohne Passwort.
+  assert.equal((await deleteAccount({ email: extern, method: "google", confirmText: "" }, ENV)).status, 400);
+
+  const done = await deleteAccount({ email: extern, method: "google", name: "Test", confirmText: "DELETE ACCOUNT" }, ENV);
+  assert.equal(done.ok, true);
+  // Der Grabstein macht die Loeschung nachweisbar, obwohl es vorher gar keinen
+  // Datensatz gab (die Sitzung ist zustandslos signiert).
+  const record = await getUserByEmail(extern, ENV);
+  assert.ok(record.deletedAt, "der Grabstein muss den Zeitpunkt tragen");
+  assert.equal(record.status, "deleted");
+  assert.equal(record.method, "google");
+  assert.equal(record.passwordHash, null);
+});
+
+test("Konto löschen: das Bestätigungswort gilt in beiden Sprachfassungen", async () => {
+  // Die Huelle zeigt das Wort in der Sprache des Nutzers (14 Sprachen). Wer die
+  // App auf Englisch benutzte, tippte "DELETE ACCOUNT" ab und bekam vorher
+  // `delete_confirmation_required` — der Server verglich hart gegen Deutsch.
+  const { deleteAccount } = await import("../control-server/src/auth/emailAuthService.js");
+  for (const [wort, erwartet] of [["KONTO LÖSCHEN", true], ["DELETE ACCOUNT", true], ["delete account", true], ["Konto entfernen", false]]) {
+    const ergebnis = await deleteAccount({ email: `w-${encodeURIComponent(wort)}@example.com`, method: "passkey", confirmText: wort }, ENV);
+    assert.equal(ergebnis.ok === true, erwartet, `Wort "${wort}" muss ${erwartet ? "greifen" : "abgelehnt werden"}`);
+  }
+});
+
 test("normalizeEmail: robuste Validierung", () => {
   assert.equal(normalizeEmail("  USER@Example.COM "), "user@example.com");
   assert.equal(normalizeEmail("kaputt"), "");
