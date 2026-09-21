@@ -1,6 +1,6 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-20T23:52:54.886Z",
+  "frozenAt": "2026-09-21T00:06:06.049Z",
   "confirmation": "Betreiber 20.09.2026 schriftlich im Chat: 'Jetzt die restlichen deutschen Texte uebersetzen' / 'Checke nochmal alles von A bis Z, ob noch was deutsch ist' / 'alle Stufen'. Stufe 5 (letzte): Inhalte der Ansichten uebersetzbar gemacht; an index.html nur die ?v=-Marken der geaenderten Module, kein Markup, kein Design.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "ed66e5e5ab565231fa6f13dd10020c1abbcfd454d1f2bb03cea36003b2787ab9",
+    "public/sw.js": "72da8fa0cf7f93ece770bb7de5652e56c07af46510c31ce562435fa0e62ec769",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
