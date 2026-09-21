@@ -1,9 +1,29 @@
-# Mit Apple anmelden — Einrichtung (Stand 19.09.2026)
+# Mit Apple anmelden — Einrichtung (Stand 21.09.2026)
 
-Der Code ist fertig und getestet (`tests/apple-auth.test.mjs`). Er bleibt **unsichtbar und
-wirkungslos**, bis die vier Umgebungsvariablen auf dem Control-Server gesetzt sind:
-`/api/auth/config` meldet `methods.apple: false`, der Knopf bleibt versteckt, die Routen
-antworten 503. Es kann also nichts kaputtgehen, wenn vorher ausgeliefert wird.
+Der Code ist fertig und getestet (`tests/apple-auth.test.mjs`, 19 Proben). Er bleibt
+**unsichtbar und wirkungslos**, bis die vier Umgebungsvariablen auf dem Control-Server
+gesetzt sind: `/api/auth/config` meldet `methods.apple: false`, der Knopf bleibt versteckt,
+die Routen antworten 503. Es kann also nichts kaputtgehen, wenn vorher ausgeliefert wird.
+
+## Stand 21.09.2026 — was erledigt ist
+
+* **Der Server ist ausgeliefert.** Bis zum 21.09. lag der Code nur im Arbeitszweig;
+  `https://api.smejj.com/api/auth/apple` antwortete **404**. Jetzt antwortet die Route
+  **503 „Apple Login ist noch nicht konfiguriert."** — also: da, wartet auf die Schlüssel.
+  Anker `schutz-100-2026-09-21-apple-login-server`.
+* **App-ID `com.smejj.app`**: Capability *Sign in with Apple* aktiviert (Schritt 1 unten).
+  Nebenwirkung, die Apple beim Speichern nennt: bestehende Provisioning-Profile werden
+  ungültig und müssen für **künftige** Builds neu erzeugt werden. Build 2 ist bereits
+  signiert und hochgeladen, der ist nicht betroffen.
+* **Services-ID `com.smejj.web`** angelegt (Beschreibung „smejj web"), *Sign in with Apple*
+  aktiviert, Primary App ID = `443R27FNHX.com.smejj.app`, Domain `api.smejj.com`,
+  Return URL `https://api.smejj.com/api/auth/apple/callback` — gespeichert und
+  gegengeprüft.
+
+**Es fehlen genau zwei Handgriffe, und beide gehören dir**, weil sie einen geheimen
+Schlüssel anfassen: den `.p8`-Schlüssel erzeugen (Schritt 3) und die vier Variablen auf
+Zeabur setzen. Einen privaten Schlüssel gebe ich weder in ein Formular ein noch lade ich
+ihn herunter.
 
 ## Ablauf für Nutzer
 
@@ -20,24 +40,23 @@ antworten 503. Es kann also nichts kaputtgehen, wenn vorher ausgeliefert wird.
 
 Portal: developer.apple.com → Account → Certificates, IDs & Profiles.
 
-1. **App-ID**: Identifiers → die App-ID der iOS-App öffnen → Capability **Sign in with Apple**
-   aktivieren → Save. (Für den App-Store-Eintrag wird das ohnehin verlangt, Regel 4.8.)
-2. **Services-ID** (das ist der „Client-ID" fürs Web): Identifiers → **+** → *Services IDs* →
-   Beschreibung „smejj web", Kennung z. B. `com.smejj.web` → Register. Danach öffnen →
-   **Sign in with Apple** aktivieren → *Configure*:
-   - Primary App ID: die App-ID aus Schritt 1
-   - Domains: `api.smejj.com`
-   - Return URLs: `https://api.smejj.com/api/auth/apple/callback`
-   - Save → Continue → Save.
-3. **Schlüssel**: Keys → **+** → Name „smejj web login", **Sign in with Apple** anhaken →
-   Configure → Primary App ID aus Schritt 1 → Save → Continue → Register →
-   **`.p8` herunterladen (nur EINMAL möglich!)** und die **Key-ID** notieren.
+1. ~~**App-ID**: Identifiers → die App-ID der iOS-App öffnen → Capability **Sign in with Apple**
+   aktivieren → Save.~~ **Am 21.09.2026 erledigt.**
+2. ~~**Services-ID**: Identifiers → **+** → *Services IDs* → „smejj web" / `com.smejj.web`
+   → Sign in with Apple → Configure mit Domain und Return URL.~~
+   **Am 21.09.2026 erledigt** — `com.smejj.web`, Domain `api.smejj.com`, Return URL
+   `https://api.smejj.com/api/auth/apple/callback`.
+3. **Schlüssel — DEIN Handgriff, offen.** developer.apple.com → Certificates, IDs &
+   Profiles → **Keys** → **+** → Name „smejj web login", **Sign in with Apple** anhaken →
+   Configure → Primary App ID `smejj (443R27FNHX.com.smejj.app)` → Save → Continue →
+   Register → **`.p8` herunterladen (nur EINMAL möglich!)** und die **Key-ID** notieren
+   (zehn Zeichen, steht auch im Dateinamen `AuthKey_XXXXXXXXXX.p8`).
 
 ## Auf Zeabur (Control-Server), vier Variablen
 
 | Variable | Wert |
 |---|---|
-| `SMEJJ_APPLE_LOGIN_SERVICES_ID` | die Services-ID, z. B. `com.smejj.web` |
+| `SMEJJ_APPLE_LOGIN_SERVICES_ID` | `com.smejj.web` (steht fest, am 21.09. angelegt) |
 | `SMEJJ_APPLE_LOGIN_TEAM_ID` | `443R27FNHX` |
 | `SMEJJ_APPLE_LOGIN_KEY_ID` | Key-ID aus Schritt 3 |
 | `SMEJJ_APPLE_LOGIN_PRIVATE_KEY` | Inhalt der `.p8` (PEM mit echten Zeilenumbrüchen, mit `\n` in einer Zeile, oder Base64 der Datei) |
