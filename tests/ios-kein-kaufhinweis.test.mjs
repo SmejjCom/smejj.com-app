@@ -197,12 +197,47 @@ test("das Profilmenue nennt in der Huelle keinen Betrag", () => {
     "der Betrag darf nur ausserhalb der Huelle erscheinen");
   assert.match(dock, /catch \{ huelle = true; \}/, "fail-closed: im Zweifel verstecken");
   assert.match(dock, /window\.Capacitor/);
-  assert.match(dock, /goTo\("\/profile#billing"\)/,
-    '"Mein Plan" muss den Plan-Reiter oeffnen, nicht das Profil');
+  assert.match(dock, /goTo\("\/profile"\)/, "das Menue springt auf /profile");
 });
 
-test("die Kontoseite nimmt den gewuenschten Reiter an", () => {
-  assert.match(QUELLE, /const gewuenscht = String\(location\.hash \|\| ""\)\.replace\("#", ""\)/);
-  // Unbekannte Hashes duerfen die Seite nicht leer lassen.
+test("die Kontoseite nimmt den gewuenschten Reiter an — ohne Hash", () => {
+  // Der Reiter reist als Merknotiz, NICHT im Hash (siehe Router-Test unten).
+  assert.match(QUELLE, /sessionStorage\.getItem\(KONTO_REITER_SCHLUESSEL\)/);
+  assert.match(QUELLE, /sessionStorage\.removeItem\(KONTO_REITER_SCHLUESSEL\)/,
+    "die Notiz muss nach dem Lesen verfallen — ein zweiter Besuch beginnt wieder im Profil");
   assert.match(QUELLE, /\? gewuenscht : "identity"/, "unbekannter Reiter faellt auf das Profil zurueck");
+  const dock = fs.readFileSync("public/profile-dock-menu.js", "utf8");
+  assert.equal(
+    (QUELLE.match(/smejj\.konto\.reiter\.v1/g) || []).length
+      && (dock.match(/smejj\.konto\.reiter\.v1/g) || []).length, 1,
+    "beide Seiten benutzen denselben Schluessel");
+});
+
+test("VERHALTEN: das Menue-Ziel ueberlebt den ECHTEN Router", async () => {
+  // DER TEURE FEHLER (21.09.2026, live): Der Reiter reiste zuerst als
+  // "/profile#billing". Der Router liest den Hash aber als ANSICHTSNAMEN —
+  // "billing" ist keine Ansicht, also landeten BEIDE Menuepunkte auf der
+  // Fehlerseite, und mit ihnen der Weg zur Konto-Loeschung. Der alte Test
+  // verglich nur Zeichenketten und sah davon nichts. Dieser hier fuettert den
+  // echten Router mit dem echten Menue-Ziel.
+  const dock = fs.readFileSync("public/profile-dock-menu.js", "utf8");
+  const ziel = dock.match(/if \(action === "account"\)[\s\S]*?goTo\("([^"]+)"\)/)[1];
+
+  globalThis.location = new URL(`https://smejj.com${ziel}`);
+  const { getViewFromUrl } = await import("../public/view-routes.js");
+  const ansicht = getViewFromUrl();
+  assert.equal(ansicht, "profile", `das Menue-Ziel "${ziel}" ergibt die Ansicht "${ansicht}" statt "profile"`);
+});
+
+test("kein sichtbarer Text kommt aus CSS", () => {
+  // Gefunden 21.09.2026: `.premium-view .output:empty::before { content: "Bereit." }`
+  // schrieb einen deutschen Text in die englische App. `content:` erreicht
+  // keine Uebersetzung — die Hausfalle. Der Waechter haelt sie zu.
+  const css = fs.readFileSync("public/app-surfaces.css", "utf8");
+  const treffer = [...css.matchAll(/content:\s*"([^"]{2,})"/g)].map((m) => m[1])
+    // Reine Zeichen (Pfeile, Trenner, Anfuehrungszeichen) sind keine Sprache.
+    .filter((wert) => /\p{L}{3}/u.test(wert));
+  assert.deepEqual(treffer, [], `Text aus CSS gefunden: ${treffer.join(" | ")}`);
+  assert.match(QUELLE, /id="profileOutput"[^>]*>\$\{t\("Bereit\."\)\}/,
+    "der Anfangstext gehoert ins Markup und durch t()");
 });
