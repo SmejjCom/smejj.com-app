@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-20T23:52:06.004Z",
-  "confirmation": "Zuarbeit der Sitzung 'Smejj Browser Checken' vom 21.09.2026 (Geraetetest v931, strengerer Reste-Zaehler): vier verbliebene deutsche Stellen — Suchleiste des Browser-Fensters, Speicher-Status 'wird geprueft …', 'Google Login aktiv fuer' und das 'von' in der Schrittzeile. Betreiber-Auftrag 'Checke nochmal alles von A bis Z'. An index.html nur Marken und Cache-Nummer. SW v934.",
+  "frozenAt": "2026-09-21T00:04:49.585Z",
+  "confirmation": "Zuarbeit der Sitzung 'Smejj Browser Checken' vom 21.09.2026: Gast-Frage am Geraet geprueft, zwei Befunde — die alte Frage blieb im Feld stehen, und am iPhone verdeckte die offene Tastatur die untere Haelfte der Antwortkarte samt Anmelde-Knopf. Beides behoben; Betreiber-Freigabe fuer den Gastmodus liegt vom 21.09.2026 vor. An index.html nur die Cache-Nummer. SW v935.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "3e2304f529d9d3c427da1f6617859e83b01721b52dbd94dc97f7aad5cfab3f47",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "ed66e5e5ab565231fa6f13dd10020c1abbcfd454d1f2bb03cea36003b2787ab9",
+    "public/sw.js": "72da8fa0cf7f93ece770bb7de5652e56c07af46510c31ce562435fa0e62ec769",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
