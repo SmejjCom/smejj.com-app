@@ -78,8 +78,8 @@
       "finger": "518d644a4f3dc1f4"
     },
     "premium-surfaces.js": {
-      "marke": "b47v-10",
-      "finger": "e723b6e49a22e52a"
+      "marke": "b47v-11",
+      "finger": "d8f786953cb598b9"
     },
     "composer-tools.js": {
       "marke": "werkzeuge-30",
@@ -398,8 +398,8 @@
       "finger": "224dace78b92459e"
     },
     "app.js": {
-      "marke": "model-picker-20260725",
-      "finger": "157a0442b5740bf6"
+      "marke": "model-picker-20260726",
+      "finger": "f067db7d02188366"
     },
     "pwa-schnellstart.js": {
       "marke": "25",
@@ -414,7 +414,7 @@
       "finger": "3215e3b4b11aac80"
     },
     "profile-dock.js": {
-      "marke": "profile-dock-20260717-9",
+      "marke": "profile-dock-20260717-10",
       "finger": "f97cad0533fc1dc5"
     },
     "chat-actions.js": {
@@ -458,7 +458,7 @@
       "finger": "e5c29e44da13a400"
     },
     "account-privacy.js": {
-      "marke": "8",
+      "marke": "9",
       "finger": "b99300e40dfddc17"
     },
     "auth-gate.js": {
@@ -476,6 +476,10 @@
     "icon-nutzung.js": {
       "marke": "1",
       "finger": "ddf238e94e55304d"
+    },
+    "ios-preise-aus.js": {
+      "marke": "1",
+      "finger": "2591ed6def6cacc1"
     },
     "search-overlay.js": {
       "marke": "b80",
