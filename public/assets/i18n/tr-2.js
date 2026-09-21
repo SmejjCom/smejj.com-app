@@ -346,4 +346,6 @@ export default {
   "Abgemeldet (lokaler Token entfernt).": "Oturum kapatıldı (yerel jeton silindi).",
   "Export fehlgeschlagen": "Dışa aktarma başarısız",
   "Server-Datenexport erstellt. Secrets sind ausgeschlossen.": "Sunucu veri dışa aktarımı oluşturuldu. Gizli bilgiler hariç tutuldu.",
+  // Apple 3.1.1: kein Kauf-Hinweis in der iOS-Huelle (21.09.2026)
+  "Dieses Konto nutzt smejj.com kostenlos. Es ist kein Abo aktiv und in dieser App wird nichts verkauft.": "Bu hesap smejj.com’u ücretsiz kullanıyor. Etkin bir abonelik yok ve bu uygulamada hiçbir şey satılmıyor.",
 };

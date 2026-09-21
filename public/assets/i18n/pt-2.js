@@ -346,4 +346,6 @@ export default {
   "Abgemeldet (lokaler Token entfernt).": "Desconectado (token local removido).",
   "Export fehlgeschlagen": "A exportação falhou",
   "Server-Datenexport erstellt. Secrets sind ausgeschlossen.": "Exportação de dados do servidor criada. Os segredos ficam de fora.",
+  // Apple 3.1.1: kein Kauf-Hinweis in der iOS-Huelle (21.09.2026)
+  "Dieses Konto nutzt smejj.com kostenlos. Es ist kein Abo aktiv und in dieser App wird nichts verkauft.": "Esta conta usa o smejj.com gratuitamente. Nenhuma assinatura está ativa e nada é vendido neste app.",
 };

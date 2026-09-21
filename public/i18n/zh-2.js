@@ -346,4 +346,6 @@ export default {
   "Abgemeldet (lokaler Token entfernt).": "已退出（本地令牌已删除）。",
   "Export fehlgeschlagen": "导出失败",
   "Server-Datenexport erstellt. Secrets sind ausgeschlossen.": "服务器数据导出已创建，不含机密信息。",
+  // Apple 3.1.1: kein Kauf-Hinweis in der iOS-Huelle (21.09.2026)
+  "Dieses Konto nutzt smejj.com kostenlos. Es ist kein Abo aktiv und in dieser App wird nichts verkauft.": "此账户免费使用 smejj.com。没有生效的订阅，本应用中也不销售任何内容。",
 };
