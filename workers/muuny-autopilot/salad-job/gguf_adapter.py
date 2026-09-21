@@ -23,6 +23,8 @@ import json
 import os
 import subprocess
 import sys
+import io
+import tarfile
 import urllib.request
 from lager import lager  # noqa: E402
 
@@ -30,17 +32,27 @@ from lager import lager  # noqa: E402
 # aus einem reproduzierbaren Lauf ein Gluecksspiel. b6100 ist die Fassung, die
 # zur llama.cpp-Version des Hausmodell-Abbilds passt (Dockerfile: b10729 —
 # das Konverterskript ist zwischen diesen Staenden unveraendert geblieben).
-LLAMA_BASIS = "https://raw.githubusercontent.com/ggml-org/llama.cpp/b6100"
-# ZWEI Dateien, nicht eine. convert_lora_to_gguf.py endet mit
-#   from convert_hf_to_gguf import LazyTorchTensor, ModelBase
-# und stirbt ohne die zweite mit ModuleNotFoundError — genau so gescheitert im
-# ersten Lauf am 10.09. um 04:50. Die Modelldefinitionen (welche Gewichtsnamen
-# zu welcher Architektur gehoeren) stehen dort, nicht im Adapter-Konverter.
-KONVERTER_DATEIEN = ("convert_lora_to_gguf.py", "convert_hf_to_gguf.py")
-KONVERTER_URL = f"{LLAMA_BASIS}/convert_lora_to_gguf.py"
-# convert_hf_to_gguf braucht mehr als nur gguf: transformers fuer AutoConfig
-# (liegt im Trainingsjob ohnehin vor) und sentencepiece fuer Tokenizer.
-GGUF_PAKETE = ["gguf>=0.10", "sentencepiece"]
+# FESTE Fassung, aber eine, die Qwen3.5 kennt.
+#
+# Bis zum 21.09.2026 stand hier b6100. Diese Fassung kennt die Architektur von
+# Qwen3.8-27B nicht ("Model Qwen3_5ForConditionalGeneration is not supported") —
+# JEDE Umwandlung ist gescheitert, bei muuny-1.7 bis 1.11 ohne Ausnahme, und kein
+# einziger trainierter Adapter haette je in der Laufzeit landen koennen.
+# b11070 enthaelt die Architektur (conversion/qwen.py).
+#
+# Und nicht mehr zwei Einzeldateien: ab dieser Fassung ist der Konverter ein
+# PAKET (conversion/) und bringt sein eigenes gguf-Modul mit (gguf-py/). Ein pip-
+# gguf in anderer Fassung passt nicht zu den Konstanten des Konverters. Geholt
+# wird darum der Quellstand des Tags, und zwar nur die Teile, die gebraucht werden.
+LLAMA_TAG = os.environ.get("MUUNY_LLAMA_TAG", "b11070")
+LLAMA_ARCHIV = f"https://codeload.github.com/ggml-org/llama.cpp/tar.gz/refs/tags/{LLAMA_TAG}"
+KONVERTER_TEILE = ("convert_lora_to_gguf.py", "convert_hf_to_gguf.py", "conversion/", "gguf-py/")
+# Woran man sieht, dass die Fassung das Grundmodell kennt — geprueft VOR dem Lauf,
+# damit ein falscher Tag in Sekunden auffaellt und nicht nach zwei Stunden Training.
+ARCHITEKTUR = "Qwen3_5ForConditionalGeneration"
+# sentencepiece fuer Tokenizer; transformers liegt im Trainingsjob ohnehin vor.
+# gguf kommt bewusst NICHT von pip, sondern aus gguf-py des Tags.
+GGUF_PAKETE = ["sentencepiece"]
 
 
 def sha256_von(pfad):
@@ -52,19 +64,48 @@ def sha256_von(pfad):
 
 
 def _hole_konverter(ziel_dir, oeffne=urllib.request.urlopen):
-    """Laedt BEIDE Konverterskripte. Getrennt, damit ein Test es ersetzen kann."""
-    os.makedirs(ziel_dir, exist_ok=True)
-    for name in KONVERTER_DATEIEN:
-        ziel = os.path.join(ziel_dir, name)
-        if os.path.exists(ziel) and os.path.getsize(ziel) > 1000:
-            continue
-        with oeffne(f"{LLAMA_BASIS}/{name}", timeout=120) as antwort:
+    """Holt den Konverter-Quellstand des festen Tags. Gibt das Wurzelverzeichnis zurueck.
+
+    Getrennt, damit ein Test das Netz ersetzen kann.
+    """
+    wurzel = os.path.join(ziel_dir, f"llama.cpp-{LLAMA_TAG}")
+    fertig = os.path.join(wurzel, "convert_lora_to_gguf.py")
+    if not os.path.exists(fertig):
+        os.makedirs(ziel_dir, exist_ok=True)
+        with oeffne(LLAMA_ARCHIV, timeout=300) as antwort:
             inhalt = antwort.read()
-        if len(inhalt) < 1000:
-            raise RuntimeError(f"konverter_zu_klein: {name} hat {len(inhalt)} Bytes")
-        with open(ziel, "wb") as f:
-            f.write(inhalt)
-    return os.path.join(ziel_dir, KONVERTER_DATEIEN[0])
+        if len(inhalt) < 100_000:
+            raise RuntimeError(f"konverter_zu_klein: {len(inhalt)} Bytes von {LLAMA_ARCHIV}")
+        with tarfile.open(fileobj=io.BytesIO(inhalt), mode="r:gz") as archiv:
+            for teil in archiv.getmembers():
+                # "llama.cpp-b11070/conversion/qwen.py" -> "conversion/qwen.py"
+                relativ = teil.name.split("/", 1)[1] if "/" in teil.name else ""
+                if not relativ or ".." in relativ.split("/") or relativ.startswith("/"):
+                    continue
+                if not any(relativ == t or relativ.startswith(t) for t in KONVERTER_TEILE):
+                    continue
+                if not (teil.isfile() or teil.isdir()):
+                    continue
+                ziel = os.path.join(wurzel, relativ)
+                if teil.isdir():
+                    os.makedirs(ziel, exist_ok=True)
+                    continue
+                os.makedirs(os.path.dirname(ziel), exist_ok=True)
+                with archiv.extractfile(teil) as quelle, open(ziel, "wb") as f:
+                    f.write(quelle.read())
+    for pflicht in ("convert_lora_to_gguf.py", "convert_hf_to_gguf.py", "conversion", "gguf-py"):
+        if not os.path.exists(os.path.join(wurzel, pflicht)):
+            raise RuntimeError(f"konverter_unvollstaendig: {pflicht} fehlt in {LLAMA_TAG}")
+    kennt = False
+    for datei in os.listdir(os.path.join(wurzel, "conversion")):
+        if datei.endswith(".py"):
+            with open(os.path.join(wurzel, "conversion", datei), encoding="utf-8", errors="ignore") as f:
+                if ARCHITEKTUR in f.read():
+                    kennt = True
+                    break
+    if not kennt:
+        raise RuntimeError(f"konverter_kennt_architektur_nicht: {ARCHITEKTUR} fehlt in {LLAMA_TAG}")
+    return wurzel
 
 
 def wandle(adapter_dir, basis_dir, ausgabe_dir, name, status=None, pip=None, lauf=subprocess.run):
@@ -85,16 +126,17 @@ def wandle(adapter_dir, basis_dir, ausgabe_dir, name, status=None, pip=None, lau
         pip(GGUF_PAKETE)
 
     os.makedirs(ausgabe_dir, exist_ok=True)
-    konverter = _hole_konverter(ausgabe_dir)
+    wurzel = _hole_konverter(ausgabe_dir)
+    konverter = os.path.join(wurzel, "convert_lora_to_gguf.py")
     ziel = os.path.join(ausgabe_dir, f"{name}.gguf")
 
-    # cwd auf das Konverterverzeichnis: convert_lora_to_gguf.py importiert
-    # convert_hf_to_gguf als NACHBARMODUL. Liegt der Arbeitsordner woanders,
-    # findet Python es nicht, obwohl die Datei da ist.
-    umgebung = {**os.environ, "PYTHONPATH": ausgabe_dir + os.pathsep + os.environ.get("PYTHONPATH", "")}
+    # Das Paket conversion/ und das passende gguf aus gguf-py/ muessen VOR jedem
+    # pip-gguf gefunden werden — daher beide an den Anfang des Suchpfads.
+    umgebung = {**os.environ, "PYTHONPATH": os.pathsep.join(
+        [wurzel, os.path.join(wurzel, "gguf-py"), os.environ.get("PYTHONPATH", "")])}
     r = lauf(
         [sys.executable, konverter, adapter_dir, "--base", basis_dir, "--outfile", ziel, "--outtype", "f16"],
-        capture_output=True, text=True, timeout=1800, cwd=ausgabe_dir, env=umgebung
+        capture_output=True, text=True, timeout=1800, cwd=wurzel, env=umgebung
     )
     if r.returncode != 0:
         # Die letzten Zeilen genuegen: der Konverter schreibt seinen Grund ans Ende.

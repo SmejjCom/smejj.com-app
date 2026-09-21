@@ -1,0 +1,36 @@
+# muuny Laufzeit — OpenAI-vertraeglicher Dienst vor einem wach gehaltenen llama-server.
+#
+# Vorlage: Dockerfile.smejj-hausmodell. Zwei bewusste Unterschiede:
+#  * llama.cpp b11070 statt b10729: erst diese Fassungen kennen die Architektur
+#    von Qwen3.8-27B (Qwen3_5ForConditionalGeneration). Konverter (im GPU-Job)
+#    und Laufzeit MUESSEN dieselbe Generation haben, sonst liest die Laufzeit den
+#    Adapter nicht, den der Job erzeugt hat.
+#  * Das Modell bleibt geladen (kein Leerlauf-Entladen) — siehe motor.js.
+FROM ubuntu:24.04
+ARG LLAMA_VERSION=b11070
+ARG NODE_VERSION=22.14.0
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates curl xz-utils libgomp1 libcurl4 libstdc++6 \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" -o /tmp/node.tar.xz \
+    && mkdir -p /opt/node && tar -xJf /tmp/node.tar.xz -C /opt/node --strip-components=1 && rm /tmp/node.tar.xz \
+    && ln -s /opt/node/bin/node /usr/local/bin/node && node --version
+RUN curl -fsSL "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_VERSION}/llama-${LLAMA_VERSION}-bin-ubuntu-x64.tar.gz" -o /tmp/llama.tgz \
+    && mkdir -p /opt/llama && tar -xzf /tmp/llama.tgz -C /opt/llama --strip-components=1 && rm /tmp/llama.tgz \
+    && chmod +x /opt/llama/llama-server \
+    && LD_LIBRARY_PATH=/opt/llama /opt/llama/llama-server --version
+ENV LD_LIBRARY_PATH=/opt/llama
+WORKDIR /app
+COPY workers/muuny-laufzeit/ ./workers/muuny-laufzeit/
+COPY workers/smejj-hausmodell/e2.js ./workers/smejj-hausmodell/e2.js
+COPY workers/smejj-hausmodell/warteschlange.js ./workers/smejj-hausmodell/warteschlange.js
+COPY workers/muuny-autopilot/entscheidung.js ./workers/muuny-autopilot/entscheidung.js
+COPY workers/muuny-autopilot/lager.js ./workers/muuny-autopilot/lager.js
+COPY workers/muuny-autopilot/suitenstand.js ./workers/muuny-autopilot/suitenstand.js
+RUN mkdir -p /var/cache/muuny
+ENV MUUNY_CACHE=/var/cache/muuny MUUNY_LLAMA_BINAER=/opt/llama/llama-server PORT=8090
+EXPOSE 8090
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||8090)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+CMD ["node", "workers/muuny-laufzeit/server.mjs"]

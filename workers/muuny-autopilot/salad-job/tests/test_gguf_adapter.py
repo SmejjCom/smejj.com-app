@@ -58,7 +58,7 @@ class TestWandeln(unittest.TestCase):
         self.tmp = tempfile.mkdtemp()
         # Den Netzabruf des Konverterskripts ersetzen.
         self.echter_hole = gguf_adapter._hole_konverter
-        gguf_adapter._hole_konverter = lambda d, **kw: os.path.join(d, "konverter.py")
+        gguf_adapter._hole_konverter = lambda d, **kw: d
 
     def tearDown(self):
         gguf_adapter._hole_konverter = self.echter_hole
@@ -100,7 +100,7 @@ class TestSichern(unittest.TestCase):
         import tempfile
         self.tmp = tempfile.mkdtemp()
         self.echter_hole = gguf_adapter._hole_konverter
-        gguf_adapter._hole_konverter = lambda d, **kw: os.path.join(d, "konverter.py")
+        gguf_adapter._hole_konverter = lambda d, **kw: d
         self.echtes_wandle = gguf_adapter.wandle
 
     def tearDown(self):
@@ -113,8 +113,8 @@ class TestSichern(unittest.TestCase):
         gguf_adapter.wandle = lambda *a, **kw: self.echtes_wandle(*a, **{**kw, "lauf": konverter_der_schreibt(inhalt)})
         r = gguf_adapter.wandle_und_sichere(adapter_ordner(self.tmp), "/basis", self.tmp, "smejj-1-8", e2)
         self.assertEqual(r["sha256"], hashlib.sha256(inhalt).hexdigest())
-        self.assertIn("con/versions/smejj-1-8/adapter-gguf/smejj-1-8-lora.gguf", e2.dateien)
-        beschreibung = e2.jsons["con/versions/smejj-1-8/adapter-gguf/adapter.json"]
+        self.assertIn("muuny/versions/smejj-1-8/adapter-gguf/smejj-1-8-lora.gguf", e2.dateien)
+        beschreibung = e2.jsons["muuny/versions/smejj-1-8/adapter-gguf/adapter.json"]
         # Genau die vier Angaben, ohne die der Hausmodell-Katalog ablehnt.
         for feld in ("datei", "sizeBytes", "sha256", "prefix"):
             self.assertIn(feld, beschreibung)
@@ -129,8 +129,8 @@ class TestSichern(unittest.TestCase):
         r = gguf_adapter.wandle_und_sichere(adapter_ordner(self.tmp), "/basis", self.tmp, "smejj-1-8", e2)
         self.assertIsNone(r)
         self.assertEqual(e2.dateien, {})
-        self.assertNotIn("con/versions/smejj-1-8/adapter-gguf/adapter.json", e2.jsons)
-        self.assertIn("con/versions/smejj-1-8/adapter-gguf/fehlgeschlagen.json", e2.jsons)
+        self.assertNotIn("muuny/versions/smejj-1-8/adapter-gguf/adapter.json", e2.jsons)
+        self.assertIn("muuny/versions/smejj-1-8/adapter-gguf/fehlgeschlagen.json", e2.jsons)
 
     def test_ein_fehlschlag_bringt_den_trainingslauf_NICHT_zum_absturz(self):
         # Der Adapter ist zu diesem Zeitpunkt gesichert. Die Umwandlung kostet
@@ -147,61 +147,87 @@ class TestSichern(unittest.TestCase):
         self.assertIsNone(gguf_adapter.wandle_und_sichere(adapter_ordner(self.tmp), "/b", self.tmp, "k", KaputtesE2()))
 
 
+
+def llama_archiv(tag, *, mit_architektur=True, polster=150_000, boeser_pfad=False):
+    """Ein tar.gz wie codeload.github.com es liefert: alles unter llama.cpp-<tag>/."""
+    import io
+    import tarfile
+    puffer = io.BytesIO()
+    with tarfile.open(fileobj=puffer, mode="w:gz") as archiv:
+        def datei(name, inhalt):
+            info = tarfile.TarInfo(f"llama.cpp-{tag}/{name}")
+            info.size = len(inhalt)
+            archiv.addfile(info, io.BytesIO(inhalt))
+        datei("convert_lora_to_gguf.py", b"from conversion import ModelBase\n")
+        datei("convert_hf_to_gguf.py", b"from conversion import *\n")
+        datei("conversion/__init__.py", b"")
+        qwen = b"class Qwen3_5ForConditionalGeneration: pass\n" if mit_architektur else b"class Qwen2: pass\n"
+        datei("conversion/qwen.py", qwen)
+        datei("gguf-py/gguf/__init__.py", b"")
+        datei("gguf-py/polster.bin", os.urandom(polster))  # zufaellig: gzip kann es nicht schrumpfen
+        datei("src/llama.cpp", b"nicht gebraucht")
+        if boeser_pfad:
+            info = tarfile.TarInfo(f"llama.cpp-{tag}/../../ausgebrochen.txt")
+            info.size = 4
+            archiv.addfile(info, io.BytesIO(b"boes"))
+    return puffer.getvalue()
+
+
+class Antwort:
+    def __init__(self, inhalt):
+        self.inhalt = inhalt
+
+    def read(self):
+        return self.inhalt
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
 class TestKonverterHolen(unittest.TestCase):
-    """Der Fehler, der den ersten echten Lauf gekostet hat (10.09., 04:50).
-
-    convert_lora_to_gguf.py endet mit
-        from convert_hf_to_gguf import LazyTorchTensor, ModelBase
-    Es allein zu holen ergibt ein Skript, das beim Start mit
-    ModuleNotFoundError stirbt — nach dem Training, nach dem pip-Install, nach
-    dem Herunterladen. Alles richtig ausser einer fehlenden Datei.
-    """
-
     def setUp(self):
         import tempfile
         self.tmp = tempfile.mkdtemp()
 
-    def test_BEIDE_skripte_werden_geholt(self):
+    def test_holt_den_festen_tag_und_nur_die_gebrauchten_teile(self):
         geholt = []
 
-        class Antwort:
-            def __init__(self, inhalt):
-                self.inhalt = inhalt
-
-            def read(self):
-                return self.inhalt
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *a):
-                return False
-
         def oeffne(url, timeout=None):
-            geholt.append(url.rsplit("/", 1)[-1])
-            return Antwort(b"x" * 5000)
+            geholt.append(url)
+            return Antwort(llama_archiv(gguf_adapter.LLAMA_TAG))
 
+        wurzel = gguf_adapter._hole_konverter(self.tmp, oeffne=oeffne)
+        self.assertTrue(geholt[0].endswith(f"/refs/tags/{gguf_adapter.LLAMA_TAG}"), "eine FESTE Fassung, nicht main")
+        for pflicht in ("convert_lora_to_gguf.py", "convert_hf_to_gguf.py", "conversion/qwen.py", "gguf-py/gguf/__init__.py"):
+            self.assertTrue(os.path.exists(os.path.join(wurzel, pflicht)), pflicht)
+        self.assertFalse(os.path.exists(os.path.join(wurzel, "src")), "nur was der Konverter braucht")
+        # Ein zweiter Aufruf holt nicht erneut.
         gguf_adapter._hole_konverter(self.tmp, oeffne=oeffne)
-        self.assertIn("convert_lora_to_gguf.py", geholt)
-        self.assertIn("convert_hf_to_gguf.py", geholt,
-                      "ohne die Modelldefinitionen stirbt der Konverter beim Import")
+        self.assertEqual(len(geholt), 1)
 
-    def test_eine_verdaechtig_kleine_datei_wird_abgelehnt(self):
-        # Eine Fehlerseite statt des Skripts ist wenige hundert Bytes gross und
-        # laesst sich sonst klaglos speichern.
-        class Antwort:
-            def read(self):
-                return b"404: Not Found"
+    def test_die_alte_fassung_ist_es_nicht_mehr(self):
+        # b6100 kannte Qwen3_5ForConditionalGeneration nicht; jede Umwandlung scheiterte.
+        self.assertNotEqual(gguf_adapter.LLAMA_TAG, "b6100")
 
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *a):
-                return False
-
+    def test_eine_fassung_ohne_die_architektur_faellt_SOFORT_auf(self):
         with self.assertRaises(RuntimeError) as f:
-            gguf_adapter._hole_konverter(self.tmp, oeffne=lambda url, timeout=None: Antwort())
+            gguf_adapter._hole_konverter(self.tmp, oeffne=lambda url, timeout=None: Antwort(
+                llama_archiv(gguf_adapter.LLAMA_TAG, mit_architektur=False)))
+        self.assertIn("konverter_kennt_architektur_nicht", str(f.exception),
+                      "sonst faellt es erst nach zwei Stunden bezahltem Training auf")
+
+    def test_eine_verdaechtig_kleine_antwort_wird_abgelehnt(self):
+        with self.assertRaises(RuntimeError) as f:
+            gguf_adapter._hole_konverter(self.tmp, oeffne=lambda url, timeout=None: Antwort(b"404: Not Found"))
         self.assertIn("konverter_zu_klein", str(f.exception))
+
+    def test_ein_pfad_aus_dem_archiv_heraus_wird_ignoriert(self):
+        gguf_adapter._hole_konverter(self.tmp, oeffne=lambda url, timeout=None: Antwort(
+            llama_archiv(gguf_adapter.LLAMA_TAG, boeser_pfad=True)))
+        self.assertFalse(os.path.exists(os.path.join(os.path.dirname(self.tmp), "ausgebrochen.txt")))
 
 
 if __name__ == "__main__":

@@ -77,3 +77,5 @@ schemas/*
 # mit "failed to calculate checksum of ref" — dieselbe Falle wie beim Training-Loop.
 !workers/muuny-autopilot
 !workers/muuny-autopilot/**
+!workers/muuny-laufzeit
+!workers/muuny-laufzeit/**
