@@ -10,12 +10,15 @@ Seite erledigt und in App Store Connect gespeichert — es fehlt nur dieses Vide
 
 1. iPhone: **Einstellungen → Kontrollzentrum → Bildschirmaufnahme** hinzufügen,
    falls noch nicht da.
-2. Die App installieren, die Apple prüft — also die **TestFlight-Fassung**
-   (Build 1.0 (1)), nicht das Webclip-Symbol vom Home-Bildschirm.
-   **Das ist am 21.09. eingerichtet:** interne TestFlight-Gruppe „Intern"
-   angelegt, smejjcom@gmail.com als Tester eingeladen, Build 1.0 (1) steht auf
-   „Bereit zum Testen". Du hast eine Einladungs-Mail von TestFlight bekommen —
-   TestFlight-App öffnen, Einladung annehmen, „smejj.com" installieren.
+2. Die App installieren, die Apple prüft — also die **TestFlight-Fassung
+   Build 1.0 (2)**, nicht das Webclip-Symbol vom Home-Bildschirm und **nicht
+   Build 1**. Build 1 fehlt die Mikrofon-Beschreibung; tippst du dort auf den
+   Sprachmodus, bricht iOS ab.
+   **Alles eingerichtet (21.09.):** interne TestFlight-Gruppe „Intern",
+   smejjcom@gmail.com als Tester eingeladen, Build 2 hochgeladen und der
+   Version 1.0 in App Store Connect zugeordnet. TestFlight-App öffnen,
+   Einladung annehmen, „smejj" installieren — und oben prüfen, dass dort
+   **(2)** steht.
 3. **Mikrofon aus** ist in Ordnung — Apple braucht keinen Ton. Wenn du sprechen
    willst, sprich Englisch.
 
@@ -75,7 +78,13 @@ Version neu ein.
   erreichbar, Altersfreigabe gesetzt, Screenshots vorhanden (iPhone 4, iPad 2),
   Build 1.0 (1) hängt an der Version, Support- und Marketing-URL erreichbar.
 * **TestFlight eingerichtet** (21.09.): interne Gruppe „Intern", du bist als
-  Tester eingeladen, Build 1.0 (1) steht auf „Bereit zum Testen".
+  Tester eingeladen. **Build 2 ist hochgeladen und der Version 1.0 zugeordnet**
+  — er bringt die Mikrofon-, Kamera- und Fotomediathek-Texte mit, die Build 1
+  fehlten (ohne sie bricht der Sprachmodus am Gerät ab: Richtlinie 2.1).
+* **Keine Preise mehr in der App** (21.09., SW v937): Der Konto-Reiter „My plan"
+  zeigte drei Abos mit Preis und einen Knopf zu Stripe — in einer iOS-App nach
+  Richtlinie 3.1.1 verboten. In der App steht dort jetzt nur noch, dass das
+  Konto kostenlos ist. Im Video ruhig kurz zeigen.
 * **Konto-Löschung für JEDEN Anmeldeweg gebaut und live** (21.09., SW v936):
   Google-, GitHub- und Passkey-Konten löschen sich jetzt in der App selbst.
   Am echten Google-Konto im Browser nachgemessen: Formular ohne Passwortfeld,
