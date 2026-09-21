@@ -271,7 +271,7 @@ test("die Beschriftung mit dem Loeschwort bleibt EINE Zeile", () => {
     `die Beschriftung darf kein eigenes Element enthalten, gefunden: ${label}`);
   // Beschriftung UND Pruefung muessen dieselbe Konstante benutzen — sonst
   // verlangt der Text ein anderes Wort als der Code akzeptiert.
-  assert.match(label, /\$\{wort\}/,
+  assert.match(label, /\$\{inAnfuehrung\(wort\)\}/,
     "die Beschriftung muss dieselbe Variable einsetzen wie die Pruefung");
 });
 
