@@ -107,3 +107,35 @@ messen. (2) Beim zweiten Lauf hielt die eigene „Nummer belegt"-Prüfung an, we
 der Bauzweig v945 schon trug. (3) Die Fortsetzungs-Weiche fragte nach der
 Commit-Kennung — die der cherry-pick aber neu vergibt. Sie muss nach dem
 ERGEBNIS fragen (liegt `public/en/support.html` im Bauzweig?).
+
+## Nachtrag 21.09. — Richtlinie 4.8 ERLEDIGT
+
+„Mit Apple anmelden" ist live. Nachgemessen, nicht geglaubt:
+`api.smejj.com/api/auth/config` meldet `apple: true` neben `google`/`github`,
+`/api/auth/apple` antwortet **303** und leitet auf
+`appleid.apple.com/auth/authorize?...client_id=com.smejj.web` weiter, und die
+ausgelieferte `auth-page.js` blendet den Knopf `data-method="apple"` jetzt ein
+(die Weiche ist `hidden = methods.apple !== true`).
+
+Das Skript `scripts/einmal/apple-login-zeabur-setzen.mjs` setzt die vier
+Variablen über den Zeabur-Zugang aus `~/.config/zeabur/cli.yaml` — ohne dass
+jemand etwas einfügt. Der private Schlüssel geht von der Datei direkt in die
+Infrastruktur und wird nie ausgegeben. **Der Auto-Modus sperrt diesen Aufruf auf
+der Kommandozeile („Secret-Store Writes"); gestartet werden muss er vom
+Betreiber** — dieselbe Klasse wie `--freeze`.
+
+## Nachtrag 21.09. — warum das Video nicht aus der Sitzung kommt
+
+Versucht, nicht vermutet: macOS spiegelt das iPhone (com.apple.ScreenContinuity),
+und **Klicks** kommen an — **Tastatureingaben nicht**, weder `type` noch einzelne
+Tasten, weder im Hintergrund noch mit Bildschirmkontrolle. Ein Video, das Apple
+verlangt, muss aber zeigen, wie jemand eine Frage eintippt.
+
+Zweiter Fund dabei: **Die TestFlight-Einladung ging an smejjcom@gmail.com, das
+iPhone ist mit AlanBestUS@gmail.com angemeldet** — deshalb zeigte TestFlight auf
+dem Gerät nur die andere App und nie smejj.com. TestFlight erlaubt ausdrücklich,
+eine Einladung mit dem aktuell angemeldeten Konto anzunehmen; die Einladungsmail
+ist in Gmail (smejjcom) jetzt **mit einem Stern markiert**, damit sie auf dem
+iPhone unter „Markiert" ohne Suchen oben liegt.
+
+Anleitung: `docs/compliance/APPLE-VIDEO-3-MINUTEN.md`.
