@@ -15,11 +15,24 @@ import { bucheEnde, bucheStart, darfStarten, leseGesamtverbrauch, leseTagesbuch,
 import { leseRegistry, naechsteVersion, promote, reject, schreibeRegistry, schwaechen, stabileVersion, trageKandidatEin, findeVersion, zusammenfassung } from "./registry.js";
 import { bereiteJobVor, gruppenZustand } from "./salad.js";
 import { befoerdereCanaryWennBewaehrt, rollbackWennNoetig, setzeCanary } from "./canary.js";
-import { eingebrocheneBereiche, erzeugeNachschub } from "./nachschub.js";
 import { FAMILIE, L, wert } from "./lager.js";
 
 export const ZUSTAND_KEY = L.zustand;
-export const PHASEN = Object.freeze(["ueberwachen", "job_laeuft", "warten_auf_daten", "gestoppt"]);
+export const PHASEN = Object.freeze(["ueberwachen", "job_laeuft", "wartet_auf_paare", "warten_auf_daten", "gestoppt"]);
+
+/**
+ * Der Name, unter dem das UNTRAINIERTE Grundmodell gemessen wird.
+ *
+ * Es ist keine Version und bekommt nie eine Nummer. Seine Note ist der
+ * Vergleichswert, gegen den jede trainierte Version antreten muss — nicht die
+ * zuletzt befoerderte. Gemessen am 21.09.2026: das Grundmodell war nur auf der
+ * alten, leichten Latte (46 Faelle) bewertet worden; ob muuny-1.3 auf der
+ * heutigen Latte besser ist als das nackte Qwen, wusste niemand.
+ */
+export const GRUNDMODELL = "muuny-grundmodell";
+
+/** Erst ab so vielen NEUEN echten Paaren lohnt ein Lauf. Darunter: kein GPU-Start. */
+export const MIN_NEUE_PAARE_STANDARD = 500;
 const NACHFRIST_MINUTEN = 20;
 
 export async function ladeSuiten(dir) {
@@ -261,6 +274,22 @@ async function bewerteUndEntscheide(ctx, z, job, ergebnis) {
     log(`Messung ${job.version} ungueltig: ${bewertung.ungueltigGrund}`);
     return bewertung;
   }
+  // Das Grundmodell ist KEINE Version: seine Note wird als Vergleichswert abgelegt,
+  // nie ins Register eingetragen und nie befoerdert oder verworfen.
+  if (job.version === GRUNDMODELL) {
+    const messung = {
+      schemaVersion: 1, modell: konfig.basis.repo, basisPrefix: konfig.basis.prefix,
+      punktzahl: bewertung.gesamt, kritisch: bewertung.kritisch, kategorien: bewertung.kategorien,
+      faelle: bewertung.faelle, suitenStand: bewertung.suitenStand || await suitenStand(konfig.suitesDir),
+      jobId: job.jobId, evalPrefix: ergebnis.messung.prefix, am: new Date().toISOString()
+    };
+    await e2.putJson(L.grundmodell, messung);
+    z.letzteEntscheidung = { version: GRUNDMODELL, entscheidung: "GRUNDMODELL_GEMESSEN",
+      gruende: [`punktzahl ${messung.punktzahl}`, `kritisch ${messung.kritisch}`], zeit: messung.am, gegen: null };
+    notiere(z, `Grundmodell gemessen: ${messung.punktzahl} (kritisch ${messung.kritisch}) — das ist ab jetzt der Vergleichswert`);
+    log(`Grundmodell gemessen: ${messung.punktzahl}`);
+    return bewertung;
+  }
   const registry = await leseRegistry(e2);
   const stabil = stabileVersion(registry);
   const version = job.version;
@@ -319,11 +348,8 @@ async function planeUndStarte(ctx, z) {
   z.plan = plan;
   if (!plan.job) {
     z.phase = plan.phase || "warten_auf_daten";
-    // Kein Job, weil die Daten fehlen? Dann werden sie JETZT erzeugt, statt zu warten.
-    // Das ist der Unterschied zwischen einem Kreislauf und einer Warteschleife.
-    if (plan.phase === "warten_auf_daten" && plan.schritt === "trainingsplan") {
-      await sorgeFuerNachschub(ctx, z, plan);
-    }
+    // Erzeugte Trainingsdaten gibt es seit dem 21.09.2026 nicht mehr (Owner-Auftrag,
+    // Eiserne Regel 3). Fehlen Paare, wird gewartet — nicht erfunden.
     // Es steht gar kein Start an, also kann auch nichts blockiert sein. Ohne
     // dieses Loeschen bliebe eine alte Startsperre fuer immer stehen und die
     // Betreiber-Wache meldete rot, obwohl nichts klemmt (Falschrot).
@@ -341,48 +367,6 @@ async function planeUndStarte(ctx, z) {
   // voruebergehend (verwaister Container, Anbieter kurz weg) — sie duerfen die
   // Ampel nicht ueber den naechsten geglueckten Lauf hinaus rot faerben.
   delete z.startBlockiert;
-}
-
-/**
- * Sorgt dafuer, dass der naechste Takt Daten vorfindet.
- *
- * Hoechstens EIN Datensatz je Takt und hoechstens einer je Stunde: das Erzeugen
- * ist billig (kein Netz, keine GPU), das Hochladen nach e2 aber nicht umsonst, und
- * ein Takt alle fuenf Minuten wuerde sonst zwoelf Datensaetze pro Stunde anlegen,
- * von denen elf niemand je benutzt. Der Zeitstempel steht im Zustand, ueberlebt
- * also einen Neustart des Dienstes.
- */
-export const NACHSCHUB_ABSTAND_MS = 60 * 60_000;
-
-export async function sorgeFuerNachschub(ctx, z, plan) {
-  const { konfig, log = () => {}, jetzt = () => new Date() } = ctx;
-  const letzter = z.letzterNachschub?.zeit ? new Date(z.letzterNachschub.zeit).getTime() : 0;
-  if (jetzt().getTime() - letzter < NACHSCHUB_ABSTAND_MS) {
-    z.nachschubWartet = `Abstand laeuft (${Math.round((NACHSCHUB_ABSTAND_MS - (jetzt().getTime() - letzter)) / 60_000)} min)`;
-    return null;
-  }
-  const kategorie = plan.schwaeche?.kategorie || z.schwaechste?.kategorie || "allgemein";
-  const minPaare = Number(process.env.MUUNY_MIN_PAARE) > 0 ? Number(process.env.MUUNY_MIN_PAARE) : 3000;
-  try {
-    const suiten = await ladeSuiten(konfig.suitesDir);
-    // Was beim letzten Urteil eingebrochen ist, bekommt Gewicht zurueck. Ohne das
-    // zielt der naechste Satz wieder nur auf die schwaechste Kategorie und reisst
-    // dasselbe Loch (muuny-1.7 am 20.09.: Sicherheit -32 Punkte).
-    const eingebrochen = eingebrocheneBereiche(z.letzteEntscheidung);
-    const r = await erzeugeNachschub(ctx, { kategorie, suiten, minPaare, eingebrochen });
-    z.letzterNachschub = { zeit: jetzt().toISOString(), name: r.name, paare: r.paare,
-      freigegeben: r.freigegeben, kategorie, grund: r.grund };
-    delete z.nachschubWartet;
-    notiere(z, `Datennachschub ${r.name}: ${r.paare} Paare gegen ${kategorie}, ${r.freigegeben ? "freigegeben" : "gesperrt (" + r.grund + ")"}`);
-    log(`Nachschub ${r.name} (${r.paare} Paare, ${kategorie})`);
-    return r;
-  } catch (fehler) {
-    // Ein Fehler beim Nachschub darf den Takt nicht kippen — er ist eine Zugabe,
-    // keine Voraussetzung. Er wird sichtbar vermerkt und beim naechsten Mal erneut versucht.
-    z.nachschubFehler = { zeit: jetzt().toISOString(), text: String(fehler?.message || fehler).slice(0, 300) };
-    notiere(z, "Datennachschub fehlgeschlagen: " + z.nachschubFehler.text);
-    return null;
-  }
 }
 
 /** Aktueller Stand der Pruefsuiten aus git: {suiteId: contentSha256}. */
@@ -464,6 +448,16 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   // 1b. Latte hat sich geaendert: die stabile Version zuerst neu messen. Ein Kandidat gegen eine
   // Note zu halten, die mit einer anderen Suite entstanden ist, waere ein unfairer Vergleich.
   const aktuell = await suitenStand(konfig.suitesDir);
+  // 0. Der Vergleichswert. Ohne eine Note des UNTRAINIERTEN Grundmodells auf der
+  //    heutigen Latte wird nichts trainiert und nichts befoerdert.
+  const grund = await e2.getJson(L.grundmodell, null);
+  if (!grund || abweichendeSuiten(grund.suitenStand, aktuell).length) {
+    return { schritt: "grundmodell_messen", job: { modus: "messung", version: GRUNDMODELL, adapterPrefix: null,
+      staende: [{ version: GRUNDMODELL, adapterPrefix: null }],
+      ziel: `Grundmodell ${konfig.basis.repo} ohne Adapter messen — der Vergleichswert fuer jede Version`,
+      parameter: { MUUNY_VERSION: GRUNDMODELL, MUUNY_MESS_VERSIONEN: JSON.stringify([{ version: GRUNDMODELL, adapterPrefix: null }]),
+        MUUNY_WIEDERHOLUNGEN: konfig.wiederholungen } } };
+  }
   const veraendert = abweichendeSuiten(stabil.benchmarks?.suitenStand, aktuell);
   const kandidat = registry.versions.find((v) => v.status === "candidate" && v.adapterPrefix && !v.benchmarks);
   // Beides faellig? Dann in EINEM Job. Das 55-GB-Fundament wird einmal geholt statt zweimal;
@@ -481,52 +475,43 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
           ...(staende[0].adapterPrefix ? { MUUNY_ADAPTER_PREFIX: staende[0].adapterPrefix } : {}),
           MUUNY_WIEDERHOLUNGEN: konfig.wiederholungen } } };
   }
-  // 3. Schwaeche -> Trainingsplan -> Daten pruefen -> Training.
-  // Die Schwaeche der STABILEN Version zaehlt, nicht die des zuletzt Gemessenen. Nach einem
-  // REJECT stand am 04.09. die Schwaeche des verworfenen Kandidaten im Zustand — der naechste
-  // Lauf haette gegen eine Schwaeche trainiert, die es im gefuehrten Stand gar nicht gibt.
-  const schwaeche = (stabil.benchmarks ? schwaechsteKategorie(stabil.benchmarks) : null) || z.schwaechste || null;
-  const daten = await findeDatensatz(e2, schwaeche?.kategorie);
-  const minPaare = Number(wert(process.env, "MIN_PAARE")) > 0 ? Number(wert(process.env, "MIN_PAARE")) : 3000;
-  if (!daten) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Kein freigegebener Datensatz unter ${L.datensaetze}/ fuer ${schwaeche?.kategorie || "allgemein"} (manifest.json mit qualitaet.ok=true, paare>=${minPaare})` };
-  if ((daten.paare || 0) < minPaare) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} hat ${daten.paare} Paare, noetig ${minPaare} (MUUNY_MIN_PAARE)` };
-  if (stabil.datensatz === daten.name && stabil.trainingsKonfig) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} wurde fuer ${stabil.version} schon benutzt — neue Daten noetig` };
-  // Ein Versuch, der schon einmal abgelehnt wurde, wird nicht wiederholt.
-  // Gleiche Daten plus gleiche Konfiguration ergeben (bis auf Rauschen) dasselbe
-  // Ergebnis. Am 05.09. lief genau das: con-1.4 fiel mit 89,1 Prozent durch, und
-  // der naechste Takt startete con-1.5 mit demselben Datensatz und derselben
-  // Konfiguration — 0,37 USD und zwei Stunden fuer ein bekanntes Ergebnis.
-  const konfigText = trainingsKennung(trainingsKonfigAusUmgebung());
-  const schonGescheitert = registry.versions.find((v) => v.status === "rejected"
-    && v.datensatz === daten.name && trainingsKennung(v.trainingsKonfig) === konfigText);
-  if (schonGescheitert) {
-    return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche,
-      grund: `Datensatz ${daten.name} mit dieser Konfiguration wurde als ${schonGescheitert.version} schon abgelehnt (${schonGescheitert.benchmarks?.gesamt != null ? Math.round(schonGescheitert.benchmarks.gesamt * 1000) / 10 + " %" : "ohne Note"}) — neue Daten oder eine andere Konfiguration noetig` };
+  // 3. Das Tor. Trainiert wird nur mit ECHTEN neuen Lernpaaren, und erst ab
+  //    MUUNY_MIN_NEUE_PAARE (Standard 500). Erzeugte Beispiele gibt es nicht mehr:
+  //    muuny-1.4 bis 1.11 sind alle auf erzeugten Aufgaben trainiert und alle
+  //    schlechter als 1.3 (Loss gegen null — auswendig gelernt).
+  const tor = await pruefeTor(e2);
+  if (!tor.offen) {
+    return { schritt: "tor", phase: "wartet_auf_paare", tor, grund: tor.grund };
   }
-  const version = naechsteVersion(stabil, { basisPrefix: konfig.basis.prefix,
-    vergeben: registry.versions.map((v) => v.version) });
-  // maxZeilen ist Pflicht, nicht Geschmack: gemessen 03.09. braucht EIN Trainingsschritt
-  // auf dem 27B-Modell rund zwei Minuten. Ein Lauf ueber alle 3.707 Paare waere bei
-  // gradAkk 8 rund 460 Schritte, also 15 Stunden — die Zeitgrenze von 220 Minuten schnitte
-  // ihn bei 13 Prozent ab. 700 Zeilen ergeben ~88 Schritte und passen mit Laden und Messen.
-  const trainKonfig = trainingsKonfigAusUmgebung();
-  // Das Polster fuer die Messung richtet sich nach der ZAHL der Pruefaelle.
-  // Fest verdrahtet waere es bei jeder Erweiterung der Latte wieder falsch.
-  const faelleGesamt = (await ladeSuiten(konfig.suitesDir)).reduce((n, s) => n + (s.cases || []).length, 0);
-  trainKonfig.messReserveMinuten = messReserveMinuten({ faelle: faelleGesamt,
-    wiederholungen: konfig.wiederholungen, jobMaxMinuten: konfig.grenzen?.jobMaxMinuten || 220 });
-  return { schritt: "training", schwaeche, job: { modus: "training+messung", version, kandidat: version, datensatz: daten.name, trainingsKonfig: trainKonfig,
-    ziel: `Training ${version} gegen Schwaeche ${schwaeche?.kategorie || "allgemein"} mit ${daten.name} (${daten.paare} Paare)`,
-    parameter: { MUUNY_VERSION: stabil.version, MUUNY_KANDIDAT: version, MUUNY_DATENSATZ_PREFIX: daten.prefix, MUUNY_TRAIN_KONFIG: JSON.stringify(trainKonfig), MUUNY_WIEDERHOLUNGEN: konfig.wiederholungen } } };
+  // Das Tor ist offen — aber ohne gemessenes Grundmodell gibt es keinen
+  // Vergleichswert, und ohne Vergleichswert wird nie trainiert (siehe oben:
+  // die Messung laeuft vorher). Der Datensatzbau folgt in datensatzAusPaaren().
+  return { schritt: "tor_offen", phase: "gestoppt", tor,
+    grund: `Tor offen (${tor.neu} neue Paare), aber der Bau des Datensatzes aus Lernpaaren ist noch nicht freigeschaltet` };
 }
 
-async function findeDatensatz(e2, kategorie) {
-  const index = await e2.getJson(L.datensatzIndex, null);
-  const liste = (index?.datensaetze || []).filter((d) => d.qualitaet?.ok === true && d.freigegeben === true);
-  if (!liste.length) return null;
-  const passend = liste.filter((d) => !kategorie || (d.kategorien || []).includes(kategorie) || (d.kategorien || []).includes("allgemein"));
-  const wahl = (passend.length ? passend : liste).sort((a, b) => String(b.erstellt || "").localeCompare(String(a.erstellt || "")))[0];
-  return wahl;
+/**
+ * Zaehlt die echten Lernpaare und vergleicht mit dem Stand der letzten Runde.
+ * Fail-closed: ist die Ablage oder der Stand nicht lesbar, bleibt das Tor ZU.
+ */
+export async function pruefeTor(e2, { env = process.env } = {}) {
+  const min = Number(wert(env, "MIN_NEUE_PAARE")) > 0 ? Number(wert(env, "MIN_NEUE_PAARE")) : MIN_NEUE_PAARE_STANDARD;
+  let jetzt;
+  try {
+    jetzt = (await e2.liste(`${L.paare}/`)).filter((o) => o.key.endsWith(".json")).length;
+  } catch (fehler) {
+    return { offen: false, jetzt: null, neu: null, min, grund: `Ablage der Lernpaare nicht lesbar — kein Training (${String(fehler?.message || fehler).slice(0, 80)})` };
+  }
+  let stand;
+  try {
+    stand = await e2.getJson(L.paarStand, { paare: 0, datensatz: null, am: null });
+  } catch {
+    return { offen: false, jetzt, neu: null, min, grund: "Stand der letzten Runde nicht lesbar — kein Training" };
+  }
+  const bisher = Number(stand?.paare) >= 0 ? Number(stand.paare) : 0;
+  const neu = Math.max(0, jetzt - bisher);
+  return { offen: neu >= min, jetzt, bisher, neu, min,
+    grund: neu >= min ? null : `wartet: ${neu} von ${min} neuen Paaren (${jetzt} gesamt)` };
 }
 
 async function starteJob(ctx, z, jobPlan) {

@@ -196,7 +196,7 @@ test("planung: geretteter Kandidat aus abgebrochenem Training wird als naechstes
     { version: "muuny-1.0", status: "stable", basisPrefix: "muuny/base/x", benchmarks: { gesamt: 0.97, kritisch: 1, kategorien: { reasoning: { score: 0.83, kritisch: 1 } }, suitenStand: stand } },
     { version: "muuny-1.1", status: "candidate", adapterPrefix: "muuny/versions/muuny-1.1/adapter", benchmarks: null }
   ] };
-  const e2Attrappe = { getJson: async () => null, liste: async () => [] };
+  const e2Attrappe = { getJson: async (k) => (k === "muuny/grundmodell/messung.json" ? { punktzahl: 0.9, suitenStand: stand } : null), liste: async () => [] };
   const konfig = { basis: { prefix: "muuny/base/x", repo: "r" }, wiederholungen: 1, suitesDir };
   const plan = await planeNaechstenSchritt({ e2: e2Attrappe, konfig }, { schwaechste: null }, registry);
   assert.equal(plan.schritt, "kandidat_messen");
@@ -214,7 +214,7 @@ test("faire Latte: geaenderte Suite erzwingt Neumessung der stabilen Version", a
   assert.deepEqual(abweichendeSuiten({ ...aktuell, "con-sicherheit": "alt" }, aktuell), ["con-sicherheit"]);
   assert.equal(abweichendeSuiten(null, aktuell).length, Object.keys(aktuell).length);
   const konfig = { basis: { prefix: "muuny/base/x", repo: "r" }, wiederholungen: 1, suitesDir: dir };
-  const e2Attrappe = { getJson: async () => ({ komplett: true }), liste: async () => [] };
+  const e2Attrappe = { getJson: async (k) => (k === "muuny/grundmodell/messung.json" ? { punktzahl: 0.9, suitenStand: aktuell } : { komplett: true }), liste: async () => [] };
   // Alte Note mit veralteter Latte -> zuerst die stabile Version neu messen, nicht den Kandidaten.
   const alt = { versions: [
     { version: "muuny-1.0", status: "stable", basisPrefix: "muuny/base/x", benchmarks: { gesamt: 0.97, kritisch: 1, kategorien: {}, suitenStand: { ...aktuell, "con-sicherheit": "veraltet" } } },
@@ -250,7 +250,7 @@ test("planung: geaenderte Latte UND wartender Kandidat werden in EINEM Job gemes
   const suitesDir = path.join(ROOT, "workers/muuny-autopilot/suites");
   const stand = await suitenStand(suitesDir);
   const konfig = { basis: { prefix: "muuny/base/x", repo: "r" }, wiederholungen: 1, suitesDir };
-  const e2Attrappe = { getJson: async () => ({ komplett: true }), liste: async () => [] };
+  const e2Attrappe = { getJson: async (k) => (k === "muuny/grundmodell/messung.json" ? { punktzahl: 0.9, suitenStand: stand } : { komplett: true }), liste: async () => [] };
   const registry = { versions: [
     { version: "muuny-1.0", status: "stable", basisPrefix: "muuny/base/x", benchmarks: { gesamt: 0.97, kritisch: 1, kategorien: {}, suitenStand: { ...stand, "con-sicherheit": "veraltet" } } },
     { version: "muuny-1.1", status: "candidate", basisPrefix: "muuny/base/x", adapterPrefix: "muuny/versions/muuny-1.1/adapter", benchmarks: null }
@@ -331,29 +331,6 @@ test("Notbremse: dreimal derselbe Fehler haelt den Kreislauf an", async () => {
   assert.notEqual(z2.phase, "gestoppt");
 });
 
-test("Trainingsziel ist die Schwaeche der STABILEN Version, nicht die des verworfenen Kandidaten", async () => {
-  const { planeNaechstenSchritt, suitenStand } = await import("../workers/muuny-autopilot/kreislauf.js");
-  const suitesDir = path.join(ROOT, "workers/muuny-autopilot/suites");
-  const stand = await suitenStand(suitesDir);
-  const konfig = { basis: { prefix: "muuny/base/x", repo: "r" }, wiederholungen: 1, suitesDir };
-  const e2 = {
-    getJson: async (k, standard = null) => {
-      if (k === `muuny/base/x/manifest.json`) return { komplett: true };
-      if (k === "muuny/datasets/index.json") return { datensaetze: [{ name: "d1", prefix: "muuny/datasets/d1", paare: 5000, kategorien: ["allgemein"], freigegeben: true, qualitaet: { ok: true }, erstellt: "2026-09-04" }] };
-      return standard;
-    },
-    liste: async () => []
-  };
-  const registry = { versions: [{ version: "muuny-1.0", status: "stable", basisPrefix: "muuny/base/x",
-    benchmarks: { gesamt: 0.97, kritisch: 1, suitenStand: stand,
-      kategorien: { reasoning: { score: 0.83, kritisch: 1 }, sicherheit: { score: 1, kritisch: 0 } } } }] };
-  // Im Zustand steht noch die Schwaeche des VERWORFENEN Kandidaten — sie darf nicht gewinnen.
-  const z = { schwaechste: { kategorie: "sicherheit", score: 0.66, kritisch: 2 } };
-  const plan = await planeNaechstenSchritt({ e2, konfig }, z, registry);
-  assert.equal(plan.schritt, "training");
-  assert.equal(plan.schwaeche.kategorie, "reasoning", "die Schwaeche des gefuehrten Standes zaehlt");
-});
-
 test("verwaister Container: laeuft die Gruppe ohne gefuehrten Job, wird sie gestoppt", async () => {
   const { bereiteJobVor } = await import("../workers/muuny-autopilot/salad.js");
   let gestoppt = false;
@@ -417,6 +394,7 @@ test("Eine alte Startsperre faerbt die Wache nicht dauerhaft rot", async () => {
         return { phase: "ueberwachen", ticks: 5, historie: [], laufenderJob: null,
           startBlockiert: { zeit: "2026-09-05T10:00:00.000Z", gruende: ["gruppe_nicht_gestoppt:running"] } };
       }
+      if (k === "muuny/grundmodell/messung.json") return { punktzahl: 0.9, suitenStand: stand };
       if (k === "muuny/registry.json") {
         // Latte aktuell, kein Kandidat, kein Datensatz ⇒ der Planer plant nichts
         // und faehrt in die Phase warten_auf_daten. Genau der Live-Fall vom 05.09.
@@ -579,42 +557,6 @@ test("Eine Messung loescht die Herkunft der Version nicht", async () => {
   assert.equal(e.jobId, "messlauf-1", "echte neue Werte werden weiterhin uebernommen");
 });
 
-test("Ein abgelehnter Versuch wird nicht mit denselben Daten wiederholt", async () => {
-  // Gleiche Daten plus gleiche Konfiguration ergeben dasselbe Ergebnis. Am 05.09.
-  // startete der Autopilot nach dem Reject von muuny-1.4 sofort muuny-1.5 mit exakt
-  // demselben Datensatz — 0,37 USD und zwei Stunden fuer ein bekanntes Ergebnis.
-  const { planeNaechstenSchritt, suitenStand, trainingsKonfigAusUmgebung } = await import("../workers/muuny-autopilot/kreislauf.js");
-  const suitesDir = path.join(ROOT, "workers/muuny-autopilot/suites");
-  const stand = await suitenStand(suitesDir);
-  const konfig = { basis: { prefix: "muuny/base/x", repo: "r" }, wiederholungen: 1, suitesDir };
-  const e2 = {
-    getJson: async (k, standard = null) => {
-      if (k === "muuny/base/x/manifest.json") return { komplett: true };
-      if (k === "muuny/datasets/index.json") {
-        return { datensaetze: [{ name: "con-grundfaehigkeiten-v3", prefix: "muuny/datasets/con-grundfaehigkeiten-v3",
-          paare: 4696, kategorien: ["reasoning"], freigegeben: true, qualitaet: { ok: true }, erstellt: "2026-09-05" }] };
-      }
-      return standard;
-    },
-    liste: async () => []
-  };
-  const registry = { versions: [
-    { version: "muuny-1.3", status: "stable", benchmarks: { gesamt: 0.961, kritisch: 5,
-      kategorien: { reasoning: { score: 0.909, kritisch: 2 }, coding: { score: 1, kritisch: 0 } }, suitenStand: stand } },
-    { version: "muuny-1.4", status: "rejected", datensatz: "con-grundfaehigkeiten-v3",
-      trainingsKonfig: trainingsKonfigAusUmgebung(), benchmarks: { gesamt: 0.891, kritisch: 8 } }
-  ] };
-  const plan = await planeNaechstenSchritt({ e2, konfig }, { schwaechste: null }, registry);
-  assert.equal(plan.job, undefined, "kein Job: derselbe Versuch ist schon gescheitert");
-  assert.equal(plan.phase, "warten_auf_daten");
-  assert.match(plan.grund, /muuny-1\.4 schon abgelehnt/);
-  // Mit einem NEUEN Datensatz laeuft es weiter.
-  registry.versions[1].datensatz = "con-grundfaehigkeiten-v2";
-  const plan2 = await planeNaechstenSchritt({ e2, konfig }, { schwaechste: null }, registry);
-  assert.ok(plan2.job, "neue Daten muessen wieder ein Training ergeben");
-  assert.equal(plan2.job.datensatz, "con-grundfaehigkeiten-v3");
-});
-
 test("Eine angeforderte Zeitgrenze fuer die Ablage wird nicht stillschweigend gedeckelt", async () => {
   // Bis zum 06.09. klemmte requestTimeoutSignal jede Anfrage auf hoechstens
   // 30 Sekunden. Ein Aufrufer konnte 40 Minuten verlangen und bekam 30 Sekunden,
@@ -645,30 +587,6 @@ test("Das Messpolster waechst mit der Zahl der Pruefaelle", async () => {
   // Nie mehr als die Haelfte des Jobs, sonst bleibt fuer das Training nichts.
   assert.ok(messReserveMinuten({ faelle: 5000, jobMaxMinuten: 220 }) <= 110);
   assert.ok(messReserveMinuten({ faelle: 1 }) >= 15, "auch ein einziger Fall braucht die Ladezeit");
-
-  // Und der Planer legt den Wert wirklich in die Job-Konfiguration.
-  const suitesDir = path.join(ROOT, "workers/muuny-autopilot/suites");
-  const stand = await suitenStand(suitesDir);
-  const konfig = { basis: { prefix: "muuny/base/x", repo: "r" }, wiederholungen: 1, suitesDir,
-    grenzen: { jobMaxMinuten: 220 } };
-  const e2 = {
-    getJson: async (k, standard = null) => {
-      if (k === "muuny/base/x/manifest.json") return { komplett: true };
-      if (k === "muuny/datasets/index.json") {
-        return { datensaetze: [{ name: "neu-v9", prefix: "muuny/datasets/neu-v9", paare: 9000,
-          kategorien: ["reasoning"], freigegeben: true, qualitaet: { ok: true }, erstellt: "2026-09-06" }] };
-      }
-      return standard;
-    },
-    liste: async () => []
-  };
-  const registry = { versions: [{ version: "muuny-1.3", status: "stable", datensatz: "alt-v1",
-    trainingsKonfig: { r: 16 },
-    benchmarks: { gesamt: 0.96, kritisch: 5, kategorien: { reasoning: { score: 0.9, kritisch: 2 } }, suitenStand: stand } }] };
-  const plan = await planeNaechstenSchritt({ e2, konfig }, {}, registry);
-  assert.equal(plan.schritt, "training");
-  assert.ok(plan.job.trainingsKonfig.messReserveMinuten >= 30,
-    `Polster fehlt oder zu klein: ${JSON.stringify(plan.job.trainingsKonfig)}`);
 });
 
 test("Die Wiederholungssperre ignoriert Laufzeitwerte in der Konfiguration", async () => {

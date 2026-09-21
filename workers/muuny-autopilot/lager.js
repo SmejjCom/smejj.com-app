@@ -59,7 +59,15 @@ export function schluessel(env = process.env) {
     jobs: `${p}logs/jobs`,
     versionen: `${p}versions`,
     evals: `${p}evals`,
-    deployMetriken: `${p}deploy-metriken`
+    deployMetriken: `${p}deploy-metriken`,
+    // Vergleichswert: die gemessene Note des UNTRAINIERTEN Grundmodells.
+    grundmodell: `${p}grundmodell/messung.json`,
+    // Echte Lernpaare (Daumen hoch + Einwilligung), eine unveraenderliche Datei je Paar.
+    paare: `${p}training/paare`,
+    // Stand der letzten Runde: {paare, datensatz, am}. Das Tor rechnet dagegen.
+    paarStand: `${p}training/stand.json`,
+    // Freigabe fuer die Laufzeit: welcher Adapter live ist. Geloescht = Grundmodell.
+    freigabe: `${p}freigabe.json`
   };
 }
 
