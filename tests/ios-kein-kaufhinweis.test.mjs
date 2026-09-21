@@ -205,7 +205,15 @@ test("die Kontoseite nimmt den gewuenschten Reiter an — ohne Hash", () => {
   assert.match(QUELLE, /sessionStorage\.getItem\(KONTO_REITER_SCHLUESSEL\)/);
   assert.match(QUELLE, /sessionStorage\.removeItem\(KONTO_REITER_SCHLUESSEL\)/,
     "die Notiz muss nach dem Lesen verfallen — ein zweiter Besuch beginnt wieder im Profil");
-  assert.match(QUELLE, /\? gewuenscht : "identity"/, "unbekannter Reiter faellt auf das Profil zurueck");
+  // Die Auswertung muss bei JEDEM Betreten laufen. Der Aufbau der Ansicht
+  // laeuft nur einmal (dataset.accountPrivacyReady) — beim zweiten Besuch kam
+  // sie sonst gar nicht mehr zum Zug (live gemessen, der Reiter blieb stehen).
+  assert.match(QUELLE, /window\.addEventListener\("popstate", \(\) => reiterAusNotiz\(view\)\)/,
+    "der Reiterwunsch muss auch beim erneuten Oeffnen greifen");
+  const fn = QUELLE.match(/function reiterAusNotiz\(view\) \{[\s\S]*?\n\}/)[0];
+  assert.ok(fn.indexOf("removeItem") < fn.indexOf("activate("),
+    "die Notiz wird verbraucht, bevor der Reiter gesetzt wird");
+  assert.match(fn, /if \(!view\.querySelector/, "ein unbekannter Reiter darf die Seite nicht leer lassen");
   const dock = fs.readFileSync("public/profile-dock-menu.js", "utf8");
   assert.equal(
     (QUELLE.match(/smejj\.konto\.reiter\.v1/g) || []).length
