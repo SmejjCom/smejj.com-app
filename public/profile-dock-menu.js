@@ -104,8 +104,16 @@ function fuelleWerte() {
     const voll = document.getElementById("dockWertPlan");
     if (kurz) kurz.textContent = plan;
     // Apple 3.1.1: "Frei · 0,00 €" ist eine Preisangabe — in der iOS-Huelle
-    // bleibt nur der Plan-Name stehen (Geraetetest 21.09.2026).
-    const huelle = document.documentElement.getAttribute("data-huelle") === "ios";
+    // bleibt nur der Plan-Name stehen (Geraetetest 21.09.2026). Die Pruefung
+    // steht hier und nicht in einem gemeinsamen Modul: eine eigene Datei im
+    // Startbuendel sprengt das Startgewicht, und dessen Messlatte darf nur mit
+    // schriftlicher Freigabe steigen. Fail-closed wie iosHuelle().
+    let huelle = true;
+    try {
+      const ua = String(navigator.userAgent || "");
+      huelle = Boolean(window.Capacitor) || /iPad|iPhone|iPod/.test(navigator.platform || ua)
+        || (ua.includes("Macintosh") && "ontouchend" in document);
+    } catch { huelle = true; }
     if (voll) voll.textContent = (plan === "Frei" && !huelle) ? "Frei · 0,00 €" : plan;
     let sprachRoh = "de";
     try { sprachRoh = (JSON.parse(localStorage.getItem("smejj.settings.v1") || "{}").language) || navigator.language || "de"; } catch { /* de */ }

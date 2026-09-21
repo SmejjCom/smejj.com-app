@@ -357,10 +357,6 @@
       "marke": "17",
       "finger": "3abb9d08ea2ec278"
     },
-    "ios-preise-aus.js": {
-      "marke": "1",
-      "finger": "2591ed6def6cacc1"
-    },
     "start-chips.js": {
       "marke": "b32b-3",
       "finger": "a691cee1a517f3b1"
@@ -402,7 +398,7 @@
       "finger": "224dace78b92459e"
     },
     "app.js": {
-      "marke": "model-picker-20260727",
+      "marke": "model-picker-20260728",
       "finger": "ba96f1d803229242"
     },
     "pwa-schnellstart.js": {
@@ -418,8 +414,8 @@
       "finger": "3215e3b4b11aac80"
     },
     "profile-dock.js": {
-      "marke": "profile-dock-20260717-11",
-      "finger": "be4771af8b315ba6"
+      "marke": "profile-dock-20260717-12",
+      "finger": "3e297dea66a91173"
     },
     "chat-actions.js": {
       "marke": "b79",
@@ -470,8 +466,8 @@
       "finger": "92d706e95e9e2015"
     },
     "profile-dock-menu.js": {
-      "marke": "b55",
-      "finger": "b167d5d252111adb"
+      "marke": "b56",
+      "finger": "2069c0136144b8e7"
     },
     "quellen-panel.js": {
       "marke": "2",
@@ -480,6 +476,10 @@
     "icon-nutzung.js": {
       "marke": "1",
       "finger": "ddf238e94e55304d"
+    },
+    "ios-preise-aus.js": {
+      "marke": "1",
+      "finger": "2591ed6def6cacc1"
     },
     "search-overlay.js": {
       "marke": "b80",
