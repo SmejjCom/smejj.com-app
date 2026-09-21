@@ -23,12 +23,18 @@ import { anfragenFuerLauf, darfLaufen, grenzenAus } from "../../../src/radar/rad
 import { pruefeFremdtext, entschaerfe } from "../../../src/radar/injektionsschutz.js";
 import { bewerteFund, nachGuete } from "../../../src/radar/quellenGuete.js";
 import { PRUEFSTATUS, VERGLEICH, baueEintrag, fuerAbruf, neueFassung, vergleiche } from "../../../src/radar/wissensbasis.js";
+import { themenAusLuecken } from "../../../src/radar/wissensluecken.js";
+import { darfHintergrundLaufen, vorrangStand } from "./radarVorrang.js";
 
 export const WISSEN_ABLAGE = "radar/wissen";
 export const LAUF_ABLAGE = "radar/laeufe";
 export const KONFIG_ABLAGE = "radar/konfiguration";
 
 const wissenStore = createRecordStore(WISSEN_ABLAGE, { maximal: 2000 });
+// Nutzungssignale der eigenen Ablage (bereits PII-bereinigt, siehe
+// userFeedbackFlywheelAutopilot). Sie bleiben IM HAUS — nach draussen geht nur
+// ein Begriff aus der festen Liste in wissensluecken.js.
+const signalStore = createRecordStore("self-improvement/user-feedback-events", { maximal: 300 });
 const laufStore = createRecordStore(LAUF_ABLAGE, { maximal: 500 });
 const konfigStore = createRecordStore(KONFIG_ABLAGE, { maximal: 5 });
 
@@ -76,6 +82,9 @@ export async function fuehreRadarLaufAus({
   grund = "takt"
 } = {}) {
   const begonnenAm = jetzt;
+  // Die Dauer wird an der ECHTEN Uhr gemessen, nicht an `jetzt` — das ist in
+  // Tests ein gesetzter Zeitpunkt und ergaebe negative Laufzeiten.
+  const startMs = Date.now();
   const konfig = await leseKonfig({ env, store: stores.konfig });
   const grenzen = grenzenAus(env, konfig);
   const laeufe = await listeOderNull(stores.laeufe, env);
@@ -85,8 +94,22 @@ export async function fuehreRadarLaufAus({
     return protokoll({ begonnenAm, ok: false, grund: erlaubnis.grund, rest: erlaubnis.rest, gestartetWegen: grund });
   }
 
+  // VORRANG (Auftrag Punkt 7): Chat, Coding, Stimme und Bildschirmfreigabe
+  // gehen vor. Der Takt verschiebt sich dann einfach; von Hand ausgeloeste
+  // Laeufe (Adminknopf) laufen trotzdem — dort wartet ein Mensch davor.
+  if (grund === "takt") {
+    const vorrang = darfHintergrundLaufen({ jetztMs: Date.parse(jetzt) || Date.now() });
+    if (!vorrang.erlaubt) {
+      return protokoll({ begonnenAm, ok: true, grund: vorrang.grund, rest: erlaubnis.rest, gestartetWegen: grund, vorrang: vorrangStand() });
+    }
+  }
+
   laeuftGerade = true;
-  const themen = themenListe(konfig);
+  // Wissensluecken aus der eigenen Nutzung: nur Begriffe aus der festen Liste,
+  // nie Nutzertext (wissensluecken.js). Neue Themen ergaenzen sich damit
+  // selbst — innerhalb der Themen- und Budgetgrenzen, wie im Auftrag erlaubt.
+  const ergaenzt = await themenAusLueckenErgaenzen({ env, konfig, stores });
+  const themen = themenListe(ergaenzt.konfig);
   const letzteLaeufe = letzteThemenLaeufe(laeufe);
   const faellig = faelligeThemen(themen, letzteLaeufe, Date.parse(jetzt)).slice(0, maxThemen);
   const budgetAnfragen = anfragenFuerLauf(grenzen, erlaubnis.rest);
@@ -106,14 +129,24 @@ export async function fuehreRadarLaufAus({
         anfragen: 0, funde: 0, geprueft: 0, gespeichert: 0, verworfen: []
       };
       const anfrage = thema.anfragen[0];
-      let treffer = [];
-      try {
-        const ergebnis = await suche(anfrage, { limit: 6 });
-        treffer = Array.isArray(ergebnis?.results) ? ergebnis.results : [];
-        anfragen += 1;
-        eintragThema.anfragen = 1;
-      } catch (fehler) {
-        eintragThema.fehler = String(fehler?.message || fehler).slice(0, 160);
+      // EINE begrenzte Wiederholung (Auftrag Punkt 7): ein Aussetzer der
+      // Suche ist haeufig, eine Schleife waere teuer. Mehr als zwei Versuche
+      // gibt es nicht, und der zweite zaehlt aufs Budget wie der erste.
+      let treffer = null;
+      for (let versuch = 1; versuch <= 2 && treffer === null; versuch += 1) {
+        if (anfragen >= budgetAnfragen) break;
+        try {
+          const ergebnis = await suche(anfrage, { limit: 6 });
+          treffer = Array.isArray(ergebnis?.results) ? ergebnis.results : [];
+          anfragen += 1;
+          eintragThema.anfragen = versuch;
+        } catch (fehler) {
+          eintragThema.fehler = `Versuch ${versuch}: ${String(fehler?.message || fehler).slice(0, 120)}`;
+          anfragen += 1;
+          eintragThema.anfragen = versuch;
+        }
+      }
+      if (treffer === null) {
         protokollThemen.push(eintragThema);
         continue;
       }
@@ -189,6 +222,8 @@ export async function fuehreRadarLaufAus({
     begonnenAm,
     ok: true,
     grund: null,
+    dauerMs: Date.now() - startMs,
+    themenErgaenzt: ergaenzt.neue,
     rest: erlaubnis.rest,
     gestartetWegen: grund,
     themen: protokollThemen,
@@ -208,10 +243,35 @@ export async function fuehreRadarLaufAus({
   return lauf;
 }
 
+/**
+ * Haengt Themen aus erkannten Wissensluecken an die Konfiguration — hoechstens
+ * zwei je Lauf. Faellt die Signal-Ablage aus, bleibt alles beim Alten: eine
+ * stumme Ablage darf den Radar nicht anhalten (und erst recht nichts erfinden).
+ */
+async function themenAusLueckenErgaenzen({ env, konfig, stores }) {
+  try {
+    const liste = await signalStore.liste({ env });
+    if (!liste?.ok) return { konfig, neue: [] };
+    const signale = (liste.datensaetze || [])
+      .filter((d) => d?.signalType === "thumbs_down" || d?.signalType === "regenerate")
+      .map((d) => `${d.promptVoll || d.promptSample || ""} ${d.antwortSample || ""}`);
+    const vorhandeneIds = themenListe(konfig).map((t) => t.id);
+    const neue = themenAusLuecken(signale, { vorhandeneIds });
+    if (!neue.length) return { konfig, neue: [] };
+    const erweitert = { ...(konfig || {}), themen: [...((konfig || {}).themen || []), ...neue] };
+    await schreibeKonfig(erweitert, { env, store: stores.konfig });
+    return { konfig: erweitert, neue: neue.map((t) => ({ id: t.id, titel: t.titel, herkunft: t.herkunft })) };
+  } catch {
+    return { konfig, neue: [] };
+  }
+}
+
 function protokoll(felder) {
   return {
     id: neueKennung("radarlauf"),
     art: "radar-lauf",
+    dauerMs: null,
+    themenErgaenzt: [],
     themen: [],
     anfragen: 0,
     quellenGeprueft: 0,
