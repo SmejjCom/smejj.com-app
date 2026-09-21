@@ -79,3 +79,31 @@ Downloads — es fehlen vier Zeabur-Variablen: **Doppelklick
 3. In ASC → App-Prüfung → „Auf App-Prüfung antworten": Text aus
    `apple-antwort-2.1-fertig.txt`, Video anhängen.
 4. „Erneut zur App-Prüfung übermitteln".
+
+## Nachtrag 21.09. — Support-Seite gebaut und LIVE (SW v945)
+
+Der gelbe Punkt „Support-URL zeigt auf die Firmen-Startseite" ist zu.
+`https://smejj.com/en/support.html` ist live, die Support-URL in App Store
+Connect zeigt darauf (nach Neuladen gegengeprüft, nicht dem Häkchen geglaubt).
+Anker `schutz-100-2026-09-21-support-v945`, alle 243 Precache-Einträge 200.
+
+Mitgenommen, weil es dieselbe Ursache hat — ein Prüfer, der Englisch liest,
+landete bisher auf deutschen Seiten mit falschem Inhalt:
+
+* Die Hilfeseite behauptete live „smejj.com verlangt eine Anmeldung, bevor du
+  es benutzen kannst" — das Gegenteil des Gastmodus (v933) und unserer eigenen
+  ASC-Anmerkung „NO ACCOUNT IS NEEDED TO REVIEW THIS APP".
+* `hilfe-support.js` antwortete auf der englischen Seite deutsch („Wird
+  gesendet …"). Jetzt zweisprachig über `<html lang>`.
+* Der Fuß von `/en/` verlinkte `impressum.html` und `datenschutz.html`, also
+  die DEUTSCHEN Seiten, obwohl `/en/legal-notice.html` und `/en/privacy.html`
+  längst existieren.
+
+**Drei Fehlstarts der Kaskade, alle im eigenen Schutz** (die Auslieferung selbst
+war nie das Problem): (1) Der FREMD-Vergleich maß live gegen `origin/$BAU_ZWEIG`
+— nach dem Push in Schritt 3 trägt der Bauzweig aber schon die neue Fassung,
+also sah **jede** Datei fremd aus. Er muss gegen den Stand VOR dem Commit
+messen. (2) Beim zweiten Lauf hielt die eigene „Nummer belegt"-Prüfung an, weil
+der Bauzweig v945 schon trug. (3) Die Fortsetzungs-Weiche fragte nach der
+Commit-Kennung — die der cherry-pick aber neu vergibt. Sie muss nach dem
+ERGEBNIS fragen (liegt `public/en/support.html` im Bauzweig?).
