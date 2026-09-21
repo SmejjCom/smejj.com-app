@@ -186,3 +186,23 @@ test("die Kuendigung fuehrt in der Huelle nicht ins Stripe-Portal", () => {
     "auch der oeffentliche Portal-Link darf in der Huelle nicht geoeffnet werden");
   assert.match(fn, /mailto:/, "der E-Mail-Weg bleibt als Kuendigungsmoeglichkeit");
 });
+
+test("das Profilmenue nennt in der Huelle keinen Betrag", () => {
+  // "Frei · 0,00 €" stand im Menue, bevor man das Konto ueberhaupt oeffnet.
+  // Die Pruefung steht bewusst IM Modul und nicht in einer gemeinsamen Datei:
+  // eine zusaetzliche Datei im Startbuendel sprengt das Startgewicht, und
+  // dessen Messlatte darf nur mit schriftlicher Freigabe steigen.
+  const dock = fs.readFileSync("public/profile-dock-menu.js", "utf8");
+  assert.match(dock, /\(plan === "Frei" && !huelle\) \? "Frei · 0,00 €" : plan/,
+    "der Betrag darf nur ausserhalb der Huelle erscheinen");
+  assert.match(dock, /catch \{ huelle = true; \}/, "fail-closed: im Zweifel verstecken");
+  assert.match(dock, /window\.Capacitor/);
+  assert.match(dock, /goTo\("\/profile#billing"\)/,
+    '"Mein Plan" muss den Plan-Reiter oeffnen, nicht das Profil');
+});
+
+test("die Kontoseite nimmt den gewuenschten Reiter an", () => {
+  assert.match(QUELLE, /const gewuenscht = String\(location\.hash \|\| ""\)\.replace\("#", ""\)/);
+  // Unbekannte Hashes duerfen die Seite nicht leer lassen.
+  assert.match(QUELLE, /\? gewuenscht : "identity"/, "unbekannter Reiter faellt auf das Profil zurueck");
+});
