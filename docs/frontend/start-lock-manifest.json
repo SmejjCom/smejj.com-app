@@ -1,23 +1,23 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-21T00:04:49.585Z",
-  "confirmation": "Zuarbeit der Sitzung 'Smejj Browser Checken' vom 21.09.2026: Gast-Frage am Geraet geprueft, zwei Befunde — die alte Frage blieb im Feld stehen, und am iPhone verdeckte die offene Tastatur die untere Haelfte der Antwortkarte samt Anmelde-Knopf. Beides behoben; Betreiber-Freigabe fuer den Gastmodus liegt vom 21.09.2026 vor. An index.html nur die Cache-Nummer. SW v935.",
+  "frozenAt": "2026-09-21T22:15:46.177Z",
+  "confirmation": "Betreiber 18.09.2026 schriftlich im Chat: 'Oeffne https://smejj.com/ im Chrome-Browser und pruefe unseren smejj Browser vollstaendig von A bis Z. … Erst alle Probleme und Verbesserungspunkte auflisten, danach vollstaendig umsetzen und anschliessend alles erneut mit realen Tests pruefen. Keine funktionierende bestehende Funktion darf dabei beschaedigt werden.' Umsetzung: CSP frame-src https:, Globus bei offenem Browser ausgeblendet, Menue-Ebene 90, Schnellweg in derselben Live-Sitzung, Schonfrist fuer Server-Sitzungen, Hauptmenue mit Vollbild, SW smejj-shell-v911 (Runde 9: Frage-Erfassung repariert; Sicherheits-Lock fuer src/shared/controlAccessPolicy.js nachgestempelt — dort steht seit Runde 6 die Route /api/browser/page als offene Lese-Route, Sprachzeile der Chat-Bruecke (Betreiber 20.09.), gleichrangig zu /api/browser/fetch; Betreiber 20.09. schriftlich: 'Wenn du Fehler findest, behebe sie sofort, deploye erneut … Danach alles 100% schuetzen'; zuvor Runde 8: Dateiansicht fuer Bild, Text, PDF und Downloads; Betreiber 20.09.: 'Weiter'; zuvor Runde 7: Proxy-Seite komprimiert; zuvor Runde 6: Proxy-Seiten des eingebauten Browsers als eigenes Dokument mit eigener Sicherheitsregel, https zuerst; Betreiber 20.09. schriftlich: 'Checke nochmal Browser von A bis Z muss besser als Chrome Browser sein.'). Betreiber dazu am 18.09. schriftlich: 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' Dazu die Melde-Funktion: Google Play hat das Update am 20.09.2026 abgelehnt ('Your app lacks in-app features for users to report or flag offensive content'), Betreiber hat deren Auslieferung am 20.09. per Doppelklick ausgeloest (brach an der Markenkette ab). Runde 10: Betreiber 20.09. schriftlich: 'Teste v913 jetzt auch auf Android und iPhone' — dabei gefunden: Nachrichten-Menue und Melde-Dialog blieben in englischer App deutsch; 29 Texte in 14 Sprachen, Marken von v914 geheilt. Runde 11: Nachtest v915 am iPhone — beruehrte Zeile im Melde-Dialog weiss und unlesbar, behoben. Runde 12: Betreiber 20.09. schriftlich: 'Mach die Seitentitel auch noch in allen Sprachen fertig'. Runde 13: Betreiber 20.09. schriftlich: 'Teste v922 jetzt auch auf Android und iPhone' — dabei gefunden: Adressleiste des Browsers zeigt allen Nutzern t(\"Suchen, iPhone-App: Browser-Fenster unter der Statusleiste; beides behoben. Runde 14: Betreiber 21.09. schriftlich: 'Teste die naechste Version, sobald die andere Sitzung fertig ist' — dabei gefunden: das Geraetemodell in Desktop-Chrome beantwortet eine englische Frage deutsch, Hinweis darunter fest deutsch; behoben. Der Sicherheits-Lock im Arbeitszweig zieht dabei den im Bauzweig am 21.09. bereits gestempelten Stand von account-sessions.js (Konto-Loeschung, Apple 5.1.1(v), Betreiber-Freigabe 21.09.) nach. Per Doppelklick ausgeloest.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "3e2304f529d9d3c427da1f6617859e83b01721b52dbd94dc97f7aad5cfab3f47",
+    "public/index.html": "9d3a149875aae04f03b73d86caa3fc33f729389f313d65485590495634863a49",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "f78f9b57ebabbb9798ecf9142dfedd110094e85df676f86b18917c61e24fd3bc",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "10ba77e36d5b6e57b90245a559b2451db1ec256ff9d5aa8004677c9236a76b59",
-    "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
+    "public/app-surfaces.css": "d8a4efdf629bd585e10b27a5cbe365cc7b0359987d01bb81f3de6c17600386ec",
     "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "7403ac7a7106cc72805268c9f139eb5e86e458880fa7d849a26a29ea99d0c3c4",
-    "public/app.js": "6c56af8fd390f018ffd7a6d945a1ce2b86e4942f99be0352865dea8957c75fe0",
+    "public/app.js": "75365d49607d960afa8718608efd0780b38bfa6cff44a0e7eae7e306830b1c18",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "27acbbbbe2a23a81f25b8fdab7e5204cb4e5ecc1217f6ef1af8ee7a12831e3df",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "7a8111b0e77ea6d6a56fc6ff342a11f7a920d84331d157006d7499f287a3f786",
+    "public/premium-surfaces.js": "5f83d5e17c14b6b78a42ea84f5f23dc058172f0031ca97b271b95023b8ff0993",
     "public/autonomous-coding.js": "95a765c2888895d5e48458a289bda3ab29595ac5871a1edc95d992a45e027164",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "cfdeec81cd1a38393abc7bae3976de0a0a4ccbb6a885fbc3dc2c0ff04940baf4",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "72da8fa0cf7f93ece770bb7de5652e56c07af46510c31ce562435fa0e62ec769",
+    "public/sw.js": "5f9791dc8968f615f1a2bca85ba81b711386f65f8e9bacf66c7599fb69fe2173",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
