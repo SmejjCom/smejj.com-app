@@ -73,7 +73,9 @@ test("der Hinweis unter der Sprachwelle bleibt kurz", () => {
   // Der alte Satz nannte jeden Knopf einzeln und brauchte drei Zeilen (59 px)
   // direkt ueber der Bedienzone. Was die Knoepfe tun, sagen ihre eigenen
   // Beschriftungen.
-  const treffer = /hint\.textContent = "([^"]+)"/.exec(ui);
+  // Seit der Uebersetzungsrunde laeuft der Satz durch stimmText(...) — die
+  // Pruefung gilt weiter der LAENGE des Satzes, nicht seiner Verpackung.
+  const treffer = /hint\.textContent = (?:stimmText\()?"([^"]+)"/.exec(ui);
   assert.ok(treffer, "der Hinweistext wurde nicht gefunden");
   assert.ok(treffer[1].length <= 60, `Hinweis ist ${treffer[1].length} Zeichen lang: "${treffer[1]}"`);
 });

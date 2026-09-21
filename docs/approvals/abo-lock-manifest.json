@@ -1,15 +1,15 @@
 {
   "lock": "smejj abo lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-14T12:41:22.657Z",
-  "confirmation": "Betreiber, 2026-09-14 (schriftlich): 'Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.' — F6: je EINE Anfrage /api/auth/me und /api/billing/status beim Laden (account-sessions.js ueber die gemeinsamen Speicher, neues shared/billing-status-speicher.js).",
+  "frozenAt": "2026-09-21T22:35:25.390Z",
+  "confirmation": "ja mach die auch fertig — offene Sperren nach Uebersetzung und Apple-Anmeldung stempeln",
   "rule": "Keine Aenderung an der Abo- und Zahlungskette (Webhook, Signaturpruefung, Plan-Zuordnung, Abo-Anzeige, Kaufknoepfe, Zahlungsbestaetigung) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "control-server/src/routes/billingRoutes.js": "596abc7d0a52cd0f0f4db43842787f0418e9272b0bfcd44a9e4551d0a8edb33d",
     "control-server/src/billing/stripeWebhookVerify.js": "e7a42ade4bc0e78e718bac8cc24cf30e21f46aec70aac8c2d6bcc7ce2a99e6b6",
     "control-server/src/billing/stripeEventApply.js": "71de637a1e577943525db71382bce11fdbfd905c80f5f4e223158e0ecb706d60",
     "control-server/src/billing/subscriptionStore.js": "849806cffa39eebbeb50d67404e567358d38bc5952c717424abea2faa528ffea",
-    "public/account-privacy.js": "9b8bc6ff7d0d75f568327591223d91f55a6d1df33ebe664edcc32bbea2543c54",
-    "public/account-sessions.js": "5e3495cba6a9e147d3aa86ad21ed0047e4d4658e42129efd01b36311f6c750b8",
+    "public/account-privacy.js": "f97224fba837f6f3da998768b05460445dd9429cbeb132645e916a76a2bc84c5",
+    "public/account-sessions.js": "25330ad02f3f5e4e8b525ff0521ba9ffe94daa9d47a5cd8501f3f4994fba393a",
     "public/danke-abo.html": "f842a4a18bf539b73a06a56d4af3e89c39a33846a02c65b460ce4b23d00d000f",
     "public/danke-abo.js": "7dca3de8137a55cebebd2f20b12db9faddcd060f47559dba4c63ce153e45197f",
     "control-server/src/admin/opsAbrechnung.js": "cd35180f12612e0348d7b68ed5d3c232e1a1a343bb51da289f72c2cb9dc5f2d2"

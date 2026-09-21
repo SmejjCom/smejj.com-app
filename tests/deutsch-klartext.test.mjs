@@ -7,7 +7,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const quelle = readFileSync(new URL("../public/deutsch-klartext.js", import.meta.url), "utf8");
-const m = await import("data:text/javascript;base64," + Buffer.from(quelle.split("\nif (typeof document")[0]).toString("base64"));
+// DIREKT AUS DER DATEI laden, nicht ueber eine data:-Adresse (bis 21.09.2026 so):
+// seit das Modul `./i18n/ui.js` einfuehrt, kann eine data:-Adresse den relativen
+// Pfad nicht aufloesen ("Invalid relative URL") — der Test starb am eigenen
+// Ladetrick, nicht an der Sache. Die Selbststart-Zeile am Dateiende laeuft in
+// node ohnehin nicht (kein `document`).
+const m = await import(new URL("../public/deutsch-klartext.js", import.meta.url).href);
 
 test("die gemessenen Anglizismen haben ein deutsches Wort", () => {
   for (const alt of ["Modelle und Reasoning", "Reasoning-Aufwand", "Offline, Sync, Platz", "Free-safe", "BYOK vorbereitet", "Coding-Arbeitsbereich", "Coding öffnen", "API-Key", "API-Keys", "Key sicher verbinden", "Session", "local-only", "Exakte Diff-Freigabe", "Free-Guard anzeigen", "Sync", "Standardmodell, BYOK und lokale Modelle.", "Wenn ein Diff oder externer Schritt wartet.", "owner/editor/viewer/local-only vorbereitet", "Aufbauphase: ohne Limit."]) {
@@ -28,7 +33,12 @@ test("nur bei deutscher Oberfläche; Textknoten, Optionen und Platzhalter, nie i
   const en = { documentElement: { getAttribute: () => "en" } };
   assert.equal(m.oberflaecheDeutsch(de), true);
   assert.equal(m.oberflaecheDeutsch({ documentElement: { getAttribute: () => null } }), true, "ohne lang ist die Quelle deutsch");
-  assert.equal(m.oberflaecheDeutsch(en), false);
+  // SEIT 20.09.2026 entscheidet die LAUFZEIT-Sprache (i18n/ui.js), <html lang>
+  // ist nur noch Rueckfall — genau darum ging der Fix: ui.js setzt lang nur auf
+  // Oberflaechen-Ebene, <html> steht immer auf "de", und das Modul hielt jede
+  // Sprache fuer Deutsch. In node meldet uiLanguage() die Quellsprache (de),
+  // deshalb greift hier die Laufzeit; der Rueckfall wird unten eigens geprueft.
+  assert.equal(m.oberflaecheDeutsch(en), true, "Laufzeit sagt Deutsch — <html lang> ist nur Rueckfall");
   // Mini-DOM
   const knoten = (text, tag) => ({ textContent: text, parentElement: { tagName: tag } });
   const liste = [knoten("Free-safe", "OPTION"), knoten("API-Key", "PRE"), knoten("Sync", "SPAN")];
