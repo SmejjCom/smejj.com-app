@@ -2,7 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { STANDARD_THEMEN, faelligeThemen, naechsteFaelligkeit, themenListe } from "../src/radar/radarThemen.js";
-import { GUETE, MARKIERUNG, bewerteFund, gueteVon, veroeffentlichungsDatum } from "../src/radar/quellenGuete.js";
+import { GUETE, MARKIERUNG, bewerteFund, gueteVon, istLesbarerSatz, veroeffentlichungsDatum } from "../src/radar/quellenGuete.js";
 import { PRUEFSTATUS, VERGLEICH, aehnlichkeit, baueEintrag, fuerAbruf, neueFassung, pruefstatusAus, vergleiche, zurueckNehmen } from "../src/radar/wissensbasis.js";
 import { anfragenFuerLauf, darfLaufen, grenzenAus, verbrauch } from "../src/radar/radarBudget.js";
 import { baueTagesbericht, nachBereichen } from "../src/radar/tagesbericht.js";
@@ -137,4 +137,15 @@ test("Tagesbericht: sagt ehrlich, wenn nichts gefunden wurde, und zaehlt nur Bel
   assert.equal(bericht.neu[0].quellen[0].url, "https://openai.com/a");
   assert.match(bericht.ueberschrift, /1 neue/);
   assert.equal(nachBereichen(bericht)[0].bereich, "konkurrenz");
+});
+
+test("Lesbarkeitsfilter: Ueberschriften- und Menuebrei ist kein Wissen (Befund im ersten echten Lauf)", () => {
+  // Am 21.09.2026 standen nach dem ersten Lauf zwei von drei Erkenntnissen so
+  // in der Basis: formal ein Auszug, inhaltlich eine Menuezeile.
+  assert.equal(istLesbarerSatz("## Research ### Mapping global methane emissions from space with deep learning ### Our new model"), false);
+  assert.equal(istLesbarerSatz("Home | Products | Pricing | Blog | Careers | Contact us today for more"), false);
+  assert.equal(istLesbarerSatz("OpenAI announced today that the pro plan now costs 12 Euro per month for all customers."), true);
+  const brei = bewerteFund({ url: "https://blog.google/x", title: "Blog", snippet: "## Research ### Mapping global methane emissions from space ### Our new model ### More" });
+  assert.equal(brei.tauglich, false);
+  assert.equal(brei.grund, "kein_lesbarer_satz");
 });
