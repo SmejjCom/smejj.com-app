@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { erkenneBildAuftrag, erzeugeFotoInhalt, sichereSvgAntwort, streamBilderLane } from "../public/chat-bridge-bilder.js";
+import { BILD_TEXTE, bildAntwort, erkenneBildAuftrag, erzeugeFotoInhalt, sichereSvgAntwort, spracheAusAnfrage, spracheAusKopf, streamBilderLane } from "../public/chat-bridge-bilder.js";
 
 test("erkenneBildAuftrag: Mal-Verb UND Motivwort noetig (deutsch/englisch)", () => {
   const treffer = [
@@ -214,4 +214,67 @@ test("ohne eingerichteten Maler bleibt es beim stillen Rueckfall", async () => {
   };
   assert.equal(await streamBilderLane(res, {}, "Male ein Bild von einem Fuchs", deps), false);
   assert.equal(geschrieben, false, "hier darf weiterhin kein Byte raus");
+});
+
+// --- Sprache des Bildsatzes (21.09.2026) --------------------------------
+// Die zwei Saetze ueber dem Bild waren die letzte fest deutsche Stelle der App.
+// Ein englischsprachiger Nutzer las ueber seinem Bild "Hier ist dein Bild:".
+// Uebersetzen ging lange nicht, weil dieses Modul im SERVER laeuft: kein DOM,
+// kein t(). Die Sprache reist jetzt mit der Anfrage.
+
+test("Accept-Language entscheidet, wenn der Client nichts mitschickt", () => {
+  assert.equal(spracheAusKopf("en-US,en;q=0.9,de;q=0.8"), "en");
+  assert.equal(spracheAusKopf("de-DE,de;q=0.9"), "de");
+  assert.equal(spracheAusKopf("pt-BR"), "pt");
+  assert.equal(spracheAusKopf("zh-Hans-CN"), "zh");
+  assert.equal(spracheAusKopf(""), "de", "ohne Kopf bleibt es bei der Quellsprache");
+  assert.equal(spracheAusKopf("kl-GL"), "de", "unbekannte Sprache faellt auf Deutsch zurueck");
+  assert.equal(spracheAusKopf(undefined), "de");
+});
+
+test("die Angabe des Clients schlaegt den Browser-Kopf", () => {
+  // Wer die App auf Englisch gestellt hat, aber einen deutschen Browser nutzt,
+  // soll Englisch lesen — nicht das, was der Browser zufaellig mitschickt.
+  assert.equal(spracheAusAnfrage({ preferences: { sprache: "en" } }, "de-DE"), "en");
+  assert.equal(spracheAusAnfrage({ preferences: { sprache: "EN" } }, "de-DE"), "en", "Grossschreibung darf nicht stoeren");
+  assert.equal(spracheAusAnfrage({ preferences: { sprache: "klingonisch" } }, "en-US"), "en", "Unsinn faellt auf den Kopf zurueck");
+  assert.equal(spracheAusAnfrage({}, "ja-JP"), "ja");
+  assert.equal(spracheAusAnfrage(undefined, undefined), "de");
+});
+
+test("alle 15 Sprachen haben beide Texte, und keiner ist mehr deutsch", () => {
+  const sprachen = Object.keys(BILD_TEXTE);
+  assert.equal(sprachen.length, 15, "de plus die 14 Sprachen der Oberflaeche");
+  for (const code of sprachen) {
+    const [satz, alt] = BILD_TEXTE[code];
+    assert.ok(satz && satz.length > 3, `${code}: Satz fehlt`);
+    assert.ok(alt && alt.length > 3, `${code}: Alternativtext fehlt`);
+    if (code !== "de") {
+      assert.notEqual(satz, BILD_TEXTE.de[0], `${code} traegt noch den deutschen Satz`);
+      assert.notEqual(alt, BILD_TEXTE.de[1], `${code} traegt noch den deutschen Alternativtext`);
+    }
+  }
+});
+
+test("die Antwort traegt Satz und Alternativtext der Sprache", () => {
+  const en = bildAntwort("en", "image/png", "AAAA");
+  assert.match(en, /^Here is your image:\n\n!\[Generated image\]\(data:image\/png;base64,AAAA\)$/);
+  const de = bildAntwort("de", "image/svg+xml", "BBBB");
+  assert.match(de, /^Hier ist dein Bild:\n\n!\[Erstelltes Bild\]\(data:image\/svg\+xml;base64,BBBB\)$/);
+  assert.equal(bildAntwort("gibtsnicht", "image/png", "CC"), bildAntwort("de", "image/png", "CC"),
+    "unbekannte Sprache darf nicht leer antworten, sondern faellt auf Deutsch");
+});
+
+test("BEIDE Wege sind uebersetzt — auch der SVG-Rueckfall", async () => {
+  // Der Hinweis kam aus der Apple-Sitzung: Zeile 237 (SVG) und 331 (PNG)
+  // trugen denselben Satz. Wer nur einen anfasst, laesst den haeufigeren
+  // Fall deutsch. Deshalb prueft dieser Test die QUELLE, nicht nur die Helfer.
+  const { readFileSync } = await import("node:fs");
+  const quelle = readFileSync(new URL("../public/chat-bridge-bilder.js", import.meta.url), "utf8");
+  const reste = quelle.match(/`Hier ist dein Bild:/g) || [];
+  assert.equal(reste.length, 0, "kein fest eingebauter deutscher Bildsatz mehr");
+  // Nur die RUECKGABEN zaehlen — die Definition von bildAntwort passt sonst
+  // auch auf das Muster und der Test zaehlt drei statt zwei.
+  assert.equal((quelle.match(/return bildAntwort\(sprache,/g) || []).length, 2,
+    "beide Rueckgaben — SVG und PNG — muessen ueber bildAntwort laufen");
 });

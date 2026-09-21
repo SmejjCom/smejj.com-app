@@ -230,7 +230,7 @@ async function handleChat(req, res) {
   const task = String(messages[messages.length - 1]?.content || "").trim();
   // v157: ein Bild geht IMMER an die Vision-Spur — auch ohne Begleittext (vorher fiel es dann still ans Textmodell).
   if (await streamVisionLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS, maxBodyBytes: MAX_BODY_BYTES })) return;
-  if (task && await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS })) return;
+  if (task && await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS, acceptLanguage: req.headers?.["accept-language"] })) return;
   // Anschlussfragen tragen ihr Thema nicht selbst — dann zaehlt die Frage davor.
   const wissen = buildRagBlockMitVerlauf(lastUserContent(messages), previousUserContent(messages));
   // Wechselndes ans Ende: der Wissensblock aendert sich mit jeder Frage und
@@ -260,7 +260,7 @@ async function handleAgent(req, res) {
   // Bild-Verstehen (Vision) und Bilder-Zeichnen: bei false laeuft unveraendert
   // der Text-Weg (fail-safe, Details in chat-bridge-vision.js/-bilder.js).
   if (await streamVisionLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS, maxBodyBytes: MAX_BODY_BYTES })) return;
-  if (await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS })) return;
+  if (await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS, acceptLanguage: req.headers?.["accept-language"] })) return;
   // "schnell" heisst schnell: dann bekommt auch eine Coding- oder Suchfrage die
   // Schnellspur angeboten (streamFastLane entscheidet dann endgueltig).
   const fastTask = stufe === "schnell" || (!coding && !shouldSearchWeb(task));
