@@ -37,9 +37,13 @@ Seite erledigt und in App Store Connect gespeichert — es fehlt nur dieses Vide
 6. **Inhalt melden — das ist Apple besonders wichtig.** Beim Bild oder bei einer
    Antwort auf die drei Punkte „…" tippen → **„Report content"** → den Dialog
    zeigen → eine Auswahl treffen und abschicken → die Bestätigung zeigen.
-7. **Konto-Bereich.** Menü → Konto öffnen. Dort einmal langsam durchscrollen,
-   bis **„Delete account"** im Bild war. **Nicht antippen** — dein Konto soll
-   bleiben. Es reicht, dass Apple die Schaltfläche sieht.
+7. **Konto-Bereich — hier hat sich heute etwas geändert.** Menü → „My account"
+   → links **„My data"**. Dort bis **„Delete account"** scrollen und den Knopf
+   **antippen**: das Formular geht auf und zeigt „Type to confirm: DELETE
+   ACCOUNT". Bei einem Google-Konto steht dort **kein Passwortfeld mehr** —
+   genau das verlangt Apple in Richtlinie 5.1.1(v). Kurz stehen lassen, damit
+   es im Bild ist, dann **„Cancel"** antippen. **Nichts eintippen, nicht
+   abschicken** — dein Konto soll bleiben.
 8. **Abmelden.** Auf „Abmelden"/„Sign out" tippen, damit Apple sieht, dass der
    Weg zurück auch funktioniert. Danach Aufnahme stoppen.
 
@@ -66,15 +70,19 @@ Version neu ein.
 * **Konto geprüft**: Datenschutz-Angaben veröffentlicht, Datenschutz-URL
   erreichbar, Altersfreigabe gesetzt, Screenshots vorhanden (iPhone 4, iPad 2),
   Build 1.0 (1) hängt an der Version, Support- und Marketing-URL erreichbar.
+* **TestFlight eingerichtet** (21.09.): interne Gruppe „Intern", du bist als
+  Tester eingeladen, Build 1.0 (1) steht auf „Bereit zum Testen".
+* **Konto-Löschung für JEDEN Anmeldeweg gebaut und live** (21.09., SW v936):
+  Google-, GitHub- und Passkey-Konten löschen sich jetzt in der App selbst.
+  Am echten Google-Konto im Browser nachgemessen: Formular ohne Passwortfeld,
+  Bestätigungswort „DELETE ACCOUNT" auf Englisch. Der Satz in den ASC-Anmerkungen
+  ist entsprechend umgeschrieben.
 
-## Ein offener Punkt, den du kennen solltest
+## Der frühere offene Punkt ist erledigt
 
-Konten, die über **Google, GitHub oder Passkey** entstanden sind, lassen sich
-in der App **nicht selbst löschen** — die Löschung verlangt heute ein Passwort,
-und diese Anmeldewege haben keins. Apple verlangt in Richtlinie 5.1.1(v), dass
-eine Kontolöschung in der App startbar ist. In den Anmerkungen steht darum
-ehrlich, dass diese Löschung per E-Mail an den Support läuft. Das kann beim
-nächsten Mal ein Ablehnungsgrund werden. Der Umbau ist klein (der Server
-verlangt dann statt des Passworts nur noch die getippte Bestätigung), betrifft
-aber das Löschen echter Nutzerdaten — dafür will ich deine ausdrückliche
-Freigabe, bevor ich ihn mache.
+Bis zum 21.09. ließen sich Konten aus **Google, GitHub oder Passkey** in der App
+nicht selbst löschen — die Löschung verlangte ein Passwort, das es bei diesen
+Anmeldewegen gar nicht gibt. Das war der wahrscheinlichste nächste
+Ablehnungsgrund (Richtlinie 5.1.1(v)). Nach deiner Freigabe ist es gebaut und
+live: der Server nimmt bei diesen Wegen die gültige Sitzung plus das getippte
+Wort als Nachweis, und das Passwortfeld erscheint nur noch bei E-Mail-Konten.
