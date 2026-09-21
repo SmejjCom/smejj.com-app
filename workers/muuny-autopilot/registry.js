@@ -3,7 +3,7 @@
 import { FAMILIE, L } from "./lager.js";
 //
 // Eine neue Nummer gibt es NUR ueber promote() nach einem PROMOTE-Urteil von
-// bewertung.vergleiche(). Nichts hier zaehlt blind hoch.
+// entscheidung.entscheide(). Nichts hier zaehlt blind hoch.
 export const REGISTRY_KEY = L.registry;
 export const STATUS = Object.freeze({ CANDIDATE: "candidate", STABLE: "stable", REJECTED: "rejected", SUPERSEDED: "superseded" });
 

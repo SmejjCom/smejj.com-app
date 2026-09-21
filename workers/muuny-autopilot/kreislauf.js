@@ -10,7 +10,8 @@
 // Salad-Job zugleich — die einfachste Kostenbremse.
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { bewerteAntworten, schwaechsteKategorie, vergleiche } from "./bewertung.js";
+import { bewerteAntworten, schwaechsteKategorie } from "./bewertung.js";
+import { adapterAusTraining, entscheide, schreibeFreigabe } from "./entscheidung.js";
 import { bucheEnde, bucheStart, darfStarten, leseGesamtverbrauch, leseTagesbuch, minutenFuer } from "./budget.js";
 import { leseRegistry, naechsteVersion, promote, reject, schreibeRegistry, schwaechen, stabileVersion, trageKandidatEin, findeVersion, zusammenfassung } from "./registry.js";
 import { bereiteJobVor, gruppenZustand } from "./salad.js";
@@ -307,9 +308,25 @@ async function bewerteUndEntscheide(ctx, z, job, ergebnis) {
     eintrag.bekannteSchwaechen = schwaechen(bewertung);
     z.letzteEntscheidung = { version, entscheidung: "REGRESSIONSLAUF", gruende: ["stabile_version_erneut_gemessen"], zeit: new Date().toISOString() };
   } else {
-    const urteil = vergleiche(bewertung, stabil?.benchmarks ? { ...stabil.benchmarks } : null);
-    if (urteil.entscheidung === "PROMOTE") { promote(registry, version, urteil, bewertung); await setzeCanary(e2, registry, version); }
-    else reject(registry, version, urteil, bewertung);
+    // Die Regel vom 21.09.2026: gegen den BESTWERT aus Grundmodell und stabiler
+    // Version, beide auf derselben Latte. Ohne gemessenes Grundmodell nie befoerdern.
+    const grundmodell = await e2.getJson(L.grundmodell, null);
+    const rausch = Number(wert(process.env, "RAUSCHSCHWELLE"));
+    const urteil = entscheide(bewertung, { grundmodell,
+      stabil: stabil?.benchmarks ? { ...stabil.benchmarks, version: stabil.version } : null,
+      ...(rausch > 0 && rausch < 0.2 ? { rauschschwelle: rausch } : {}) });
+    if (urteil.entscheidung === "PROMOTE") {
+      promote(registry, version, urteil, bewertung);
+      await setzeCanary(e2, registry, version);
+      // Die Laufzeit liest die Freigabe-Datei. Sie wird NUR mit vollstaendiger
+      // Adapterangabe geschrieben; sonst bleibt die Laufzeit beim alten Stand und
+      // der Grund steht sichtbar im Zustand.
+      const training = ergebnis.training || await e2.getJson(`${L.versionen}/${version}/training.json`, null);
+      const f = await schreibeFreigabe(e2, { modell: konfig.basis.repo, version, punktzahl: bewertung.gesamt,
+        adapter: adapterAusTraining(training) });
+      z.freigabe = f.geschrieben ? { version, am: f.freigabe.am } : { version, fehlt: f.grund };
+      notiere(z, f.geschrieben ? `Freigabe ${version} geschrieben — die Laufzeit laedt sie` : `Freigabe ${version} NICHT geschrieben: ${f.grund}`);
+    } else reject(registry, version, urteil, bewertung);
     z.letzteEntscheidung = { version, ...urteil, zeit: new Date().toISOString(), gegen: stabil?.version || null };
     log(`Entscheidung ${version}: ${urteil.entscheidung} (${urteil.gruende.join(", ")})`);
   }

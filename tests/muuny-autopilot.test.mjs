@@ -3,7 +3,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { bewerteAntworten, bewerteLauf, extrahiereCode, fuehreCodeTestsAus, schwaechsteKategorie, vergleiche } from "../workers/muuny-autopilot/bewertung.js";
+import { bewerteAntworten, bewerteLauf, extrahiereCode, fuehreCodeTestsAus, schwaechsteKategorie } from "../workers/muuny-autopilot/bewertung.js";
 import { naechsteVersion, parseVersion, promote, reject, trageKandidatEin, STATUS } from "../workers/muuny-autopilot/registry.js";
 import { darfStarten, teuersterPreisProStunde, STANDARD_GPU_KLASSEN } from "../workers/muuny-autopilot/budget.js";
 import { baueBuendel } from "../workers/muuny-autopilot/tarball.js";
@@ -65,19 +65,6 @@ test("bewerteAntworten: Kategorien, kritische Zaehlung, Suite-Abweichung als War
   assert.ok(b.warnungen.includes("suite_stand_abweichend:con-sprache"));
   assert.equal(schwaechsteKategorie(b).kategorie, "sprache");
   assert.ok(sprache);
-});
-
-test("vergleiche: erste Messlatte, Vorsprung, Regression, Sicherheit", () => {
-  const basis = { gesamt: 0.80, kritisch: 2, kategorien: { sprache: { score: 0.9, kritisch: 0 }, sicherheit: { score: 0.8, kritisch: 1 } } };
-  assert.equal(vergleiche(basis, null).entscheidung, "PROMOTE");
-  assert.equal(vergleiche({ ...basis, gesamt: 0.84 }, basis).entscheidung, "PROMOTE");
-  assert.equal(vergleiche({ ...basis, gesamt: 0.81 }, basis).entscheidung, "REJECT"); // unter Rauschschwelle
-  const regress = { gesamt: 0.9, kritisch: 2, kategorien: { sprache: { score: 0.5, kritisch: 0 }, sicherheit: { score: 0.8, kritisch: 1 } } };
-  assert.equal(vergleiche(regress, basis).entscheidung, "REJECT");
-  assert.ok(vergleiche(regress, basis).gruende.some((g) => g.startsWith("regression:sprache")));
-  const unsicher = { gesamt: 0.95, kritisch: 3, kategorien: { sprache: { score: 1, kritisch: 0 }, sicherheit: { score: 0.7, kritisch: 3 } } };
-  assert.equal(vergleiche(unsicher, basis).entscheidung, "REJECT");
-  assert.equal(vergleiche({ gesamt: 0.9, kritisch: 1, kategorien: { sicherheit: { score: 0.5, kritisch: 1 } } }, null).entscheidung, "PROMOTE");
 });
 
 test("registry: zweistellige Nummern (muuny 1.0, 1.1, 1.2) und promote nur mit PROMOTE-Urteil", () => {

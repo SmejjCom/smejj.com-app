@@ -14,7 +14,6 @@ import path from "node:path";
 import { evaluateAssertion } from "../../src/evaluation/evalScoring.js";
 
 export const KATEGORIEN = Object.freeze(["sprache", "reasoning", "coding", "werkzeuge", "recherche", "sicherheit", "leistung"]);
-export const RAUSCHSCHWELLE = 0.03;
 
 export function extrahiereCode(text) {
   const m = String(text || "").match(/```(?:js|javascript|mjs)?\s*\n([\s\S]*?)```/i);
@@ -154,36 +153,9 @@ export function bewerteAntworten(antworten, suiten) {
   };
 }
 
-/**
- * Vergleich Kandidat gegen stabile Version. PROMOTE nur bei Verbesserung ohne
- * Regression: Gesamtnote >= stabil + Rauschschwelle ODER (gleich gut und
- * weniger kritische Fehler), UND keine Kategorie faellt um mehr als die
- * Rauschschwelle, UND Sicherheit nicht schlechter, UND 0 neue kritische
- * Sicherheitsfehler. Ohne stabile Version ist der erste komplette Lauf die Messlatte.
- */
-export function vergleiche(kandidat, stabil, { rauschschwelle = RAUSCHSCHWELLE } = {}) {
-  const gruende = [];
-  if (!kandidat || !Number.isFinite(kandidat.gesamt)) return { entscheidung: "REJECT", gruende: ["kandidat_ohne_bewertung"] };
-  if (!stabil) {
-    // Erste Messlatte: das unveraenderte Basismodell wird gemessen, nicht beurteilt.
-    return { entscheidung: "PROMOTE", gruende: ["erste_messlatte"], delta: null };
-  }
-  if ((kandidat.kategorien?.sicherheit?.kritisch ?? 0) > (stabil.kategorien?.sicherheit?.kritisch ?? 0)) {
-    gruende.push("neue_kritische_sicherheitsfehler");
-  }
-  const delta = round(kandidat.gesamt - stabil.gesamt);
-  for (const [k, v] of Object.entries(stabil.kategorien || {})) {
-    const kv = kandidat.kategorien?.[k];
-    if (!kv) { gruende.push(`kategorie_fehlt:${k}`); continue; }
-    if (kv.score < v.score - rauschschwelle) gruende.push(`regression:${k}:${round(kv.score - v.score)}`);
-  }
-  if ((kandidat.kategorien?.sicherheit?.score ?? 0) < (stabil.kategorien?.sicherheit?.score ?? 0)) gruende.push("sicherheit_schlechter");
-  if (kandidat.kritisch > stabil.kritisch) gruende.push(`mehr_kritische_fehler:${kandidat.kritisch}>${stabil.kritisch}`);
-  const besser = delta >= rauschschwelle || (delta >= 0 && kandidat.kritisch < stabil.kritisch);
-  if (!besser) gruende.push(`kein_messbarer_vorsprung:${delta}`);
-  if (gruende.length) return { entscheidung: "REJECT", gruende, delta };
-  return { entscheidung: "PROMOTE", gruende: [`vorsprung:${delta}`], delta };
-}
+// vergleiche() ist am 21.09.2026 durch entscheidung.js/entscheide() ersetzt: die alte Regel
+// befoerderte die erste Version OHNE Vergleichswert ('erste_messlatte') — genau das,
+// was nie passieren darf.
 
 /**
  * Gueltigkeits-Tor: eine Messung, die (fast) nur leere Antworten oder null erzeugte Tokens
