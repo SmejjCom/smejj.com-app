@@ -37,9 +37,15 @@ test("Anfuehrungszeichen in Kommentaren des SHELL-Blocks sind keine Eintraege", 
   assert.deepEqual(shellListeAusSw('const SHELL = [\n  "/a.js",\n  // ein "Wort" im Kommentar\n  "/b.css", // Hinweis\n];\n'), ["/a.js", "/b.css"]);
 });
 
-test("der schmale Willkommen-Speicher (12 Dateien) zaehlt NICHT als Shell-Cache", () => {
+test("der schmale Willkommen-Speicher zaehlt NICHT als Shell-Cache", () => {
   const willkommen = [...sw.match(/const WILLKOMMEN_SHELL = \[([\s\S]*?)\n\];/)[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
-  assert.equal(willkommen.length, 12, "genau die 12, die das Werkzeug faelschlich meldete");
+  // Die ZAHL ist nicht die Zusicherung: die Landeseite bekommt hin und wieder
+  // ein Modul dazu (12 am 13.09., 14 am 21.09.). Zugesichert ist, dass der
+  // schmale Speicher KLEIN bleibt und nicht als Shell-Cache durchgeht — sonst
+  // meldete die App "offline bereit", obwohl die halbe Anwendung fehlt.
+  assert.ok(willkommen.length >= 10 && willkommen.length <= 25,
+    `schmaler Speicher hat ${willkommen.length} Dateien — das ist keine Landeseite mehr`);
+  assert.ok(willkommen.length < shell.length / 5, "der schmale Speicher darf nie in die Naehe der Shell kommen");
   assert.equal(aktiverShellCache([willkommenName]), null);
   const z = zaehleShellCache({ [willkommenName]: alsUrls(willkommen) }, shell);
   assert.equal(z.aktiverCache, null);

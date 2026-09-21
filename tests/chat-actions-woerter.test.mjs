@@ -39,7 +39,10 @@ test("der Haken sitzt in chat-stream.js als dynamischer Import mit catch", () =>
 
 test("die neuen Woerter stehen in allen 14 Sprachdateien", () => {
   for (const sp of ["ar","bn","en","es","fr","hi","id","it","ja","ko","pt","ru","tr","zh"]) {
-    const q = readFileSync(new URL(`../public/i18n/${sp}.js`, import.meta.url), "utf8");
+    // Beide Teile: seit 20.09.2026 ist jedes Woerterbuch geteilt (800-Zeilen-Regel),
+    // `xx.js` laedt `xx-2.js`. Nur Teil 1 zu lesen meldet Luecken, die es nicht gibt.
+    const q = readFileSync(new URL(`../public/i18n/${sp}.js`, import.meta.url), "utf8")
+      + readFileSync(new URL(`../public/i18n/${sp}-2.js`, import.meta.url), "utf8");
     for (const k of ["Vorlesen", "Ändern", "Kopieren", "Gut", "Schwach", "Mehr", "Neu"]) assert.ok(q.includes(`\n  ${JSON.stringify(k)}:`), `${sp}: ${k}`);
   }
 });

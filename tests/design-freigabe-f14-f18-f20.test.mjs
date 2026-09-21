@@ -55,7 +55,7 @@ test("das Buendel start-styles.css traegt beide Bloecke (bundle-start-styles.mjs
 });
 
 test("F20: 'Hell' und 'So wie mein Geraet' sind sichtbar, aber gesperrt, mit Hinweis", () => {
-  assert.match(surface, /\["dark", "Dunkel"\], \["light", "Hell", true\], \["system", "So wie mein Gerät", true\]/);
+  assert.match(surface, /\["dark", "Dunkel"\], \["light", "Hell", true\], \["system", (?:t\()?"So wie mein Gerät"\)?, true\]/);
   // Der select-Helfer setzt disabled aus dem dritten Feld.
   assert.match(surface, /\(\[value, text, gesperrt\]\) => `<option value="\$\{value\}"\$\{gesperrt \? " disabled" : ""\}>/);
   assert.match(surface, /settings-hinweis-hell/);

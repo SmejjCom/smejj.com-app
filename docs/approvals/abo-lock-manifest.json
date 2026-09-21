@@ -1,7 +1,7 @@
 {
   "lock": "smejj abo lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-21T15:27:07.951Z",
-  "confirmation": "Betreiber 21.09.2026 schriftlich auf die Auswahlkarte zu Apple 3.1.1: 'In der iOS-App ausblenden'. Dritte Runde derselben Freigabe: auch die Landeseite und die Programmierer-Seite zeigen in der iOS-Huelle keine Preise mehr. Im Web unveraendert; keine Aenderung an Anmeldung, Pruefung oder Abo-Kette.",
+  "frozenAt": "2026-09-21T22:35:25.390Z",
+  "confirmation": "ja mach die auch fertig — offene Sperren nach Uebersetzung und Apple-Anmeldung stempeln",
   "rule": "Keine Aenderung an der Abo- und Zahlungskette (Webhook, Signaturpruefung, Plan-Zuordnung, Abo-Anzeige, Kaufknoepfe, Zahlungsbestaetigung) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "control-server/src/routes/billingRoutes.js": "596abc7d0a52cd0f0f4db43842787f0418e9272b0bfcd44a9e4551d0a8edb33d",

@@ -73,13 +73,21 @@ test("Stil: viereckig, 44-px-Ziele, drei Spalten, unter 600 px eine; Haken in ch
 });
 
 test("alle Texte der Karten stehen in allen 14 Sprachdateien", () => {
+  // SEIT 20.09.2026 ZWEI DATEIEN je Sprache: die Woerterbuecher stiessen an die
+  // 800-Zeilen-Regel und wurden geteilt — `xx.js` importiert `xx-2.js` und legt
+  // seine eigenen Eintraege darueber. Wer nur in Teil 1 sucht, meldet fehlende
+  // Uebersetzungen, die laengst da sind (so geschehen: dieser Test war rot,
+  // obwohl in der App jedes Wort uebersetzt ankam).
   const ordner = new URL("../public/i18n/", import.meta.url);
   const dateien = readdirSync(ordner).filter((f) => /^[a-z]{2}\.js$/.test(f) && f !== "ui.js");
   assert.equal(dateien.length, 14);
   for (const f of dateien) {
-    const s = readFileSync(new URL(f, ordner), "utf8");
+    const teil1 = readFileSync(new URL(f, ordner), "utf8");
+    const zweiter = f.replace(/\.js$/, "-2.js");
+    assert.match(teil1, new RegExp(`from "\\./${zweiter.replace(/[.\-]/g, "\\$&")}`), `${f}: Teil 2 wird nicht geladen`);
+    const s = teil1 + readFileSync(new URL(zweiter, ordner), "utf8");
     for (const k of ["Erste Schritte", "Frag etwas", "Bild erzeugen", "Code schreiben", "Ausblenden", "Erkläre mir in drei Sätzen, was du für mich tun kannst."]) {
-      assert.ok(s.includes(`"${k}":`), `${f}: ${k}`);
+      assert.ok(s.includes(`"${k}":`), `${f} (+ Teil 2): ${k}`);
     }
   }
 });
