@@ -259,3 +259,24 @@ test("keine doppelten Kennungen in der Startseite", () => {
   const doppelt = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
   assert.deepEqual(doppelt, [], `doppelte id: ${doppelt.join(", ")}`);
 });
+
+test("beide Menuepunkte sagen, welchen Reiter sie meinen", () => {
+  // Geraetetest 21.09.2026: "Mein Konto" landete im ZULETZT offenen Reiter,
+  // weil es keinen Wunsch mitgab und die Notiz dann leer blieb. Wer das Konto
+  // oeffnet, erwartet aber das Profil.
+  const html = fs.readFileSync("public/index.html", "utf8");
+  const zeilen = html.split("\n").filter((z) => z.includes('data-dock-action="account"'));
+  assert.equal(zeilen.length, 2, "es gibt genau zwei Konto-Menuepunkte");
+  for (const zeile of zeilen) {
+    assert.match(zeile, /data-dock-reiter="(identity|billing)"/, `ohne Reiter-Wunsch: ${zeile.trim()}`);
+  }
+  assert.ok(zeilen.some((z) => z.includes('data-dock-reiter="identity"')), '"Mein Konto" meint das Profil');
+  assert.ok(zeilen.some((z) => z.includes('data-dock-reiter="billing"')), '"Mein Plan" meint den Plan');
+});
+
+test("der aktive Reiter wird in den Blick geschoben", () => {
+  // Am Handy ist die Reiterleiste schmaler als ihre neun Reiter: der Sprung auf
+  // "Mein Plan" oeffnete ihn, liess die Leiste aber am Anfang stehen.
+  assert.match(QUELLE, /scrollIntoView\(\{ block: "nearest", inline: "nearest" \}\)/,
+    "nearest scrollt nur die Leiste, nicht die Seite");
+});
