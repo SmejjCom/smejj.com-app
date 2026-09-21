@@ -39,6 +39,7 @@ import { handleModelStatus, handleModelsStatus, handleWorkerPreflight } from "..
 import { handleWorkerModelAction, handleWorkerValidate } from "../control-server/src/routes/workerModelRoutes.js";
 import { refreshModelRuntimeHealth } from "../control-server/src/llm/modelRuntimeHealth.js";
 import { buildRagContextBlock, radarKontextVon, searchKnowledge } from "../control-server/src/rag/agentContext.js";
+import { mitVorrang } from "../control-server/src/autopilots/radarVorrang.js";   // Nutzer vor Hintergrundarbeit
 import { keyProviderUsage, shouldSearchWeb } from "./search/webSearch.js";
 import { buildAgentWebContext, handleWebSearch } from "./search/webSearchRoute.js";
 import { answerLiveIntent, detectLiveInternetIntent } from "../control-server/src/live/liveInternet.js";
@@ -323,7 +324,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === "POST" && url.pathname === ROUTES.api.agent) {
       if (!allowPublicModelRequest(req, res)) return;
-      return await handleAgent(req, res);
+      return await mitVorrang(() => handleAgent(req, res));   // Nutzer vor Radar
     }
     if (req.method === "POST" && url.pathname === ROUTES.api.fileRead) return await handleRead(req, res);
     if (req.method === "POST" && url.pathname === ROUTES.api.fileWrite) return await handleWrite(req, res);
@@ -643,8 +644,7 @@ async function handleAgent(req, res) {
   const body = await readJson(req);
   const task = String(body.task || "").trim();
   const files = Array.isArray(body.files) ? body.files.slice(0, 8) : [];
-  // Sprachmodus-Flag des Frontends: Antwort wird vorgelesen -> kurz und gespraechig.
-  const voiceMode = body?.preferences?.voiceMode === true;
+  const voiceMode = body?.preferences?.voiceMode === true;   // wird vorgelesen -> kurz
   if (!task) return json(res, 400, { error: "Missing task" });
 
   // Kontext-Diaet: alle Dateien teilen sich EIN Budget statt je 120.000
