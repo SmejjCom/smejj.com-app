@@ -30,7 +30,9 @@ export function radarSchluessel(prefix = "muuny/") {
     laeufe: `${r}/laeufe`,
     verbrauch: (monat) => `${r}/verbrauch/${monat}.json`,
     verwendung: (tag) => `${r}/verwendung/${tag}.json`,
-    vorschlaege: `${r}/vorschlaege.json`
+    vorschlaege: `${r}/vorschlaege.json`,
+    // Antworttests: Testfragen gegen das Wissen, mit Angabe, WELCHES Modell geantwortet hat.
+    tests: (tag) => `${r}/tests/${tag}`
   };
 }
 

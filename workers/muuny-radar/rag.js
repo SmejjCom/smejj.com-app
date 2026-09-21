@@ -23,10 +23,11 @@ const TAG = 86_400_000;
 const FRAGEWOERTER = new Set(["welche", "welcher", "welches", "gibt", "es", "neu", "neue", "neuen", "neues", "neuer", "aktuell", "aktuelle",
   "aktuellen", "derzeit", "momentan", "heute", "gerade", "kann", "koennen", "bitte", "mir", "sag", "erklaere", "erklaer", "weisst", "du",
   "ich", "wir", "man", "gab", "letzte", "letzten", "zuletzt", "what", "which", "new", "latest", "recent", "any", "there", "tell", "me",
-  "about", "how", "gerne", "mal", "so", "etwa", "eigentlich"]);
+  "about", "how", "gerne", "mal", "so", "etwa", "eigentlich", "zu", "ob", "vom", "beim", "dazu", "darueber", "sowie", "irgendwelche",
+  "infos", "informationen", "neuigkeiten", "news"]);
 // Deutsch -> die Woerter, die in den (meist englischen) Quellen stehen.
 const GLEICH = new Map(Object.entries({ modell: "model", modelle: "model", models: "model", modellen: "model", angriff: "attack",
-  angriffe: "attack", attacks: "attack", sicherheitsluecke: "vulnerability", sicherheitsluecken: "vulnerability",
+  angriffe: "attack", angriffen: "attack", attacks: "attack", sicherheitsluecke: "vulnerability", sicherheitsluecken: "vulnerability",
   vulnerabilities: "vulnerability", preis: "price", preise: "price", prices: "price", pricing: "price", kosten: "price",
   kostet: "price", veroeffentlicht: "release", veroeffentlichung: "release", released: "release", releases: "release",
   forschung: "research", werkzeug: "tool", werkzeuge: "tool", tools: "tool", funktion: "feature", funktionen: "feature",

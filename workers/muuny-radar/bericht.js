@@ -25,6 +25,13 @@ export async function tagesbericht(lager, prefix, tag) {
   const index = await leseIndex(lager, prefix);
   const verwendung = (await lager.getJson(radarSchluessel(prefix).verwendung(tag), null)) || { eintraege: {}, antworten: 0, luecken: {} };
   const echte = laeufe.filter((l) => l.ergebnis === "ok");
+  // Antworttests stehen GETRENNT von "in Antworten verwendet": sie sind Pruefungen, keine
+  // Nutzerantworten, und nennen das Modell, das geantwortet hat.
+  const antworttests = [];
+  for (const { key } of await lager.liste(`${radarSchluessel(prefix).tests(tag)}/`)) {
+    if (!key.endsWith(".json") || /\/\._/.test(key)) continue;
+    try { const t = await lager.getJson(key, null); if (t) antworttests.push(t); } catch { /* weiter */ }
+  }
 
   // Was heute NEU gespeichert wurde — nur, was im Index noch so steht (zurueckgenommenes
   // wird als zurueckgenommen gezeigt, nicht verschwiegen).
@@ -77,6 +84,6 @@ export async function tagesbericht(lager, prefix, tag) {
   else satz = `Heute ${gelernt.length} neue und ${aktualisiert.length} aktualisierte Erkenntnis(se) gespeichert, aus ${zahlen.quellenGeprueft} geprüften Quellenabrufen. In Antworten verwendet: ${zahlen.inAntwortenVerwendet}.`;
   return { tag, frage: "Was hat muuny ai radar heute dazugelernt?", satz, zahlen, gelernt, aktualisiert, offen: offen.slice(0, 50),
     verworfenNachGrund: grundZaehler, fehler, quellenFehler: quellenFehler.slice(0, 50),
-    luecken: verwendung.luecken || {}, laeufe: laeufe.map((l) => ({ laufId: l.laufId, start: l.start, ende: l.ende, ergebnis: l.ergebnis,
+    luecken: verwendung.luecken || {}, antworttests, laeufe: laeufe.map((l) => ({ laufId: l.laufId, start: l.start, ende: l.ende, ergebnis: l.ergebnis,
       grund: l.grund, ausloeser: l.ausloeser, zahlen: l.zahlen, kosten: l.kosten, ressourcen: l.ressourcen })) };
 }

@@ -458,3 +458,11 @@ test("robots.txt mit Platzhaltern sperrt nicht den ganzen Host (heise-Fall 21.09
   assert.equal(robotsErlaubt(r, "/a/b.pdf"), false);
   assert.equal(robotsErlaubt(r, "/a/b.pdf?x"), true);
 });
+
+test("Fragewoerter zaehlen nicht mit: deutsche Fragen finden englische Eintraege", () => {
+  const e = { id: "e1", status: "aktiv", titel: "Provenance-aware transformers against indirect prompt injection", kurz: "We study prompt injection attacks on LLM agents.",
+    link: "https://arxiv.org/abs/1", veroeffentlicht: "2026-09-20T00:00:00Z", abgerufen: "2026-09-21T00:00:00Z", unsicherheit: { gruende: [] } };
+  const s = baueSuche({ stand: 1, eintraege: { e1: e } });
+  assert.equal(suche(s, "Gibt es neue Forschung zu Prompt Injection Angriffen?", { jetzt: JETZT })[0]?.id, "e1");
+  assert.equal(suche(s, "Wie wird das Wetter morgen in Izmir?", { jetzt: JETZT }).length, 0);
+});
