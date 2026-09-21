@@ -85,7 +85,10 @@ function placeAboveButton(button, menu) {
 
 // Fuehrt eine Menue-Aktion aus. Input: action-Name. Output: void.
 function runAction(action) {
-  if (action === "account") return goTo("/profile");
+  // Geraetetest 21.09.2026: "Mein Plan" landete im Reiter "Profil" — am Handy
+  // muss man die Reiterleiste dann erst bis ans Ende schieben. Der Hash sagt
+  // der Kontoseite, welcher Reiter gemeint ist.
+  if (action === "account") return goTo("/profile#billing");
   if (action === "settings") return goTo("/settings");
   if (action === "hilfe") { location.href = "/hilfe.html"; return; }
   if (action === "logout") return logout();
@@ -100,7 +103,10 @@ function fuelleWerte() {
     const kurz = document.getElementById("dockWertPlanKurz");
     const voll = document.getElementById("dockWertPlan");
     if (kurz) kurz.textContent = plan;
-    if (voll) voll.textContent = plan === "Frei" ? "Frei · 0,00 €" : plan;
+    // Apple 3.1.1: "Frei · 0,00 €" ist eine Preisangabe — in der iOS-Huelle
+    // bleibt nur der Plan-Name stehen (Geraetetest 21.09.2026).
+    const huelle = document.documentElement.getAttribute("data-huelle") === "ios";
+    if (voll) voll.textContent = (plan === "Frei" && !huelle) ? "Frei · 0,00 €" : plan;
     let sprachRoh = "de";
     try { sprachRoh = (JSON.parse(localStorage.getItem("smejj.settings.v1") || "{}").language) || navigator.language || "de"; } catch { /* de */ }
     const sprache = document.getElementById("dockWertSprache");
