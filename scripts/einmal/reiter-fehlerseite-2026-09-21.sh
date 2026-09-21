@@ -35,13 +35,13 @@ echo "== 0. Stand holen"
 cd "$APP" || { echo "ABBRUCH: $APP fehlt."; exit 1; }
 git fetch -q origin "$ARBEITS_ZWEIG" "$BAU_ZWEIG" || { echo "ABBRUCH: origin nicht erreichbar."; exit 1; }
 WT_NEU=$(git rev-parse "origin/$ARBEITS_ZWEIG")
-WT_BASIS=$(git rev-parse "${BASIS_UEBERSCHREIBEN:-ad76fd2e}")  # der Stand, der als v939 live ging
+WT_BASIS=$(git rev-parse "${BASIS_UEBERSCHREIBEN:-0918032a}")  # der Stand, der als v939 live ging
 MEINE=($(git rev-list --reverse "$WT_BASIS..$WT_NEU"))
 [ ${#MEINE[@]} -ge 1 ] || { echo "ABBRUCH: kein Commit zum Ausliefern."; exit 1; }
 echo "  ${#MEINE[@]} Commit(s) auf $ARBEITS_ZWEIG, Spitze ${WT_NEU:0:8}"
 
 SCHON=0
-if [ -d "$BAU" ] && git -C "$BAU" log -1 --pretty=%s 2>/dev/null | grep -q "doppelte Kennung homeOutput entfernt"; then
+if [ -d "$BAU" ] && git -C "$BAU" log -1 --pretty=%s 2>/dev/null | grep -q "der aktive Reiter kommt in den Blick"; then
   SCHON=1
   echo "  $BAU traegt den Commit schon ($(git -C "$BAU" rev-parse --short HEAD))"
 fi
@@ -217,8 +217,17 @@ let rot = 0;
 // Paketweise zu 8: 239 gleichzeitige Anfragen liessen GitHub Pages am
 // 20.09.2026 21-mal gar nicht antworten — einzeln waren alle 200.
 for (let i = 0; i < einmalig.length; i += 8) {
-  await Promise.all(einmalig.slice(i, i + 8).map(async (p) => {
-    const r = await fetch(`https://smejj.com${p}?n=${Math.random()}`, { method: "GET" }).catch(() => null);
+  await Promise.all(einmalig.slice(i, i + 6).map(async (p) => {
+    // DREI Versuche je Eintrag. Am 21.09.2026 meldete dieser Block "242 von
+    // 242 ROT" — alle mit "netz", also ein Aussetzer der Aufloesung, nicht ein
+    // fehlendes Ziel. Einzeln nachgeholt waren alle 242 sofort 200. Ein
+    // Messfehler, der wie ein kaputtes Deployment aussieht (dieselbe Falle wie
+    // am 18.09.: `fetch failed` ist eine Netzstoerung, kein Befund).
+    let r = null;
+    for (let versuch = 0; versuch < 3 && !r?.ok; versuch++) {
+      r = await fetch(`https://smejj.com${p}?n=${Math.random()}`, { method: "GET" }).catch(() => null);
+      if (!r?.ok) await new Promise((w) => setTimeout(w, 800));
+    }
     if (!r || !r.ok) { console.log(`  ROT ${r ? r.status : "netz"} ${p}`); rot += 1; }
   }));
 }
