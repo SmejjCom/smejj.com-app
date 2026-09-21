@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-17T08:20:54.782Z",
-  "confirmation": "Betreiber 17.09.2026 schriftlich im Chat, Auswahl 'Schreibweise smejj (Empfehlung)': Preisseite und Admin-Balken zeigen den Namen klein als smejj statt in Grossbuchstaben. Umgesetzt: willkommen.html .plan .stufe ohne text-transform:uppercase; Admin-Balken mit span.ck-marke und text-transform:none; SW smejj-shell-v896.",
+  "frozenAt": "2026-09-21T21:46:05.682Z",
+  "confirmation": "smejj ai radar als zweite Schiene fuer autonome Internetrecherche einrichten und in den Autopilot-Adminbereich integrieren",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -24,7 +24,7 @@
     "control-server/src/admin/opsAutopiloten.js": "ce26f225cd79873d85714771f6406956779c414ca62b767036c23114933a41f9",
     "control-server/src/admin/opsAutopilotenListe.js": "38a5861bdc15dc688935e158a4d8cba5eb373e995bd3a2492849a6aa373e28a5",
     "control-server/src/admin/opsAutopilotenListeEvolution.js": "703e22dd80cc191460eac3acce7cd133495ac29f5afce27594f3319cfe8213be",
-    "control-server/src/admin/opsAutopilotenBereiche.js": "150a00069a0dd70a76d4da70474f36f0f45f3ff333d9880a543d99144b9e72ba",
+    "control-server/src/admin/opsAutopilotenBereiche.js": "c134528de8b476ea5f4e125300e199d5b58f54285a1e4b9b0bcfaeeb21f7deb9",
     "control-server/src/admin/opsAuslieferung.js": "7af1c20a150dd29e01caac403305b0d14311efc9bfdfa7ed3c5bf6feb3a82b63",
     "control-server/admin-ui/views-stage12.js": "58acc0496d59d5bf79e0344ffdb07e3e6eb84266d15ce788725365e530dd57eb",
     "control-server/src/admin/opsSicherheitsLage.js": "cff01378042fbfebdf2ba42543f62024593db024ab06b12822f2a1042d9f875a",
@@ -33,10 +33,10 @@
     "control-server/src/admin/opsUmsatz.js": "63b88ce20ade6c4b0c9670d4f1aff6b819d30d63c57f488ec5b972eaa4d7a989",
     "control-server/src/admin/opsCockpit.js": "2c485eb065457978faddf372dc9ec4e7369579ae27005acc5a456c7af82d555a",
     "control-server/admin-ui/views-cockpit.js": "a09998dcb23c4a3a7940a2285615096a18b30584e8505f82b24865e11ad893fa",
-    "control-server/admin-ui/console.js": "9475ddf48ba0c5440d57a4816011d82eec85c33d003a7f09adaa1ce9bd8efd1b",
+    "control-server/admin-ui/console.js": "c673459c61f9bfff8d628b002d484683b41b412e0c40e1fc7b68a873f9871248",
     "control-server/admin-ui/views.js": "421593597c17afa9b1c9d6269723726d8820f5b4521421fc8c22e43e0aca7855",
-    "control-server/admin-ui/index.html": "a193a1fd5ae1a20250dcc22be0b9d9b634f62a512fec4e323f13725a4ea36b10",
-    "control-server/admin-ui/console.css": "05f705b92e5a8a6243b70866d1692fa276c9e3a1db97562f10508a62b90ecbbb",
+    "control-server/admin-ui/index.html": "3cc9358f2110ba7785bf928ceb71edfe32c00799a9d4d6679004b4f39d216468",
+    "control-server/admin-ui/console.css": "023e7f4bb895ae728428279bd3af6dc3f5cfb632bb3d37c45814ea10f7f403ab",
     "control-server/admin-ui/views-stage5.js": "15ea5cc9c23fc08fdca578eed29144378a05f58896e45d744144aefa4f3b1568",
     "control-server/admin-ui/views-stage7.js": "8eab5b3d3744086202e9fc02a641ef5725829009f6364625e894bec50036a868",
     "control-server/admin-ui/console-stage6.js": "590e2f1b0bf1a6b84bf3ee0d758e08b930da57fb10c985c2df78f396c3d7152a",
@@ -52,7 +52,7 @@
     "control-server/src/routes/adminGeldRoutes.js": "2e4debc7ecc1e225d5a919cc0e342d633bec28823dd84e9e1887b91f85c53b22",
     "control-server/src/routes/adminSicherheitRoutes.js": "56f4aaada4a90cd38ab529257f38a74b13dca9116dfce9dfcd2aebd644ac2ba1",
     "control-server/src/routes/adminOpsRoutes.js": "9a6d9616f932e5e91dcc016189c8ffbf6986bc66611328582097d494fa850a4b",
-    "scripts/deploy/sync_admin_console_pages.mjs": "a981e3cce6b90585b271c019db8385662081beb9f69630741d5b9313d8c4de4b",
+    "scripts/deploy/sync_admin_console_pages.mjs": "13ccb4a9fff61a94f0689eed51cf2ad80214d4379b53c1ef1d3372c357e81b04",
     "control-server/admin-ui/views-stage9.js": "20a09c8f87d65f8d87dc14042b90ce0f0a86f6bee1a2aac26b04d68e74816f35"
   }
 }
