@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-21T13:57:53.830Z",
-  "confirmation": "Betreiber 21.09.2026 schriftlich auf die Auswahlkarte zu Apple 3.1.1: 'In der iOS-App ausblenden'. Dritte Runde derselben Freigabe: auch die Landeseite und die Programmierer-Seite zeigen in der iOS-Huelle keine Preise mehr. Im Web unveraendert; keine Aenderung an Anmeldung, Pruefung oder Abo-Kette.",
+  "frozenAt": "2026-09-21T14:25:48.037Z",
+  "confirmation": "Betreiber 21.09.2026 schriftlich im Chat: 'apple login 4.8 machen'. Der Server-Teil von 'Mit Apple anmelden' geht in den Bauzweig; er bleibt ohne die vier SMEJJ_APPLE_LOGIN_*-Variablen wirkungslos (config meldet apple:false, Routen 503). Die Rueckkehr-Route laesst als einzige den Origin appleid.apple.com zu — form_post ist bei den Bereichen name/email Pflicht.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "22bee5ce2040df34d5bd17e6cded4f6020e9c4f7c62ffab8caab428335900864",
@@ -15,7 +15,7 @@
     "public/browser-pane.css": "7403ac7a7106cc72805268c9f139eb5e86e458880fa7d849a26a29ea99d0c3c4",
     "public/app.js": "ba96f1d803229242d8f877d0b1e35b2b0f7cde3d254efc77b029d63351021105",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
-    "public/config.js": "23d8ce8c091439eed3ac2436d700edfac9c15cec910d43a8157016ad063ab646",
+    "public/config.js": "27acbbbbe2a23a81f25b8fdab7e5204cb4e5ecc1217f6ef1af8ee7a12831e3df",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
     "public/premium-surfaces.js": "2542552df9b7fbf32f0fd1b5f609d3a5322a01db88274eaae967e8670d31c15a",
     "public/autonomous-coding.js": "95a765c2888895d5e48458a289bda3ab29595ac5871a1edc95d992a45e027164",
