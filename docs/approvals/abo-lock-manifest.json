@@ -1,6 +1,6 @@
 {
   "lock": "smejj abo lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-21T14:51:40.870Z",
+  "frozenAt": "2026-09-21T15:27:07.951Z",
   "confirmation": "Betreiber 21.09.2026 schriftlich auf die Auswahlkarte zu Apple 3.1.1: 'In der iOS-App ausblenden'. Dritte Runde derselben Freigabe: auch die Landeseite und die Programmierer-Seite zeigen in der iOS-Huelle keine Preise mehr. Im Web unveraendert; keine Aenderung an Anmeldung, Pruefung oder Abo-Kette.",
   "rule": "Keine Aenderung an der Abo- und Zahlungskette (Webhook, Signaturpruefung, Plan-Zuordnung, Abo-Anzeige, Kaufknoepfe, Zahlungsbestaetigung) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
@@ -8,7 +8,7 @@
     "control-server/src/billing/stripeWebhookVerify.js": "e7a42ade4bc0e78e718bac8cc24cf30e21f46aec70aac8c2d6bcc7ce2a99e6b6",
     "control-server/src/billing/stripeEventApply.js": "71de637a1e577943525db71382bce11fdbfd905c80f5f4e223158e0ecb706d60",
     "control-server/src/billing/subscriptionStore.js": "849806cffa39eebbeb50d67404e567358d38bc5952c717424abea2faa528ffea",
-    "public/account-privacy.js": "347c0577890ad6d21c4f8e292b4dba3754658fa3bc0fa527ce0e8a40ce0d6d5f",
+    "public/account-privacy.js": "f97224fba837f6f3da998768b05460445dd9429cbeb132645e916a76a2bc84c5",
     "public/account-sessions.js": "25330ad02f3f5e4e8b525ff0521ba9ffe94daa9d47a5cd8501f3f4994fba393a",
     "public/danke-abo.html": "f842a4a18bf539b73a06a56d4af3e89c39a33846a02c65b460ce4b23d00d000f",
     "public/danke-abo.js": "7dca3de8137a55cebebd2f20b12db9faddcd060f47559dba4c63ce153e45197f",

@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-21T15:16:54.221Z",
+  "frozenAt": "2026-09-21T15:27:08.032Z",
   "confirmation": "Betreiber 21.09.2026 schriftlich auf die Auswahlkarte zu Apple 3.1.1: 'In der iOS-App ausblenden'. Dritte Runde derselben Freigabe: auch die Landeseite und die Programmierer-Seite zeigen in der iOS-Huelle keine Preise mehr. Im Web unveraendert; keine Aenderung an Anmeldung, Pruefung oder Abo-Kette.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "ae992efa0dcd28414f70ba832470dc3bd4210f77b8923f97e856e68df274cc15",
+    "public/index.html": "9d3a149875aae04f03b73d86caa3fc33f729389f313d65485590495634863a49",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "f78f9b57ebabbb9798ecf9142dfedd110094e85df676f86b18917c61e24fd3bc",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,11 +13,11 @@
     "public/app-surfaces.css": "d8a4efdf629bd585e10b27a5cbe365cc7b0359987d01bb81f3de6c17600386ec",
     "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "7403ac7a7106cc72805268c9f139eb5e86e458880fa7d849a26a29ea99d0c3c4",
-    "public/app.js": "526c29855a78662f73b14901d68513d4e9976aab3f9caa94ef66fc9c0ce2a961",
+    "public/app.js": "75365d49607d960afa8718608efd0780b38bfa6cff44a0e7eae7e306830b1c18",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "27acbbbbe2a23a81f25b8fdab7e5204cb4e5ecc1217f6ef1af8ee7a12831e3df",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "0d92e12dcf26e731bfe07d5827cc8295230119ea7e4c0458c75699ad8f0adb70",
+    "public/premium-surfaces.js": "5f83d5e17c14b6b78a42ea84f5f23dc058172f0031ca97b271b95023b8ff0993",
     "public/autonomous-coding.js": "95a765c2888895d5e48458a289bda3ab29595ac5871a1edc95d992a45e027164",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "cfdeec81cd1a38393abc7bae3976de0a0a4ccbb6a885fbc3dc2c0ff04940baf4",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "0a935252cf06b7d7f30ec09deacfdd444ddb3c923db38f98752db868b6ac95eb",
+    "public/sw.js": "df69f142dbc1e682017effcd82e5273cf12568b6d858c953ad80901376a17673",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
