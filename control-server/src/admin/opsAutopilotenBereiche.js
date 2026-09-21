@@ -67,6 +67,8 @@ const ZUORDNUNG = Object.freeze({
     "modell-evolution",
     // Nr. 83 (2026-09-05): der smejj-Versions-Takt — Alias "smejj" folgt der besten eigenen Version.
     "smejj-versions-takt",
+    // Nr. 86 (2026-09-21): smejj ai radar — die zweite Schiene (Recherche + Wissensbasis).
+    "smejj-ai-radar",
     // Nr. 74/77 (2026-09-03, Runde 2): Einwilligungs-Weg des Trainings, Frische des Projektwissens.
     "einwilligungs-wache", "projektwissen-frische"
   ],

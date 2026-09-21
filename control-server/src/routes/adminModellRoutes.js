@@ -31,6 +31,8 @@ import { mapMitGrenze } from "../shared/parallelFetch.js";
 import { modellbestandUebersicht } from "../admin/opsModellbestand.js";
 import { putProviderCredential } from "../providers/providerCredentialVault.js";
 import { handleAdminEntscheidungenRoute } from "./adminEntscheidungenRoutes.js";
+// smejj ai radar (21.09.2026) haengt aus demselben Grund hier: die Ops-Routen stehen im Admin-Lock.
+import { handleAdminRadarRoute } from "./adminRadarRoutes.js";
 
 const PREFIX = "/api/admin/modelle";
 const gate = createRateLimiter({ capacity: 20, refillPerSec: 0.3, maxKeys: 5_000 });
@@ -54,6 +56,7 @@ export async function handleAdminModellRoute(req, url, res, { env = process.env 
   // alles andere im Adminbereich. Wer den Lock einmal mit Betreiber-Stempel
   // oeffnet, verschiebt die Zeile nach adminSurfaceRoutes.js — dort gehoert sie hin.
   if (await handleAdminEntscheidungenRoute(req, url, res, { env })) return true;
+  if (await handleAdminRadarRoute(req, url, res, { env })) return true;
 
   if (url.pathname !== PREFIX && !url.pathname.startsWith(`${PREFIX}/`)) return false;
 

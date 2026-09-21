@@ -26,9 +26,9 @@ test("Der Laeufer betreibt alle Selbsttest-Autopiloten und meldet jeden einzeln"
   const gemeldet = [];
   const ergebnisse = await laufeAlle({ melde: (id, e) => { gemeldet.push({ id, ...e }); return true; }, mitNetz: false });
 
-  assert.equal(ergebnisse.length, 72, "72 Autopiloten laufen ohne Netz im Control-Server (seit 2026-08-26 Trainings-Reife Nr. 65, seit 2026-08-30 die fünf Deckungs-Wächter Nr. 66-70, seit 2026-09-03 der Modell-Evolutions-Takt Nr. 72, seit 2026-09-04 die Schutz-Echtheit Nr. 82, seit 2026-09-05 der smejj-Versions-Takt Nr. 83 und die Webhook-Wache Nr. 84, seit 2026-09-08 die Code-Sicherung Nr. 85)");
-  assert.equal(gemeldet.length, 73, "72 Laeufe + der Taktgeber, der sich selbst bezeugt");
-  assert.equal(new Set(gemeldet.map((g) => g.id)).size, 73, "keine Kennung doppelt");
+  assert.equal(ergebnisse.length, 73, "73 Autopiloten laufen ohne Netz im Control-Server (seit 2026-09-21 smejj ai radar Nr. 86; seit 2026-08-26 Trainings-Reife Nr. 65, seit 2026-08-30 die fünf Deckungs-Wächter Nr. 66-70, seit 2026-09-03 der Modell-Evolutions-Takt Nr. 72, seit 2026-09-04 die Schutz-Echtheit Nr. 82, seit 2026-09-05 der smejj-Versions-Takt Nr. 83 und die Webhook-Wache Nr. 84, seit 2026-09-08 die Code-Sicherung Nr. 85)");
+  assert.equal(gemeldet.length, 74, "73 Laeufe + der Taktgeber, der sich selbst bezeugt");
+  assert.equal(new Set(gemeldet.map((g) => g.id)).size, 74, "keine Kennung doppelt");
   assert.ok(gemeldet.some((g) => g.id === "autopilot-laeufer"), "der Taktgeber bezeugt sich selbst");
 
   // Jede Meldung muss ein Ergebnis tragen, keinen Pauschaltext.
@@ -64,7 +64,7 @@ test("Ein abstuerzendes Modul reisst den Lauf nicht mit", async () => {
     dateienLader: () => { throw new Error("Dateisystem weg"); },
     mitNetz: false
   });
-  assert.equal(ergebnisse.length, 72, "alle anderen laufen trotzdem");
+  assert.equal(ergebnisse.length, 73, "alle anderen laufen trotzdem");
   // smart-router misst seit dem Master-Audit 15.09. die Live-Konfiguration (ohne
   // Schluessel rot) — der unabhaengige Beleg ist darum ein Selbsttest-Baustein.
   assert.equal(gemeldet.get("deep-research").status, "ok");
@@ -78,7 +78,7 @@ test("Mit Netz kommt der E2E-Waechter dazu — und meldet ehrlich, wenn er nicht
     melde: (id, e) => { gemeldet.set(id, e); return true; },
     mitNetz: true
   });
-  assert.equal(ergebnisse.length, 75, "E2E-Waechter, Voice-Region und Sync-Waechter sind die drei zusaetzlichen Netz-Laeufe (plus Nr. 65, die fuenf Deckungs-Waechter Nr. 66-70, Nr. 72, die Schutz-Echtheit Nr. 82, die Webhook-Wache Nr. 84 und die Code-Sicherung Nr. 85 ohne Netz)");
+  assert.equal(ergebnisse.length, 76, "E2E-Waechter, Voice-Region und Sync-Waechter sind die drei zusaetzlichen Netz-Laeufe (plus Nr. 65, die fuenf Deckungs-Waechter Nr. 66-70, Nr. 72, die Schutz-Echtheit Nr. 82, die Webhook-Wache Nr. 84 und die Code-Sicherung Nr. 85 ohne Netz)");
   const sw = gemeldet.get("sync-waechter");
   assert.ok(sw, "der Sync-Waechter muss melden");
   assert.equal(sw.status, "fehler", "ohne Geheimnis ist er rot, nie gruen");
