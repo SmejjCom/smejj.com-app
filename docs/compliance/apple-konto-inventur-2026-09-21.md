@@ -163,3 +163,32 @@ Alles nach Neuladen gegengeprüft, nicht dem Sicherungs-Häkchen geglaubt:
 Von unserer Seite ist **alles erledigt bis auf das Video**. Sobald es da ist:
 Antwort an die App-Prüfung mit Video anhängen, dann „Erneut zur App-Prüfung
 übermitteln" — und die Version veröffentlicht sich nach der Genehmigung selbst.
+
+## Nachtrag 22.09. — Build 2 ist auf dem echten iPhone, 4.8 und 3.1.1 am Gerät belegt
+
+Über die iPhone-Spiegelung (Klicks kommen an, Tasten nicht) selbst erledigt:
+die **TestFlight-Einladung angenommen und Build 1.0 (2) installiert**. Vorher
+zeigte TestFlight auf dem Gerät nur con.ax — die Einladung lief auf
+smejjcom@gmail.com, das iPhone auf AlanBestUS@gmail.com. TestFlight nimmt sie,
+wie es selbst ankündigt, mit dem aktuell angemeldeten Konto an.
+
+**Zwei Richtlinien sind damit am echten Gerät belegt, nicht nur am Server:**
+
+* **4.8** — die Anmeldeseite der installierten App zeigt „Mit Apple fortfahren"
+  neben Google, Fingerabdruck, GitHub und E-Mail.
+* **3.1.1** — die Landeseite in der Hülle zeigt „Frag alles. Kostenlos." ohne
+  Preisliste, ohne „Preise" in der Navigation.
+
+**Das Video bleibt beim Betreiber — drei getrennte Gründe, alle gemessen:**
+Tastatureingaben werden nicht an das gespiegelte iPhone übertragen (weder ganze
+Wörter noch einzelne Tasten); die **iOS-Bildschirmtastatur erscheint bei
+Spiegelung gar nicht**, weil das System die Mac-Tastatur erwartet, es gibt also
+auch keine Tasten zum Anklicken; und **Wischgesten kommen nicht an**, weshalb
+sich das Kontrollzentrum und damit die Bildschirmaufnahme nicht starten lässt.
+
+**Ein Video gab es nie.** In der Mediathek des iPhones ist die neueste
+Videoaufnahme ein Bildschirmvideo der **con.ax**-App von 19:11 — kein
+smejj.com-Video. Das konnte auch gar nicht anders sein, weil die App bis eben
+nicht installiert war. Nebenbefund: Die **iCloud-Synchronisierung des iPhones
+steht auf „angehalten"** — Aufnahmen kommen nicht von allein auf den Mac,
+AirDrop ist nötig.
