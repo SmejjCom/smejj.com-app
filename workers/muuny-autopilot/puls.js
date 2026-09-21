@@ -18,6 +18,13 @@
 export function pulsText(z) {
   if (z?.grenzen?.notaus) return "NOTAUS aktiv — nichts wird gestartet";
   if (z?.phase === "gestoppt") return z?.plan?.grund || "angehalten";
+  // Pausiert per fehlender GPU-Freigabe: das ist ein GEWOLLTER Zustand (Owner-
+  // Entscheidung 21.09.2026), kein Fehler — aber er darf auch nicht so klingen, als
+  // wuerde gerade trainiert. Vorher stand hier das Ziel des naechsten Plans
+  // ("Training muuny-1.12 ..."), obwohl nichts davon je gestartet wird.
+  if (z?.grenzen && z.grenzen.freigabe === false && !z?.laufenderJob) {
+    return "pausiert — keine GPU-Freigabe, das stabile Modell bedient weiter";
+  }
   if (z?.laufenderJob) {
     const j = z.laufenderJob;
     const live = j.letzterStatus;
@@ -40,8 +47,25 @@ export function pulsOk(z) {
   if (z?.grenzen?.notaus) return false;
   if (z?.phase === "gestoppt") return false;
   if (z?.letzterFehler && z?.aktualisiert && z.letzterFehler.zeit === z.aktualisiert) return false;
-  if (z?.startBlockiert) return false;
+  if (z?.startBlockiert && !nurPausiert(z)) return false;
   return true;
+}
+
+/**
+ * Ist die einzige Startsperre die fehlende GPU-Freigabe?
+ *
+ * Dann ist er nicht kaputt, sondern pausiert — gewollt. Live am 21.09.2026: nach
+ * der Owner-Entscheidung "pausiert lassen" versuchte jeder Takt weiterhin zu
+ * starten, der Kostenwaechter lehnte ab ("keine_salad_freigabe"), und der Puls
+ * meldete das als Fehler. Die Kachel waere dauerhaft auf "braucht dich" gegangen —
+ * fuer einen Zustand, den der Betreiber selbst so eingestellt hat.
+ *
+ * Jeder ANDERE Sperrgrund (Budget, Deckel, Salad nicht erreichbar) bleibt rot.
+ */
+function nurPausiert(z) {
+  const gruende = z?.startBlockiert?.gruende || [];
+  return z?.grenzen?.freigabe === false && gruende.length > 0
+    && gruende.every((g) => String(g).startsWith("keine_salad_freigabe"));
 }
 
 /**
