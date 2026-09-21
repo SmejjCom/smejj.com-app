@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-21T08:48:42.730Z",
-  "confirmation": "Betreiber 21.09.2026 schriftlich auf die Auswahlkarte: 'Ja, jetzt umbauen' — Konto-Loeschung fuer Google-, GitHub- und Passkey-Konten in der App (Apple Richtlinie 5.1.1(v)); das Passwortfeld entfaellt dort, die woertliche Bestaetigung bleibt Pflicht und gilt jetzt in beiden Sprachfassungen.",
+  "frozenAt": "2026-09-21T13:17:03.851Z",
+  "confirmation": "Betreiber 21.09.2026 schriftlich auf die Auswahlkarte: 'Ja, jetzt umbauen' — Fortsetzung derselben Freigabe: der Konto-Bereich (Sitzungen, Passwortwechsel, Server-Export) spricht jetzt die Sprache der Huelle. Keine Aenderung an Anmeldung, Pruefung oder Abo-Kette, nur Beschriftungen ueber t().",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "b1b3b73900ca2362963626c74526622b0b33f705efd8111885f7e344315cfc16",
@@ -10,7 +10,7 @@
     "public/auth/auth.css": "ae2641fdb167358f9bad1f4b844d68aec2b6c41268882973a63de81896c3a910",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "src/shared/controlAccessPolicy.js": "f9c036d518cf44ae0ff9289ee6d2e050a1c64731895a04db061f00e8d99daf29",
-    "public/account-sessions.js": "e7d44caef1e65189852d6e815d2f620477faf2fb3689a6c74cfd87dcfc6bca3d",
+    "public/account-sessions.js": "25330ad02f3f5e4e8b525ff0521ba9ffe94daa9d47a5cd8501f3f4994fba393a",
     "public/chat-history-context.js": "fb3b2ce06399428b9166a46a00769234f738c3bf87571334168bda5097babfe5",
     "public/chat-bridge.js": "dc3408d7ded59ca37c4a30350ec335f75676351cc993d13979767658258725e9",
     "public/ai/fetch-retry.js": "c9cc00145776d34fecae036769ddd73dbeb67b924db1fb4479666bc724f052b2",
