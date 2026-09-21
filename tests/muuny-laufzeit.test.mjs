@@ -41,12 +41,12 @@ function falscherLlama({ verzoegerungMs = 300, gesund = () => true } = {}) {
   return new Promise((r) => server.listen(0, "127.0.0.1", () => r({ server, stats, hafen: server.address().port })));
 }
 
-async function dienst({ llama, bereit = true, version = "muuny-1.12", schlange, pulsMs = 50 }) {
+async function dienst({ llama, bereit = true, version = "muuny-1.12", schlange, pulsMs = 50, wissen = null }) {
   const motor = { zustand: bereit ? "bereit" : "startet", basisUrl: `http://127.0.0.1:${llama.hafen}`, letzterFehler: null, bericht: () => ({}) };
   const waechter = { aktuell: bereit ? { version } : null, letzterGrund: bereit ? null : "grundmodell_gguf_fehlt",
     anwendenWennFrei: async () => ({}), bericht: () => ({}) };
   const behandle = baueBehandlung({ schluessel: "test-schluessel", motor, waechter,
-    schlange: schlange || new Warteschlange({ deckel: 1, maxWartend: 8, wartefristMs: 5000, protokoll: still }), pulsMs });
+    schlange: schlange || new Warteschlange({ deckel: 1, maxWartend: 8, wartefristMs: 5000, protokoll: still }), pulsMs, wissen });
   const server = http.createServer((req, res) => behandle(req, res));
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   return { server, url: `http://127.0.0.1:${server.address().port}` };
@@ -333,4 +333,33 @@ test("SSE: nur die Datenzeilen bekommen den Modellnamen, [DONE] bleibt unberuehr
   assert.equal(umschreiben('data: {"model":"x","a":1}', "muuny-1.12"), 'data: {"model":"muuny-1.12","a":1}');
   assert.equal(umschreiben("data: [DONE]", "v"), "data: [DONE]");
   assert.equal(umschreiben(": warten", "v"), ": warten");
+});
+
+// --- Wissen von muuny ai radar -------------------------------------------------
+test("Radar-Wissen: landet im Systemprompt, gezaehlt wird nur echte Verwendung, ein langsames Radar blockiert nichts", async () => {
+  const llama = await falscherLlama({ verzoegerungMs: 10 });
+  const gemeldet = [];
+  const treffer = [{ id: "0123456789abcdef", titel: "Hallo Welt 2.0", kurz: "x", link: "https://a.example/hw", unsicherheit: { stufe: "niedrig", gruende: [] } }];
+  const wissen = { suche: async () => ({ block: "[W1] Hallo Welt 2.0 — Quelle: https://a.example/hw", treffer }), melde: async (v) => { gemeldet.push(...v); } };
+  const d = await dienst({ llama, wissen });
+  try {
+    const r = await fetch(`${d.url}/v1/chat/completions`, { method: "POST", headers: auth, body: frage(false) });
+    assert.equal(r.headers.get("x-muuny-wissen"), "1");
+    await r.text();
+    assert.match(llama.stats.anfragen.at(-1).messages[0].content, /\[W1\] Hallo Welt 2\.0/);
+    await warte(20);
+    // Das falsche Modell antwortet "Hallo Welt" OHNE [W1]: gefunden ja, verwendet nein.
+    assert.equal(gemeldet.length, 0);
+  } finally { d.server.close(); }
+
+  const langsam = { suche: () => new Promise(() => {}), melde: async () => {} };
+  const d2 = await dienst({ llama, wissen: langsam });
+  try {
+    const t0 = Date.now();
+    const r = await fetch(`${d2.url}/v1/chat/completions`, { method: "POST", headers: auth, body: frage(false) });
+    await r.text();
+    assert.equal(r.headers.get("x-muuny-wissen"), "0");
+    assert.ok(Date.now() - t0 < 3000, "Frist greift");
+    assert.equal(llama.stats.anfragen.at(-1).messages[0].content, SYSTEM_KURZ);
+  } finally { d2.server.close(); llama.server.close(); }
 });

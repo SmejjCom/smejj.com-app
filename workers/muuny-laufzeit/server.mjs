@@ -9,12 +9,13 @@
 //   MUUNY_KONTEXT               Standard 4096
 //   MUUNY_CACHE                 Standard /var/cache/muuny
 //   PORT                        Standard 8090
+//   MUUNY_RADAR_URL             optional: muuny ai radar fuer gepruefte Recherche im Prompt
 import http from "node:http";
 import { e2AusUmgebung } from "../smejj-hausmodell/e2.js";
 import { Warteschlange } from "../smejj-hausmodell/warteschlange.js";
 import { lagerPrefix } from "../muuny-autopilot/lager.js";
 import { FreigabeWaechter, PRUEF_INTERVALL_MS } from "./freigabe.js";
-import { baueBehandlung } from "./laufzeit.js";
+import { baueBehandlung, radarWissen } from "./laufzeit.js";
 import { WacherMotor } from "./motor.js";
 
 const env = process.env;
@@ -34,7 +35,9 @@ const waechter = new FreigabeWaechter({
   cacheVerzeichnis: env.MUUNY_CACHE || "/var/cache/muuny", motor, istBeschaeftigt, protokoll: { log, warn: log }
 });
 
-const behandle = baueBehandlung({ schluessel: String(env.MUUNY_LAUFZEIT_SCHLUESSEL || "").trim(), motor, waechter, schlange });
+// Optional: gepruefte Recherche von muuny ai radar (MUUNY_RADAR_URL + MUUNY_DIENST_SCHLUESSEL).
+const wissen = radarWissen({ url: String(env.MUUNY_RADAR_URL || "").trim(), dienstSchluessel: String(env.MUUNY_DIENST_SCHLUESSEL || "").trim() });
+const behandle = baueBehandlung({ schluessel: String(env.MUUNY_LAUFZEIT_SCHLUESSEL || "").trim(), motor, waechter, schlange, wissen });
 const server = http.createServer((req, res) => behandle(req, res).catch((f) => {
   log("Fehler", f?.message);
   if (!res.headersSent) { res.writeHead(500, { "content-type": "application/json" }); res.end('{"error":{"message":"intern"}}'); }

@@ -79,3 +79,5 @@ schemas/*
 !workers/muuny-autopilot/**
 !workers/muuny-laufzeit
 !workers/muuny-laufzeit/**
+!workers/muuny-radar
+!workers/muuny-radar/**

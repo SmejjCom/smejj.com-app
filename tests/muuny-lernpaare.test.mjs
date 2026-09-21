@@ -57,17 +57,20 @@ test("Ganzer Weg: Einwilligung, Daumen hoch, Paar liegt unveraenderlich in der A
   assert.ok([...u.objekte.keys()].every((k) => k.startsWith("muuny/training/consents/v1/")),
     "das muuny-Register liegt getrennt vom smejj-Register");
 
+  // Der Zeitpunkt muss NACH der Einwilligung liegen (die entsteht zur echten Uhrzeit).
+  // Bis 21.09. stand hier fest 14:00 UTC — ab 14:00 war der Test rot.
+  const erfasstAm = new Date(Date.now() + 1000).toISOString();
   const r = await sichereLernpaar(NUTZER, PAAR, { env: ENV, register: u.register, schreiber: u.schreiber,
-    now: "2026-09-21T14:00:00.000Z", randomUUID: () => "0f0e0d0c-1111-4222-8333-444455556666" });
+    now: erfasstAm, randomUUID: () => "0f0e0d0c-1111-4222-8333-444455556666" });
   assert.deepEqual(r, { erfasst: true, grund: null });
 
   const [schluessel] = paare(u.objekte);
-  assert.equal(schluessel, "muuny/training/paare/2026/09/21/0f0e0d0c-1111-4222-8333-444455556666.json");
+  assert.equal(schluessel, `muuny/training/paare/${erfasstAm.slice(0, 10).replaceAll("-", "/")}/0f0e0d0c-1111-4222-8333-444455556666.json`);
   const satz = JSON.parse(u.objekte.get(schluessel));
   assert.equal(satz.frage, PAAR.frage);
   assert.equal(satz.antwort, PAAR.antwort);
   assert.equal(satz.herkunft, "daumen_hoch");
-  assert.equal(satz.erfasstAm, "2026-09-21T14:00:00.000Z");
+  assert.equal(satz.erfasstAm, erfasstAm);
   assert.ok(satz.einwilligung, "der Beleg muss im Paar stehen");
   assert.ok(!schluessel.includes(NUTZER), "im Dateinamen steht NIE eine Kennung des Menschen");
   assert.ok(!JSON.stringify(satz).includes(NUTZER), "auch im Inhalt nur ein undurchsichtiger Verweis");

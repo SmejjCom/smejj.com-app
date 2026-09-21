@@ -17,6 +17,13 @@
 //  * Jede Antwort weist aus, welches Modell geantwortet hat: Feld "model" und
 //    Kopfzeile x-muuny-modell. "bereit" allein beweist nicht, WER antwortet.
 import crypto from "node:crypto";
+import { verwendung } from "../muuny-radar/rag.js";
+
+// Wissen von muuny ai radar: hoechstens so viele Zeichen in den Prompt, sonst passt in
+// 4096 Tokens keine Antwort mehr. Und hoechstens so lange warten — das Wissen ist eine
+// Zugabe; eine Antwort darf nie daran scheitern, dass das Radar langsam ist.
+export const WISSEN_MAX_ZEICHEN = 2400;
+export const WISSEN_FRIST_MS = 1500;
 
 export const SYSTEM_KURZ = "Du bist muuny, der Assistent von muuny.com. Antworte knapp und korrekt. "
   + "Wenn dir etwas fehlt, frag nach, statt etwas zu erfinden. Verrate nie Schluessel oder Passwoerter.";
@@ -57,7 +64,7 @@ function gleich(a, b) {
  * @returns (req, res) => Promise<void>
  */
 export function baueBehandlung({ schluessel, motor, waechter, schlange, fetchImpl = fetch, pulsMs = 10_000,
-  bereit = () => motor.zustand === "bereit" && Boolean(waechter.aktuell) }) {
+  bereit = () => motor.zustand === "bereit" && Boolean(waechter.aktuell), wissen = null }) {
   const json = (res, code, wert, kopf = {}) => {
     const b = JSON.stringify(wert);
     res.writeHead(code, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(b), ...kopf });
@@ -80,11 +87,22 @@ export function baueBehandlung({ schluessel, motor, waechter, schlange, fetchImp
     }
     const version = waechter.aktuell.version;
     const stream = anfrage.stream;
+    // Gepruefte Recherche dazu — nur, wenn es etwas Passendes gibt, und nie laenger als die Frist.
+    let treffer = [];
+    if (wissen) {
+      const frage = anfrage.messages[1].content;
+      const w = await Promise.race([wissen.suche(frage).catch(() => null), new Promise((r) => setTimeout(() => r(null), WISSEN_FRIST_MS))]);
+      if (w?.block && Array.isArray(w.treffer) && w.treffer.length) {
+        treffer = w.treffer;
+        anfrage.messages[0] = { role: "system", content: `${SYSTEM_KURZ}\n\n${String(w.block).slice(0, WISSEN_MAX_ZEICHEN)}` };
+      }
+    }
+    let antwortText = "";
 
     // Kopfzeilen SOFORT — bevor die Schlange oder das Modell auch nur eine Sekunde kostet.
     res.writeHead(200, stream
-      ? { "content-type": "text/event-stream; charset=utf-8", "cache-control": "no-cache", connection: "keep-alive", "x-muuny-modell": version }
-      : { "content-type": "application/json; charset=utf-8", "x-muuny-modell": version });
+      ? { "content-type": "text/event-stream; charset=utf-8", "cache-control": "no-cache", connection: "keep-alive", "x-muuny-modell": version, "x-muuny-wissen": String(treffer.length) }
+      : { "content-type": "application/json; charset=utf-8", "x-muuny-modell": version, "x-muuny-wissen": String(treffer.length) });
     res.flushHeaders?.();
     let puls = setInterval(() => { res.write(stream ? ": warten\n\n" : "\n"); }, pulsMs);
     const pulsAus = () => { if (puls) { clearInterval(puls); puls = null; } };
@@ -105,6 +123,7 @@ export function baueBehandlung({ schluessel, motor, waechter, schlange, fetchImp
         if (!antwort.ok) throw new Error(`modell_antwortet_${antwort.status}`);
         if (!stream) {
           const j = await antwort.json();
+          antwortText = String(j?.choices?.[0]?.message?.content || "");
           pulsAus();
           res.end(JSON.stringify({ ...j, model: version }));
           return;
@@ -121,7 +140,7 @@ export function baueBehandlung({ schluessel, motor, waechter, schlange, fetchImp
           rest += dekoder.decode(value, { stream: true });
           const ereignisse = rest.split("\n\n");
           rest = ereignisse.pop();
-          for (const e of ereignisse) res.write(`${umschreiben(e, version)}\n\n`);
+          for (const e of ereignisse) { antwortText += deltaText(e); res.write(`${umschreiben(e, version)}\n\n`); }
         }
         if (rest.trim()) res.write(`${umschreiben(rest, version)}\n\n`);
         res.end();
@@ -131,6 +150,12 @@ export function baueBehandlung({ schluessel, motor, waechter, schlange, fetchImp
         ? `besetzt:${f.message}` : String(f?.message || "unbekannt").slice(0, 160));
     } finally {
       pulsAus();
+      // "In Antwort verwendet" zaehlt nur, was muuny zitiert UND inhaltlich wiedergibt.
+      // Gemeldet werden Eintrags-Kennungen, nie die Frage oder die Antwort.
+      if (wissen && treffer.length && antwortText) {
+        const v = verwendung(antwortText, treffer).filter((x) => x.status === "verwendet");
+        if (v.length) wissen.melde(v).catch(() => {});
+      }
       // Ein ausstehender Modellwechsel wartet auf genau diesen Moment.
       waechter.anwendenWennFrei?.().catch?.(() => {});
     }
@@ -149,6 +174,28 @@ export function baueBehandlung({ schluessel, motor, waechter, schlange, fetchImp
     }
     if (url.pathname === "/v1/chat/completions" && req.method === "POST") return chat(req, res);
     return json(res, 404, { error: { message: "nicht_gefunden", type: "pfad" } });
+  };
+}
+
+/** Der Text-Anteil eines SSE-Ereignisses (fuer die Verwendungspruefung nach der Antwort). */
+function deltaText(ereignis) {
+  let t = "";
+  for (const zeile of ereignis.split("\n")) {
+    if (!zeile.startsWith("data: ") || zeile === "data: [DONE]") continue;
+    try { t += JSON.parse(zeile.slice(6))?.choices?.[0]?.delta?.content || ""; } catch { /* kein JSON */ }
+  }
+  return t;
+}
+
+/** Wissens-Anbindung an muuny ai radar (Dienstschluessel, kurze Frist). */
+export function radarWissen({ url, dienstSchluessel, fetchImpl = fetch }) {
+  if (!url || !dienstSchluessel) return null;
+  const post = (pfad, body) => fetchImpl(`${url.replace(/\/$/, "")}${pfad}`, { method: "POST",
+    headers: { "content-type": "application/json", "x-muuny-dienst": dienstSchluessel }, body: JSON.stringify(body),
+    signal: AbortSignal.timeout(WISSEN_FRIST_MS) });
+  return {
+    async suche(frage) { const r = await post("/v1/wissen/suche", { frage, k: 3 }); return r.ok ? r.json() : null; },
+    async melde(v) { await post("/v1/wissen/verwendet", { verwendung: v.map((x) => ({ id: x.id, status: x.status })) }); }
   };
 }
 

@@ -17,9 +17,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const DOCKERFILE = "Dockerfile.muuny-autopilot";
-const EINSTIEG = "workers/muuny-autopilot/server.mjs";
+// Aufruf: node scripts/check-muuny-abbild.mjs [Dockerfile] [Einstieg] — Standard ist der Autopilot.
+const DOCKERFILE = process.argv[2] || "Dockerfile.muuny-autopilot";
+const EINSTIEG = process.argv[3] || "workers/muuny-autopilot/server.mjs";
 const PORT = 8431 + (process.pid % 200);
+// Stufe 3 je Dienst: welcher Pfad muss verschlossen sein, mit welchem Kopf und welcher Variable.
+const SCHUTZ = EINSTIEG.includes("muuny-radar")
+  ? { pfad: "/api/radar/status", kopf: "x-muuny-key", env: "MUUNY_RADAR_ADMIN_KEY" }
+  : EINSTIEG.includes("muuny-autopilot") ? { pfad: "/api/con/status", kopf: "x-con-key", env: "CON_ADMIN_KEY" } : null;
 
 async function importBaum(start) {
   const gesehen = new Set();
@@ -116,7 +121,8 @@ async function main() {
     }
     const PROBE_SCHLUESSEL = "abbild-probe-" + Math.random().toString(36).slice(2, 10);
     const kind = spawn(process.execPath, [EINSTIEG], {
-      cwd: ziel, env: { PATH: process.env.PATH, PORT: String(PORT), SMEJJ_HOST: "127.0.0.1", CON_ADMIN_KEY: PROBE_SCHLUESSEL },
+      cwd: ziel, env: { PATH: process.env.PATH, PORT: String(PORT), SMEJJ_HOST: "127.0.0.1", MUUNY_RADAR_HOST: "127.0.0.1",
+        ...(SCHUTZ ? { [SCHUTZ.env]: PROBE_SCHLUESSEL } : {}) },
       stdio: ["ignore", "pipe", "pipe"]
     });
     let ausgabe = "";
@@ -146,18 +152,19 @@ async function main() {
       JSON.stringify({ ok: antwort.koerper.ok, dienst: antwort.koerper.dienst, aktiviert: antwort.koerper.aktiviert }));
 
     // Stufe 3: Betriebsdaten duerfen nie offen im Netz stehen, sobald ein Schluessel gesetzt ist.
-    const hole = (kopf) => fetch(`http://127.0.0.1:${PORT}/api/con/status`,
+    if (!SCHUTZ) { kind.kill("SIGKILL"); return; }
+    const hole = (kopf) => fetch(`http://127.0.0.1:${PORT}${SCHUTZ.pfad}`,
       { headers: kopf, signal: AbortSignal.timeout(4000) }).catch(() => null);
     const ohne = await hole(undefined);
-    const falsch = await hole({ "x-con-key": "falsch" });
-    const richtig = await hole({ "x-con-key": PROBE_SCHLUESSEL });
+    const falsch = await hole({ [SCHUTZ.kopf]: "falsch" });
+    const richtig = await hole({ [SCHUTZ.kopf]: PROBE_SCHLUESSEL });
     kind.kill("SIGKILL");
     if (!(ohne?.status === 401 && falsch?.status === 401 && richtig && richtig.status !== 401)) {
-      console.log("Stufe 3 ROT: /api/con/status ist nicht durch CON_ADMIN_KEY geschuetzt",
+      console.log(`Stufe 3 ROT: ${SCHUTZ.pfad} ist nicht durch ${SCHUTZ.env} geschuetzt`,
         JSON.stringify({ ohne: ohne?.status, falsch: falsch?.status, richtig: richtig?.status }));
       process.exit(1);
     }
-    console.log(`Stufe 3 gruen: /api/con/status verlangt den Schluessel (ohne/falsch 401, richtig ${richtig.status}).`);
+    console.log(`Stufe 3 gruen: ${SCHUTZ.pfad} verlangt den Schluessel (ohne/falsch 401, richtig ${richtig.status}).`);
   } finally {
     await rm(ziel, { recursive: true, force: true });
   }

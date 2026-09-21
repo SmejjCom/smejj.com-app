@@ -28,6 +28,10 @@ COPY workers/smejj-hausmodell/warteschlange.js ./workers/smejj-hausmodell/wartes
 COPY workers/muuny-autopilot/entscheidung.js ./workers/muuny-autopilot/entscheidung.js
 COPY workers/muuny-autopilot/lager.js ./workers/muuny-autopilot/lager.js
 COPY workers/muuny-autopilot/suitenstand.js ./workers/muuny-autopilot/suitenstand.js
+# Wissen von muuny ai radar: nur die Verwendungspruefung (rag.js) und ihre Bausteine.
+COPY workers/muuny-radar/rag.js ./workers/muuny-radar/rag.js
+COPY control-server/src/rag/bm25Index.js ./control-server/src/rag/bm25Index.js
+COPY control-server/src/rag/fremdinhaltFilter.js ./control-server/src/rag/fremdinhaltFilter.js
 RUN mkdir -p /var/cache/muuny
 ENV MUUNY_CACHE=/var/cache/muuny MUUNY_LLAMA_BINAER=/opt/llama/llama-server PORT=8090
 EXPOSE 8090
