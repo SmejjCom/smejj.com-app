@@ -224,6 +224,7 @@ function toggleForm(id, block) {
 // den Quelltext: der teuerste Fehler waere ein Serveraufruf trotz falscher Eingabe.
 export function changePasswordForm(block, output) {
   if (!toggleForm("passwordChangeForm", block)) return;
+  output(""); // wie beim Löschen: keine alte Meldung unter einem frischen Formular
   block.insertAdjacentHTML("beforeend", `
     <form id="passwordChangeForm" class="account-inline-form" autocomplete="on">
       <label for="pwCurrent">${t("Aktuelles Passwort")}<input id="pwCurrent" type="password" autocomplete="current-password" required></label>
@@ -307,6 +308,10 @@ function inAnfuehrung(text) {
 
 export async function deleteAccountForm(block, output) {
   if (!toggleForm("accountDeleteForm", block)) return output(t("Löschung abgebrochen. Keine Daten wurden verändert."));
+  // Gerätetest 21.09.2026: wer abbrach und das Formular erneut öffnete, sah die
+  // alte Meldung ("Deletion cancelled…") weiter darunter stehen — sie las sich
+  // wie das Ergebnis des NEUEN Versuchs. Die Zeile wird beim Öffnen geleert.
+  output("");
   // Der Anmeldeweg entscheidet nur über das Passwortfeld in der Maske; die
   // verbindliche Prüfung macht der Server am Sitzungstoken, nicht hier.
   const user = await fetchAuthenticatedUser();

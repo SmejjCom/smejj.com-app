@@ -38,7 +38,11 @@ Seite erledigt und in App Store Connect gespeichert — es fehlt nur dieses Vide
    Antwort auf die drei Punkte „…" tippen → **„Report content"** → den Dialog
    zeigen → eine Auswahl treffen und abschicken → die Bestätigung zeigen.
 7. **Konto-Bereich — hier hat sich heute etwas geändert.** Menü → „My account"
-   → links **„My data"**. Dort bis **„Delete account"** scrollen und den Knopf
+   → **„My data"**. Achtung, am Handy ist das fummelig: „My data" ist der
+   **letzte von neun Reitern**, die Reiterleiste muss man erst dorthin
+   schieben. Mach das im Video langsam und sichtbar — Apple soll sehen, dass
+   der Weg existiert, nicht raten müssen.
+   Dort bis **„Delete account"** scrollen und den Knopf
    **antippen**: das Formular geht auf und zeigt „Type to confirm: DELETE
    ACCOUNT". Bei einem Google-Konto steht dort **kein Passwortfeld mehr** —
    genau das verlangt Apple in Richtlinie 5.1.1(v). Kurz stehen lassen, damit
