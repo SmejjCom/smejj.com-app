@@ -78,8 +78,8 @@
       "finger": "518d644a4f3dc1f4"
     },
     "premium-surfaces.js": {
-      "marke": "b47v-11",
-      "finger": "d8f786953cb598b9"
+      "marke": "b47v-12",
+      "finger": "2542552df9b7fbf3"
     },
     "composer-tools.js": {
       "marke": "werkzeuge-30",
@@ -357,6 +357,10 @@
       "marke": "17",
       "finger": "3abb9d08ea2ec278"
     },
+    "ios-preise-aus.js": {
+      "marke": "1",
+      "finger": "2591ed6def6cacc1"
+    },
     "start-chips.js": {
       "marke": "b32b-3",
       "finger": "a691cee1a517f3b1"
@@ -398,8 +402,8 @@
       "finger": "224dace78b92459e"
     },
     "app.js": {
-      "marke": "model-picker-20260726",
-      "finger": "f067db7d02188366"
+      "marke": "model-picker-20260727",
+      "finger": "ba96f1d803229242"
     },
     "pwa-schnellstart.js": {
       "marke": "25",
@@ -414,8 +418,8 @@
       "finger": "3215e3b4b11aac80"
     },
     "profile-dock.js": {
-      "marke": "profile-dock-20260717-10",
-      "finger": "f97cad0533fc1dc5"
+      "marke": "profile-dock-20260717-11",
+      "finger": "be4771af8b315ba6"
     },
     "chat-actions.js": {
       "marke": "b79",
@@ -458,16 +462,16 @@
       "finger": "e5c29e44da13a400"
     },
     "account-privacy.js": {
-      "marke": "9",
-      "finger": "b99300e40dfddc17"
+      "marke": "10",
+      "finger": "ee176a9ed4e22468"
     },
     "auth-gate.js": {
       "marke": "8",
       "finger": "92d706e95e9e2015"
     },
     "profile-dock-menu.js": {
-      "marke": "b54",
-      "finger": "1600742de3ec8c0f"
+      "marke": "b55",
+      "finger": "b167d5d252111adb"
     },
     "quellen-panel.js": {
       "marke": "2",
@@ -476,10 +480,6 @@
     "icon-nutzung.js": {
       "marke": "1",
       "finger": "ddf238e94e55304d"
-    },
-    "ios-preise-aus.js": {
-      "marke": "1",
-      "finger": "2591ed6def6cacc1"
     },
     "search-overlay.js": {
       "marke": "b80",

@@ -51,7 +51,9 @@ test("iOS-Huelle: kein Preis, kein Kaufknopf, kein fremder Bezahlweg", () => {
   assert.ok(!/<a\s/i.test(markup), `kein Link im Plan-Bereich der Huelle: ${markup}`);
   assert.ok(!/buch|website|im browser|am computer|abonnier/i.test(markup),
     `kein Verweis auf einen anderen Kaufweg: ${markup}`);
-  assert.match(markup, /kostenlos/, "der Plan-Status bleibt erklaert");
+  // Der Satz sagt nur, was fuer BEIDE Faelle stimmt — er kennt den Abo-Status
+  // nicht (er wird gebaut, bevor der Serverstand da ist).
+  assert.match(markup, /nichts verkauft/, "die Huelle erklaert, warum hier nichts steht");
 });
 
 test("Web: der Verkauf bleibt vollstaendig erhalten", () => {
@@ -136,4 +138,51 @@ test("die Weiche steht in BEIDEN Offline-Listen", () => {
   // der Service Worker sie nie — oder installiert sich gar nicht erst (v857).
   const treffer = SW.match(/"\/assets\/ios-preise-aus\.js"/g) || [];
   assert.equal(treffer.length, 2, `erwartet 2 Eintraege, gefunden ${treffer.length}`);
+});
+
+// --- Die Plan-KARTE, nicht nur die Kaufliste ---------------------------------
+//
+// BEFUND 21.09.2026 (Parallelsitzung, installierte iPhone-App, angemeldetes
+// Konto MIT Abo): Ueber dem neuen Satz stand weiter "smejj Plus — 9 € / Monat
+// … ACTIVE … renews on October 14, 2026". Zwei Fehler auf einem Bildschirm:
+// der Preis war noch da, und der Satz darunter behauptete "kein Abo aktiv".
+
+test("die Plan-Karte nennt in der Huelle keinen Preis", () => {
+  const fn = QUELLE.match(/function planNameAnzeige\(plan\) \{[\s\S]*?\n\}/)[0];
+  assert.match(fn, /iosHuelle\(\) \? label\.split\(" — "\)\[0\] : label/,
+    "aus 'smejj Plus — 9 € / Monat' muss in der Huelle 'smejj Plus' werden");
+  assert.match(QUELLE, /const label = planNameAnzeige\(billing\.plan\)/,
+    "die Anzeige muss ueber die Funktion laufen, nicht direkt ueber PLAN_LABELS");
+  // Auch die Free-Karte im Markup: "Free — 0 €" ist eine Preisangabe.
+  assert.match(QUELLE, /\$\{iosHuelle\(\) \? "Free" : "Free — 0 €"\}/,
+    "die Free-Karte darf in der Huelle keinen Betrag zeigen");
+});
+
+test("kein Verlaengerungsdatum und kein Zahlungsdienstleister in der Huelle", () => {
+  // "verlaengert sich am …" und "ueber Stripe" beschreiben eine wiederkehrende
+  // Zahlung ausserhalb von Apple — in der Huelle beides weg.
+  const stelle = QUELLE.indexOf('} else if (iosHuelle()) {');
+  assert.ok(stelle > 0, "der Huellen-Zweig fuer den Plan-Hinweis fehlt");
+  const zweig = QUELLE.slice(stelle, QUELLE.indexOf("} else {", stelle));
+  assert.ok(!/verlängert|Stripe|\{datum\}/.test(zweig), `Huellen-Zweig nennt Zahlung oder Datum: ${zweig}`);
+});
+
+test("der Satz behauptet keinen Abo-Status", () => {
+  // Er wird gebaut, BEVOR der Serverstand da ist — er kann den Status gar nicht
+  // kennen. Ein Konto mit Abo las darum "kein Abo aktiv" direkt unter "ACTIVE".
+  const markup = ladeKaufTeil({ ios: true });
+  assert.ok(!/kein Abo|no subscription|aktiv/i.test(markup),
+    `der Satz darf keinen Status behaupten: ${markup}`);
+});
+
+test("die Kuendigung fuehrt in der Huelle nicht ins Stripe-Portal", () => {
+  // Dort stehen Preise und Zahlungsmittel. Kuendigen bleibt moeglich (E-Mail) —
+  // Apple stoert sich am Kauf, nicht am Beenden.
+  const fn = QUELLE.match(/function handleCancelSubscription\(view\) \{[\s\S]*?\n\}/)[0];
+  const portal = fn.indexOf("openBillingPortal");
+  const weiche = fn.indexOf("!iosHuelle()");
+  assert.ok(weiche >= 0 && weiche < portal, "die Weiche muss VOR dem Portal-Aufruf stehen");
+  assert.match(fn, /!iosHuelle\(\) && STRIPE_BILLING_PORTAL_URL/,
+    "auch der oeffentliche Portal-Link darf in der Huelle nicht geoeffnet werden");
+  assert.match(fn, /mailto:/, "der E-Mail-Weg bleibt als Kuendigungsmoeglichkeit");
 });
