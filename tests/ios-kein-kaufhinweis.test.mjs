@@ -249,3 +249,13 @@ test("kein sichtbarer Text kommt aus CSS", () => {
   assert.match(QUELLE, /id="profileOutput"[^>]*>\$\{t\("Bereit\."\)\}/,
     "der Anfangstext gehoert ins Markup und durch t()");
 });
+
+test("keine doppelten Kennungen in der Startseite", () => {
+  // Gefunden 21.09.2026: <div id="homeOutput"> stand ZWEIMAL untereinander.
+  // querySelector trifft nur das erste — das zweite war unerreichbarer Ballast
+  // im Startbuendel, und dessen Messlatte darf nur mit Freigabe steigen.
+  const html = fs.readFileSync("public/index.html", "utf8");
+  const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
+  const doppelt = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
+  assert.deepEqual(doppelt, [], `doppelte id: ${doppelt.join(", ")}`);
+});
