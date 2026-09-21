@@ -11,9 +11,11 @@ Seite erledigt und in App Store Connect gespeichert — es fehlt nur dieses Vide
 1. iPhone: **Einstellungen → Kontrollzentrum → Bildschirmaufnahme** hinzufügen,
    falls noch nicht da.
 2. Die App installieren, die Apple prüft — also die **TestFlight-Fassung**
-   (Build 1.0 (1)), nicht das Webclip-Symbol vom Home-Bildschirm. Wenn
-   TestFlight die App nicht zeigt, sag mir Bescheid, dann richte ich die interne
-   Testgruppe ein.
+   (Build 1.0 (1)), nicht das Webclip-Symbol vom Home-Bildschirm.
+   **Das ist am 21.09. eingerichtet:** interne TestFlight-Gruppe „Intern"
+   angelegt, smejjcom@gmail.com als Tester eingeladen, Build 1.0 (1) steht auf
+   „Bereit zum Testen". Du hast eine Einladungs-Mail von TestFlight bekommen —
+   TestFlight-App öffnen, Einladung annehmen, „smejj.com" installieren.
 3. **Mikrofon aus** ist in Ordnung — Apple braucht keinen Ton. Wenn du sprechen
    willst, sprich Englisch.
 
