@@ -127,7 +127,11 @@ jobs:
           # --skipPwaValidation: die Lighthouse-Pruefung von Bubblewrap braucht
           # einen Browser und faellt sonst ueber unsere CSP. Geprueft wird die
           # Seite bei uns ohnehin durch eigene Waechter.
-          bubblewrap build --skipPwaValidation
+          # Erst das Projekt aus dem Manifest erzeugen — sonst fragt `build`
+          # interaktiv "would you like to regenerate your project?" und der Lauf
+          # bleibt stehen, bis das Zeitlimit greift (lokal am 21.09. passiert).
+          bubblewrap update --skipVersionUpgrade < /dev/null
+          printf 'n\n' | bubblewrap build --skipPwaValidation
           ls -l app-release-bundle.aab app-release-signed.apk 2>/dev/null || ls -l
 
       - name: Fingerabdruck gegen die Live-Assetlinks halten

@@ -26,21 +26,21 @@
   "shortcuts": [
     {
       "name": "Neuer Chat",
-      "short_name": "Neuer Chat",
       "url": "/?neu=1",
-      "chosenIconUrl": "https://smejj.com/icons/pwa-192x192.png"
+      "chosenIconUrl": "https://smejj.com/icons/pwa-192x192.png",
+      "shortName": "Neuer Chat"
     },
     {
       "name": "Sprachmodus",
-      "short_name": "Sprachmodus",
       "url": "/?sprechen=1",
-      "chosenIconUrl": "https://smejj.com/icons/pwa-192x192.png"
+      "chosenIconUrl": "https://smejj.com/icons/pwa-192x192.png",
+      "shortName": "Sprachmodus"
     },
     {
       "name": "Programmieren",
-      "short_name": "Code",
       "url": "/code",
-      "chosenIconUrl": "https://smejj.com/icons/pwa-192x192.png"
+      "chosenIconUrl": "https://smejj.com/icons/pwa-192x192.png",
+      "shortName": "Code"
     }
   ],
   "generatorApp": "bubblewrap-cli",
