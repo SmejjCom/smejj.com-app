@@ -139,3 +139,27 @@ ist in Gmail (smejjcom) jetzt **mit einem Stern markiert**, damit sie auf dem
 iPhone unter „Markiert" ohne Suchen oben liegt.
 
 Anleitung: `docs/compliance/APPLE-VIDEO-3-MINUTEN.md`.
+
+## Nachtrag 22.09. — die letzten Metadaten-Punkte
+
+Alles nach Neuladen gegengeprüft, nicht dem Sicherungs-Häkchen geglaubt:
+
+* **Veröffentlichung stand auf „manuell".** Der alte Termin (21.09. 19:00) war
+  verstrichen, und App Store Connect hatte die Einstellung selbst auf MANUAL
+  zurückgesetzt — die App wäre nach Apples Genehmigung liegengeblieben, bis
+  jemand einen Knopf drückt. Jetzt **AFTER_APPROVAL**: sie geht von allein in
+  den Store, sobald Apple zustimmt.
+* **Die Anmerkungen widersprachen dem neuen Stand.** Sie zählten die
+  Anmeldewege ohne Apple auf und nannten `imild.com` als Support sowie die
+  deutsche Datenschutzseite. Ein Nachtrag stellt beides richtig (jetzt 3.388
+  Zeichen).
+* Merke für ASC: **ein Textfeld per JavaScript zu setzen reicht nicht** — das
+  Formular merkt die Änderung nicht und die Seite warnt beim Verlassen vor
+  „ungespeicherten Änderungen", obwohl nichts ankam. Über die echte Eingabe
+  tippen (ins Feld klicken, `cmd+down` ans Ende, schreiben).
+
+## Stand jetzt
+
+Von unserer Seite ist **alles erledigt bis auf das Video**. Sobald es da ist:
+Antwort an die App-Prüfung mit Video anhängen, dann „Erneut zur App-Prüfung
+übermitteln" — und die Version veröffentlicht sich nach der Genehmigung selbst.
