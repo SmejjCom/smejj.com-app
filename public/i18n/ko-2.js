@@ -341,4 +341,6 @@ export default {
   "Abgemeldet (lokaler Token entfernt).": "로그아웃했습니다(로컬 토큰 삭제).",
   "Export fehlgeschlagen": "내보내기에 실패했습니다",
   "Server-Datenexport erstellt. Secrets sind ausgeschlossen.": "서버 데이터 내보내기를 만들었습니다. 비밀 정보는 제외됩니다.",
+  // Apple 3.1.1: kein Kauf-Hinweis in der iOS-Huelle (21.09.2026)
+  "Dieses Konto nutzt smejj.com kostenlos. Es ist kein Abo aktiv und in dieser App wird nichts verkauft.": "이 계정은 smejj.com을 무료로 사용합니다. 활성 구독이 없으며 이 앱에서는 아무것도 판매하지 않습니다.",
 };

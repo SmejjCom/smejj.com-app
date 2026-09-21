@@ -341,4 +341,6 @@ export default {
   "Abgemeldet (lokaler Token entfernt).": "সাইন আউট হয়েছে (স্থানীয় টোকেন মুছে ফেলা হয়েছে)।",
   "Export fehlgeschlagen": "রপ্তানি ব্যর্থ হয়েছে",
   "Server-Datenexport erstellt. Secrets sind ausgeschlossen.": "সার্ভার ডেটা রপ্তানি তৈরি হয়েছে। গোপন তথ্য বাদ দেওয়া হয়েছে।",
+  // Apple 3.1.1: kein Kauf-Hinweis in der iOS-Huelle (21.09.2026)
+  "Dieses Konto nutzt smejj.com kostenlos. Es ist kein Abo aktiv und in dieser App wird nichts verkauft.": "এই অ্যাকাউন্ট smejj.com বিনামূল্যে ব্যবহার করে। কোনো সাবস্ক্রিপশন সক্রিয় নেই এবং এই অ্যাপে কিছুই বিক্রি হয় না।",
 };
