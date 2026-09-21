@@ -1,23 +1,23 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-21T14:25:48.037Z",
-  "confirmation": "Betreiber 21.09.2026 schriftlich im Chat: 'apple login 4.8 machen'. Der Server-Teil von 'Mit Apple anmelden' geht in den Bauzweig; er bleibt ohne die vier SMEJJ_APPLE_LOGIN_*-Variablen wirkungslos (config meldet apple:false, Routen 503). Die Rueckkehr-Route laesst als einzige den Origin appleid.apple.com zu — form_post ist bei den Bereichen name/email Pflicht.",
+  "frozenAt": "2026-09-21T14:35:54.316Z",
+  "confirmation": "Betreiber 21.09.2026 schriftlich auf die Auswahlkarte zu Apple 3.1.1: 'In der iOS-App ausblenden'. Dritte Runde derselben Freigabe: auch die Landeseite und die Programmierer-Seite zeigen in der iOS-Huelle keine Preise mehr. Im Web unveraendert; keine Aenderung an Anmeldung, Pruefung oder Abo-Kette.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "22bee5ce2040df34d5bd17e6cded4f6020e9c4f7c62ffab8caab428335900864",
+    "public/index.html": "7aea4f6add6cd949cf84b5273e5d2ad937fda6b076d0bb60212ef7e30c81fdf6",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "f78f9b57ebabbb9798ecf9142dfedd110094e85df676f86b18917c61e24fd3bc",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "10ba77e36d5b6e57b90245a559b2451db1ec256ff9d5aa8004677c9236a76b59",
-    "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
+    "public/app-surfaces.css": "d8a4efdf629bd585e10b27a5cbe365cc7b0359987d01bb81f3de6c17600386ec",
     "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "7403ac7a7106cc72805268c9f139eb5e86e458880fa7d849a26a29ea99d0c3c4",
-    "public/app.js": "ba96f1d803229242d8f877d0b1e35b2b0f7cde3d254efc77b029d63351021105",
+    "public/app.js": "f5d2efa0ee4826734b9965f61e73839cbe038f26b93afe9077957a69fae54909",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "27acbbbbe2a23a81f25b8fdab7e5204cb4e5ecc1217f6ef1af8ee7a12831e3df",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "2542552df9b7fbf32f0fd1b5f609d3a5322a01db88274eaae967e8670d31c15a",
+    "public/premium-surfaces.js": "f2572710082c896ec4edcb5e732e66e55dc555f079a063bfc912fbc70a1e052c",
     "public/autonomous-coding.js": "95a765c2888895d5e48458a289bda3ab29595ac5871a1edc95d992a45e027164",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "cfdeec81cd1a38393abc7bae3976de0a0a4ccbb6a885fbc3dc2c0ff04940baf4",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "d181863875eddce7cbb7ca8cd8f9b58a57698d133fafebc1b5eb4b6b35692f62",
+    "public/sw.js": "0ec7c07353cc365b08a11cc4d036d95ec8cde132b11e8c5ef62396aec1e1bb77",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
