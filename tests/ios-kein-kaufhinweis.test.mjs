@@ -149,8 +149,8 @@ test("die Weiche steht in BEIDEN Offline-Listen", () => {
 
 test("die Plan-Karte nennt in der Huelle keinen Preis", () => {
   const fn = QUELLE.match(/function planNameAnzeige\(plan\) \{[\s\S]*?\n\}/)[0];
-  assert.match(fn, /iosHuelle\(\) \? label\.split\(" — "\)\[0\] : label/,
-    "aus 'smejj Plus — 9 € / Monat' muss in der Huelle 'smejj Plus' werden");
+  assert.match(fn, /iosHuelle\(\) \? label\.split\(" — "\)\[0\] : t\(label\)/,
+    "aus 'smejj Plus — 9 € / Monat' muss in der Huelle 'smejj Plus' werden — ausserhalb durch t()");
   assert.match(QUELLE, /const label = planNameAnzeige\(billing\.plan\)/,
     "die Anzeige muss ueber die Funktion laufen, nicht direkt ueber PLAN_LABELS");
   // Auch die Free-Karte im Markup: "Free — 0 €" ist eine Preisangabe.
