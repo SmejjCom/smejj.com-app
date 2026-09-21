@@ -38,7 +38,7 @@ import { handleOhrRoute } from "../control-server/src/routes/voiceOhrRoutes.js";
 import { handleModelStatus, handleModelsStatus, handleWorkerPreflight } from "../control-server/src/routes/modelRoutes.js";
 import { handleWorkerModelAction, handleWorkerValidate } from "../control-server/src/routes/workerModelRoutes.js";
 import { refreshModelRuntimeHealth } from "../control-server/src/llm/modelRuntimeHealth.js";
-import { buildRagContextBlock, searchKnowledge } from "../control-server/src/rag/agentContext.js";
+import { buildRagContextBlock, radarKontextVon, searchKnowledge } from "../control-server/src/rag/agentContext.js";
 import { keyProviderUsage, shouldSearchWeb } from "./search/webSearch.js";
 import { buildAgentWebContext, handleWebSearch } from "./search/webSearchRoute.js";
 import { answerLiveIntent, detectLiveInternetIntent } from "../control-server/src/live/liveInternet.js";
@@ -665,6 +665,7 @@ async function handleAgent(req, res) {
   });
   // Projektwissen (RAG) ergaenzt, ersetzt aber nie die Live-Suche.
   const ragContext = await buildRagContextBlock(config.projectRoot, task, 3);
+  const radarContext = await radarKontextVon(task);
 
   const modus = ["plan", "manuell", "akzeptieren"].includes(String(body?.preferences?.modus || ""))
     ? body.preferences.modus
@@ -674,6 +675,7 @@ async function handleAgent(req, res) {
   const userParts = [`Frage/Aufgabe:\n${task}`];
   if (webContext) userParts.push(webContext);
   if (ragContext) userParts.push(ragContext);
+  if (radarContext) userParts.push(radarContext);
   if (fileBlocks.length) userParts.push(`Dateien:\n${fileBlocks.join("\n\n")}`);
 
   // Gespraechsgedaechtnis: der Verlauf des Clients wird streng validiert
