@@ -207,7 +207,10 @@ export async function ladeErnteChunks({ env = process.env, maxFakten = 200, list
         if (chunks.length >= maxFakten) return chunks;
         const datum = String(batch.createdAt || "").slice(0, 10);
         const text = String(fakt?.summary || "").trim();
-        if (text.length < 25) continue;
+        // Auch BEIM LESEN filtern: die 42 Laeufe vor dem 21.09.2026 liegen
+        // weiter im Speicher und tragen je eine Berichts-Fusszeile. Geloescht
+        // wird nichts (Betreiber-Regel), sie kommen nur nicht mehr ins Wissen.
+        if (text.length < 25 || BERICHTS_RESTE.test(text)) continue;
         const quelle = String(fakt?.url || "").trim();
         chunks.push({
           id: `ernte:${batch.id}:${i}`,
