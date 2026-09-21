@@ -62,6 +62,10 @@ const MIT_ECHTER_MESSUNG = new Set([
   // er sie falsch loest. Siehe autopilots/autopilotLaeufer.js +
   // autopilots/autopilotSelbsttests.js.
   "smejj-versions-takt",      // liest Register und Bewertungen aus der Ablage (Nr. 83)
+  // Nr. 86 (2026-09-21): meldet den GEMESSENEN Stand seiner eigenen Ablage
+  // (Laeufe, Wissenseintraege, Budget) und startet nur, wenn ein Thema faellig
+  // ist — die Meldung nennt immer echte Zahlen, nie einen Pauschaltext.
+  "smejj-ai-radar",
   "webhook-wache",            // fragt den Smee-Dienst und klopft am eigenen Eingang (Nr. 84)
   "bug-predictor",            // scannt die echten Quelldateien des Containers
   "knowledge-graph",          // baut den Symbolgraphen ueber dieselben Dateien

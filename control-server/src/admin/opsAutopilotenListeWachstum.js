@@ -192,5 +192,24 @@ export const WACHSTUM_AUTOPILOTEN = Object.freeze([
     verbessert: "Ein ausgefallener Webhook fiel bisher gar nicht auf: Stripe wiederholt begrenzt, danach ist das Ereignis weg. Jetzt gibt es einen zweiten Weg und eine Wache, die auch prüft, ob dieser Weg selbst ein Loch aufreißt",
     neuigkeiten: ["Neu am 2026-09-05 (Betreiber-Auftrag: Smee/Webhook-Proxy muss in unserem System sein)"],
     ...LAEUFER
+  },
+  {
+    id: "smejj-ai-radar",
+    name: "smejj ai radar",
+    nummer: "86",
+    kurz: "Die zweite Schiene: recherchiert im Takt Presse, neue Modelle, Konkurrenz, Preise, Sicherheit und Regeln — prueft die Quellen und erweitert die Wissensbasis, die der Chat liest.",
+    funktionen: [
+      "THEMENPLAN: elf Themen mit eigenen Intervallen (Presse 12 h, Preise 24 h, Regeln 72 h). Faellig heisst faellig — wer alles gleich oft fragt, verbrennt Kontingent an dem, was sich nicht bewegt.",
+      "PRUEFUNG: jede Fundstelle bekommt eine Guete (Primaerquelle, Fachpresse, Forum), ein Veroeffentlichungsdatum (fehlt es, steht das ausdruecklich da) und Markierungen fuer Geruecht, Werbung und Unbelegtes.",
+      "WISSENSBASIS: Duplikate fallen weg, Aenderungen werden als neue FASSUNG mit Vorgaenger gespeichert, Widersprueche als solche gekennzeichnet. Eine falsche Uebernahme laesst sich zuruecknehmen, ohne die Geschichte zu faelschen.",
+      "ABRUF: nur Geprueftes wandert in den Wissensindex des Agenten — mit Quelle, Stand und Pruefstatus im Text. Eine Einzelquelle wird als solche ausgewiesen.",
+      "SICHERHEIT: Internetinhalte sind DATEN. Findet der Radar in einem Text eine Anweisung an ein Sprachmodell (\"ignore previous instructions\"), wird der Fund verworfen, nicht gespeichert.",
+      "GRENZEN: Tages- und Monatsdeckel fuer Suchanfragen, Notaus per Schalter, ein Lauf zur Zeit. Ist der Zaehler nicht lesbar, wird nicht recherchiert — ein Deckel, den man nicht lesen kann, ist kein Deckel.",
+      "EHRLICH: er aendert keine Modellgewichte und reicht nichts an die Trainingsschiene weiter. Was er speichert, ist Wissen zum Nachschlagen — kein Trainingserfolg."
+    ],
+    trainiert: "Nichts — er recherchiert und prueft, Training bleibt Spur 1",
+    verbessert: "Das Modellwissen endet beim Stand des Basismodells. Der Radar haelt Markt, Konkurrenz und Regeln aktuell, ohne dass jemand trainiert oder deployt",
+    neuigkeiten: ["Neu am 2026-09-21 (Betreiber-Auftrag: smejj ai radar als zweite Schiene)"],
+    ...LAEUFER
   }
 ]);

@@ -25,6 +25,7 @@ import { laufBesucherPuls } from "./besucherPulsAutopilot.js";
 import { laufSchutzEchtheit } from "./schutzEchtheitAutopilot.js";
 import { laufSmejjVersionsTakt } from "./smejjVersionsTaktAutopilot.js";
 import { laufWebhookWache } from "./webhookWacheAutopilot.js";
+import { fuehreRadarLaufAus, radarStand } from "./aiRadarAutopilot.js";
 
 /** Die Kennungen, damit der Läufer sie in IM_LAEUFER_BETRIEBEN aufführen kann. */
 export const DECKUNG_IDS = Object.freeze([
@@ -49,8 +50,44 @@ export const DECKUNG_IDS = Object.freeze([
   // Nr. 84 (2026-09-05): die Webhook- und Smee-Wache. Prueft die Strecke des
   // ZWEITEN Weges — und dass der eigene Eingang Fremde abweist. Ein oeffentlich
   // erreichbares Tor waere schlimmer als ein ausgefallener Zweitweg.
-  "webhook-wache"
+  "webhook-wache",
+  // smejj ai radar (2026-09-21): die zweite Schiene — Internetrecherche und
+  // Wissensbasis, getrennt von der Trainingsschiene.
+  "smejj-ai-radar"
 ]);
+
+/**
+ * smejj ai radar (Spur 2, Betreiber-Auftrag 21.09.2026): recherchiert im Takt,
+ * prueft die Quellen und erweitert die Wissensbasis. Ohne Netz meldet er nur
+ * den gemessenen Stand — er behauptet nie einen Lauf, den es nicht gab.
+ *
+ * Der Radar entscheidet SELBST, ob er faellig ist (Themen-Intervalle) und ob er
+ * darf (Budget, Notaus). Der Laeufer ist nur der Taktgeber.
+ */
+export async function laufAiRadar({ mitNetz = true, stand = radarStand, lauf = fuehreRadarLaufAus } = {}) {
+  const jetzt = await stand().catch((f) => ({ fehler: String(f?.message || f).slice(0, 80) }));
+  if (jetzt?.fehler) return { ok: false, meldung: `smejj ai radar: Stand nicht lesbar (${jetzt.fehler})` };
+  if (!jetzt.laeufeLesbar || !jetzt.wissenLesbar) {
+    return { ok: false, meldung: "smejj ai radar: Ablage nicht lesbar — es wird nichts recherchiert (fail-closed)" };
+  }
+  const kopf = `Wissen ${jetzt.wissenAktiv}/${jetzt.wissenGesamt} aktiv, heute ${jetzt.verbrauch?.anfragenHeute ?? "?"} von ${jetzt.grenzen.anfragenJeTag} Anfragen`;
+  if (!jetzt.eingeschaltet) return { ok: true, meldung: `smejj ai radar ist AUS (Betreiber-Schalter); ${kopf}` };
+  if (jetzt.zustand === "pausiert") return { ok: true, meldung: `smejj ai radar pausiert (${jetzt.grund || "ohne Grund"}); ${kopf}` };
+  if (!mitNetz) return { ok: true, meldung: `smejj ai radar bereit; ${kopf}` };
+  if (jetzt.naechsteFaelligkeitAm) {
+    return { ok: true, meldung: `smejj ai radar wartet bis ${jetzt.naechsteFaelligkeitAm.slice(0, 16).replace("T", " ")} UTC; ${kopf}` };
+  }
+
+  const ergebnis = await lauf({ grund: "takt" });
+  if (!ergebnis.ok) return { ok: false, meldung: `smejj ai radar kam nicht zum Zug: ${ergebnis.grund}; ${kopf}` };
+  const gespeichert = ergebnis.gespeicherteIds.length;
+  const themen = ergebnis.themen.map((t) => t.titel).join(", ") || "keins";
+  return {
+    ok: true,
+    meldung: `smejj ai radar: ${ergebnis.anfragen} Anfrage(n) zu ${themen}; `
+      + `${ergebnis.quellenGeprueft} Quellen geprueft, ${gespeichert} Erkenntnis(se) gespeichert`
+  };
+}
 
 /** Die [kennung, lauf]-Paare für laufeAlle. */
 export function baueDeckungsLaeufe({ mitNetz = true, kontenLeser = null } = {}) {
@@ -78,6 +115,9 @@ export function baueDeckungsLaeufe({ mitNetz = true, kontenLeser = null } = {}) 
     // Nr. 82: liest nur oeffentliche Dateien von smejj.com und vergleicht
     // Hashes — keine Anmeldung, kein Auftrag, keine Kosten.
     ["schutz-echtheit", () => laufSchutzEchtheit({ mitNetz })],
+    // smejj ai radar (Spur 2): recherchiert nur, wenn ein Thema faellig ist und
+    // das Budget es hergibt — die Entscheidung liegt im Radar selbst.
+    ["smejj-ai-radar", () => laufAiRadar({ mitNetz })],
     // Nr. 83: liest Register + Bewertungen aus der Ablage (ohne e2-Konfiguration
     // aus dem Speicher), haengt den Alias um, gibt dem Router den Stand.
     ["smejj-versions-takt", () => laufSmejjVersionsTakt()],

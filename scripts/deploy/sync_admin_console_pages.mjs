@@ -53,6 +53,9 @@ const SEITEN_ORDNER = Object.freeze([
   // eingetragen — und damit unerreichbar. "cockpit" liegt zusaetzlich
   // unter der nackten Adresse /admin/ (STARTSEITE in console.js).
   "cockpit", "radar",
+  // 2026-09-21: smejj ai radar (Nr. 86) — die zweite Schiene, eigene Seite
+  // unter /admin/ai-radar/.
+  "ai-radar",
   // 2026-08-14: Modul AE (AI Evolution Dashboard). Ohne diesen Eintrag laege
   // die Seite zwar im Control-Server, aber smejj.com/admin/evolution/ waere
   // 404 — genau der Fehler, an dem Cockpit und Radar tagelang unsichtbar
@@ -199,7 +202,11 @@ function seitenSchluessel(text) {
   const block = text.slice(start + 1, ende);
   const schluessel = [];
   let ebene = 0;
-  for (const treffer of block.matchAll(/([a-zA-Z0-9_-]+)\s*:\s*\{|[{}]/g)) {
+  // Schluessel mit Bindestrich MUESSEN in Anfuehrungszeichen stehen
+  // ("ai-radar": {...}) — ohne sie waere es kein gueltiges JavaScript. Die
+  // Anfuehrungszeichen sind deshalb erlaubt, sonst faellt so eine Seite
+  // stillschweigend durch und ihr Ordner waere live eine 404.
+  for (const treffer of block.matchAll(/["']?([a-zA-Z0-9_-]+)["']?\s*:\s*\{|[{}]/g)) {
     if (treffer[0] === "{") { ebene += 1; continue; }
     if (treffer[0] === "}") { ebene -= 1; continue; }
     if (ebene === 0) schluessel.push(treffer[1]);
