@@ -42,6 +42,17 @@ test("die Landeseite laedt das Modul VOR dem Fokus-Skript und hat es offline", (
   assert.ok(fs.existsSync(path.join(wurzel, "public", "assets", "gast-frage.js")), "assets-Kopie fehlt");
 });
 
+// Am Geraet gemessen (21.09.2026, Zuarbeit der Browser-Sitzung): die alte Frage
+// blieb im Feld stehen, und am iPhone verdeckte die offene Tastatur die untere
+// Haelfte der Antwortkarte samt Anmelde-Knopf.
+test("nach dem Absenden ist das Feld leer, am Handy schliesst die Tastatur", () => {
+  assert.match(quelle, /function feldAufraeumen\(\)/);
+  assert.match(quelle, /feld\.value = ""/);
+  assert.match(quelle, /\(pointer: coarse\)[\s\S]{0,40}feld\.blur\(\)/, "am Touch-Geraet muss der Fokus weg");
+  assert.match(quelle, /else feld\.focus\(\)/, "am Schreibtisch soll der Fokus bleiben");
+  assert.match(quelle, /scrollIntoView/);
+});
+
 test("der Satz unter dem Feld verspricht nichts Falsches mehr", () => {
   const html = lies("public/willkommen.html");
   assert.match(html, /die erste Frage geht sofort, ganz ohne Konto/);
