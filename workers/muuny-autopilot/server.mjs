@@ -13,6 +13,8 @@ import { tick, leseZustand } from "./kreislauf.js";
 import { baueStatus, dashboardHtml } from "./dashboard.js";
 import { aliasStand, waehleVersion } from "./canary.js";
 import { meldePuls } from "./puls.js";
+import { ablageSchreiber, einwilligungsKonfig, einwilligungsRegister, erteileEinwilligung, sichereLernpaar, widerrufeEinwilligung }
+  from "./lernpaare.js";
 import { L } from "./lager.js";
 
 const konfig = leseKonfig(process.env);
@@ -21,6 +23,29 @@ let e2 = null;
 let salad = null;
 try { e2 = konfig.e2.ok ? e2Client(konfig.e2) : null; } catch (e) { log("e2 aus:", e.message); }
 try { salad = konfig.salad.ok ? saladClient(konfig.salad) : null; } catch (e) { log("salad aus:", e.message); }
+// Teil 1: Ablage und Einwilligungs-Register. Fehlt die Einrichtung, bleiben beide
+// null — sichereLernpaar meldet dann ehrlich "nicht eingerichtet" statt still nichts
+// zu tun.
+let schreiber = null;
+let register = null;
+try {
+  const cfg = einwilligungsKonfig(process.env);
+  if (e2 && cfg?.ready) {
+    schreiber = ablageSchreiber(konfig.e2, process.env);
+    register = einwilligungsRegister({ config: cfg, schreiber, e2, env: process.env });
+  }
+} catch (e) { log("Lernpaar-Ablage aus:", e.message); }
+const DIENST_SCHLUESSEL = String(process.env.MUUNY_DIENST_SCHLUESSEL || "").trim();
+
+async function leseKoerper(req, grenze = 20_000) {
+  return new Promise((fertig, schief) => {
+    let t = "";
+    req.on("data", (c) => { t += c; if (t.length > grenze) { req.destroy(); schief(new Error("zu_gross")); } });
+    req.on("end", () => { try { fertig(t ? JSON.parse(t) : {}); } catch { schief(new Error("kein_json")); } });
+    req.on("error", schief);
+  });
+}
+
 let tickLaeuft = false;
 let letzterTick = null;
 
@@ -60,6 +85,35 @@ const server = http.createServer(async (req, res) => {
       const kennung = url.searchParams.get("kennung") || req.headers["x-anfrage-kennung"] || "";
       const wahl = waehleVersion(stand, kennung);
       return senden(200, { ok: true, ...stand, gewaehlt: wahl.version, rolle: wahl.rolle });
+    }
+    // TEIL 1 — Lernpaare und Einwilligung. Nur fuer den Server von muuny.com: er
+    // haelt den Dienstschluessel und reicht die Kennung eines ANGEMELDETEN Nutzers
+    // durch. Ein Browser kann beides nicht faelschen, weil er den Schluessel nie sieht.
+    if (url.pathname === "/v1/lernpaar" || url.pathname === "/v1/einwilligung") {
+      if (!DIENST_SCHLUESSEL || !sicherGleich(String(req.headers["x-muuny-dienst"] || ""), DIENST_SCHLUESSEL)) {
+        return senden(401, { ok: false, grund: "dienstschluessel_fehlt_oder_falsch" });
+      }
+      const nutzer = String(req.headers["x-muuny-nutzer"] || "");
+      let koerper = {};
+      if (req.method === "POST") {
+        try { koerper = await leseKoerper(req); } catch (e) { return senden(400, { ok: false, grund: e.message }); }
+      }
+      if (url.pathname === "/v1/lernpaar" && req.method === "POST") {
+        // Nur ein Daumen HOCH wird ueberhaupt geprueft. Das Ergebnis kommt immer mit
+        // 200 zurueck: der Daumen selbst darf am Speichern nie scheitern.
+        if (koerper.daumen !== "hoch") return senden(200, { erfasst: false, grund: "kein_daumen_hoch" });
+        const r = await sichereLernpaar(nutzer, { frage: koerper.frage, antwort: koerper.antwort }, { register, schreiber });
+        return senden(200, r);
+      }
+      if (url.pathname === "/v1/einwilligung" && req.method === "POST") {
+        const r = await erteileEinwilligung(nutzer, { datenschutzSha256: koerper.datenschutzSha256, trainingJa: koerper.trainingJa,
+          pruefungJa: koerper.pruefungJa, rechteJa: koerper.rechteJa }, { register });
+        return senden(r.ok ? 201 : 200, r);
+      }
+      if (url.pathname === "/v1/einwilligung" && req.method === "DELETE") {
+        return senden(200, await widerrufeEinwilligung(nutzer, { register }));
+      }
+      return senden(405, { ok: false, grund: "methode" });
     }
     // Betriebsdaten einer ausgelieferten Version. OHNE diese Meldungen kann sich keine
     // Canary bewaehren: pruefeBefoerderung verlangt echte Antworten, keine Vermutungen.

@@ -16,6 +16,16 @@ COPY control-server/src/shared/hash.js ./control-server/src/shared/hash.js
 COPY src/evaluation/evalScoring.js ./src/evaluation/evalScoring.js
 COPY src/evaluation/evalSuite.js ./src/evaluation/evalSuite.js
 COPY src/evaluation/modelPromotion.js ./src/evaluation/modelPromotion.js
+# Teil 1 (Lernpaare mit Einwilligung): dieselben geprueften Bausteine wie bei
+# smejj, nicht nachgebaut. Einwilligung signiert und gebunden, Ablage nur mit
+# bewiesener Unveraenderlichkeit und Rueckpruefung.
+COPY src/training/consent.js ./src/training/consent.js
+COPY src/training/constants.js ./src/training/constants.js
+COPY src/training/idrive-conditional-writer.js ./src/training/idrive-conditional-writer.js
+COPY src/training/lernpaare.js ./src/training/lernpaare.js
+COPY src/training/policy.js ./src/training/policy.js
+COPY src/training/sanitize.js ./src/training/sanitize.js
+COPY control-server/src/training/consentLedger.js ./control-server/src/training/consentLedger.js
 # Pflicht-Env (fail-closed: ohne MUUNY_AUTOPILOT_ENABLED=YES tickt nichts, ohne MUUNY_SALAD_FREIGABE=YES startet kein Salad-Job):
 #   MUUNY_AUTOPILOT_ENABLED=YES  MUUNY_SALAD_FREIGABE=YES  MUUNY_TAGESBUDGET_USD=5.5  MUUNY_GESAMTDECKEL_USD=50
 #   IDRIVE_E2_ENDPOINT / IDRIVE_E2_BUCKET / IDRIVE_E2_REGION / IDRIVE_E2_ACCESS_KEY / IDRIVE_E2_SECRET_KEY
