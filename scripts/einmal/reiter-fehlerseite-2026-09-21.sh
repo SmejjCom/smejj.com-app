@@ -35,13 +35,13 @@ echo "== 0. Stand holen"
 cd "$APP" || { echo "ABBRUCH: $APP fehlt."; exit 1; }
 git fetch -q origin "$ARBEITS_ZWEIG" "$BAU_ZWEIG" || { echo "ABBRUCH: origin nicht erreichbar."; exit 1; }
 WT_NEU=$(git rev-parse "origin/$ARBEITS_ZWEIG")
-WT_BASIS=$(git rev-parse "${BASIS_UEBERSCHREIBEN:-b9e7d46f}")  # der Stand, der als v939 live ging
+WT_BASIS=$(git rev-parse "${BASIS_UEBERSCHREIBEN:-374ff659}")  # der Stand, der als v939 live ging
 MEINE=($(git rev-list --reverse "$WT_BASIS..$WT_NEU"))
 [ ${#MEINE[@]} -ge 1 ] || { echo "ABBRUCH: kein Commit zum Ausliefern."; exit 1; }
 echo "  ${#MEINE[@]} Commit(s) auf $ARBEITS_ZWEIG, Spitze ${WT_NEU:0:8}"
 
 SCHON=0
-if [ -d "$BAU" ] && git -C "$BAU" log -1 --pretty=%s 2>/dev/null | grep -q "Reiter-Sprung fuehrte auf die Fehlerseite"; then
+if [ -d "$BAU" ] && git -C "$BAU" log -1 --pretty=%s 2>/dev/null | grep -q "Plan-Name mit Preis war auch in der englischen App deutsch"; then
   SCHON=1
   echo "  $BAU traegt den Commit schon ($(git -C "$BAU" rev-parse --short HEAD))"
 fi
