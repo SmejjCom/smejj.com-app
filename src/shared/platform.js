@@ -173,6 +173,10 @@ export const ROUTES = {
   // Englische Hoeflichkeitsfassungen (verbindlich bleibt der deutsche Text).
   legalNoticeEn: "/en/legal-notice.html",
   privacyEn: "/en/privacy.html",
+  // Englische Support-Seite (21.09.2026, Apple-Richtlinie 1.5). Sie lag in
+  // public/, stand aber in keiner Route — der lokale Server lieferte 404,
+  // waehrend GitHub Pages sie auslieferte.
+  supportEn: "/en/support.html",
   // Klickjacking-Schutz, den index.html, Anmeldeseiten und die Admin-Konsole
   // laden. Live liefert GitHub Pages ihn aus, der Control-Server kannte ihn
   // nicht: auf dem Rueckfall-Host smejj-control.zeabur.app/admin/ endete
