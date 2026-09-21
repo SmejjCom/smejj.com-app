@@ -47,7 +47,8 @@ import { planeHeilung, fuehreHeilungAus } from "./selbstheilung.js";
 import { offeneUeberfaellig, listeTickets } from "../admin/supportTickets.js";
 import { scrubPiiData, getUserFlywheelStats } from "./userFeedbackFlywheelAutopilot.js";
 import { pruefeAntwortenAlle, fuehreSelbsttestAus } from "./antwortTuevAutopilot.js";
-import { executeRealtimeHarvestCycle, getHarvestBestand, HARVEST_TOPICS } from "./realtimeInternetHarvesterAutopilot.js";
+import { executeRealtimeHarvestCycle, getHarvestBestand } from "./realtimeInternetHarvesterAutopilot.js";
+import { themaFuer, themenListe } from "../../../src/markt/marktthemen.js";
 // Die drei Läufe der AI Evolution Engine (Nr. 37-39) — eigene Datei wegen der
 // 800-Zeilen-Regel, siehe control-server/src/evolution/evolutionLaeufe.js.
 import { laufEvolutionEngine, laufMissingFunctionDetector, laufSupervisor, schreibeEvolutionAblage, laufKonkurrenzRadar } from "../evolution/evolutionLaeufe.js";
@@ -483,7 +484,11 @@ export async function laufFeedbackSchwungrad({ statsLader = getUserFlywheelStats
 // Zwischen zwei Ernten liegt mindestens ein Tag: die Themen rotieren
 // kalendertaeglich, und haeufigeres Ernten wuerde nur dieselben Treffer
 // erneut einsammeln (und Suchkontingent verbrennen).
-const ERNTE_ABSTAND_MS = 24 * 60 * 60 * 1000;
+// Spur 2 (Betreiber 21.09.2026): Markt- und Wettbewerbsthemen kamen dazu, die
+// Liste ist damit neunmal so lang. Bei einem Lauf pro Tag waere jedes Thema nur
+// alle neun Tage dran. Die Websuche ist unser eigener, kostenloser Weg
+// (DuckDuckGo/SearXNG) — der Takt kostet also nichts ausser etwas Rechenzeit.
+const ERNTE_ABSTAND_MS = Math.max(1, Number(process.env.SMEJJ_ERNTE_ABSTAND_STUNDEN) || 6) * 60 * 60 * 1000;
 
 /**
  * Wissens-Ernte (Nr. 23), seit 2026-08-13 echt: einmal taeglich holt sie
@@ -510,8 +515,9 @@ export async function laufWissensErnte({ mitNetz = true, bestandLader = getHarve
   if (!mitNetz) {
     return { ok: true, meldung: `Ernte faellig (Bestand: ${bestand.faktenGesamt} Fakten) — laeuft im naechsten Netz-Takt` };
   }
-  const tagDesJahres = Math.floor(jetztMs / 86_400_000);
-  const thema = HARVEST_TOPICS[tagDesJahres % HARVEST_TOPICS.length];
+  // Reihum nach der Zahl der bisherigen Laeufe: so kommt jedes Thema dran,
+  // auch wenn die Liste laenger ist als die Laeufe eines Tages.
+  const thema = themaFuer(bestand.batches || 0, themenListe());
   const ergebnis = await ernte(thema);
   if (!ergebnis.ok || ergebnis.factsHarvested === 0) {
     return {
