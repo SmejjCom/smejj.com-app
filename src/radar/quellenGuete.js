@@ -39,6 +39,32 @@ const GERUECHT_WORT = /\b(rumou?r|geruecht|gerücht|leak|leaked|allegedly|report
 const WERBE_WORT = /\b(sponsored|advertisement|werbung|anzeige|jetzt kaufen|buy now|kostenlos testen|free trial|rabatt|discount code|affiliate)\b/i;
 const BELEG_WORT = /\b(announced|released|launched|published|veroeffentlicht|veröffentlicht|angekuendigt|angekündigt|documentation|release notes|changelog|paper|study|report)\b/i;
 
+/**
+ * Ist das ueberhaupt ein lesbarer Satz — oder Navigations- und Ueberschriften-
+ * Brei? (Gemessen am ersten echten Lauf, 21.09.2026: von drei gespeicherten
+ * Erkenntnissen waren zwei Bruchstuecke wie "## Research ### Mapping global ..."
+ * — formal ein Auszug, inhaltlich eine Menuezeile.)
+ *
+ * Geprueft wird dreierlei, alles ohne Sprachmodell:
+ *   1. genug Woerter (mindestens 8)
+ *   2. ein Satzzeichen, das einen Satz beendet
+ *   3. nicht zu viele Gliederungszeichen (#, |, >, *, Aufzaehlungspunkte)
+ */
+export function istLesbarerSatz(text) {
+  const roh = String(text || "").trim();
+  if (roh.length < 60) return false;
+  const woerter = roh.split(/\s+/).filter((w) => /[a-zA-ZäöüÄÖÜß]{2,}/.test(w));
+  if (woerter.length < 8) return false;
+  if (!/[.!?](\s|$)/.test(roh)) return false;
+  const gliederung = (roh.match(/[#|>*·•]/g) || []).length;
+  if (gliederung >= 4 || /#{2,}/.test(roh)) return false;
+  // Ueberschriften-Ketten ohne Satzbau: viele Grossbuchstaben-Anfaenge, kein Punkt dazwischen.
+  const satzEnden = (roh.match(/[.!?]/g) || []).length;
+  const grossAnfaenge = woerter.filter((w) => /^[A-ZÄÖÜ]/.test(w)).length;
+  if (satzEnden <= 1 && grossAnfaenge > woerter.length * 0.5) return false;
+  return true;
+}
+
 /** Der Wirtsname einer Adresse, ohne www. Leer, wenn die Adresse unbrauchbar ist. */
 export function hostVon(url) {
   try {
@@ -109,7 +135,8 @@ export function bewerteFund(fund, { jetzt = new Date().toISOString() } = {}) {
   const veroeffentlicht = veroeffentlichungsDatum({ url, snippet: auszug, title: titel });
   if (!veroeffentlicht) markierungen.push(MARKIERUNG.DATUM_FEHLT);
 
-  const tauglich = Boolean(host) && auszug.length >= 40 && !markierungen.includes(MARKIERUNG.WERBUNG);
+  const lesbar = istLesbarerSatz(auszug);
+  const tauglich = Boolean(host) && auszug.length >= 40 && lesbar && !markierungen.includes(MARKIERUNG.WERBUNG);
   return {
     url,
     host,
@@ -120,7 +147,10 @@ export function bewerteFund(fund, { jetzt = new Date().toISOString() } = {}) {
     veroeffentlicht,          // null = unbekannt, ausdruecklich
     abgerufenAm: jetzt,
     tauglich,
-    grund: tauglich ? null : (!host ? "keine_adresse" : (auszug.length < 40 ? "zu_kurz" : "werbung"))
+    grund: tauglich ? null
+      : (!host ? "keine_adresse"
+        : (auszug.length < 40 ? "zu_kurz"
+          : (!lesbar ? "kein_lesbarer_satz" : "werbung")))
   };
 }
 
