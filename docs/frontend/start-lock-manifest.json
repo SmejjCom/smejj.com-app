@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-21T13:17:04.219Z",
-  "confirmation": "Betreiber 21.09.2026 schriftlich auf die Auswahlkarte: 'Ja, jetzt umbauen' — Fortsetzung derselben Freigabe: der Konto-Bereich (Sitzungen, Passwortwechsel, Server-Export) spricht jetzt die Sprache der Huelle. Keine Aenderung an Anmeldung, Pruefung oder Abo-Kette, nur Beschriftungen ueber t().",
+  "frozenAt": "2026-09-21T13:41:49.867Z",
+  "confirmation": "Betreiber 21.09.2026 schriftlich auf die Auswahlkarte zu Apple 3.1.1: 'In der iOS-App ausblenden'. Dritte Runde derselben Freigabe: auch die Landeseite und die Programmierer-Seite zeigen in der iOS-Huelle keine Preise mehr. Im Web unveraendert; keine Aenderung an Anmeldung, Pruefung oder Abo-Kette.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "39c666dc18c22a37badbd9ddd994631e5b86b3fbafce0b61fc44c92845b1641a",
+    "public/index.html": "648a7c69d8f800ddb232b9a45a3c6af6cce0853d6b56ce53661565cd8579c6fb",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "f78f9b57ebabbb9798ecf9142dfedd110094e85df676f86b18917c61e24fd3bc",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,11 +13,11 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "7403ac7a7106cc72805268c9f139eb5e86e458880fa7d849a26a29ea99d0c3c4",
-    "public/app.js": "157a0442b5740bf6193dfefd1e7a9c3c30d8e6d40723b0d0912a6e78bac7522a",
+    "public/app.js": "f067db7d0218836670c4f21f3de31ff6dccfd17f724a7a661b6e3c119bd59688",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "23d8ce8c091439eed3ac2436d700edfac9c15cec910d43a8157016ad063ab646",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "e723b6e49a22e52a93d6dcbf6633fdc736c4b549473431c893d6b0c20904429b",
+    "public/premium-surfaces.js": "d8f786953cb598b9b8a1f2938f31fdc413fbd717b59456ffabbe5d38f8e2af6d",
     "public/autonomous-coding.js": "95a765c2888895d5e48458a289bda3ab29595ac5871a1edc95d992a45e027164",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "cfdeec81cd1a38393abc7bae3976de0a0a4ccbb6a885fbc3dc2c0ff04940baf4",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "46f55c85dfb0d23aace35906e2d834b7a1cbd02ea181cc78111a10008e44e849",
+    "public/sw.js": "757d784a0be09a6f99644d6a0008e33368eed343b8b357d070832adf655c13aa",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
