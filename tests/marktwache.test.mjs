@@ -59,11 +59,12 @@ test("Wissensspeicher: Quelle und Stand stehen im Text, Altes faellt raus, Neues
     { id: "b-alt", topic: "Altes Thema", createdAt: alt, facts: [{ headline: "Alt", summary: "Ein alter Fund, der laengst nicht mehr aktuell ist.", url: "https://example.org/alt" }] },
     { id: "b-neu", topic: "KI-Anbieter Preise", createdAt: jung, facts: [
       { headline: "Neu", summary: "Anbieter X senkt die Preise seiner Schnittstelle deutlich.", url: "https://example.org/neu" },
-      { headline: "Leer", summary: "zu kurz", url: "https://example.org/leer" }
+      { headline: "Leer", summary: "zu kurz", url: "https://example.org/leer" },
+      { headline: "Rest", summary: "*Erstellt am 21.9.2026 von smejj Deep Research Autopilot*", url: "" }
     ] }
   ];
   const chunks = await ladeErnteChunks({ env: {}, maxFakten: 50, listeLader: async () => ({ ok: true, datensaetze }) });
-  assert.equal(chunks.length, 1, "alter Stapel und zu kurzer Fakt fallen weg");
+  assert.equal(chunks.length, 1, "alter Stapel, zu kurzer Fakt und alte Berichtsreste fallen weg");
   assert.match(chunks[0].text, /Quelle: https:\/\/example\.org\/neu/);
   assert.match(chunks[0].text, /Stand \d{4}-\d{2}-\d{2}/);
   assert.match(chunks[0].source, /^internet-ernte\//);
