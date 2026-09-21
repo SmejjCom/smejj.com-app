@@ -49,6 +49,11 @@ export async function runDeepResearch(topic, options = {}) {
     topic,
     stepsExecuted: plan.length,
     findingsCount: findings.length,
+    // Die EINZELFUNDE mit Titel, Auszug und Adresse (21.09.2026). Vorher gab es
+    // nur den fertigen Bericht — die Wissens-Ernte zerlegte ihn wieder in Zeilen
+    // und verlor dabei die Quelle jedes Fundes (und nahm die Fusszeile des
+    // Berichts als "Fakt" mit auf). Wer die Funde hat, braucht das nicht.
+    findings: findings.filter((f) => !f.error),
     citations: Array.from(citations),
     report,
     timestamp: new Date().toISOString()

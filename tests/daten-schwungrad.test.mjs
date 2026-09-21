@@ -122,13 +122,15 @@ test("Wissens-Ernte: frische Ernte => Bestandsmeldung, KEIN neuer Netzlauf", asy
     jetztMs: Date.parse("2026-08-13T12:00:00Z"),
     bestandLader: async () => ({
       ok: true, batches: 4, faktenGesamt: 31,
-      letzterBatch: { topic: "Node.js Security", createdAt: "2026-08-13T06:00:00Z", factCount: 8 }
+      // Seit Spur 2 (21.09.2026) erntet die Wache alle 6 statt alle 24 Stunden —
+      // "frisch" heisst deshalb: vor weniger als 6 Stunden gelaufen.
+      letzterBatch: { topic: "Node.js Security", createdAt: "2026-08-13T10:00:00Z", factCount: 8 }
     }),
     ernte: async () => { geerntet += 1; return { ok: true, factsHarvested: 9 }; }
   });
   assert.equal(ergebnis.ok, true);
   assert.match(ergebnis.meldung, /31 Fakten in 4 Laeufen/);
-  assert.match(ergebnis.meldung, /vor 6 h/);
+  assert.match(ergebnis.meldung, /vor 2 h/);
   assert.equal(geerntet, 0, "eine frische Ernte darf keinen zweiten Netzlauf ausloesen");
 });
 
