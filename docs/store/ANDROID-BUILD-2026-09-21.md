@@ -103,3 +103,71 @@ Versionscode und Signatur stimmen sicher; bei Kosmetik (Startbild-Dauer, Farben 
 Navigationsleiste, Ausrichtung) kann der neue Build minimal abweichen. Genau dafür ist
 Schritt 2 der Prüfung da. Wer es exakt will, baut stattdessen erneut über
 pwabuilder.com und lädt dort denselben `signing.keystore` hoch.
+
+---
+
+# Play Integrity — Aufwandsschätzung (21.09.2026)
+
+**Empfehlung: nicht bauen.** Der Aufwand ist erheblich, der Nutzen für diese App praktisch null.
+Begründung und Zahlen unten, damit die Entscheidung später nachvollziehbar bleibt.
+
+## Was die „0 von 7" wirklich sind
+
+Die sieben Dienste sind keine Qualitätsnote, sondern ein Zähler dafür, wie viele Felder des
+Play-Integrity-Urteils die App abruft: Lizenzprüfung, App-Manipulation, Geräteintegrität,
+virtuelle Integrität, letzte Geräteaktivitäten, Play-Protect-Status, Risiko von App-Zugriffen.
+Sie beeinflussen **weder das Ranking noch die Richtlinienprüfung noch den Store-Eintrag**.
+
+Einen No-Code-Weg gibt es hier nicht: Die Seite „Einstellungen für die Play Integrity API"
+bietet nur Cloud-Projekt verknüpfen, Urteils-Antworten und Tests an — kein automatischer
+Integritätsschutz.
+
+## Der Knackpunkt: eine TWA kann das Urteil kaum nutzen
+
+Die App läuft als Trusted Web Activity, also in einem **Custom Tab von Chrome**
+(`fallbackType: customtabs`, WebView nur als Rückfall). Zwischen Android-Hülle und Webseite
+gibt es deshalb **keine JavaScript-Brücke**. Die Hülle kann ein Integritätsurteil anfordern —
+aber nicht an die Seite weiterreichen, die die Anfragen an api.smejj.com stellt.
+
+Zwei Auswege, beide unbefriedigend:
+
+- **Start-URL-Variante:** Die Hülle holt beim Start ein Token, schickt es an den Server und
+  hängt eine kurzlebige Kennung an die Start-URL. Bescheinigt nur den Start, nicht die
+  laufenden Anfragen — und wer ein gerootetes Gerät hat, liest die Kennung einfach aus der URL.
+  Genau die Gruppe, die man aussperren wollte, kommt durch.
+- **Umbau auf WebView:** Dann funktioniert Integrity sauber pro Anfrage. Kostet aber Chrome und
+  damit Tempo, Service-Worker-Verhalten, Passkeys und PWA-Eigenschaften — bei einer App, deren
+  Kern ein browsergleiches Fenster ist (sie bringt sogar einen eigenen Browser mit), ein
+  Rückschritt in der Architektur.
+
+## Und selbst dann schützt es nichts
+
+Das einzige echte Schutzziel wäre, verschenkte KI-Rechenzeit gegen Missbrauch abzusichern.
+Derselbe Server ist aber über **smejj.com im offenen Web** erreichbar. Wer die Android-Hülle
+umgehen will, nimmt die Webseite. Eine Bescheinigung der Hülle sichert einen von vielen
+Eingängen — das ist kein Schutz, sondern Aufwand mit gutem Gefühl.
+
+## Zahlen, falls es doch jemand will
+
+| Paket | Aufwand |
+|---|---|
+| Google-Cloud-Projekt anlegen und verknüpfen | 1–2 h |
+| Aus dem Bubblewrap-Gerüst in ein gepflegtes Android-Projekt lösen | 4–8 h |
+| Android-Code: Token anfordern, Aufwärmen, Geräte ohne Play-Dienste abfangen | 4–8 h |
+| Brücke zur Webseite (Start-URL-Variante) | 4–8 h |
+| Server: Nonce-Route, Token entschlüsseln, Urteilsregeln, Dienstkonto-Schlüssel | 8–16 h |
+| Test auf echten Geräten (Emulatoren liefern keine brauchbaren Urteile) | 4–8 h |
+| **Summe schwache Variante** | **25–50 h** |
+| Stattdessen Umbau auf WebView | **+40–80 h** und dauerhafter Architektur-Rückschritt |
+
+Dazu laufende Kosten, die in keiner Tabelle stehen: Ab dem Moment, in dem am generierten
+Android-Projekt von Hand gearbeitet wird, ist die Eigenschaft „Web-Deploy = App-Fix" für die
+Hülle weg — jede Änderung braucht wieder einen Build. Und Google selbst weist darauf hin, dass
+ein kleiner Teil ehrlicher Geräte (eigene ROMs, ältere Modelle) die Geräteintegrität nicht
+besteht; jeder davon wird zu einem Support-Fall.
+
+## Wann es sich lohnen würde
+
+Erst wenn es **Android-exklusive Bezahlinhalte** gibt, die im Web nicht erreichbar sind — dann
+schützt die Bescheinigung etwas, das sonst offen liegt. Bis dahin bleiben die 0 von 7 stehen,
+und das ist die richtige Antwort, nicht eine Lücke.
