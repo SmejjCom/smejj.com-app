@@ -62,9 +62,35 @@ if [ "$SCHON" = "0" ]; then
   for c in "${MEINE[@]}"; do
     git cherry-pick -x "$c" >/dev/null 2>&1 && continue
     OFFEN=$(git diff --name-only --diff-filter=U)
+    # LEER statt strittig: Der Inhalt liegt im Bauzweig schon (hier: der
+    # Android-Workflow, den die Parallelsitzung direkt auf den Standardzweig
+    # geschoben hat — und der Standardzweig IST der Bauzweig). Ohne --skip
+    # haelt so ein Commit die ganze Auslieferung auf, obwohl nichts fehlt.
+    if [ -z "$OFFEN" ]; then
+      git cherry-pick --skip >/dev/null 2>&1 && continue
+    fi
     # Reine Ergebnis-Manifeste sind zwei Schritte spaeter ohnehin neu gestempelt.
     if [ "$OFFEN" = "docs/frontend/start-lock-manifest.json" ] || [ "$OFFEN" = "docs/frontend/marken-manifest.json" ]; then
       git checkout --ours "$OFFEN" && git add "$OFFEN"
+      GIT_EDITOR=true git cherry-pick --continue >/dev/null 2>&1 && continue
+    fi
+    # Ablagen (docs/, scripts/einmal/) beeinflussen den Bau NICHT. Sie kollidieren
+    # trotzdem staendig, weil mehrere Sitzungen am selben Tag dieselbe Datei
+    # fortschreiben — gemessen 21.09.2026 am Apple-Drehbuch, das die ganze
+    # Auslieferung aufhielt. Dort gewinnt die neuere Fassung (--theirs = der
+    # Commit, der gerade gepickt wird); alles ausserhalb braucht einen Menschen.
+    NUR_ABLAGE=1
+    while IFS= read -r datei; do
+      case "$datei" in
+        docs/*|scripts/einmal/*) ;;
+        *) NUR_ABLAGE=0 ;;
+      esac
+    done <<< "$OFFEN"
+    if [ -n "$OFFEN" ] && [ "$NUR_ABLAGE" = "1" ]; then
+      while IFS= read -r datei; do
+        git checkout --theirs "$datei" 2>/dev/null || git checkout --ours "$datei"
+        git add "$datei"
+      done <<< "$OFFEN"
       GIT_EDITOR=true git cherry-pick --continue >/dev/null 2>&1 && continue
     fi
     git cherry-pick --abort >/dev/null 2>&1
