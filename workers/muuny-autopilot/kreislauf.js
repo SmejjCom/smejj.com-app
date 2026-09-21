@@ -12,7 +12,8 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { bewerteAntworten, schwaechsteKategorie } from "./bewertung.js";
 import { adapterAusTraining, entscheide, schreibeFreigabe } from "./entscheidung.js";
-import { bucheEnde, bucheStart, darfStarten, leseGesamtverbrauch, leseTagesbuch, minutenFuer } from "./budget.js";
+import { baueLernpaarDatensatz } from "./datensatz.js";
+import { bucheEnde, bucheStart, darfStarten, leseGesamtverbrauch, leseMonatsverbrauch, leseTagesbuch, minutenFuer } from "./budget.js";
 import { leseRegistry, naechsteVersion, promote, reject, schreibeRegistry, schwaechen, stabileVersion, trageKandidatEin, findeVersion, zusammenfassung } from "./registry.js";
 import { bereiteJobVor, gruppenZustand } from "./salad.js";
 import { befoerdereCanaryWennBewaehrt, rollbackWennNoetig, setzeCanary } from "./canary.js";
@@ -35,6 +36,16 @@ export const GRUNDMODELL = "muuny-grundmodell";
 /** Erst ab so vielen NEUEN echten Paaren lohnt ein Lauf. Darunter: kein GPU-Start. */
 export const MIN_NEUE_PAARE_STANDARD = 500;
 const NACHFRIST_MINUTEN = 20;
+
+/**
+ * Wie lange darf der Herzschlag eines laufenden Jobs schweigen?
+ *
+ * Die WAHRHEIT ueber einen Job ist sein eigener Herzschlag (status.json, jede
+ * Minute), nicht die Meldung des GPU-Anbieters: "running" heisst dort nur
+ * "Prozess gestartet". Ein Job, der haengt, bleibt bei Salad "running" und
+ * verbrennt Miete. Schweigt der Herzschlag 20 Minuten, ist er tot.
+ */
+export const HERZSCHLAG_STILL_MINUTEN = 20;
 
 export async function ladeSuiten(dir) {
   // "._name.json" sind KEINE Pruefsuiten, sondern AppleDouble-Beiwerk, das macOS beim
@@ -97,6 +108,7 @@ export async function tick(ctx) {
   // Standardwerte vergleichen und meldet falsches Rot (gemessen 04.09.: Deckel 2 statt 10).
   z.grenzen = {
     tagesbudgetUsd: konfig.grenzen.tagesbudgetUsd,
+    monatsdeckelUsd: konfig.grenzen.monatsdeckelUsd,
     gesamtdeckelUsd: konfig.grenzen.gesamtdeckelUsd,
     jobMaxMinuten: konfig.grenzen.jobMaxMinuten,
     freigabe: konfig.grenzen.freigabe,
@@ -135,14 +147,25 @@ async function beobachteJob(ctx, z) {
     fortschritt: status.erledigt != null ? `${status.erledigt}/${status.von}` : (status.fertigDateien != null ? `${status.fertigDateien}/${status.vonDateien} Dateien` : null),
     schritt: status.schritt || null, loss: status.loss ?? null } : null;
   job.gruppe = gruppe.zustand;
+  const jetztMs = jetzt().getTime();
+  // Der erste Herzschlag ist der echte Start. Die Zeit davor war Warten auf einen
+  // Rechner — die zaehlt nicht gegen die Zeitgrenze des Jobs.
+  if (status && !job.ersterHerzschlag) job.ersterHerzschlag = jetzt().toISOString();
   if (ergebnis) {
     log(`Job ${job.jobId} fertig: ok=${ergebnis.ok} grund=${ergebnis.grund || "-"}`);
     await beendeJob(ctx, z, ergebnis.ok ? "fertig" : `fehler:${ergebnis.grund || "unbekannt"}`, ergebnis);
     return;
   }
-  const alterMin = (jetzt().getTime() - new Date(job.gestartet).getTime()) / 60_000;
-  if (alterMin > job.maxMinuten + NACHFRIST_MINUTEN) {
+  const alterMin = (jetztMs - new Date(job.gestartet).getTime()) / 60_000;
+  const laufMin = job.ersterHerzschlag ? (jetztMs - new Date(job.ersterHerzschlag).getTime()) / 60_000 : alterMin;
+  if (laufMin > job.maxMinuten + NACHFRIST_MINUTEN) {
     await beendeJob(ctx, z, "zeitgrenze_ueberschritten_ohne_ergebnis", null);
+    return;
+  }
+  const letzterSchlag = status?.aktualisiert ? new Date(status.aktualisiert).getTime() : null;
+  if (letzterSchlag && (jetztMs - letzterSchlag) / 60_000 > HERZSCHLAG_STILL_MINUTEN) {
+    // Salad mag "running" sagen — der Job selbst sagt seit 20 Minuten nichts mehr.
+    await beendeJob(ctx, z, "herzschlag_verstummt", null);
     return;
   }
   if (gruppe.ok && (gruppe.zustand === "stopped" || gruppe.zustand === "failed") && alterMin > 10) {
@@ -167,6 +190,9 @@ async function beendeJob(ctx, z, grund, ergebnis) {
     }
   }
   const kosten = await bucheEnde(e2, { jobId: job.jobId, gestartet: job.gestartet, beendet: jetzt() });
+  // Der Zykluszaehler steigt NUR, wenn wirklich trainiert wurde — ein Messlauf,
+  // ein abgebrochener Start oder ein Lauf ohne neuen Schritt ist kein Zyklus.
+  if (Number(ergebnis?.training?.neueSchritte) > 0) z.zyklen = (Number(z.zyklen) || 0) + 1;
   job.beendet = jetzt().toISOString();
   job.grund = grund;
   job.kosten = kosten;
@@ -363,6 +389,24 @@ async function planeUndStarte(ctx, z) {
   z.alias = await befoerdereCanaryWennBewaehrt(ctx, z).then((r) => r.befoerdert ? `befoerdert ${r.von} -> ${r.nach}` : r.grund);
   const plan = await planeNaechstenSchritt(ctx, z, registry);
   z.plan = plan;
+  let runde = null;
+  if (plan.schritt === "tor_offen") {
+    const stand = await e2.getJson(L.paarStand, { paare: 0, runde: 0 });
+    runde = (Number(stand?.runde) || 0) + 1;
+    const suiten = await ladeSuiten(konfig.suitesDir);
+    const ds = await baueLernpaarDatensatz(e2, { suiten, runde });
+    if (!ds.ok) {
+      // Fail-closed: kein Datensatz, kein Training — mit Grund, nicht still.
+      z.phase = "gestoppt";
+      z.plan = { ...plan, grund: `Tor offen, aber Datensatz nicht gebaut: ${ds.grund}` };
+      notiere(z, z.plan.grund);
+      return;
+    }
+    plan.job = planeTraining({ konfig, registry, stabil, datensatz: ds,
+      faelle: suiten.reduce((n, x) => n + (x.cases || []).length, 0) });
+    plan.datensatz = ds;
+    notiere(z, `Datensatz ${ds.name}: ${ds.paare} Paare (sha256 ${ds.sha256.slice(0, 12)})`);
+  }
   if (!plan.job) {
     z.phase = plan.phase || "warten_auf_daten";
     // Erzeugte Trainingsdaten gibt es seit dem 21.09.2026 nicht mehr (Owner-Auftrag,
@@ -379,6 +423,12 @@ async function planeUndStarte(ctx, z) {
     z.startBlockiert = { zeit: new Date().toISOString(), gruende: gestartet.gruende };
     notiere(z, "Start blockiert: " + gestartet.gruende.join("; "));
     return;
+  }
+  // Erst NACH einem geglueckten Start gilt die Runde als verbraucht. Scheitert der
+  // Start (Budget, Salad), bleiben die Paare neu und die naechste Gelegenheit nutzt sie.
+  if (runde && plan.datensatz) {
+    await e2.putJson(L.paarStand, { paare: plan.tor.jetzt, datensatz: plan.datensatz.name, runde, am: new Date().toISOString() });
+    z.laufenderJob.runde = runde;
   }
   // Geglueckter Start hebt die Sperrmeldung auf. Die meisten Startgruende sind
   // voruebergehend (verwaister Container, Anbieter kurz weg) — sie duerfen die
@@ -500,11 +550,24 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   if (!tor.offen) {
     return { schritt: "tor", phase: "wartet_auf_paare", tor, grund: tor.grund };
   }
-  // Das Tor ist offen — aber ohne gemessenes Grundmodell gibt es keinen
-  // Vergleichswert, und ohne Vergleichswert wird nie trainiert (siehe oben:
-  // die Messung laeuft vorher). Der Datensatzbau folgt in datensatzAusPaaren().
-  return { schritt: "tor_offen", phase: "gestoppt", tor,
-    grund: `Tor offen (${tor.neu} neue Paare), aber der Bau des Datensatzes aus Lernpaaren ist noch nicht freigeschaltet` };
+  // Das Tor ist offen. Den Datensatz baut planeUndStarte — der Planer selbst
+  // schreibt nichts, damit "plan" (cli) nie etwas veraendert.
+  return { schritt: "tor_offen", phase: "ueberwachen", tor, grund: `Tor offen: ${tor.neu} neue Paare` };
+}
+
+/**
+ * Der Trainingsjob einer Runde. Die Nummer beginnt HINTER der letzten vergebenen
+ * (heute: muuny-1.12) — eine vergebene Nummer wird nie ueberschrieben.
+ */
+export function planeTraining({ konfig, registry, stabil, datensatz, faelle }) {
+  const version = naechsteVersion(stabil, { basisPrefix: konfig.basis.prefix, vergeben: registry.versions.map((v) => v.version) });
+  const trainKonfig = trainingsKonfigAusUmgebung();
+  trainKonfig.messReserveMinuten = messReserveMinuten({ faelle, wiederholungen: konfig.wiederholungen,
+    jobMaxMinuten: konfig.grenzen?.jobMaxMinuten || 220 });
+  return { modus: "training+messung", version, kandidat: version, datensatz: datensatz.name, trainingsKonfig: trainKonfig,
+    ziel: `Training ${version} mit ${datensatz.paare} echten Lernpaaren (${datensatz.name})`,
+    parameter: { MUUNY_VERSION: stabil?.version || GRUNDMODELL, MUUNY_KANDIDAT: version, MUUNY_DATENSATZ_PREFIX: datensatz.prefix,
+      MUUNY_TRAIN_KONFIG: JSON.stringify(trainKonfig), MUUNY_WIEDERHOLUNGEN: konfig.wiederholungen } };
 }
 
 /**
@@ -536,9 +599,11 @@ async function starteJob(ctx, z, jobPlan) {
   if (!salad) return { ok: false, gruende: ["kein_salad_client"] };
   const tagesbuch = await leseTagesbuch(e2, jetzt());
   const gesamt = await leseGesamtverbrauch(e2);
+  let monat = null;
+  try { monat = await leseMonatsverbrauch(e2, jetzt()); } catch { monat = null; } // -> darfStarten sagt nein
   // Nur so viel Zeit reservieren, wie diese Betriebsart wirklich braucht.
   const minuten = minutenFuer(jobPlan.modus, konfig.grenzen);
-  const pruefung = darfStarten({ grenzen: konfig.grenzen, tagesbuch, gesamt, gpuKlassen: konfig.salad.gpuKlassen, prioritaet: konfig.salad.prioritaet, minuten });
+  const pruefung = darfStarten({ grenzen: konfig.grenzen, tagesbuch, gesamt, monat, gpuKlassen: konfig.salad.gpuKlassen, prioritaet: konfig.salad.prioritaet, minuten });
   if (!pruefung.ok) return { ok: false, gruende: pruefung.gruende };
   const jobId = `${FAMILIE}-${jetzt().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}-${jobPlan.modus.replace(/[^a-z]/g, "")}`;
   const taskId = neueTaskId(jobPlan.modus.replace(/[^a-z]/g, ""));

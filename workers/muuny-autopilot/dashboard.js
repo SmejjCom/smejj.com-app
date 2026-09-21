@@ -17,7 +17,7 @@ export async function baueStatus({ konfig, e2, salad }) {
   const jobStatus = zustand.laufenderJob ? await e2.getJson(`${L.jobs}/${zustand.laufenderJob.jobId}/status.json`, null) : null;
   return {
     zeit: new Date().toISOString(),
-    autopilot: { aktiviert: konfig.aktiviert, phase: zustand.phase, ticks: zustand.ticks, letzterTick: zustand.letzterTick, naechsterTick: zustand.naechsterTick,
+    autopilot: { aktiviert: konfig.aktiviert, phase: zustand.phase, ticks: zustand.ticks, zyklen: zustand.zyklen || 0, letzterTick: zustand.letzterTick, naechsterTick: zustand.naechsterTick,
       naechsterSchritt: naechsterSchrittText(zustand), letzteEntscheidung: zustand.letzteEntscheidung || null, schwaechste: zustand.schwaechste || null,
       startBlockiert: zustand.startBlockiert || null, letzterFehler: zustand.letzterFehler || null,
       letzterNachschub: zustand.letzterNachschub || null, nachschubWartet: zustand.nachschubWartet || null, nachschubFehler: zustand.nachschubFehler || null, alias: zustand.alias || null, notaus: konfig.grenzen.notaus, freigabe: konfig.grenzen.freigabe },

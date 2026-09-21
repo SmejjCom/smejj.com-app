@@ -68,10 +68,14 @@ export function minutenFuer(modus, grenzen) {
 
 export function leseGrenzen(env = process.env) {
   const tages = Number(wert(env, "TAGESBUDGET_USD"));
+  const monat = Number(wert(env, "MONATSDECKEL_USD"));
   const gesamt = Number(wert(env, "GESAMTDECKEL_USD"));
   const jobMinuten = Number(wert(env, "JOB_MAX_MINUTEN"));
   return {
     tagesbudgetUsd: Number.isFinite(tages) && tages > 0 ? tages : 5.5,
+    // Deckel pro KALENDERMONAT (Owner-Auftrag 21.09.2026). Standard 15 USD: das sind
+    // rund 25 Trainingslaeufe — mehr, als echte Lernpaare in einem Monat hergeben.
+    monatsdeckelUsd: Number.isFinite(monat) && monat > 0 ? monat : 15,
     gesamtdeckelUsd: Number.isFinite(gesamt) && gesamt > 0 ? gesamt : 50.0,
     jobMaxMinuten: Number.isFinite(jobMinuten) && jobMinuten > 0 ? Math.min(jobMinuten, 600) : 170,
     notaus: String(wert(env, "NOTAUS") || "").toUpperCase() === "YES",
@@ -85,13 +89,30 @@ export async function leseTagesbuch(e2, datum = new Date()) {
   return buch || { datum: datum.toISOString().slice(0, 10), jobs: [], summeUsd: 0 };
 }
 
+/**
+ * Verbrauch im laufenden Kalendermonat: Summe der Tagesbuecher.
+ * Wirft, wenn die Ablage nicht lesbar ist — ein Zaehler, den man nicht lesen kann,
+ * ist kein Zaehler, der null anzeigt (fail-closed: dann wird nicht trainiert).
+ */
+export async function leseMonatsverbrauch(e2, datum = new Date()) {
+  const monat = datum.toISOString().slice(0, 7);
+  const dateien = (await e2.liste(`${L.kosten}/${monat}-`)).filter((o) => o.key.endsWith(".json"));
+  let summe = 0;
+  for (const { key } of dateien) {
+    const buch = await e2.getJson(key, null);
+    if (!buch || !Number.isFinite(Number(buch.summeUsd))) throw new Error(`kostenbuch_unlesbar:${key}`);
+    summe += Number(buch.summeUsd);
+  }
+  return { monat, summeUsd: round(summe), tage: dateien.length };
+}
+
 export async function leseGesamtverbrauch(e2) {
   const g = await e2.getJson(L.kostenGesamt, null);
   return g || { summeUsd: 0, jobs: 0, seit: new Date().toISOString() };
 }
 
 /** Entscheidung vor einem Start: geplante Kosten = Zeitgrenze × teuerster Stundenpreis der erlaubten Klassen. */
-export function darfStarten({ grenzen, tagesbuch, gesamt, gpuKlassen, prioritaet, minuten }) {
+export function darfStarten({ grenzen, tagesbuch, gesamt, monat, gpuKlassen, prioritaet, minuten }) {
   const gruende = [];
   if (grenzen.notaus) gruende.push("notaus_aktiv");
   if (!grenzen.freigabe) gruende.push("keine_salad_freigabe (MUUNY_SALAD_FREIGABE=YES fehlt)");
@@ -100,6 +121,11 @@ export function darfStarten({ grenzen, tagesbuch, gesamt, gpuKlassen, prioritaet
   const geplant = round((minuten / 60) * preis);
   if ((tagesbuch.summeUsd || 0) + geplant > grenzen.tagesbudgetUsd) gruende.push(`tagesbudget: ${round(tagesbuch.summeUsd)} + ${geplant} > ${grenzen.tagesbudgetUsd} USD`);
   if ((gesamt.summeUsd || 0) + geplant > grenzen.gesamtdeckelUsd) gruende.push(`gesamtdeckel: ${round(gesamt.summeUsd)} + ${geplant} > ${grenzen.gesamtdeckelUsd} USD`);
+  // Ohne lesbaren Monatszaehler kein Start. Fehlt er ganz (alter Aufrufer), ebenso.
+  if (!monat || !Number.isFinite(Number(monat.summeUsd))) gruende.push("monatszaehler_unlesbar");
+  else if (Number.isFinite(grenzen.monatsdeckelUsd) && monat.summeUsd + geplant > grenzen.monatsdeckelUsd) {
+    gruende.push(`monatsdeckel: ${round(monat.summeUsd)} + ${geplant} > ${grenzen.monatsdeckelUsd} USD`);
+  }
   return { ok: gruende.length === 0, gruende, geplantUsd: geplant, preisProStunde: preis };
 }
 

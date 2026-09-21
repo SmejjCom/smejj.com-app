@@ -89,17 +89,25 @@ test("registry: zweistellige Nummern (muuny 1.0, 1.1, 1.2) und promote nur mit P
   assert.equal(reg.versions.find((v) => v.version === "muuny-1.2").status, STATUS.REJECTED);
 });
 
-test("budget: ohne Freigabe nie, Tages- und Gesamtdeckel greifen", () => {
-  const grenzen = { tagesbudgetUsd: 5.5, gesamtdeckelUsd: 2, jobMaxMinuten: 170, notaus: false, freigabe: true };
-  const ok = darfStarten({ grenzen, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 170 });
+test("budget: ohne Freigabe nie, Tages-, Monats- und Gesamtdeckel greifen", () => {
+  const grenzen = { tagesbudgetUsd: 5.5, gesamtdeckelUsd: 2, monatsdeckelUsd: 1, jobMaxMinuten: 170, notaus: false, freigabe: true };
+  const ok = darfStarten({ grenzen, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, monat: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 170 });
   assert.equal(ok.ok, true);
   // Standardauswahl sind die drei guenstigen 24-GB-Karten; teuerste davon 0,10 USD/h auf batch.
   assert.equal(ok.preisProStunde, 0.10);
   assert.ok(ok.geplantUsd < 0.30, `geplant ${ok.geplantUsd}`);
-  assert.equal(darfStarten({ grenzen: { ...grenzen, freigabe: false }, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 }).ok, false);
-  assert.equal(darfStarten({ grenzen, tagesbuch: { summeUsd: 5.45 }, gesamt: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 }).ok, false);
-  assert.equal(darfStarten({ grenzen, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 1.95 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 }).ok, false);
-  assert.equal(darfStarten({ grenzen: { ...grenzen, notaus: true }, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 }).ok, false);
+  assert.equal(darfStarten({ grenzen: { ...grenzen, freigabe: false }, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, monat: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 }).ok, false);
+  assert.equal(darfStarten({ grenzen, tagesbuch: { summeUsd: 5.45 }, gesamt: { summeUsd: 0 }, monat: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 }).ok, false);
+  assert.equal(darfStarten({ grenzen, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 1.95 }, monat: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 }).ok, false);
+  assert.equal(darfStarten({ grenzen: { ...grenzen, notaus: true }, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, monat: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 }).ok, false);
+  // Monatsdeckel: 0,95 verbraucht + ~0,1 geplant > 1 USD.
+  const monat = darfStarten({ grenzen, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, monat: { summeUsd: 0.95 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 });
+  assert.equal(monat.ok, false);
+  assert.ok(monat.gruende.some((g) => g.startsWith("monatsdeckel")));
+  // KAPUTT: unlesbarer Monatszaehler -> kein Start, auch wenn alles andere passt.
+  const blind = darfStarten({ grenzen, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, monat: null, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 });
+  assert.equal(blind.ok, false);
+  assert.ok(blind.gruende.includes("monatszaehler_unlesbar"), "ein Zaehler, den man nicht lesen kann, zeigt nicht null an");
   assert.equal(teuersterPreisProStunde(["unbekannt"], "batch"), 0);
   // Die teure RTX 4090 gehoert bewusst NICHT zur Standardauswahl.
   assert.equal(STANDARD_GPU_KLASSEN.includes("ed563892-aacd-40f5-80b7-90c9be6c759b"), false);
