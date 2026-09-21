@@ -66,15 +66,32 @@ test("das Bestaetigungsfeld verhindert den unsichtbaren Tippfehler", () => {
 });
 
 test("die Loeschung prueft das Wort schon im Browser", () => {
-  // Der Server verlangt exakt "KONTO LÖSCHEN" (emailAuthService.js). Vorher ging
-  // JEDE Eingabe ans Netz — auch eine leere, wenn jemand den Dialog wegklickte.
-  assert.match(CODE, /const LOESCH_WORT = "KONTO LÖSCHEN"/);
+  // Der Server verlangt das woertliche Bestaetigungswort (emailAuthService.js).
+  // Vorher ging JEDE Eingabe ans Netz — auch eine leere, wenn jemand den Dialog
+  // wegklickte. Seit 21.09.2026 haengt das Wort an der Sprache der Huelle;
+  // Apple prueft auf Englisch und bekam vorher ein deutsches Wort zu sehen.
+  assert.match(CODE, /function loeschWort\(\)/, "das Wort kommt aus einer Funktion");
+  assert.ok(!/const LOESCH_WORT =/.test(CODE),
+    "KEINE Modulkonstante: t()/uiLanguage() stehen beim Erstbesuch noch auf Deutsch");
+  assert.match(CODE, /"KONTO LÖSCHEN" : "DELETE ACCOUNT"/, "beide Fassungen muessen vorkommen");
   const fn = CODE.match(/function deleteAccountForm[\s\S]*?\n\}/)[0];
-  assert.ok(fn.indexOf("confirmText !== LOESCH_WORT") < fn.indexOf("API.accountDelete"),
+  assert.ok(fn.indexOf("!== wort") < fn.indexOf("API.accountDelete"),
     "die Wortpruefung muss VOR dem Serveraufruf stehen");
-  assert.ok(fn.indexOf("!password") < fn.indexOf("API.accountDelete"),
+  assert.ok(fn.indexOf("mitPasswort && !password") < fn.indexOf("API.accountDelete"),
     "die Passwortpruefung muss VOR dem Serveraufruf stehen");
   assert.match(fn, /Es wurde nichts gelöscht/, "die Absage muss sagen, dass nichts passiert ist");
+});
+
+test("die Loeschung gilt fuer JEDEN Anmeldeweg (Apple 5.1.1(v))", () => {
+  // Bis 21.09.2026 verlangte die Maske immer ein Passwort — Google-, GitHub-
+  // und Passkey-Konten haben keins und kamen nie durch. Apple verlangt, dass
+  // die Loeschung IN der App startet; der Support-Weg reicht nicht.
+  const fn = CODE.match(/function deleteAccountForm[\s\S]*?\n\}/)[0];
+  assert.match(fn, /const mitPasswort = String\(user\?\.method \|\| "email"\) === "email"/,
+    "der Anmeldeweg entscheidet ueber das Passwortfeld");
+  assert.match(fn, /\$\{mitPasswort \? /, "das Passwortfeld darf nur bei E-Mail-Konten erscheinen");
+  assert.ok(!/Nur E-Mail-Konten/.test(QUELLE),
+    "die Beschreibung darf die Loeschung nicht mehr auf E-Mail-Konten begrenzen");
 });
 
 test("die Loeschung bleibt zweistufig und als gefaehrlich gekennzeichnet", () => {
@@ -127,15 +144,34 @@ function baueDom() {
   return { element, knoten, gesendet, meldungen, erfasse };
 }
 
-async function ladeModul(gesendet) {
+async function ladeModul(gesendet, { anmeldeweg = null } = {}) {
   // fetch abfangen: jeder Serveraufruf wird protokolliert statt ausgefuehrt.
+  // `anmeldeweg` beantwortet /api/auth/me — damit laesst sich der passwortlose
+  // Fall (Google, GitHub, Passkey) nachstellen, ohne echten Server.
   globalThis.fetch = async (url, options) => {
     gesendet.push({ url: String(url), body: options?.body });
+    if (anmeldeweg && String(url).endsWith("/api/auth/me")) {
+      return { ok: true, status: 200, json: async () => ({ authenticated: true, user: { email: "a@b.c", method: anmeldeweg } }) };
+    }
     return { ok: true, status: 200, json: async () => ({ ok: true }) };
   };
   globalThis.localStorage = { getItem: () => "token", removeItem() {}, setItem() {} };
+  globalThis.sessionStorage = anmeldeweg
+    ? { getItem: () => "token", removeItem() {}, setItem() {} }
+    : { getItem: () => null, removeItem() {}, setItem() {} };
   globalThis.window = globalThis;
+  // Der /api/auth/me-Speicher haelt seine Antwort 5 s und wird ueber die
+  // unveraenderte Modul-URL von ALLEN Faellen geteilt — ohne Verwerfen bekaeme
+  // der naechste Fall die Antwort des vorigen (hier gemessen: das Google-Konto
+  // sah den Anmeldeweg des E-Mail-Falls).
+  const { authMeSpeicher } = await import("../public/shared/auth-me-speicher.js?v=1");
+  authMeSpeicher.verwerfen();
   return import(`../public/account-sessions.js?fall=${Math.random()}`);
+}
+
+/** Nur die Loeschanfragen zaehlen — /auth/me und /session-token sind Beiwerk. */
+function loeschRufe(gesendet) {
+  return gesendet.filter((r) => /account\/delete$/.test(r.url));
 }
 
 test("VERHALTEN: falsches Bestaetigungswort loest KEINEN Serveraufruf aus", async () => {
@@ -146,28 +182,54 @@ test("VERHALTEN: falsches Bestaetigungswort loest KEINEN Serveraufruf aus", asyn
   dom.knoten.set("serverAccountBlock", block);
   const meldungen = [];
 
-  // Erster Klick oeffnet das Formular.
-  modul.deleteAccountForm(block, (m) => meldungen.push(m));
+  // Erster Klick oeffnet das Formular. Seit 21.09.2026 fragt es zuerst den
+  // Anmeldeweg ab und ist deshalb asynchron.
+  await modul.deleteAccountForm(block, (m) => meldungen.push(m));
   const form = dom.knoten.get("accountDeleteForm");
   assert.ok(form, "das Formular muss angelegt werden");
 
-  dom.knoten.get("delConfirm").value = "konto loeschen"; // falsch geschrieben
+  dom.knoten.get("delConfirm").value = "konto loeschn"; // falsch geschrieben
   dom.knoten.get("delPassword").value = "EinLangesPasswort1";
   await form.feuere("submit");
-  assert.equal(dom.gesendet.length, 0, "bei falschem Wort darf NICHTS gesendet werden");
+  assert.equal(loeschRufe(dom.gesendet).length, 0, "bei falschem Wort darf NICHTS gesendet werden");
   assert.match(meldungen.at(-1), /exakt/, "die Meldung muss das exakte Wort nennen");
 
   // Richtig geschrieben, aber ohne Passwort.
   dom.knoten.get("delConfirm").value = "KONTO LÖSCHEN";
   dom.knoten.get("delPassword").value = "";
   await form.feuere("submit");
-  assert.equal(dom.gesendet.length, 0, "ohne Passwort darf NICHTS gesendet werden");
+  assert.equal(loeschRufe(dom.gesendet).length, 0, "ohne Passwort darf NICHTS gesendet werden");
 
   // Beides richtig: jetzt darf gesendet werden.
   dom.knoten.get("delPassword").value = "EinLangesPasswort1";
   await form.feuere("submit");
-  assert.equal(dom.gesendet.length, 1, "erst mit Wort UND Passwort geht die Anfrage raus");
-  assert.match(dom.gesendet[0].url, /account\/delete$/);
+  assert.equal(loeschRufe(dom.gesendet).length, 1, "erst mit Wort UND Passwort geht die Anfrage raus");
+});
+
+test("VERHALTEN: Google-Konto loescht OHNE Passwort (Apple 5.1.1(v))", async () => {
+  // Der eigentliche Ablehnungsgrund: passwortlose Anmeldewege hatten gar keinen
+  // Loeschweg in der App. Kein Passwortfeld — und die Anfrage muss trotzdem
+  // rausgehen, sobald das Wort stimmt.
+  const dom = baueDom();
+  const modul = await ladeModul(dom.gesendet, { anmeldeweg: "google" });
+  const block = dom.element();
+  block.id = "serverAccountBlock";
+  dom.knoten.set("serverAccountBlock", block);
+  const meldungen = [];
+
+  await modul.deleteAccountForm(block, (m) => meldungen.push(m));
+  const form = dom.knoten.get("accountDeleteForm");
+  assert.ok(form, "das Formular muss angelegt werden");
+  assert.ok(!/id="delPassword"/.test(block.innerHTML),
+    "ein Google-Konto hat kein Passwort — das Feld darf nicht erscheinen");
+
+  dom.knoten.get("delConfirm").value = "irgendwas";
+  await form.feuere("submit");
+  assert.equal(loeschRufe(dom.gesendet).length, 0, "bei falschem Wort darf NICHTS gesendet werden");
+
+  dom.knoten.get("delConfirm").value = "KONTO LÖSCHEN";
+  await form.feuere("submit");
+  assert.equal(loeschRufe(dom.gesendet).length, 1, "mit dem Wort allein muss die Loeschung rausgehen");
 });
 
 test("VERHALTEN: ungleiche neue Passwoerter loesen KEINEN Serveraufruf aus", async () => {
@@ -209,8 +271,8 @@ test("die Beschriftung mit dem Loeschwort bleibt EINE Zeile", () => {
     `die Beschriftung darf kein eigenes Element enthalten, gefunden: ${label}`);
   // Beschriftung UND Pruefung muessen dieselbe Konstante benutzen — sonst
   // verlangt der Text ein anderes Wort als der Code akzeptiert.
-  assert.match(label, /\$\{LOESCH_WORT\}/,
-    "die Beschriftung muss LOESCH_WORT einsetzen, nicht den Text doppelt pflegen");
+  assert.match(label, /\$\{wort\}/,
+    "die Beschriftung muss dieselbe Variable einsetzen wie die Pruefung");
 });
 
 // --- Helles Farbschema --------------------------------------------------------

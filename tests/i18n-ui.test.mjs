@@ -8,6 +8,9 @@ import { pathToFileURL } from "node:url";
 const publicDir = path.resolve("public");
 const settingsSurface = fs.readFileSync(path.join(publicDir, "settings-surface.js"), "utf8");
 const accountPrivacy = fs.readFileSync(path.join(publicDir, "account-privacy.js"), "utf8");
+// Der Loeschweg des Kontos (Apple 5.1.1(v), 21.09.2026) liegt in einem eigenen
+// Modul — ohne diese Zeile gaelten seine Schluessel als verwaist.
+const accountSessions = fs.readFileSync(path.join(publicDir, "account-sessions.js"), "utf8");
 const authPage = fs.readFileSync(path.join(publicDir, "auth", "auth-page.js"), "utf8");
 const authLoginHtml = fs.readFileSync(path.join(publicDir, "auth", "login", "index.html"), "utf8");
 const authRegisterHtml = fs.readFileSync(path.join(publicDir, "auth", "register", "index.html"), "utf8");
@@ -105,7 +108,7 @@ test("alle Uebersetzungswerte sind nicht-leere Strings", async () => {
 });
 
 test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer uebersetzten Oberflaeche", async () => {
-  const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
+  const combined = settingsSurface + accountPrivacy + accountSessions + authPage + authLoginHtml + authRegisterHtml
     + profileDock + profilePictureControl + profilePictureStore + startChips + startHtml
     + searchOverlay + onboardingWelcome + spurStart + apiCenterSurface + chatActionsWoerter + ersteSchritte
     + voiceOverlayUi + voiceRealtime + composerTools

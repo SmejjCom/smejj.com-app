@@ -127,9 +127,15 @@ export async function handleEmailAuthRoutes(req, url, res, ctx) {
   }
 
   if (post && route === paths.accountDelete) {
-    if (user.method !== "email") { ctx.json(res, 400, { ok: false, error: "account_delete_requires_email_login" }); return true; }
+    // Der Anmeldeweg kommt aus dem geprueften Sitzungstoken, NIE aus dem Rumpf:
+    // sonst koennte ein E-Mail-Konto die Passwortpruefung mit method:"google"
+    // umgehen. Passwortlose Wege (Google, GitHub, Passkey) duerfen loeschen,
+    // seit Apple 5.1.1(v) die Loeschung in der App verlangt.
     const body = await ctx.readJson(req);
-    const result = await deleteAccount({ email: user.email, password: body.password, confirmText: body.confirmText }, ctx.env);
+    const result = await deleteAccount({
+      email: user.email, name: user.name, method: user.method,
+      password: body.password, confirmText: body.confirmText
+    }, ctx.env);
     if (result.ok) {
       invalidateSessionCache(user.email);
       // H1: der Clear muss zum SET passen — bei aktivem SMEJJ_SHORT_ACCESS_TOKEN
