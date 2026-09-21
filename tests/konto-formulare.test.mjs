@@ -206,6 +206,25 @@ test("VERHALTEN: falsches Bestaetigungswort loest KEINEN Serveraufruf aus", asyn
   assert.equal(loeschRufe(dom.gesendet).length, 1, "erst mit Wort UND Passwort geht die Anfrage raus");
 });
 
+test("VERHALTEN: ein frisches Formular traegt keine alte Meldung mehr", async () => {
+  // Gerätetest 21.09.2026 (Parallelsitzung, echter Fingertipp): abbrechen und
+  // erneut oeffnen liess "Deletion cancelled. No data was changed." unter dem
+  // neuen Formular stehen — es las sich wie das Ergebnis des neuen Versuchs.
+  const dom = baueDom();
+  const modul = await ladeModul(dom.gesendet);
+  const block = dom.element();
+  block.id = "serverAccountBlock";
+  dom.knoten.set("serverAccountBlock", block);
+  const meldungen = [];
+  const sagen = (m) => meldungen.push(m);
+
+  await modul.deleteAccountForm(block, sagen);          // oeffnen
+  await modul.deleteAccountForm(block, sagen);          // zweiter Klick = abbrechen
+  assert.match(meldungen.at(-1), /abgebrochen|cancel/i, "der Abbruch muss gemeldet werden");
+  await modul.deleteAccountForm(block, sagen);          // wieder oeffnen
+  assert.equal(meldungen.at(-1), "", "beim Oeffnen muss die Meldungszeile geleert werden");
+});
+
 test("VERHALTEN: Google-Konto loescht OHNE Passwort (Apple 5.1.1(v))", async () => {
   // Der eigentliche Ablehnungsgrund: passwortlose Anmeldewege hatten gar keinen
   // Loeschweg in der App. Kein Passwortfeld — und die Anfrage muss trotzdem
