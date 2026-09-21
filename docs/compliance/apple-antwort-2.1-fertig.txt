@@ -1,0 +1,67 @@
+Hello App Review team,
+
+thank you for the detailed guidance. Here is the information you asked for.
+
+1. SCREEN RECORDING
+Attached is a screen recording captured on a physical iPhone running the latest
+iOS, starting with the app launch. It shows the typical user flow, the sign-in
+options and the account area including the account deletion flow, the generation
+of user-visible content and the content reporting mechanism.
+
+2. PURPOSE AND TARGET AUDIENCE
+smejj.com is a general AI assistant for everyday questions and for real work:
+chat, voice input, code help, image and short-video generation, web search with
+sources, and a built-in browser that can operate a website on request. Target
+audience: adults who want one app instead of a drawer full of single-purpose
+tools. The problem it solves: getting a clear answer or a small finished task
+(text, code, picture, research) without learning a new tool.
+
+3. HOW TO REACH THE MAIN FEATURES
+No account is needed to review this app. Launch it, type any question into the
+input field on the first screen and tap the arrow — the answer streams in right
+away. Signing in is optional and only adds saved history, sync across devices
+and file storage.
+- Ask: first screen, input field, arrow button.
+- Voice: microphone icon next to the input field.
+- Images and short video: ask in plain words ("draw me a red bicycle").
+- Web search with sources: ask about a current event; the sources appear under
+  the answer.
+- Built-in browser: globe icon in the header.
+- Code area: menu, "Code".
+- Report content: every AI answer and every generated image has a "..." menu
+  with "Report content"; reports reach our moderation inbox.
+- Optional sign-in: "Sign up free" — Google, GitHub, passkey, Sign in with Apple
+  or a one-time e-mail link. There is no username/password login, which is why
+  no demo credentials are listed — none are needed.
+- Account deletion: EVERY sign-in method can delete the account inside the app,
+  under Account > My data > "Delete account" (My data is the last of the nine
+  tabs; on a phone, swipe the tab strip to its end). Type DELETE ACCOUNT to
+  confirm; e-mail accounts also enter their password. All sessions end
+  immediately and sign-in is disabled.
+
+4. EXTERNAL SERVICES, TOOLS AND PLATFORMS
+- AI models: Z.ai (GLM), Moonshot AI (Kimi), Groq, and our own hosted model
+  "smejj 1".
+- Sign-in: Sign in with Apple, Google Sign-In, GitHub OAuth, WebAuthn passkeys,
+  one-time e-mail links over our own SMTP.
+- Storage: IDrive e2 (S3-compatible, EU region).
+- Hosting: GitHub Pages (static files) and Zeabur (API).
+- No payment processor inside the app, no advertising SDK, no third-party
+  analytics or tracking SDK.
+
+5. REGIONAL DIFFERENCES
+None. The app behaves identically in every country. The interface follows the
+device language (15 languages); features, content and limits do not differ by
+region.
+
+6. REGULATED INDUSTRY / PROTECTED THIRD-PARTY MATERIAL
+The app is not in a regulated industry. It gives no medical, legal or financial
+advice and is not a medical device. All shipped content is our own or properly
+licensed; the AI providers listed above are used under their commercial API
+terms.
+
+PAID CONTENT
+This version has none. The app is free, there are no in-app purchases and no
+subscriptions, and nothing is offered for sale anywhere inside the app.
+
+Kind regards
