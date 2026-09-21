@@ -1,0 +1,159 @@
+# smejj.com — Android-Bundle (TWA) bauen und signieren.
+#
+# WARUM ES DAS GIBT (21.09.2026): Zwei Dinge im Play-Konto brauchen ein NEUES
+# App-Bundle, und nur das:
+#   1. Der Pre-Launch-Bericht. Er entsteht beim HOCHLADEN eines Artefakts, nicht
+#      dadurch, in welchem Track es liegt. Das einzige Bundle wurde am 04.09.2026
+#      hochgeladen, deshalb ist die Berichtsseite bis heute leer — auch nachdem
+#      derselbe Build in den geschlossenen Test gewandert ist.
+#   2. Play Integrity (0 von 7 Diensten). Deren Urteile muss die App selbst
+#      abrufen; eine TWA tut das nicht. Dafuer reicht dieser Bau NICHT, er ist
+#      nur die Voraussetzung.
+#
+# WARUM IN DER CLOUD UND NICHT AUF DEM MAC: Auf dem Betreiber-Mac ist keine
+# Java-Laufzeit installiert (`java -version` findet nichts), und Bubblewrap
+# braucht JDK plus Android-SDK. Beides dort nachzuinstallieren waere ein
+# dauerhafter Fussabdruck auf einem Geraet, das ausdruecklich tabu ist. Der
+# Laeufer hier ist bei einem oeffentlichen Repo kostenfrei.
+#
+# DER BAU LAEDT NICHTS ZU GOOGLE HOCH. Er legt das signierte .aab als Artefakt
+# ab; hochgeladen wird von Hand, nachdem der Build auf einem Geraet gegen die
+# laufende App gehalten wurde.
+name: Android-Bundle bauen
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionCode:
+        description: "Versionscode (muss groesser sein als der letzte bei Google; 1 ist vergeben)"
+        required: true
+        default: "2"
+      versionName:
+        description: "Versionsname, rein kosmetisch"
+        required: true
+        default: "1.0.0.1"
+
+permissions:
+  contents: read
+
+jobs:
+  bauen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stand holen
+        uses: actions/checkout@v4
+
+      - name: Voraussetzungen pruefen
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KS_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PW: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          fehlt=""
+          [ -n "$KEYSTORE" ] || fehlt="$fehlt ANDROID_KEYSTORE_BASE64"
+          [ -n "$ALIAS" ]    || fehlt="$fehlt ANDROID_KEY_ALIAS"
+          [ -n "$KS_PW" ]    || fehlt="$fehlt ANDROID_KEYSTORE_PASSWORD"
+          [ -n "$KEY_PW" ]   || fehlt="$fehlt ANDROID_KEY_PASSWORD"
+          if [ -n "$fehlt" ]; then
+            echo "ABBRUCH: diese Secrets fehlen im Repo:$fehlt"
+            echo "Anleitung: docs/store/ANDROID-BUILD-2026-09-21.md"
+            exit 1
+          fi
+          echo "Alle vier Secrets sind gesetzt."
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Android-SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Bubblewrap einrichten
+        run: |
+          npm install -g @bubblewrap/cli@1.25.0
+          mkdir -p ~/.bubblewrap
+          # Bubblewrap sucht JDK und SDK sonst in seinem eigenen Ordner und
+          # laedt sie nach. Hier zeigen wir auf das, was der Laeufer schon hat.
+          cat > ~/.bubblewrap/config.json <<EOF
+          {
+            "jdkPath": "$JAVA_HOME",
+            "androidSdkPath": "$ANDROID_SDK_ROOT"
+          }
+          EOF
+          cat ~/.bubblewrap/config.json
+
+      - name: Bauordner vorbereiten
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          mkdir -p bau
+          cp android/twa-manifest.json bau/twa-manifest.json
+          # Der Schluessel liegt NIE im Repo. Er kommt als base64-Secret und
+          # landet nur im Arbeitsverzeichnis des Laeufers.
+          printf '%s' "$KEYSTORE" | base64 -d > bau/android.keystore
+          ls -l bau/android.keystore
+          node - "$ALIAS" "${{ github.event.inputs.versionCode }}" "${{ github.event.inputs.versionName }}" <<'EOF'
+          const fs = require("fs");
+          const [alias, code, name] = process.argv.slice(2);
+          const p = "bau/twa-manifest.json";
+          const m = JSON.parse(fs.readFileSync(p, "utf8"));
+          m.signingKey = { path: "./android.keystore", alias };
+          m.appVersionCode = Number(code);
+          m.appVersionName = name;
+          m.appVersion = name;
+          if (!Number.isInteger(m.appVersionCode) || m.appVersionCode < 2) {
+            throw new Error("Versionscode muss eine ganze Zahl ab 2 sein — 1 ist bei Google vergeben.");
+          }
+          fs.writeFileSync(p, JSON.stringify(m, null, 2) + "\n");
+          // Den Alias NICHT ausgeben.
+          console.log("twa-manifest gesetzt: Versionscode", m.appVersionCode, "Name", m.appVersionName);
+          EOF
+
+      - name: Bundle bauen und signieren
+        working-directory: bau
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          # --skipPwaValidation: die Lighthouse-Pruefung von Bubblewrap braucht
+          # einen Browser und faellt sonst ueber unsere CSP. Geprueft wird die
+          # Seite bei uns ohnehin durch eigene Waechter.
+          bubblewrap build --skipPwaValidation
+          ls -l app-release-bundle.aab app-release-signed.apk 2>/dev/null || ls -l
+
+      - name: Fingerabdruck gegen die Live-Assetlinks halten
+        working-directory: bau
+        run: |
+          # Wenn der Upload-Schluessel nicht derselbe ist wie beim Bundle vom
+          # 04.09., lehnt Google das Hochladen ab — das soll hier auffallen und
+          # nicht erst in der Konsole.
+          keytool -printcert -jarfile app-release-signed.apk 2>/dev/null \
+            | grep -i "SHA256" | head -1 | tr -d ' ' | sed 's/.*SHA256://' > fp.txt || true
+          echo "Fingerabdruck des Baus: $(cat fp.txt)"
+          curl -s -m 30 https://smejj.com/.well-known/assetlinks.json > live.json
+          if grep -qi "$(cat fp.txt)" live.json; then
+            echo "OK — der Fingerabdruck steht in den Live-Assetlinks."
+          else
+            echo "WARNUNG: Fingerabdruck NICHT in den Live-Assetlinks gefunden."
+            echo "Erwartet wird der Upload-Schluessel E5:E9:14:A5:...:75:D6."
+            echo "Mit einem fremden Schluessel weist Google das Bundle zurueck."
+          fi
+
+      - name: Bundle als Artefakt ablegen
+        uses: actions/upload-artifact@v4
+        with:
+          name: smejj-android-${{ github.event.inputs.versionCode }}
+          path: |
+            bau/app-release-bundle.aab
+            bau/app-release-signed.apk
+          if-no-files-found: error
+          retention-days: 14

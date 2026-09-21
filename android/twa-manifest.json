@@ -1,0 +1,60 @@
+{
+  "packageId": "com.smejj.app",
+  "host": "smejj.com",
+  "name": "smejj.com — KI- und Code-Assistent",
+  "launcherName": "smejj.com",
+  "display": "standalone",
+  "orientation": "default",
+  "themeColor": "#101113",
+  "themeColorDark": "#101113",
+  "navigationColor": "#101113",
+  "navigationColorDark": "#101113",
+  "navigationDividerColor": "#101113",
+  "navigationDividerColorDark": "#101113",
+  "backgroundColor": "#101113",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://smejj.com/icons/pwa-512x512.png",
+  "maskableIconUrl": "https://smejj.com/icons/maskable-512x512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "PLATZHALTER_WIRD_AUS_SECRET_GESETZT"
+  },
+  "appVersionName": "1.0.0.1",
+  "appVersionCode": 2,
+  "shortcuts": [
+    {
+      "name": "Neuer Chat",
+      "short_name": "Neuer Chat",
+      "url": "/?neu=1",
+      "chosenIconUrl": "https://smejj.com/icons/pwa-192x192.png"
+    },
+    {
+      "name": "Sprachmodus",
+      "short_name": "Sprachmodus",
+      "url": "/?sprechen=1",
+      "chosenIconUrl": "https://smejj.com/icons/pwa-192x192.png"
+    },
+    {
+      "name": "Programmieren",
+      "short_name": "Code",
+      "url": "/code",
+      "chosenIconUrl": "https://smejj.com/icons/pwa-192x192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://smejj.com/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://smejj.com/",
+  "minSdkVersion": 23,
+  "appVersion": "1.0.0.1",
+  "serviceAccountJsonFile": "",
+  "alphaDependencies": {
+    "enabled": false
+  }
+}
