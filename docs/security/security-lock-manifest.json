@@ -1,12 +1,12 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-22T01:28:29.457Z",
+  "frozenAt": "2026-09-22T02:43:47.511Z",
   "confirmation": "Betreiber 22.09.2026 im Chat: 'Ich habe App Testversion runtergeladen in mein iPhone, aber wenn ich mich versuche einloggen mit Google Login, ich bleibe immer im Browser, dann geht er nicht wieder zurueck zum App' — danach auf die Rueckfrage 'Ja'. Auftrag: den Rueckweg bauen. Geaendert sind nur der Rueckweg der Anmeldung (native=1, Ticket bleibt im Browser liegen, App holt es ab), 3 Texte in 14 Sprachen und die Cache-Nummer. Keine Aenderung an Pruefung, Rechten oder Abo-Kette.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "6c6cd4e672ada5c5159a67da4df134bca2f19d9a056c8d9a44ad753b2479c930",
-    "public/auth/register/index.html": "7d5da49f3954986db1a777d0d4269a6c14455cbeec4f6b506ad724329232785d",
-    "public/auth/auth-page.js": "6cb42a7775bdbec1ef1f2d1dfc829d830988a0cd5946a279f354983d13a9708a",
+    "public/auth/login/index.html": "0597fbdde720b226d116eb6109da0e510e13413d2086aad08c58b83bafc36f3e",
+    "public/auth/register/index.html": "5796056523361ef273d3a829cc2f707f782ee058f1b27c0dd3ba320004b2857b",
+    "public/auth/auth-page.js": "a39f9c28ce837c4e51185cdf5bb558777bff90c71239a92a9d01171be29412ac",
     "public/auth/auth.css": "ae2641fdb167358f9bad1f4b844d68aec2b6c41268882973a63de81896c3a910",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "src/shared/controlAccessPolicy.js": "0ed406d8088ee14f25162cf21161efbd9e326c6a4f6b06b8e8ee268916e4916d",
