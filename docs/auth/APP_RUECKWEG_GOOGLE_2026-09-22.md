@@ -166,3 +166,73 @@ wird sie bei `visibilitychange`, `pageshow` und `focus`.
 | Tests | Google 12/12, GitHub 10/10, Apple 21/21, Anmeldelink 12/12, Frontend 742/742 |
 
 Anker `schutz-100-2026-09-22-app-rueckweg-v952`.
+
+---
+
+# Runde 4: Reihenfolge der Anmeldewege + Apple dreimal getestet (v953)
+
+Betreiber: "Login Reinfolge: Google fortfahren, Apple fortfahren, GitHub
+fortfahren, Mit Fingerabdruck fortfahren, Mit eMail fortfahren. alle mit Logos
+wie jetzt."
+
+Geaendert wurde nur die Reihenfolge im Block `#authProviders` (Anmelde- und
+Registrierseite plus assets-Spiegel); Beschriftungen, Logos und Verhalten sind
+unangetastet. Die Registrierseite stand bereits so. Live geprueft: die
+ausgelieferte Seite liefert die IDs in der Reihenfolge googleLogin, appleLogin,
+githubLogin, passkeyLogin, emailWeg — und am Simulator steht es genauso auf dem
+Schirm.
+
+## Apple-Login, drei Laeufe am Simulator (v953)
+
+| Lauf | Ausgangslage | Weg zurueck | Ergebnis |
+| --- | --- | --- | --- |
+| 1 | App frisch installiert | `smejj://auth/login` | Safari zeigt appleid.apple.com ("smejj web"), zurueck in der App: **"Anmeldung laeuft …"** |
+| 2 | App frisch installiert | `smejj://auth/login` | gleiches Ergebnis |
+| 3 | App frisch installiert | **nur App-Wechsel**, kein Deeplink | gleiches Ergebnis — das ist der Weg, der ohne neuen iPhone-Build funktioniert |
+
+**Was diese Laeufe NICHT abdecken:** die Anmeldung bei Apple selbst. Dafuer
+braucht es die Apple-ID des Betreibers — Zugangsdaten gibt diese Sitzung nicht
+ein. Geprueft ist damit alles bis zur Apple-Anmeldemaske und der komplette
+Rueckweg; den letzten Schritt (Apple-ID eingeben, Rueckkehr mit Token) muss der
+Betreiber einmal selbst gehen.
+
+---
+
+# Hochgeladen: Build 4 (22.09.2026, 11:42)
+
+Der Upload von **Build 3 wurde von App Store Connect abgelehnt**: die Nummer 3
+war dort bereits vergeben ("The bundle version must be higher than the
+previously uploaded version: '3'"). Also `CURRENT_PROJECT_VERSION` auf 4
+gehoben, neu gebaut, signiert, exportiert — **UPLOAD SUCCEEDED with no errors**,
+Delivery-UUID `c2375e11-87dd-4e42-9a18-7ba8b1263547`.
+
+Build 4 traegt das URL-Schema `smejj://` und die Rueckkehr im SceneDelegate.
+Er liegt jetzt unter TestFlight/Builds; die Zuordnung zur Version 1.0 und die
+Freigabe fuer Tester macht der Betreiber in App Store Connect.
+
+Merke fuer den naechsten Bau: die Build-Nummer in `ios/App/App.xcodeproj`
+hochzaehlen, sonst weist Apple den Upload ab.
+
+---
+
+# GitHub-Login, drei Laeufe (23.09.2026, gegen smejj-shell-v959)
+
+Auftrag Betreiber: "GitHub Login auch paar mal testen". Simulator iPhone 17 Pro,
+Huelle mit Schema `smejj://`, App vor **jedem** Lauf neu installiert
+(`simctl uninstall` + `install`), damit kein Ticket aus dem vorigen Lauf das
+Ergebnis schoenfaerbt.
+
+| Lauf | Weg zurueck | Ergebnis |
+| --- | --- | --- |
+| 1 | `smejj://auth/login` | Safari zeigt "Sign in to GitHub — to continue to smejj.com Login", zurueck in der App: **"Anmeldung laeuft …"** |
+| 2 | `smejj://auth/login` | gleiches Ergebnis |
+| 3 | **nur App-Wechsel**, kein Deeplink | gleiches Ergebnis |
+
+Damit ist der GitHub-Weg genauso belegt wie Google und Apple. Was auch hier
+offen bleibt: die Anmeldung bei GitHub selbst — dafuer braucht es die
+Zugangsdaten des Betreibers.
+
+Mitgeprueft am selben Stand (v959, nach sechs fremden Auslieferungen): der
+Rueckweg-Code steht vollstaendig in der ausgelieferten `auth-page.js`, die
+Knopfreihenfolge stimmt, `api.smejj.com` nimmt `native=1` fuer Google, GitHub
+und Apple mit je 303 an, 55/55 Anmelde-Tests gruen, vier Sperren gruen.
