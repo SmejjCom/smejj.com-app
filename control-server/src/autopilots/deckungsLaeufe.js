@@ -25,6 +25,7 @@ import { laufBesucherPuls } from "./besucherPulsAutopilot.js";
 import { laufSchutzEchtheit } from "./schutzEchtheitAutopilot.js";
 import { laufSmejjVersionsTakt } from "./smejjVersionsTaktAutopilot.js";
 import { laufWebhookWache } from "./webhookWacheAutopilot.js";
+import { laufDnsWache } from "./dnsWacheAutopilot.js";
 import { fuehreRadarLaufAus, radarStand } from "./aiRadarAutopilot.js";
 
 /** Die Kennungen, damit der Läufer sie in IM_LAEUFER_BETRIEBEN aufführen kann. */
@@ -53,7 +54,10 @@ export const DECKUNG_IDS = Object.freeze([
   "webhook-wache",
   // smejj ai radar (2026-09-21): die zweite Schiene — Internetrecherche und
   // Wissensbasis, getrennt von der Trainingsschiene.
-  "smejj-ai-radar"
+  "smejj-ai-radar",
+  // Nr. 87 (2026-09-22): die DNS-Wache. Am 21.09. war smejj.com ~8 min nicht
+  // aufloesbar (Nameserver des Anbieters), die Seite lief, keine Ampel sah es.
+  "dns-wache"
 ]);
 
 /**
@@ -124,6 +128,9 @@ export function baueDeckungsLaeufe({ mitNetz = true, kontenLeser = null } = {}) 
     // Nr. 84: fragt den Gesundheitsbericht des Smee-Dienstes und klopft am
     // eigenen Eingang — ohne gueltigen Beweis, er MUSS abweisen. Keine
     // Testereignisse durch den echten Webhook-Weg.
-    ["webhook-wache", () => laufWebhookWache({ mitNetz })]
+    ["webhook-wache", () => laufWebhookWache({ mitNetz })],
+    // Nr. 87: fragt die zwei Nameserver direkt und Google-DNS (DNSSEC), vergleicht
+    // mit dem eingefrorenen Soll — nur Lesen, keine Kosten, kein neuer Anbieter.
+    ["dns-wache", () => laufDnsWache({ mitNetz })]
   ];
 }
