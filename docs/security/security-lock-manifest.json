@@ -1,12 +1,12 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-21T14:25:47.864Z",
-  "confirmation": "Betreiber 21.09.2026 schriftlich im Chat: 'apple login 4.8 machen'. Der Server-Teil von 'Mit Apple anmelden' geht in den Bauzweig; er bleibt ohne die vier SMEJJ_APPLE_LOGIN_*-Variablen wirkungslos (config meldet apple:false, Routen 503). Die Rueckkehr-Route laesst als einzige den Origin appleid.apple.com zu — form_post ist bei den Bereichen name/email Pflicht.",
+  "frozenAt": "2026-09-22T01:28:29.457Z",
+  "confirmation": "Betreiber 22.09.2026 im Chat: 'Ich habe App Testversion runtergeladen in mein iPhone, aber wenn ich mich versuche einloggen mit Google Login, ich bleibe immer im Browser, dann geht er nicht wieder zurueck zum App' — danach auf die Rueckfrage 'Ja'. Auftrag: den Rueckweg bauen. Geaendert sind nur der Rueckweg der Anmeldung (native=1, Ticket bleibt im Browser liegen, App holt es ab), 3 Texte in 14 Sprachen und die Cache-Nummer. Keine Aenderung an Pruefung, Rechten oder Abo-Kette.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "202e31298a80a32ea135f74364562fb77638b49ec57f3fcfde242cbc75cfb3fc",
-    "public/auth/register/index.html": "07a499ad57b1cce7959dbc6b412240add7800e5a073ee5f984c72336293b3ed1",
-    "public/auth/auth-page.js": "d73bcfbdd8374618490dd32f993ead908b8ed3ba1d621e6f131a8aa1eea6bcf4",
+    "public/auth/login/index.html": "6c6cd4e672ada5c5159a67da4df134bca2f19d9a056c8d9a44ad753b2479c930",
+    "public/auth/register/index.html": "7d5da49f3954986db1a777d0d4269a6c14455cbeec4f6b506ad724329232785d",
+    "public/auth/auth-page.js": "6cb42a7775bdbec1ef1f2d1dfc829d830988a0cd5946a279f354983d13a9708a",
     "public/auth/auth.css": "ae2641fdb167358f9bad1f4b844d68aec2b6c41268882973a63de81896c3a910",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "src/shared/controlAccessPolicy.js": "0ed406d8088ee14f25162cf21161efbd9e326c6a4f6b06b8e8ee268916e4916d",
