@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-21T21:46:05.682Z",
-  "confirmation": "smejj ai radar als zweite Schiene fuer autonome Internetrecherche einrichten und in den Autopilot-Adminbereich integrieren",
+  "frozenAt": "2026-09-22T11:32:10.207Z",
+  "confirmation": "Betreiber 22.09.2026 schriftlich im Chat: 'Baue Stufe A und B der DNS-Wache' — nach dem Vorschlag docs/betrieb/DNS_WACHE_VORSCHLAG_2026-09-21.md (Betreiber 21.09.: 'Arbeite einen Vorschlag fuer die DNS-Wache aus'), Anlass der DNS-Ausfall vom 21.09.2026 (~13:40-13:48, beide Nameserver launch1/launch2.spaceship.net SERVFAIL). Umsetzung: Autopilot Nr. 87 'dns-wache' (control-server/src/autopilots/dnsWacheAutopilot.js: zwei Nameserver direkt, Google-DNS mit DNSSEC-Nachweis, Soll-Ist-Vergleich, zweiter Blick, eigener Netzfehler kein Urteil) im Laeufer, in der Registry und im Bereich 'Betrieb & Auslieferung' (Admin-Lock), Nummern-Register um 87 ergaenzt; Stufe B .github/workflows/dns-wache.yml (alle 30 min von GitHub aus, meldet per Issue, kein Geheimnis). Start-Lock: nur die Cache-Nummer in sw.js. Auslieferung durch die Sitzung selbst (Betreiber 22.09. schriftlich: 'mach du selber als expert').",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -24,7 +24,7 @@
     "control-server/src/admin/opsAutopiloten.js": "ce26f225cd79873d85714771f6406956779c414ca62b767036c23114933a41f9",
     "control-server/src/admin/opsAutopilotenListe.js": "38a5861bdc15dc688935e158a4d8cba5eb373e995bd3a2492849a6aa373e28a5",
     "control-server/src/admin/opsAutopilotenListeEvolution.js": "703e22dd80cc191460eac3acce7cd133495ac29f5afce27594f3319cfe8213be",
-    "control-server/src/admin/opsAutopilotenBereiche.js": "c134528de8b476ea5f4e125300e199d5b58f54285a1e4b9b0bcfaeeb21f7deb9",
+    "control-server/src/admin/opsAutopilotenBereiche.js": "a095599162aa3188dbc39ec52e81af20dac62dc37cb23b176fcb23ef7e5e272e",
     "control-server/src/admin/opsAuslieferung.js": "7af1c20a150dd29e01caac403305b0d14311efc9bfdfa7ed3c5bf6feb3a82b63",
     "control-server/admin-ui/views-stage12.js": "58acc0496d59d5bf79e0344ffdb07e3e6eb84266d15ce788725365e530dd57eb",
     "control-server/src/admin/opsSicherheitsLage.js": "cff01378042fbfebdf2ba42543f62024593db024ab06b12822f2a1042d9f875a",
