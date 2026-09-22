@@ -212,3 +212,27 @@ Freigabe fuer Tester macht der Betreiber in App Store Connect.
 
 Merke fuer den naechsten Bau: die Build-Nummer in `ios/App/App.xcodeproj`
 hochzaehlen, sonst weist Apple den Upload ab.
+
+---
+
+# GitHub-Login, drei Laeufe (23.09.2026, gegen smejj-shell-v959)
+
+Auftrag Betreiber: "GitHub Login auch paar mal testen". Simulator iPhone 17 Pro,
+Huelle mit Schema `smejj://`, App vor **jedem** Lauf neu installiert
+(`simctl uninstall` + `install`), damit kein Ticket aus dem vorigen Lauf das
+Ergebnis schoenfaerbt.
+
+| Lauf | Weg zurueck | Ergebnis |
+| --- | --- | --- |
+| 1 | `smejj://auth/login` | Safari zeigt "Sign in to GitHub — to continue to smejj.com Login", zurueck in der App: **"Anmeldung laeuft …"** |
+| 2 | `smejj://auth/login` | gleiches Ergebnis |
+| 3 | **nur App-Wechsel**, kein Deeplink | gleiches Ergebnis |
+
+Damit ist der GitHub-Weg genauso belegt wie Google und Apple. Was auch hier
+offen bleibt: die Anmeldung bei GitHub selbst — dafuer braucht es die
+Zugangsdaten des Betreibers.
+
+Mitgeprueft am selben Stand (v959, nach sechs fremden Auslieferungen): der
+Rueckweg-Code steht vollstaendig in der ausgelieferten `auth-page.js`, die
+Knopfreihenfolge stimmt, `api.smejj.com` nimmt `native=1` fuer Google, GitHub
+und Apple mit je 303 an, 55/55 Anmelde-Tests gruen, vier Sperren gruen.
