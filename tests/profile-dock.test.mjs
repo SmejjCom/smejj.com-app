@@ -181,8 +181,10 @@ test("Menue wird nicht von der Sidebar abgeschnitten (Live-Fehler 2026-07-17)", 
   assert.match(dockMenu, /document\.body\.append\(menu\)/);
   assert.match(dockCss, /\.profile-dock-menu \{[^}]*position: fixed/s);
   assert.doesNotMatch(dockCss, /\.profile-dock-menu \{[^}]*position: absolute/s);
-  // Menue bleibt im sichtbaren Bereich.
-  assert.match(dockMenu, /window\.innerWidth - width - 8/);
+  // Menue bleibt im sichtbaren Bereich — seit 22.09.2026 als reine Rechnung
+  // lageUeberKnopf() (Geraetetest iPhone: die Lage haengt am Anker, nicht an innerHeight).
+  assert.match(dockMenu, /fensterBreite - menueBreite - rand/);
+  assert.match(dockMenu, /export function lageUeberKnopf/);
 });
 
 test("Menue-Geometrie: feste Breite und ueber der Sidebar (Live-Fehler 2026-07-17)", () => {
