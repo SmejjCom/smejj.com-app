@@ -1,6 +1,6 @@
-# Vorschlag: DNS-Wache für smejj.com (Autopilot Nr. 86)
+# DNS-Wache für smejj.com (Autopilot Nr. 87) — Vorschlag vom 21.09., GEBAUT am 22.09.
 
-Stand 21.09.2026 — Vorschlag, **nichts davon ist gebaut oder geändert**. Entscheidung liegt beim Betreiber.
+Stand 22.09.2026 — Betreiber-Freigabe „Baue Stufe A und B“: Stufe A ist `control-server/src/autopilots/dnsWacheAutopilot.js` (Nr. 87 — Nummer 86 war inzwischen an smejj ai radar vergeben), Stufe B ist `.github/workflows/dns-wache.yml`. Stufe C bleibt Vorschlag. Das Soll-Register liegt als `DNS_SOLL` im Modul (eine Quelle, ausführbar), nicht als eigene JSON-Datei.
 
 ## 1. Anlass
 

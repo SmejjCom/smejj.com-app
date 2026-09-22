@@ -92,7 +92,9 @@ const ZUORDNUNG = Object.freeze({
     "besucher-puls",
     // Nr. 84: Webhook- und Smee-Wache — Zweitweg fuer Webhooks, plus die Probe,
     // dass der eigene Eingang Fremde abweist.
-    "webhook-wache"
+    "webhook-wache",
+    // Nr. 87 (2026-09-22): DNS-Wache — ist smejj.com ueberhaupt aufloesbar? (Ausfall 21.09.)
+    "dns-wache"
   ]
 });
 

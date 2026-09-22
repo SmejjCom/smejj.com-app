@@ -263,5 +263,22 @@ export const DECKUNG_AUTOPILOTEN = Object.freeze([
     verbessert: "Eine Sperre, die gruen meldet und ins Leere bewacht, faellt am naechsten Tag auf statt nach Wochen",
     neuigkeiten: ["Neu am 2026-09-04 (Betreiber-Auftrag 'taeglichen Phantom-Waechter bauen')"],
     ...LAEUFER
+  },
+  {
+    id: "dns-wache",
+    name: "DNS-Wache",
+    nummer: "87",
+    kurz: "Ist smejj.com ueberhaupt noch aufloesbar? Fragt die zwei Nameserver des Anbieters direkt, Google-DNS mit DNSSEC-Nachweis und vergleicht die Zone mit dem eingefrorenen Soll — die Luecke, die am 21.09. acht Minuten Ausfall unbemerkt liess.",
+    funktionen: [
+      "Fragt launch1/launch2.spaceship.net DIREKT nach A, AAAA, CNAME (api), MX und CAA — die Ursachen-Messung, die den Ausfall zeigt, bevor oeffentliche Dienste ihren Zwischenspeicher leeren.",
+      "Fragt Google-DNS ueber HTTPS: Status 0 und AD=true (DNSSEC). Eine gebrochene Signatur ist rot, lange bevor ein Besucher schreibt.",
+      "Soll-Ist-Vergleich gegen DNS_SOLL (4 GitHub-Pages-Adressen, CNAME-Ziel, MX, CAA): eine fremde Aenderung an der Zone wird zum Alarm statt zur Ueberraschung.",
+      "Zweiter Blick vor Rot: ein gestoerter Nameserver wird nach 10 s wiederholt und ist dann nur ein Hinweis; beide tot, SERVFAIL, fehlendes AD oder Soll-Abweichung sind rot. Eigener Netzfehler des Servers ist KEIN Urteil.",
+      "Aussenposten: .github/workflows/dns-wache.yml misst dasselbe alle 30 min von GitHub aus und meldet per Issue — ein Bote, der auch ankommt, wenn unsere Zone (und damit unsere Alarm-Mail) tot ist."
+    ],
+    trainiert: "Nichts — sie liest nur DNS-Antworten",
+    verbessert: "Am 21.09. lieferten beide Nameserver ~8 Minuten SERVFAIL; Google und Cloudflare konnten smejj.com nicht aufloesen, Besucher sahen keine App, Mail an die Domain stand still — und keine der 86 Wachen meldete es. Jetzt ist die Aufloesung alle 30 Minuten eine Zahl, von zwei Standorten.",
+    neuigkeiten: ["Neu am 2026-09-22 (Betreiber-Freigabe nach dem Ausfall vom 21.09.; Vorschlag docs/betrieb/DNS_WACHE_VORSCHLAG_2026-09-21.md)"],
+    ...LAEUFER
   }
 ]);
