@@ -148,7 +148,16 @@ export function createGoogleAuthHandlers({
         return res.end();
       }
       anmeldeProtokoll.notiere({ schritt: "ticket-hinterlegt", anbieter: "google", ok: true, email, ticket: state.handoff });
-      res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?handoff=${encodeURIComponent(state.handoff)}` });
+      // Kam die Anmeldung aus der iPhone-/Android-Huelle, steht der Nutzer
+      // JETZT im externen Browser: die Huelle schickt Google nach draussen
+      // (Google verweigert die Anmeldung in einer eingebetteten Ansicht).
+      // Der Rueckweg traegt darum eine Markierung — die Anmeldeseite im
+      // Browser loest das Ticket dann NICHT ein, sondern laesst es fuer die
+      // App liegen und weist den Weg zurueck. Gemessen am Simulator
+      // 2026-09-22: ohne diese Markierung endete die Anmeldung im Browser
+      // und die App blieb abgemeldet.
+      const nativeTeil = state?.native ? "&native=1" : "";
+      res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?handoff=${encodeURIComponent(state.handoff)}${nativeTeil}` });
       return res.end();
     }
     if (body.redirect) {
@@ -169,11 +178,16 @@ export function createGoogleAuthHandlers({
     const handoff = String(url.searchParams.get("handoff") || "").trim();
     const handoffReturn = safeReturnOrigin(url.searchParams.get("returnOrigin"));
     const nonce = crypto.randomBytes(18).toString("base64url");
+    // Die App-Huelle meldet sich mit `native=1`. Nur genau dieser eine Wert
+    // wird uebernommen und als 1/0 im signierten Ticket abgelegt — es wandert
+    // KEINE Adresse aus der Anfrage in den Rueckweg (kein offener Redirect).
+    const nativeApp = url.searchParams.get("native") === "1" ? 1 : 0;
     const state = signGoogleAuthState({
       nonce,
       returnTo: "/profile?google=ok",
       handoff: handoff && handoffReturn ? handoff : "",
       handoffReturn: handoff && handoffReturn ? handoffReturn : "",
+      native: nativeApp,
       exp: Date.now() + 10 * 60 * 1000
     }, config.sessionSecret);
     // OHNE Ticket landet der Nutzer nach dem Login auf der Control-Domain

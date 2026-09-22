@@ -200,3 +200,56 @@ test("der Grund kommt in dem Parameter, den die Anmeldeseite liest", () => {
   }
   assert.ok(!/fehler=anmeldung_abgelaufen/.test(route), "der stumme Parameter muss weg sein");
 });
+
+// Rueckweg in die App-Huelle (Betreiber-Befund 2026-09-22: Google-Login auf dem
+// iPhone endete im Browser, die App blieb abgemeldet). Die Huelle markiert ihren
+// Start mit native=1; nur dann traegt der Rueckweg die Markierung, an der die
+// Anmeldeseite im Browser erkennt, dass das Ticket der App gehoert.
+test("App-Huelle: native=1 wandert in den Ticketinhalt und zurueck in den Rueckweg", async () => {
+  let gemerkterState = null;
+  const h = createGoogleAuthHandlers({
+    ...basisDeps,
+    config: { googleClientId: "c", sessionSecret: "s" },
+    readAuthBody: async () => ({}),
+    signGoogleAuthState: (state) => { gemerkterState = state; return "signiert:1"; }
+  });
+  const res = mockRes();
+  await h.handleGoogleAuthStart(
+    { headers: { host: "control.example", "x-forwarded-proto": "https" } },
+    res,
+    new URL("https://control.example/api/auth/google?native=1&handoff=h-1&returnOrigin=https%3A%2F%2Fsmejj.com")
+  );
+  assert.equal(gemerkterState.native, 1);
+
+  const rueck = createGoogleAuthHandlers({
+    ...basisDeps,
+    config: { googleClientId: "c", sessionSecret: "s" },
+    readAuthBody: async () => ({ redirect: "1", state: "st", credential: "idtok" }),
+    verifyGoogleAuthState: () => ({ nonce: "n", handoff: "h-1", handoffReturn: "https://smejj.com", native: 1 })
+  });
+  const res2 = mockRes();
+  await rueck.handleGoogleAuth({}, res2);
+  assert.equal(res2.headers.Location, "https://smejj.com/auth/login?handoff=h-1&native=1");
+});
+
+test("ohne App-Huelle bleibt der Rueckweg unveraendert (keine Markierung)", async () => {
+  let gemerkterState = null;
+  const h = createGoogleAuthHandlers({
+    ...basisDeps,
+    config: { googleClientId: "c", sessionSecret: "s" },
+    readAuthBody: async () => ({}),
+    signGoogleAuthState: (state) => { gemerkterState = state; return "signiert:1"; }
+  });
+  await h.handleGoogleAuthStart({ headers: { host: "control.example" } }, mockRes(), new URL("https://control.example/api/auth/google?native=ja"));
+  assert.equal(gemerkterState.native, 0);
+
+  const rueck = createGoogleAuthHandlers({
+    ...basisDeps,
+    config: { googleClientId: "c", sessionSecret: "s" },
+    readAuthBody: async () => ({ redirect: "1", state: "st", credential: "idtok" }),
+    verifyGoogleAuthState: () => ({ nonce: "n", handoff: "h-1", handoffReturn: "https://smejj.com" })
+  });
+  const res = mockRes();
+  await rueck.handleGoogleAuth({}, res);
+  assert.equal(res.headers.Location, "https://smejj.com/auth/login?handoff=h-1");
+});
