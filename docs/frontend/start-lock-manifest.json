@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-22T14:07:49.764Z",
-  "confirmation": "Betreiber 22.09.2026 schriftlich im Chat: 'Teste v955 jetzt auch auf Android und iPhone' — unter der Daueranweisung vom 22.09.2026 (EIN Prompt = EIN fertiger, live geprüfter, gesicherter Stand; Fehler selbst beheben, ausliefern, nachtesten). Befund des Geraetetests: Diktat, Vorlesen und Sprachmodus lasen ihre Sprache aus dem festen <html lang=\"de\"> der index.html — die englische App hoerte auf Deutsch; 14 Sprachmodus-Texte ohne Uebersetzung. Umsetzung: huelle-sprache.js setzt <html lang> aus der gespeicherten Oberflaechensprache (Start + Ereignis smejj:sprache); composer-tools.js (800 Zeilen, unveraendert lang) liest die Sprache bei jedem Aufruf (speechLang/speechBase) und uebersetzt rohe Attribute per t(); composer-dictation.js, voice-browser-tts.js, voice-premium-tts.js nehmen lang als Funktion; 14 Texte in 14 Sprachdateien; Marken der Importeure erhoeht (darunter app.js, chat-actions.js, code-nachladen.js — Start-Lock). Start-Lock: diese Marken + sw.js-Nummer. Auslieferung durch die Sitzung selbst (Betreiber 22.09.: 'mach du selber als expert').",
+  "frozenAt": "2026-09-22T14:45:21.732Z",
+  "confirmation": "Betreiber 22.09.2026 im Chat: 'Soll Schreibfeld (mit gesamte Icons: + Modele, Diktieren, Sprachwelle/Senden) ganz unten sein, mit ganz untere kante treffen.' — Design V16: nur der Abstand des Schreibfelds nach unten (bottom 0, kein Polster), Buendel, index.html-Version und Cache-Nummer v958. Nichts sonst an der Startseite.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "810cdabf03d5d77118af4f3a7b59b475f0789ad40e4fb18eb6ab305c60c2ba71",
+    "public/index.html": "4351c5a7007e901612060379d45d1a2c790b60c82b01d86e757434f98caf721c",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
-    "public/start-styles.css": "f78f9b57ebabbb9798ecf9142dfedd110094e85df676f86b18917c61e24fd3bc",
+    "public/start-styles.css": "34d85e0f654c9ec77d56dab2fb48ba2626c9840bc6d76c779538ca87ad263fbe",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "10ba77e36d5b6e57b90245a559b2451db1ec256ff9d5aa8004677c9236a76b59",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "8aff123f37d45958f7b4e530d7e9c0a52aaa7632092204f69bcea22d87ae8b81",
+    "public/sw.js": "f0208b55e153d5b227e891726f28866284f1d1a5febedde97b1c284e184a4918",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
