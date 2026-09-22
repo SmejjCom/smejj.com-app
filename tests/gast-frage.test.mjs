@@ -61,3 +61,21 @@ test("der Satz unter dem Feld verspricht nichts Falsches mehr", () => {
   assert.match(en, /"Probier es hier — die erste Frage geht sofort, ganz ohne Konto\.":/);
   assert.match(en, /"Kostenlos anmelden": "Sign up free"/);
 });
+
+// Geraetetest 22.09.2026 (echtes iPhone, WLAN): "Einen Moment …" stand ueber drei
+// Minuten ohne Antwort und ohne Rueckfall — der Timer der Zeitgrenze stand, weil
+// iOS ihn im Hintergrund anhaelt. Jetzt: Hinweis mit Ausweg nach HINWEIS_MS und
+// eine Wache an der Uhrzeit, die beim Sichtbarwerden nachrechnet.
+test("nach 15 s ohne Wort kommt der Hinweis mit Ausweg, und die Wache rechnet an der Uhrzeit", () => {
+  assert.match(quelle, /var HINWEIS_MS = 15000/);
+  assert.match(quelle, /function zeigeHinweis\(text\)/);
+  assert.match(quelle, /knopf\.href = "\/auth\/register\/"/);
+  assert.match(quelle, /addEventListener\("visibilitychange", wache\)/);
+  assert.match(quelle, /Date\.now\(\) - start[\s\S]{0,80}>= ZEITGRENZE_MS[\s\S]{0,40}steuerung\.abort\(\)/);
+  assert.match(quelle, /cache: "no-store"/);
+  // Beide Ausgaenge raeumen die Wache wieder ab.
+  assert.equal((quelle.match(/removeEventListener\("visibilitychange", wache\)/g) || []).length, 2);
+  const en = lies("public/willkommen-sprache.js");
+  assert.match(en, /Das dauert gerade länger als gewohnt/);
+  assert.match(lies("public/willkommen.html"), /gast-frage\.js\?v=3/);
+});
