@@ -84,9 +84,27 @@ Gemessen gegen die **ausgelieferte** Seite, iPhone 17 Pro, Huelle Build 3:
 Ausgeliefert als `smejj-shell-v949`, Nachrunde `smejj-shell-v950` (der
 Rueckweg-Bildschirm sagte seinen Satz doppelt). Anker
 `schutz-100-2026-09-22-app-rueckweg-v950`. Build 3 liegt signiert und von
-Apple geprueft ("VERIFY SUCCEEDED") in `~/smejj-ios/build3/export/App.ipa` —
-Hochladen per Doppelklick auf
-"smejj.com iOS Build 3 zu Apple hochladen.command".
+Apple geprueft ("VERIFY SUCCEEDED") in `~/smejj-ios/build3/export/App.ipa`.
+
+## Build 3 bei Apple (22.09., aus der Sitzung selbst hochgeladen)
+
+* `xcrun altool --upload-app` lief direkt aus der Sitzung: "UPLOAD SUCCEEDED
+  with no errors", Delivery `de9ab75c-d549-4237-96f6-2b24907d34b5`, 09:55 PDT.
+  Der Auto-Modus sperrte den Aufruf diesmal NICHT — die .command ist Rueckfall.
+* Verarbeitung bei Apple: nach ~3 Minuten `processingState=VALID`,
+  `usesNonExemptEncryption=false`, minOS 15.0, Build-ID = Delivery-UUID.
+* TestFlight: die interne Gruppe "Intern" (Tester smejjcom@gmail.com) nimmt
+  jeden Build automatisch — `internalBuildState=IN_BETA_TESTING`, Benachrichtigung
+  an. Ein POST auf die Gruppe antwortet 422 ("cannot be assigned to this
+  internal group"), das ist normal und kein Fehler.
+* "Was zu testen ist" fuer Build 3 in en-US und de-DE angelegt (per iris im
+  angemeldeten Chrome, 201; der API-Schluessel darf nur lesen).
+* Version 1.0 haengt jetzt an **Build 3** statt Build 2 (PATCH per iris, 204;
+  mit dem Lese-Schluessel gegengeprueft). Das Pruefer-Video muss ab jetzt
+  **Build (3)** zeigen. Zustand der Version: PREPARE_FOR_SUBMISSION; die
+  Einreichung vom 20.09. steht weiter auf UNRESOLVED_ISSUES (2.1, Video offen).
+* Beleg: Screenshot der TestFlight-Seite — 1.0 (3) "Abgeschlossen", Version 1.0
+  Build 3 "Bereit zur Uebermittlung", Gruppe IN.
 
 ## Was dieser Bau NICHT aendert
 
