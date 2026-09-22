@@ -31,6 +31,21 @@ export GIT_TERMINAL_PROMPT=0
 export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 autor=(-c user.name="Wof Kadavanich" -c user.email=smejjcom@gmail.com)
 
+# EIN Versuch reicht bei github.com nicht (Lehre 18.09.2026: fuenf Nacht-Skripte
+# gaben nach einer einzigen Anfrage auf, 13 Laeufe gingen so verloren). Und wenn
+# der Stand oben schon derselbe ist, ist gar nichts zu schieben — genau das war
+# hier der Fall, als die Verbindung mitten im zweiten Lauf abbrach.
+schiebe() {           # $1 = Zweigname, $2 = Commit
+  local zweig="$1" commit="$2" i oben
+  for i in 1 2 3 4 5; do
+    oben=$(git ls-remote origin "refs/heads/$zweig" 2>/dev/null | cut -f1)
+    if [ "$oben" = "$commit" ]; then echo "  oben liegt schon ${commit:0:8}"; return 0; fi
+    git push -q origin "${commit}:refs/heads/${zweig}" 2>/dev/null && return 0
+    [ "$i" = "5" ] || { echo "  Netz: Versuch $i fehlgeschlagen, neuer Anlauf in $((i*10)) s"; sleep $((i*10)); }
+  done
+  return 1
+}
+
 echo "== 0. Stand holen"
 cd "$APP" || { echo "ABBRUCH: $APP fehlt."; exit 1; }
 git fetch -q origin "$ARBEITS_ZWEIG" "$BAU_ZWEIG" || { echo "ABBRUCH: origin nicht erreichbar."; exit 1; }
@@ -132,7 +147,7 @@ BAU_NEU=$(git rev-parse HEAD)
 echo "  gruen (${BAU_NEU:0:8})"
 
 echo "== 4. Bauzweig ausliefern (api.smejj.com)"
-git push -q origin "${BAU_NEU}:refs/heads/${BAU_ZWEIG}" || { echo "ABBRUCH: Push Bauzweig (Parallelsitzung war schneller?)."; exit 1; }
+schiebe "$BAU_ZWEIG" "$BAU_NEU" || { echo "ABBRUCH: Push Bauzweig (Netz oder Parallelsitzung)."; exit 1; }
 API_LIVE=0
 for i in $(seq 1 80); do
   S=$(curl -s -m 20 "https://api.smejj.com/sw.js?n=$RANDOM" | grep -o 'smejj-shell-v[0-9]*' | head -1)
@@ -147,6 +162,27 @@ echo "  Dateien (${#DATEIEN[@]})"
 cd "$KLON" || { echo "ABBRUCH: Frontend-Klon fehlt."; exit 1; }
 [ -z "$(git status --porcelain --untracked-files=no)" ] || { echo "ABBRUCH: Frontend-Klon hat lokale Aenderungen."; exit 1; }
 git fetch -q origin main || { echo "ABBRUCH: origin/main nicht erreichbar."; exit 1; }
+# Ist der live liegende Inhalt EIN FRUEHERER STAND AUS UNSERER EIGENEN
+# GESCHICHTE? Genau das ist der Fall beim Spiegel unter /assets/: die
+# Apple-Auslieferung am 19.09.2026 hat /auth/login/index.html erneuert, die
+# assets-Kopie aber auf dem Stand vom 13.08. stehen gelassen (eine Zeile:
+# die Versionsnummer hinter auth-page.js). So etwas ist KEIN fremder Eingriff,
+# sondern unsere eigene Spur — und wird von diesem Bau ohnehin ueberschrieben,
+# womit beide Kopien wieder zusammenkommen. Alles, was NICHT in unserer
+# Geschichte steht, bleibt weiter ein Abbruchgrund.
+eigener_alter_stand() {
+  local pfad="$1"
+  local blob
+  blob=$(git -C "$KLON" rev-parse "origin/main:$pfad" 2>/dev/null) || return 1
+  local quelle="${pfad#assets/}"
+  local c
+  for c in $(git -C "$APP" rev-list --all --max-count=400 -- "public/$quelle" "public/assets/$quelle"); do
+    if [ "$(git -C "$APP" rev-parse "$c:public/$quelle" 2>/dev/null)" = "$blob" ]; then return 0; fi
+    if [ "$(git -C "$APP" rev-parse "$c:public/assets/$quelle" 2>/dev/null)" = "$blob" ]; then return 0; fi
+  done
+  return 1
+}
+
 FREMD=0
 for f in "${DATEIEN[@]}"; do
   if git -C "$APP" cat-file -e "$WT_BASIS:public/$f" 2>/dev/null; then
@@ -155,6 +191,10 @@ for f in "${DATEIEN[@]}"; do
     c=$(git show "origin/main:assets/$f" 2>/dev/null | shasum -a 256 | cut -c1-16)
     [ "$f" = "index.html" ] || [ "$f" = "sw.js" ] && c="$a"
     if [ "$a" = "$b" ] && { [ "$a" = "$c" ] || ! git show "origin/main:assets/$f" >/dev/null 2>&1; }; then :
+    elif [ "$a" = "$b" ] && eigener_alter_stand "assets/$f"; then
+      echo "    alt     assets/$f (frueherer eigener Stand, wird mitgezogen)"
+    elif [ "$a" != "$b" ] && eigener_alter_stand "$f" && { [ "$a" = "$c" ] || eigener_alter_stand "assets/$f"; }; then
+      echo "    alt     $f (frueherer eigener Stand, wird mitgezogen)"
     else echo "    FREMD   $f"; FREMD=1; fi
   else
     if git show "origin/main:$f" >/dev/null 2>&1; then echo "    FREMD   $f (live vorhanden, bei uns neu)"; FREMD=1; else echo "    neu     $f"; fi
@@ -170,7 +210,7 @@ for f in "${DATEIEN[@]}"; do
 done
 git "${autor[@]}" commit -q -m "deploy(auth): Google-Login kehrt in die App zurueck; $SW_NEU — Quelle ${WT_NEU:0:8}" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
 git merge-base --is-ancestor origin/main HEAD || { echo "ABBRUCH: kein Fast-Forward."; exit 1; }
-git push -q origin main || { echo "ABBRUCH: Push auf main fehlgeschlagen."; exit 1; }
+schiebe main "$(git rev-parse HEAD)" || { echo "ABBRUCH: Push auf main fehlgeschlagen."; exit 1; }
 for i in $(seq 1 40); do
   sleep 10
   L=$(curl -s -m 20 "https://smejj.com/sw.js?n=$RANDOM" | grep -o 'smejj-shell-v[0-9]*' | head -1)
