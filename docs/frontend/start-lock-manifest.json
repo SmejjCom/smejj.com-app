@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-22T02:43:47.594Z",
-  "confirmation": "Betreiber 22.09.2026 im Chat: 'Ich habe App Testversion runtergeladen in mein iPhone, aber wenn ich mich versuche einloggen mit Google Login, ich bleibe immer im Browser, dann geht er nicht wieder zurueck zum App' — danach auf die Rueckfrage 'Ja'. Auftrag: den Rueckweg bauen. Geaendert sind nur der Rueckweg der Anmeldung (native=1, Ticket bleibt im Browser liegen, App holt es ab), 3 Texte in 14 Sprachen und die Cache-Nummer. Keine Aenderung an Pruefung, Rechten oder Abo-Kette.",
+  "frozenAt": "2026-09-22T06:47:35.276Z",
+  "confirmation": "Runde 2 (Betreiber 22.09.2026: 'mach die anderen Anmeldewege auch Apple Login') — GitHub, Apple und der Anmeldelink bekommen denselben Rueckweg wie Google. Runde 1 war: Betreiber 22.09.2026 im Chat: 'Ich habe App Testversion runtergeladen in mein iPhone, aber wenn ich mich versuche einloggen mit Google Login, ich bleibe immer im Browser, dann geht er nicht wieder zurueck zum App' — danach auf die Rueckfrage 'Ja'. Auftrag: den Rueckweg bauen. Geaendert sind nur der Rueckweg der Anmeldung (native=1, Ticket bleibt im Browser liegen, App holt es ab), 3 Texte in 14 Sprachen und die Cache-Nummer. Keine Aenderung an Pruefung, Rechten oder Abo-Kette.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "9d3a149875aae04f03b73d86caa3fc33f729389f313d65485590495634863a49",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "025416de5b0ab9413376054b9e3d7e6bd82d324e9891be0bad69e0228a0e4435",
+    "public/sw.js": "0c216d61d0168dd64b808066f6e5b392bf57720757a8ac499f18dc048f73ee17",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
