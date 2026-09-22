@@ -33,6 +33,9 @@ test("composer-tools liest die Sprache bei JEDEM Aufruf, nicht einmal beim Laden
   const q = lies("composer-tools.js");
   assert.doesNotMatch(q, /const (PAGE_LANG|SPEECH_LANG|SPEECH_BASE)\b/, "feste Sprach-Konstante beim Laden");
   assert.match(q, /const speechLang = \(\) =>/);
+  // v956 gemessen: <html lang> wird erst gesetzt, wenn huelle-sprache.js nachgeladen ist — die gespeicherte Wahl kommt zuerst.
+  assert.match(q, /import \{ t, savedUiLanguage \} from "\.\/i18n\/ui\.js/, "gespeicherte Sprache importiert");
+  assert.match(q, /const pageLang = \(\) => \{ let s = ""; try \{ s = savedUiLanguage\(\) \|\| ""; \}/, "gespeicherte Sprache zuerst, lang-Attribut als Rueckfall");
   assert.equal((q.match(/recognition\.lang = speechLang\(\);/g) || []).length, 2, "beide Erkennungen fragen die Sprache beim Start");
   assert.match(q, /createBrowserTts\(\{ lang: speechLang, base: speechBase,/, "Browser-Stimme bekommt Funktionen");
   assert.match(q, /lang: speechLang,\n/, "Diktat bekommt die Funktion");
