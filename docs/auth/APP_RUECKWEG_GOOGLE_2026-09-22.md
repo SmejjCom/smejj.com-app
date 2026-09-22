@@ -113,3 +113,56 @@ Apple geprueft ("VERIFY SUCCEEDED") in `~/smejj-ios/build3/export/App.ipa`.
 * Ohne den neuen iPhone-Build (Build 3) wirkt der **Web-Teil allein**: der
   Nutzer wechselt selbst per App-Umschalter zurueck, die Anmeldung wird dann
   automatisch uebernommen. Der Knopf im Browser wird erst mit Build 3 wirksam.
+
+---
+
+# Runde 2: die uebrigen Anmeldewege (22.09.2026)
+
+Auftrag Betreiber: "mach die anderen Anmeldewege auch Apple Login".
+
+GitHub, Apple und der Anmeldelink liefen in dieselbe Falle wie Google. Gebaut
+wurde deshalb nicht dreimal dasselbe, sondern EINE Stelle:
+`startHandoffQuery()` in `public/auth/auth-page.js` merkt die Ticketnummer,
+startet die Wache und gibt `native=1` mit — fuer alle vier Wege. Google hatte
+diesen Block bisher als eigene Kopie; sie ist weg.
+
+Serverseitig ziehen `src/auth/githubAuthRoutes.js`, `src/auth/appleAuthRoutes.js`
+und `control-server/src/routes/magicLinkRoutes.js` nach: `native` wird als 1/0
+ins signierte Ticket uebernommen, der Rueckweg traegt die Markierung.
+
+**Ausnahme Anmeldelink:** Ist der Handoff beim Klick auf den Mail-Link schon
+verfallen, erzeugt der Server ein FRISCHES Ticket (Link gilt 15 Minuten, Ticket
+10). Dessen Nummer kennt die wartende App nicht — deshalb geht die Markierung
+dann NICHT mit, und die Anmeldeseite im Browser meldet an wie bisher. Sonst
+fiele die Anmeldung zwischen App und Browser durch.
+
+**Zweiter Weg im Rueckweg-Bildschirm:** "Stattdessen hier im Browser anmelden"
+(14 Sprachen) — die E-Mail mit dem Anmeldelink kann auf einem anderen Geraet
+liegen, und dann darf der Bildschirm keine Sackgasse sein.
+
+## Runde 3: die Wache blockierte sich selbst (v952)
+
+Beim Nachmessen am Simulator zeigte der Apple-Weg nach der Rueckkehr NICHT
+"Anmeldung laeuft …" — der Google-Weg schon. Der Unterschied war kein Zufall:
+beim Google-Test lag noch ein Ticket aus dem vorigen Lauf im Speicher, sodass
+die Wache schon beim Laden der Seite lief.
+
+Die Ursache: **iOS friert die Ansicht beim Sprung in den Browser ein, und ob
+diese Schleife danach weiterlaeuft, ist nicht garantiert.** Die Sperre
+"laeuft schon" (`wacheLaeuft`) haette den Neustart in genau diesem Fall fuer
+immer verhindert — die App haette das Ticket nie abgeholt. Statt der Sperre
+zaehlt jetzt eine Laufnummer: jede neue Wache verdraengt die alte. Angestossen
+wird sie bei `visibilitychange`, `pageshow` und `focus`.
+
+## Nachweis Runde 2/3 (LIVE, frisch installierte App, v952)
+
+| Schritt | Ergebnis |
+| --- | --- |
+| App frisch installiert, Anmeldeseite | keine Statuszeile (sauberer Start) |
+| "Mit Apple fortfahren" | Safari oeffnet appleid.apple.com |
+| zurueck in die App (`smejj://auth/login`) | **"Anmeldung laeuft …"** |
+| dasselbe mit "Mit GitHub fortfahren" | **"Anmeldung laeuft …"** |
+| `api.smejj.com` mit `native=1` | google/github/apple je 303 |
+| Tests | Google 12/12, GitHub 10/10, Apple 21/21, Anmeldelink 12/12, Frontend 742/742 |
+
+Anker `schutz-100-2026-09-22-app-rueckweg-v952`.
