@@ -65,6 +65,29 @@ kein offener Redirect). Traegt das Ticket die Markierung, haengt der Rueckweg
   App kommt nach vorne und steht auf der Anmeldeseite (Screenshot-Beleg in der
   Sitzung).
 
+## Live-Messung am Simulator (nach der Auslieferung)
+
+Gemessen gegen die **ausgelieferte** Seite, iPhone 17 Pro, Huelle Build 3:
+
+1. In der App "Mit Google fortfahren" -> Safari oeffnet die Google-Anmeldung
+   (erwartet, Google laesst es nicht anders zu).
+2. Zurueck in der App steht **"Anmeldung laeuft …"** — die Huelle wurde erkannt,
+   die Ticketnummer liegt bereit und die Wache fragt den Server.
+3. Im Browser auf `…/auth/login?handoff=<id>&native=1`: die Anmeldewege sind
+   weg, es steht "Angemeldet. Wechsle zurueck zur smejj-App — die Anmeldung
+   wird dort automatisch uebernommen." mit dem Knopf "Zurueck zur smejj-App".
+   Das Ticket wird dort **nicht** eingeloest.
+4. Der Knopf zeigt "In ‚smejj' oeffnen?" -> Oeffnen -> die App ist vorne.
+5. `smejj://auth/login` direkt aus Safari: dasselbe, die App steht auf der
+   Anmeldeseite (nichts wird neu geladen, weil sie schon dort steht).
+
+Ausgeliefert als `smejj-shell-v949`, Nachrunde `smejj-shell-v950` (der
+Rueckweg-Bildschirm sagte seinen Satz doppelt). Anker
+`schutz-100-2026-09-22-app-rueckweg-v950`. Build 3 liegt signiert und von
+Apple geprueft ("VERIFY SUCCEEDED") in `~/smejj-ios/build3/export/App.ipa` —
+Hochladen per Doppelklick auf
+"smejj.com iOS Build 3 zu Apple hochladen.command".
+
 ## Was dieser Bau NICHT aendert
 
 * GitHub-, Apple- und Magic-Link-Anmeldung laufen ueber denselben Handoff, geben
