@@ -1,12 +1,12 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-22T06:47:35.003Z",
+  "frozenAt": "2026-09-22T07:03:51.330Z",
   "confirmation": "Runde 2 (Betreiber 22.09.2026: 'mach die anderen Anmeldewege auch Apple Login') — GitHub, Apple und der Anmeldelink bekommen denselben Rueckweg wie Google. Runde 1 war: Betreiber 22.09.2026 im Chat: 'Ich habe App Testversion runtergeladen in mein iPhone, aber wenn ich mich versuche einloggen mit Google Login, ich bleibe immer im Browser, dann geht er nicht wieder zurueck zum App' — danach auf die Rueckfrage 'Ja'. Auftrag: den Rueckweg bauen. Geaendert sind nur der Rueckweg der Anmeldung (native=1, Ticket bleibt im Browser liegen, App holt es ab), 3 Texte in 14 Sprachen und die Cache-Nummer. Keine Aenderung an Pruefung, Rechten oder Abo-Kette.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "3c7a4c19cd7f517516657a6fe5a9dfa4019a72b2db26a5811bc8915d7fb1b387",
-    "public/auth/register/index.html": "658efde7206bbdd5111f9258ec621ae759310a0a84f20fdd56ccc5eb16e8af63",
-    "public/auth/auth-page.js": "5cc98923831e01f319c64c5e5831cc67f64d52c00dc769fb8cf2ef343f87b97b",
+    "public/auth/login/index.html": "d2c824ebb86656fd608a839c2f125c4a142ac0300962b9f1898d73a7b84668e2",
+    "public/auth/register/index.html": "b9e6d32a3ffea724c5eb2e8dbd4176415975cfab906c90ccea51dfaaf8ebe8c6",
+    "public/auth/auth-page.js": "d9b30771cf1319b1cf341e3043698839e50128e2fbeeed4ee8b054dcd6d11715",
     "public/auth/auth.css": "ae2641fdb167358f9bad1f4b844d68aec2b6c41268882973a63de81896c3a910",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "src/shared/controlAccessPolicy.js": "0ed406d8088ee14f25162cf21161efbd9e326c6a4f6b06b8e8ee268916e4916d",
