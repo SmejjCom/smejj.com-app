@@ -1,4 +1,11 @@
-# Mit Apple anmelden — Einrichtung (Stand 21.09.2026)
+# Mit Apple anmelden — Einrichtung (FERTIG, Stand 22.09.2026)
+
+> **Erledigt.** Die vier Variablen sind gesetzt, `/api/auth/config` meldet
+> `"apple": true`, und der Weg ist am 22.09. durchgemessen: `/api/auth/apple`
+> antwortet 303 nach `appleid.apple.com` mit `client_id=com.smejj.web`, und
+> Apples Maske sagt „Verwende deinen Apple Account, um dich bei ‚smejj web'
+> anzumelden." Der Knopf steht abgemeldet sichtbar auf der Anmeldeseite.
+> Richtlinie 4.8 ist damit erfüllt. Alles darunter ist die Entstehung.
 
 Der Code ist fertig und getestet (`tests/apple-auth.test.mjs`, 19 Proben). Er bleibt
 **unsichtbar und wirkungslos**, bis die vier Umgebungsvariablen auf dem Control-Server
