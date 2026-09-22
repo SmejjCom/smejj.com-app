@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-22T13:55:09.735Z",
+  "frozenAt": "2026-09-22T14:08:04.223Z",
   "confirmation": "Betreiber 22.09.2026 schriftlich im Chat: 'Teste v955 jetzt auch auf Android und iPhone' — unter der Daueranweisung vom 22.09.2026 (EIN Prompt = EIN fertiger, live geprüfter, gesicherter Stand; Fehler selbst beheben, ausliefern, nachtesten). Befund des Geraetetests: Diktat, Vorlesen und Sprachmodus lasen ihre Sprache aus dem festen <html lang=\"de\"> der index.html — die englische App hoerte auf Deutsch; 14 Sprachmodus-Texte ohne Uebersetzung. Umsetzung: huelle-sprache.js setzt <html lang> aus der gespeicherten Oberflaechensprache (Start + Ereignis smejj:sprache); composer-tools.js (800 Zeilen, unveraendert lang) liest die Sprache bei jedem Aufruf (speechLang/speechBase) und uebersetzt rohe Attribute per t(); composer-dictation.js, voice-browser-tts.js, voice-premium-tts.js nehmen lang als Funktion; 14 Texte in 14 Sprachdateien; Marken der Importeure erhoeht (darunter app.js, chat-actions.js, code-nachladen.js — Start-Lock). Start-Lock: diese Marken + sw.js-Nummer. Auslieferung durch die Sitzung selbst (Betreiber 22.09.: 'mach du selber als expert').",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "6bdfd614987c29ffc94c8f8970c90637eff50f4cc1ab6bb69f238c9cf9b18c49",
+    "public/index.html": "810cdabf03d5d77118af4f3a7b59b475f0789ad40e4fb18eb6ab305c60c2ba71",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "f78f9b57ebabbb9798ecf9142dfedd110094e85df676f86b18917c61e24fd3bc",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "d8a4efdf629bd585e10b27a5cbe365cc7b0359987d01bb81f3de6c17600386ec",
     "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "7403ac7a7106cc72805268c9f139eb5e86e458880fa7d849a26a29ea99d0c3c4",
-    "public/app.js": "b320c8cf00fdaba72353e7fc45d4f6b726a056bd1aa480ba73f9bbbbe0263ae7",
+    "public/app.js": "47e5b74c91bca69bcd7783173c7b1b112cdb5f725a96bd8f0eb16bde1fcb4dd1",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "27acbbbbe2a23a81f25b8fdab7e5204cb4e5ecc1217f6ef1af8ee7a12831e3df",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -21,7 +21,7 @@
     "public/autonomous-coding.js": "95a765c2888895d5e48458a289bda3ab29595ac5871a1edc95d992a45e027164",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "cfdeec81cd1a38393abc7bae3976de0a0a4ccbb6a885fbc3dc2c0ff04940baf4",
-    "public/composer-tools.js": "5d3eb663646ee528c7995755f3ec3ebdc2ae33bbabaddaa7937a9e33e1f66167",
+    "public/composer-tools.js": "e37b0ad626a8bc070ec858563774c7c76d361acfa8eed49bbd031459ffab1eaa",
     "public/composer-plus-menu.js": "1e4937be8a89e8393bceedc81c0524c802708ec652505121e31f773b95666eba",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "726f4fbf109c2f4388284708be53248ebb3cdb1821e4b362f8bbd11e021eb463",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "3748196c3c41879a9a849ea43547092fd643087e2c0fbab8145067d31d768e7b",
+    "public/sw.js": "8aff123f37d45958f7b4e530d7e9c0a52aaa7632092204f69bcea22d87ae8b81",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
