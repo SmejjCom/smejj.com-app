@@ -195,3 +195,20 @@ braucht es die Apple-ID des Betreibers — Zugangsdaten gibt diese Sitzung nicht
 ein. Geprueft ist damit alles bis zur Apple-Anmeldemaske und der komplette
 Rueckweg; den letzten Schritt (Apple-ID eingeben, Rueckkehr mit Token) muss der
 Betreiber einmal selbst gehen.
+
+---
+
+# Hochgeladen: Build 4 (22.09.2026, 11:42)
+
+Der Upload von **Build 3 wurde von App Store Connect abgelehnt**: die Nummer 3
+war dort bereits vergeben ("The bundle version must be higher than the
+previously uploaded version: '3'"). Also `CURRENT_PROJECT_VERSION` auf 4
+gehoben, neu gebaut, signiert, exportiert — **UPLOAD SUCCEEDED with no errors**,
+Delivery-UUID `c2375e11-87dd-4e42-9a18-7ba8b1263547`.
+
+Build 4 traegt das URL-Schema `smejj://` und die Rueckkehr im SceneDelegate.
+Er liegt jetzt unter TestFlight/Builds; die Zuordnung zur Version 1.0 und die
+Freigabe fuer Tester macht der Betreiber in App Store Connect.
+
+Merke fuer den naechsten Bau: die Build-Nummer in `ios/App/App.xcodeproj`
+hochzaehlen, sonst weist Apple den Upload ab.
