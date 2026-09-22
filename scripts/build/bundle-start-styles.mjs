@@ -73,7 +73,9 @@ export const SOURCES = Object.freeze([
   // fest unten und ist transparent, oben liegt nichts mehr ueber Uhrzeit, Netz
   // und Akku. Nimmt V14 nur die zwei Glasflaechen weg und ist darum das neue
   // Kaskaden-Ende.
-  "design-v15-transparent-chat.css"
+  "design-v15-transparent-chat.css",
+  // V16 (22.09.2026): das Schreibfeld trifft die Unterkante — Betreiber-Auftrag.
+  "design-v16-kante.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.
