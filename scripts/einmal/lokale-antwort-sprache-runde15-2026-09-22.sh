@@ -106,7 +106,9 @@ cd "$BAU"
 if git merge-base --is-ancestor "$BAU_NEU" "origin/$BAU_ZWEIG"; then
   echo "(Bauzweig traegt $BAU_NEU schon)"
 else
-  git push -q origin "${BAU_NEU}:refs/heads/${BAU_ZWEIG}" || { echo "ABBRUCH: Push Bauzweig fehlgeschlagen."; exit 1; }
+  # Netz-Aussetzer (22.09.: der Push scheiterte einmal, 2 min spaeter ging er) — drei Versuche mit Pause, kein sofortiger Abbruch.
+  ok=0; for v in 1 2 3; do git push -q origin "${BAU_NEU}:refs/heads/${BAU_ZWEIG}" && { ok=1; break; }; echo "  Push Bauzweig Versuch $v fehlgeschlagen — 20 s warten"; sleep 20; done
+  [ "$ok" = 1 ] || { echo "ABBRUCH: Push Bauzweig dreimal fehlgeschlagen — Netz/GitHub pruefen, dann erneut doppelklicken (Lauf wird wieder aufgenommen)."; exit 1; }
   echo "Bauzweig gepusht: ${BAU_NEU:0:8}"
 fi
 CONFIRM_CONTROL_BAU=JA node scripts/deploy/control-neu-bauen.mjs "$BAU_ZWEIG" >/dev/null 2>&1 || echo "(Extra-Anstoss nicht moeglich — Auto-Deploy nach Push wird abgewartet)"
@@ -122,7 +124,8 @@ done
 echo "== 3. Arbeitszweig sichern"
 cd "$APP"
 if git merge-base --is-ancestor "$APP_NEU" "origin/$ARBEITS_ZWEIG"; then echo "(schon drueben)"; else
-  git push -q origin "${APP_NEU}:refs/heads/${ARBEITS_ZWEIG}" || echo "(Push Arbeitszweig fehlgeschlagen — Auslieferung laeuft trotzdem weiter)"
+  ok=0; for v in 1 2 3; do git push -q origin "${APP_NEU}:refs/heads/${ARBEITS_ZWEIG}" && { ok=1; break; }; sleep 15; done
+  [ "$ok" = 1 ] || echo "(Push Arbeitszweig dreimal fehlgeschlagen — Auslieferung laeuft trotzdem weiter)"
   echo "Arbeitszweig gepusht: ${APP_NEU:0:8}"
 fi
 
