@@ -37,3 +37,15 @@ sofort (ggf. App einmal schließen und neu öffnen).
 
 Hinweis: die Symbolzeile liegt jetzt IM Home-Balken-Bereich (34 pt). Das ist so bestellt; falls
 Tipper dort den Home-Wisch auslösen, wäre ein kleiner Rest (z. B. 8 px) die Rückfalloption.
+
+## Runde b (22.09., „Ja, Symbole auch auf die Kante setzen") — LIVE v959
+Gemessen nach v958: Kasten 0 px, aber die 44-px-Knöpfe sind Grid-Zellen mit `align-items: center`
+→ Glyphen 10 px über dem Knopfrand (Simulator: 14 pt über der Bildschirmkante). V16b in derselben
+Datei: die Knöpfe im Schreibfeld (Plus, Modell-Chip, Diktat, Senden/Welle) richten ihren Inhalt mit
+`align-items: end` am unteren Rand aus, Tippziel bleibt 44 px. index.html `?v=v16b-20260922`,
+Cache v959, Start-Lock gestempelt, Kaskade `scripts/einmal/design-v16b-symbole-2026-09-22.sh`
+(api 45 s, smejj.com 80 s, 243/243, Anker `schutz-100-2026-09-22-design-v16b-v959`).
+Nachweis: Browser 375×812 an der ausgelieferten Seite — Glyphen-Boxen 0 px (Senden 1 px), Text „Auto"
+0 px; iPhone-17-Pro-Max-Simulator (App lädt live) — unterster gezeichneter Strich 4 pt über der
+Kante (das ist der Innenrand der 24-px-Icon-Zeichnung, vorher 14 pt). Versionswache der
+Parallelsitzung wurde vorab und nach dem Lauf informiert.
