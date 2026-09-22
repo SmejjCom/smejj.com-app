@@ -25,8 +25,8 @@ BAU="$HOME/smejj-app-rueckweg-bau"
 KLON="/Users/alanbest/smejj-app-frontend"
 ARBEITS_ZWEIG="feature/design-start-chat-2026-09-13"
 BAU_ZWEIG="feature/auth-redesign-github-magiclink"
-BASIS="d139c917^"   # der Stand VOR diesem Bau (= 6bdbda8f)
-WORTLAUT="Betreiber 22.09.2026 im Chat: 'Ich habe App Testversion runtergeladen in mein iPhone, aber wenn ich mich versuche einloggen mit Google Login, ich bleibe immer im Browser, dann geht er nicht wieder zurueck zum App' — danach auf die Rueckfrage 'Ja'. Auftrag: den Rueckweg bauen. Geaendert sind nur der Rueckweg der Anmeldung (native=1, Ticket bleibt im Browser liegen, App holt es ab), 3 Texte in 14 Sprachen und die Cache-Nummer. Keine Aenderung an Pruefung, Rechten oder Abo-Kette."
+BASIS="40f3e170"    # der Stand, der als smejj-shell-v950 live ging
+WORTLAUT="Runde 2 (Betreiber 22.09.2026: 'mach die anderen Anmeldewege auch Apple Login') — GitHub, Apple und der Anmeldelink bekommen denselben Rueckweg wie Google. Runde 1 war: Betreiber 22.09.2026 im Chat: 'Ich habe App Testversion runtergeladen in mein iPhone, aber wenn ich mich versuche einloggen mit Google Login, ich bleibe immer im Browser, dann geht er nicht wieder zurueck zum App' — danach auf die Rueckfrage 'Ja'. Auftrag: den Rueckweg bauen. Geaendert sind nur der Rueckweg der Anmeldung (native=1, Ticket bleibt im Browser liegen, App holt es ab), 3 Texte in 14 Sprachen und die Cache-Nummer. Keine Aenderung an Pruefung, Rechten oder Abo-Kette."
 export GIT_TERMINAL_PROMPT=0
 export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 autor=(-c user.name="Wof Kadavanich" -c user.email=smejjcom@gmail.com)
@@ -144,7 +144,7 @@ for p in check-auslieferung-lock check-markenkette check-modul-syntax check-star
   node "scripts/$p.mjs" >/dev/null || { echo "ABBRUCH: $p rot."; exit 1; }
 done
 npm run check:frontend --silent >/dev/null 2>&1 || { echo "ABBRUCH: Frontend-Tests rot im Bauzweig."; exit 1; }
-node --test tests/google-auth-routes.test.mjs tests/github-auth-routes.test.mjs tests/apple-auth.test.mjs >/dev/null 2>&1 || { echo "ABBRUCH: Anmelde-Tests rot im Bauzweig."; exit 1; }
+node --test tests/google-auth-routes.test.mjs tests/github-auth-routes.test.mjs tests/apple-auth.test.mjs tests/magic-link.test.mjs >/dev/null 2>&1 || { echo "ABBRUCH: Anmelde-Tests rot im Bauzweig."; exit 1; }
 BAU_NEU=$(git rev-parse HEAD)
 echo "  gruen (${BAU_NEU:0:8})"
 
@@ -235,8 +235,18 @@ J=$(curl -s -m 20 "https://smejj.com/assets/i18n/ja-2.js?n=$RANDOM" | grep -c "s
 [ "$J" -ge 1 ] && echo "  ja-2.js traegt den Rueckweg-Text" || { echo "  ja-2.js OHNE Rueckweg-Text"; OK=0; }
 # Der Server muss die Markierung durchreichen: ohne Anmeldung ist nur der
 # START pruefbar — er darf mit native=1 weiter zu Google fuehren (303).
-START=$(curl -s -o /dev/null -w "%{http_code}" -m 20 "https://api.smejj.com/api/auth/google?mode=redirect&native=1")
-[ "$START" = "303" ] && echo "  api.smejj.com nimmt native=1 an (303)" || { echo "  api.smejj.com antwortet auf native=1 mit $START"; OK=0; }
+for weg in "google?mode=redirect&native=1" "github?native=1" "apple?native=1"; do
+  START=$(curl -s -o /dev/null -w "%{http_code}" -m 20 "https://api.smejj.com/api/auth/$weg")
+  case "$START" in
+    303) echo "  api.smejj.com nimmt native=1 an: ${weg%%\?*} (303)" ;;
+    503) echo "  ${weg%%\?*}: 503 — dieser Weg ist serverseitig (noch) nicht konfiguriert" ;;
+    *)   echo "  ${weg%%\?*}: unerwartet $START"; OK=0 ;;
+  esac
+done
+# Der Anmeldelink verschickt eine E-Mail — hier wird nur geprueft, dass die
+# Seite die Markierung ueberhaupt mitschickt.
+echo "$A" | grep -q "returnOrigin: origin, native" && echo "  auth-page.js gibt native auch dem Anmeldelink mit" || { echo "  Anmeldelink OHNE native"; OK=0; }
+echo "$A" | grep -q "imBrowserAnmelden" && echo "  Rueckweg-Bildschirm hat den zweiten Weg" || { echo "  zweiter Weg fehlt"; OK=0; }
 
 echo "== 7. Jeder Precache-Eintrag live"
 cd "$APP"

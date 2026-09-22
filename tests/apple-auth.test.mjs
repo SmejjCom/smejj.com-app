@@ -308,3 +308,30 @@ test("Richtlinie: Origin appleid.apple.com nur fuer die Rueckkehr-Adresse zugela
   assert.equal(post("/api/auth/google"), false);
   assert.equal(post("/api/chat"), false);
 });
+
+// Rueckweg in die App-Huelle — dieselbe Mechanik wie bei Google und GitHub
+// (Auftrag Betreiber 22.09.2026: "mach die anderen Anmeldewege auch").
+test("App-Huelle: native=1 steht im State und markiert den Rueckweg", async () => {
+  const h = handlers({ sessionHandoffStore: { complete: () => ({ ok: true }) } });
+  const start = mockRes();
+  await h.handleAppleAuthStart({ headers: { host: "api.smejj.com", "x-forwarded-proto": "https" } }, start,
+    new URL("https://api.smejj.com/api/auth/apple?native=1&handoff=H1&returnOrigin=https://smejj.com"));
+  const gestartet = leseAppleAuthState(new URL(start.headers.Location).searchParams.get("state"), SECRET).daten;
+  assert.equal(gestartet.native, 1);
+
+  const res = mockRes();
+  await h.handleAppleCallback(formReq({ code: "C", state: gueltigerState({ native: 1 }) }), res, cbUrl);
+  assert.equal(res.headers.Location, "https://smejj.com/auth/login?handoff=H1&native=1");
+});
+
+test("ohne App-Huelle bleibt der Apple-Rueckweg unveraendert", async () => {
+  const h = handlers({ sessionHandoffStore: { complete: () => ({ ok: true }) } });
+  const start = mockRes();
+  await h.handleAppleAuthStart({ headers: { host: "api.smejj.com" } }, start,
+    new URL("https://api.smejj.com/api/auth/apple?native=ja&handoff=H1&returnOrigin=https://smejj.com"));
+  assert.equal(leseAppleAuthState(new URL(start.headers.Location).searchParams.get("state"), SECRET).daten.native, 0);
+
+  const res = mockRes();
+  await h.handleAppleCallback(formReq({ code: "C", state: gueltigerState() }), res, cbUrl);
+  assert.equal(res.headers.Location, "https://smejj.com/auth/login?handoff=H1");
+});

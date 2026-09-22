@@ -136,3 +136,43 @@ test("Verify: Handoff-Rueckkehr zur App mit hinterlegtem Token", async () => {
   assert.equal(res.headers.Location, "https://smejj.com/auth/login?handoff=H9");
   assert.equal(deposited.data.user.method, "magiclink");
 });
+
+// Rueckweg in die App-Huelle (Auftrag Betreiber 22.09.2026, nach Google jetzt
+// auch die uebrigen Wege). Beim Anmeldelink gilt eine Ausnahme: musste oben ein
+// FRISCHES Ticket erzeugt werden, kennt die wartende App dessen Nummer nicht —
+// dann darf die Markierung nicht mitgehen, sonst fiele die Anmeldung zwischen
+// App und Browser durch.
+test("Verify: native=1 markiert den Rueckweg — aber nur beim selben Ticket", async () => {
+  const { h } = makeHandlers({ sessionHandoffStore: { complete: () => ({ ok: true }) } });
+  const token = signMagicToken({ email: "smejjcom@gmail.com", jti: "jn1", handoff: "H9", handoffReturn: "https://smejj.com", native: 1, exp: Date.now() + 60000 }, "geheim");
+  const res = mockRes();
+  await h.handleMagicLinkVerify({ headers: {} }, res, new URL(`https://c.test/api/auth/magic-link/verify?token=${encodeURIComponent(token)}`));
+  assert.equal(res.headers.Location, "https://smejj.com/auth/login?handoff=H9&native=1");
+
+  const store = {
+    complete: (id) => (id === "FRISCH" ? { ok: true } : { ok: false, status: 404, error: "session_handoff_not_found" }),
+    start: () => ({ ok: true, status: 201, id: "FRISCH" })
+  };
+  const { h: h2 } = makeHandlers({ sessionHandoffStore: store });
+  const token2 = signMagicToken({ email: "smejjcom@gmail.com", jti: "jn2", handoff: "VERFALLEN", handoffReturn: "https://smejj.com", native: 1, exp: Date.now() + 60000 }, "geheim");
+  const res2 = mockRes();
+  await h2.handleMagicLinkVerify({ headers: {} }, res2, new URL(`https://c.test/api/auth/magic-link/verify?token=${encodeURIComponent(token2)}`));
+  assert.equal(res2.headers.Location, "https://smejj.com/auth/login?handoff=FRISCH");
+});
+
+test("Request: native aus der App-Huelle landet im Link, sonst 0", async () => {
+  const { h, sent } = makeHandlers();
+  await h.handleMagicLinkRequest(
+    { headers: { host: "control.example", "x-forwarded-proto": "https" }, __body: { email: "smejjcom@gmail.com", handoff: "H9", returnOrigin: "https://smejj.com", native: true } },
+    mockRes(), new URL("https://control.example/api/auth/magic-link/request")
+  );
+  const link = sent.at(-1).text.match(/token=([^\s]+)/)[1];
+  assert.equal(verifyMagicToken(decodeURIComponent(link), "geheim").native, 1);
+
+  await h.handleMagicLinkRequest(
+    { headers: { host: "control.example" }, __body: { email: "smejjcom@gmail.com", handoff: "H9", returnOrigin: "https://smejj.com" } },
+    mockRes(), new URL("https://control.example/api/auth/magic-link/request")
+  );
+  const link2 = sent.at(-1).text.match(/token=([^\s]+)/)[1];
+  assert.equal(verifyMagicToken(decodeURIComponent(link2), "geheim").native, 0);
+});

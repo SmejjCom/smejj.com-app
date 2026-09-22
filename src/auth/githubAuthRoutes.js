@@ -41,11 +41,17 @@ export function createGithubAuthHandlers({
     if (!config.sessionSecret) return json(res, 503, { error: "Session Secret fehlt." });
     const handoff = String(url.searchParams.get("handoff") || "").trim();
     const handoffReturn = safeReturnOrigin(url.searchParams.get("returnOrigin"));
+    // Die App-Huelle meldet ihren Start mit `native=1`. Nur dieser eine Wert
+    // wird als 1/0 ins signierte Ticket uebernommen — es wandert KEINE Adresse
+    // aus der Anfrage in den Rueckweg (kein offener Redirect). Gleiche Mechanik
+    // wie bei Google, siehe docs/auth/APP_RUECKWEG_GOOGLE_2026-09-22.md.
+    const nativeApp = url.searchParams.get("native") === "1" ? 1 : 0;
     const state = signGithubAuthState({
       nonce: crypto.randomBytes(18).toString("base64url"),
       returnTo: "/profile?github=ok",
       handoff: handoff && handoffReturn ? handoff : "",
       handoffReturn: handoff && handoffReturn ? handoffReturn : "",
+      native: nativeApp,
       exp: Date.now() + 10 * 60 * 1000
     }, config.sessionSecret);
     const authorizeUrl = githubAuthorizeUrl({
@@ -109,7 +115,10 @@ export function createGithubAuthHandlers({
         res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?fehler=anmeldung_abgelaufen` });
         return res.end();
       }
-      res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?handoff=${encodeURIComponent(state.handoff)}` });
+      // Kam die Anmeldung aus der App-Huelle, steht der Nutzer jetzt im
+      // externen Browser. Die Markierung sagt der Anmeldeseite dort, dass sie
+      // das einmalige Ticket LIEGEN lassen soll — es gehoert der App.
+      res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?handoff=${encodeURIComponent(state.handoff)}${state?.native ? "&native=1" : ""}` });
       return res.end();
     }
     res.writeHead(303, { ...headers, Location: state?.returnTo || "/profile?github=ok" });
