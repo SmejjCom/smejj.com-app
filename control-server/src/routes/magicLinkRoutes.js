@@ -52,11 +52,17 @@ export function createMagicLinkHandlers({
     if (!EMAIL_RE.test(email)) return json(res, 400, { ok: false, error: "email_invalid" });
     const handoffReturn = safeReturnOrigin(body.returnOrigin);
     const handoff = String(body.handoff || "").trim();
+    // Die App-Huelle meldet ihren Start mit `native: true`. Nur 1/0 wandert in
+    // den signierten Link — es wandert KEINE Adresse aus der Anfrage in den
+    // Rueckweg. Gleiche Mechanik wie bei Google/GitHub/Apple, siehe
+    // docs/auth/APP_RUECKWEG_GOOGLE_2026-09-22.md.
+    const nativeApp = body.native === true || body.native === 1 || body.native === "1" ? 1 : 0;
     const token = signMagicToken({
       email,
       jti: crypto.randomBytes(18).toString("base64url"),
       handoff: handoff && handoffReturn ? handoff : "",
       handoffReturn: handoff && handoffReturn ? handoffReturn : "",
+      native: nativeApp,
       exp: nowMs() + TOKEN_TTL_MS
     }, secret());
     const link = `${originOf(req, url)}${ROUTES.api.authMagicLinkVerify}?token=${encodeURIComponent(token)}`;
@@ -118,7 +124,13 @@ export function createMagicLinkHandlers({
         }
       }
       if (completed.ok) {
-        res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?handoff=${encodeURIComponent(handoffId)}` });
+        // Die Markierung fuer die App-Huelle gilt NUR, solange das Ticket
+        // dasselbe geblieben ist. Musste oben ein frisches erzeugt werden
+        // (E-Mail spaeter geoeffnet), kennt die wartende App dessen Nummer
+        // nicht — dann muss die Anmeldeseite im Browser das Ticket einloesen
+        // wie bisher, sonst faende die Anmeldung gar nicht mehr statt.
+        const nativeTeil = data?.native && handoffId === data.handoff ? "&native=1" : "";
+        res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?handoff=${encodeURIComponent(handoffId)}${nativeTeil}` });
         return res.end();
       }
     }

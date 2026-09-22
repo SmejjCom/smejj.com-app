@@ -140,3 +140,49 @@ test("Callback: manipulierter State wird abgelehnt", async () => {
     new URL("https://c.example/api/auth/github/callback?code=abc&state=gefaelscht.xxx")
   ), /ungueltig/);
 });
+
+// Rueckweg in die App-Huelle — dieselbe Mechanik wie bei Google (Auftrag
+// Betreiber 22.09.2026: "mach die anderen Anmeldewege auch").
+test("App-Huelle: native=1 wandert in den State und zurueck in den Rueckweg", async () => {
+  const config = { githubLoginClientId: "cid", githubLoginClientSecret: "sec", sessionSecret: "s" };
+  const start = createGithubAuthHandlers({ ...baseDeps, config, fetchImpl: githubFetch() });
+  const res0 = mockRes();
+  await start.handleGithubAuthStart(
+    { headers: { host: "control.example", "x-forwarded-proto": "https" } },
+    res0,
+    new URL("https://control.example/api/auth/github?native=1&handoff=H1&returnOrigin=https%3A%2F%2Fsmejj.com")
+  );
+  const gestartet = new URL(res0.headers.Location);
+  // Der State ist signiert (payload.signature); der Inhalt steht im ersten Teil.
+  const inhalt = JSON.parse(Buffer.from(gestartet.searchParams.get("state").split(".")[0], "base64url").toString("utf8"));
+  assert.equal(inhalt.native, 1);
+
+  const h = createGithubAuthHandlers({
+    ...baseDeps, config, fetchImpl: githubFetch(),
+    sessionHandoffStore: { complete: () => ({ ok: true }) }
+  });
+  const state = signGithubAuthState({ handoff: "H1", handoffReturn: "https://smejj.com", native: 1, exp: Date.now() + 60000 }, "s");
+  const res = mockRes();
+  await h.handleGithubCallback(
+    { headers: { host: "control.example", "x-forwarded-proto": "https" } },
+    res,
+    new URL(`https://control.example/api/auth/github/callback?code=abc&state=${encodeURIComponent(state)}`)
+  );
+  assert.equal(res.headers.Location, "https://smejj.com/auth/login?handoff=H1&native=1");
+});
+
+test("ohne App-Huelle bleibt der GitHub-Rueckweg unveraendert", async () => {
+  const config = { githubLoginClientId: "cid", githubLoginClientSecret: "sec", sessionSecret: "s" };
+  const h = createGithubAuthHandlers({
+    ...baseDeps, config, fetchImpl: githubFetch(),
+    sessionHandoffStore: { complete: () => ({ ok: true }) }
+  });
+  const state = signGithubAuthState({ handoff: "H1", handoffReturn: "https://smejj.com", exp: Date.now() + 60000 }, "s");
+  const res = mockRes();
+  await h.handleGithubCallback(
+    { headers: { host: "control.example", "x-forwarded-proto": "https" } },
+    res,
+    new URL(`https://control.example/api/auth/github/callback?code=abc&state=${encodeURIComponent(state)}`)
+  );
+  assert.equal(res.headers.Location, "https://smejj.com/auth/login?handoff=H1");
+});

@@ -74,11 +74,17 @@ export function createAppleAuthHandlers({
     const handoff = String(url.searchParams.get("handoff") || "").trim();
     const handoffReturn = safeReturnOrigin(url.searchParams.get("returnOrigin"));
     const nonce = crypto.randomBytes(18).toString("base64url");
+    // Die App-Huelle meldet ihren Start mit `native=1`. Nur dieser eine Wert
+    // wird als 1/0 ins signierte Ticket uebernommen — es wandert KEINE Adresse
+    // aus der Anfrage in den Rueckweg (kein offener Redirect). Gleiche Mechanik
+    // wie bei Google, siehe docs/auth/APP_RUECKWEG_GOOGLE_2026-09-22.md.
+    const nativeApp = url.searchParams.get("native") === "1" ? 1 : 0;
     const state = signAppleAuthState({
       nonce,
       returnTo: "/profile?apple=ok",
       handoff: handoff && handoffReturn ? handoff : "",
       handoffReturn: handoff && handoffReturn ? handoffReturn : "",
+      native: nativeApp,
       exp: Date.now() + 10 * 60 * 1000
     }, config.sessionSecret);
     const authorizeUrl = appleAuthorizeUrl({
@@ -140,7 +146,9 @@ export function createAppleAuthHandlers({
         });
         return backToLogin(res, state, "anmeldung_abgelaufen", headers);
       }
-      res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?handoff=${encodeURIComponent(state.handoff)}` });
+      // Wie bei Google und GitHub: aus der Huelle gestartet heisst, der Nutzer
+      // steht jetzt im externen Browser — das Ticket bleibt dort liegen.
+      res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?handoff=${encodeURIComponent(state.handoff)}${state?.native ? "&native=1" : ""}` });
       return res.end();
     }
     res.writeHead(303, { ...headers, Location: state.returnTo || "/profile?apple=ok" });
