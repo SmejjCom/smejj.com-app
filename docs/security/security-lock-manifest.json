@@ -1,10 +1,10 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-22T07:03:51.330Z",
-  "confirmation": "Runde 2 (Betreiber 22.09.2026: 'mach die anderen Anmeldewege auch Apple Login') — GitHub, Apple und der Anmeldelink bekommen denselben Rueckweg wie Google. Runde 1 war: Betreiber 22.09.2026 im Chat: 'Ich habe App Testversion runtergeladen in mein iPhone, aber wenn ich mich versuche einloggen mit Google Login, ich bleibe immer im Browser, dann geht er nicht wieder zurueck zum App' — danach auf die Rueckfrage 'Ja'. Auftrag: den Rueckweg bauen. Geaendert sind nur der Rueckweg der Anmeldung (native=1, Ticket bleibt im Browser liegen, App holt es ab), 3 Texte in 14 Sprachen und die Cache-Nummer. Keine Aenderung an Pruefung, Rechten oder Abo-Kette.",
+  "frozenAt": "2026-09-22T07:57:26.999Z",
+  "confirmation": "Runde 4 (Betreiber 22.09.2026: 'Login Reinfolge: Google, Apple, GitHub, Fingerabdruck, eMail — alle mit Logos wie jetzt') — nur die Reihenfolge der Knoepfe, kein Knopf geaendert. Davor Runde 2 (Betreiber: 'mach die anderen Anmeldewege auch Apple Login') — GitHub, Apple und der Anmeldelink bekommen denselben Rueckweg wie Google. Runde 1 war: Betreiber 22.09.2026 im Chat: 'Ich habe App Testversion runtergeladen in mein iPhone, aber wenn ich mich versuche einloggen mit Google Login, ich bleibe immer im Browser, dann geht er nicht wieder zurueck zum App' — danach auf die Rueckfrage 'Ja'. Auftrag: den Rueckweg bauen. Geaendert sind nur der Rueckweg der Anmeldung (native=1, Ticket bleibt im Browser liegen, App holt es ab), 3 Texte in 14 Sprachen und die Cache-Nummer. Keine Aenderung an Pruefung, Rechten oder Abo-Kette.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "d2c824ebb86656fd608a839c2f125c4a142ac0300962b9f1898d73a7b84668e2",
+    "public/auth/login/index.html": "5517f14a85a614021c5313d135ef7cabd8f3838c59c80f6f4e3e104a0b0b8b11",
     "public/auth/register/index.html": "b9e6d32a3ffea724c5eb2e8dbd4176415975cfab906c90ccea51dfaaf8ebe8c6",
     "public/auth/auth-page.js": "d9b30771cf1319b1cf341e3043698839e50128e2fbeeed4ee8b054dcd6d11715",
     "public/auth/auth.css": "ae2641fdb167358f9bad1f4b844d68aec2b6c41268882973a63de81896c3a910",
