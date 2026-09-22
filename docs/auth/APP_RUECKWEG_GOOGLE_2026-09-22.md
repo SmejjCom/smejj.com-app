@@ -166,3 +166,32 @@ wird sie bei `visibilitychange`, `pageshow` und `focus`.
 | Tests | Google 12/12, GitHub 10/10, Apple 21/21, Anmeldelink 12/12, Frontend 742/742 |
 
 Anker `schutz-100-2026-09-22-app-rueckweg-v952`.
+
+---
+
+# Runde 4: Reihenfolge der Anmeldewege + Apple dreimal getestet (v953)
+
+Betreiber: "Login Reinfolge: Google fortfahren, Apple fortfahren, GitHub
+fortfahren, Mit Fingerabdruck fortfahren, Mit eMail fortfahren. alle mit Logos
+wie jetzt."
+
+Geaendert wurde nur die Reihenfolge im Block `#authProviders` (Anmelde- und
+Registrierseite plus assets-Spiegel); Beschriftungen, Logos und Verhalten sind
+unangetastet. Die Registrierseite stand bereits so. Live geprueft: die
+ausgelieferte Seite liefert die IDs in der Reihenfolge googleLogin, appleLogin,
+githubLogin, passkeyLogin, emailWeg — und am Simulator steht es genauso auf dem
+Schirm.
+
+## Apple-Login, drei Laeufe am Simulator (v953)
+
+| Lauf | Ausgangslage | Weg zurueck | Ergebnis |
+| --- | --- | --- | --- |
+| 1 | App frisch installiert | `smejj://auth/login` | Safari zeigt appleid.apple.com ("smejj web"), zurueck in der App: **"Anmeldung laeuft …"** |
+| 2 | App frisch installiert | `smejj://auth/login` | gleiches Ergebnis |
+| 3 | App frisch installiert | **nur App-Wechsel**, kein Deeplink | gleiches Ergebnis — das ist der Weg, der ohne neuen iPhone-Build funktioniert |
+
+**Was diese Laeufe NICHT abdecken:** die Anmeldung bei Apple selbst. Dafuer
+braucht es die Apple-ID des Betreibers — Zugangsdaten gibt diese Sitzung nicht
+ein. Geprueft ist damit alles bis zur Apple-Anmeldemaske und der komplette
+Rueckweg; den letzten Schritt (Apple-ID eingeben, Rueckkehr mit Token) muss der
+Betreiber einmal selbst gehen.
