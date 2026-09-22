@@ -24,11 +24,12 @@ resolutionCenterMessageAttachments` mit `resolutionCenterDraftMessage`, 15 PUTs 
 (3 parallel), `PATCH uploaded:true + md5`. Zwei liegengebliebene AWAITING_UPLOAD-Anhänge der Maske
 gelöscht, Entwurf per „Entwurf fortsetzen" gesendet.
 
-## Offen
-`PATCH reviewSubmissions submitted:true` antwortet 409 „Version is not ready to be submitted yet".
-Der Weg ist der Knopf **„Prüfung aktualisieren"** auf der Versionsseite, danach **„Erneut zur
-App-Prüfung übermitteln"**. Genau davor beendete sich Chrome; die ASC-Sitzung (Sitzungscookies) ist
-weg — Anmeldung mit Apple-ID + 2FA nötig.
+## Ergebnis
+**Erneut eingereicht am 22.09.2026 um 14:38 UTC** — Übermittlung f696cf68 steht auf WAITING_FOR_REVIEW,
+Element READY_FOR_REVIEW, Version 1.0 mit Build 3 (per Lese-API bestätigt). Weg: Versionsseite →
+„Prüfung aktualisieren" → Dialog „Neuerer Build verfügbar" (Build 4 einer Parallelsitzung, inhaltlich
+identisch) mit „Senden" bestätigt → „Erneut zur App-Prüfung übermitteln". Ein direktes
+`PATCH reviewSubmissions submitted:true` antwortet vorher 409 „Version is not ready".
 
 ## Am Gerät gefundene App-Befunde (nicht Teil dieser Einreichung)
 1. Profilmenü: der Tipp auf „Mein Konto"/„Einstellungen" ging meist DURCH das Menü auf die
