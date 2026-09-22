@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-22T23:48:15.693Z",
-  "confirmation": "Betreiber 23.09.2026 im Chat: 'Die drei Geraetebefunde beheben, A bis Z' (Befunde vom 22.09.: Profilmenue-Tipp geht durch, iOS-Auswahlleiste klebt, Gastfrage haengt). Geaendert: profile-dock-menu.js/profile-dock.css (Lage + Bedienflaeche), mobil-dock.js (Auswahl aufheben), gast-frage.js + willkommen-sprache.js + willkommen.html (Hinweis, Wache), Buendel, Cache v960. Nichts sonst an der Startseite.",
+  "frozenAt": "2026-09-22T23:51:57.270Z",
+  "confirmation": "Betreiber 23.09.2026 im Chat: 'Die drei Geraetebefunde beheben, A bis Z' (Befunde vom 22.09.: Profilmenue-Tipp geht durch, iOS-Auswahlleiste klebt, Gastfrage haengt). Geaendert: profile-dock-menu.js/profile-dock.css (Lage + Bedienflaeche), mobil-dock.js (Auswahl aufheben), gast-frage.js + willkommen-sprache.js + willkommen.html (Hinweis, Wache), Marke profile-dock.js -14, Buendel, Cache v960. Nichts sonst an der Startseite.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "2e5923c97f6d82998247bbe8c2a6ab1656c460c669f948acf8aefafb7fa6a257",
+    "public/index.html": "badda102f2edccee2fd6e72d5bb69564a1c22f701c2f123702f0a5044b767e19",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "725cdc70d3fc21e75d058ef1f162bfb7eed4bae65ba7ba89eea00f44e6c0f82d",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
