@@ -25,8 +25,8 @@ BAU="$HOME/smejj-app-rueckweg-bau"
 KLON="/Users/alanbest/smejj-app-frontend"
 ARBEITS_ZWEIG="feature/design-start-chat-2026-09-13"
 BAU_ZWEIG="feature/auth-redesign-github-magiclink"
-BASIS="c92c9296"    # der Stand, der als smejj-shell-v951 live ging
-WORTLAUT="Runde 2 (Betreiber 22.09.2026: 'mach die anderen Anmeldewege auch Apple Login') — GitHub, Apple und der Anmeldelink bekommen denselben Rueckweg wie Google. Runde 1 war: Betreiber 22.09.2026 im Chat: 'Ich habe App Testversion runtergeladen in mein iPhone, aber wenn ich mich versuche einloggen mit Google Login, ich bleibe immer im Browser, dann geht er nicht wieder zurueck zum App' — danach auf die Rueckfrage 'Ja'. Auftrag: den Rueckweg bauen. Geaendert sind nur der Rueckweg der Anmeldung (native=1, Ticket bleibt im Browser liegen, App holt es ab), 3 Texte in 14 Sprachen und die Cache-Nummer. Keine Aenderung an Pruefung, Rechten oder Abo-Kette."
+BASIS="6e07b8aa"    # der Stand, der als smejj-shell-v952 live ging
+WORTLAUT="Runde 4 (Betreiber 22.09.2026: 'Login Reinfolge: Google, Apple, GitHub, Fingerabdruck, eMail — alle mit Logos wie jetzt') — nur die Reihenfolge der Knoepfe, kein Knopf geaendert. Davor Runde 2 (Betreiber: 'mach die anderen Anmeldewege auch Apple Login') — GitHub, Apple und der Anmeldelink bekommen denselben Rueckweg wie Google. Runde 1 war: Betreiber 22.09.2026 im Chat: 'Ich habe App Testversion runtergeladen in mein iPhone, aber wenn ich mich versuche einloggen mit Google Login, ich bleibe immer im Browser, dann geht er nicht wieder zurueck zum App' — danach auf die Rueckfrage 'Ja'. Auftrag: den Rueckweg bauen. Geaendert sind nur der Rueckweg der Anmeldung (native=1, Ticket bleibt im Browser liegen, App holt es ab), 3 Texte in 14 Sprachen und die Cache-Nummer. Keine Aenderung an Pruefung, Rechten oder Abo-Kette."
 export GIT_TERMINAL_PROMPT=0
 export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 autor=(-c user.name="Wof Kadavanich" -c user.email=smejjcom@gmail.com)
@@ -248,6 +248,9 @@ done
 echo "$A" | grep -q "returnOrigin: origin, native" && echo "  auth-page.js gibt native auch dem Anmeldelink mit" || { echo "  Anmeldelink OHNE native"; OK=0; }
 echo "$A" | grep -q "imBrowserAnmelden" && echo "  Rueckweg-Bildschirm hat den zweiten Weg" || { echo "  zweiter Weg fehlt"; OK=0; }
 echo "$A" | grep -q "wacheNr" && echo "  die Wache startet beim Zurueckkommen neu" || { echo "  Wache ohne Laufnummer"; OK=0; }
+R=$(curl -s -m 20 "https://smejj.com/auth/login/?n=$RANDOM" | grep -o 'id="\(googleLogin\|appleLogin\|githubLogin\|passkeyLogin\|emailWeg\)"' | tr '\n' ' ')
+SOLL='id="googleLogin" id="appleLogin" id="githubLogin" id="passkeyLogin" id="emailWeg" '
+[ "$R" = "$SOLL" ] && echo "  Reihenfolge live: Google, Apple, GitHub, Fingerabdruck, E-Mail" || { echo "  Reihenfolge live FALSCH: $R"; OK=0; }
 
 echo "== 7. Jeder Precache-Eintrag live"
 cd "$APP"
