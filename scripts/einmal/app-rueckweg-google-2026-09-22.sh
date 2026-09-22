@@ -56,7 +56,9 @@ MEINE=($(git rev-list --reverse "$WT_BASIS..$WT_NEU"))
 echo "  ${#MEINE[@]} Commit(s), Spitze ${WT_NEU:0:8}, Basis ${WT_BASIS:0:8}"
 
 SCHON=0
-if [ -d "$BAU" ] && git -C "$BAU" log -1 --pretty=%s 2>/dev/null | grep -q "v949"; then
+# Nicht an der Cache-Nummer erkennen (die wandert mit jeder Nachrunde), sondern
+# an der Spitze selbst: cherry-pick -x schreibt den Quell-Commit in die Nachricht.
+if [ -d "$BAU" ] && git -C "$BAU" log --format=%B -30 2>/dev/null | grep -q "$WT_NEU"; then
   SCHON=1
   echo "  $BAU traegt den Bau schon ($(git -C "$BAU" rev-parse --short HEAD))"
 fi
