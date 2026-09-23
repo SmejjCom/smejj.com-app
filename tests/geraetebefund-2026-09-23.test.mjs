@@ -220,3 +220,34 @@ test("(5) Schreibfeld am Handy hoechstens 148 px (Betreiber-Freigabe 23.09.) —
   assert.match(REGELN, /html body #start\.view \.prompt-glass #startMessage#startMessage#startMessage\{max-height:148px\}/);
   assert.match(REGELN, /body #code \.codefeld #codeAufgabe\{max-height:148px;overflow-y:auto/);
 });
+
+test("(6) Bild erneut anfordern ohne Neumalen: abgerissener Strom -> dasselbe Bild aus der Bruecken-Ablage", async () => {
+  const { holeBildNach, inhaltAusSse, istVollstaendigesBild } = await import("../public/ai/bild-nachholen.js");
+  const png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+  const bild = `Hier ist dein Bild:\n\n![Erstelltes Bild](data:image/png;base64,${png})`;
+  const sse = `data: ${JSON.stringify({ choices: [{ delta: { content: bild.slice(0, 30) } }] })}\n\ndata: ${JSON.stringify({ choices: [{ delta: { content: bild.slice(30) } }] })}\n\ndata: [DONE]\n\n`;
+  assert.equal(inhaltAusSse(sse), bild);
+  assert.equal(istVollstaendigesBild(bild), true);
+  assert.equal(istVollstaendigesBild(bild.slice(0, -5)), false, "halber Block zaehlt nie als Bild");
+  const abriss = "Hier ist dein Bild:\n\nDie Bild-Übertragung ist abgerissen — bitte fordere es einfach noch einmal an.";
+  // Erfolg im zweiten Versuch (erster: Netz noch weg).
+  const out = { textContent: abriss };
+  let versuche = 0; let gerendert = 0;
+  const ok = await holeBildNach({ output: out, warte: async () => {}, renderMarkdown: () => { gerendert += 1; },
+    anfrage: async () => { versuche += 1; if (versuche === 1) throw new Error("offline"); return { ok: true, text: async () => sse }; } });
+  assert.equal(ok, true);
+  assert.equal(out.textContent, bild);
+  assert.equal(versuche, 2);
+  assert.equal(gerendert, 1);
+  // Scheitert alles: der ehrliche Abriss-Satz bleibt, nie ein halbes Bild.
+  const out2 = { textContent: abriss };
+  const nein = await holeBildNach({ output: out2, warte: async () => {}, anfrage: async () => ({ ok: true, text: async () => "data: {\"choices\":[{\"delta\":{\"content\":\"![x](data:image/png;base64,iVBO\"}}]}\n\n" }) });
+  assert.equal(nein, false);
+  assert.equal(out2.textContent, abriss);
+  // Ohne Abriss: nichts tun.
+  assert.equal(await holeBildNach({ output: { textContent: "Normale Antwort" }, anfrage: async () => { throw new Error("darf nicht"); } }), false);
+  const q = fs.readFileSync("public/ai/chat-stream.js", "utf8");
+  assert.match(q, /if \(!lauf\.gestoppt && BILD_ABRISS\.test\(output\?\.textContent \|\| ""\)\)/, "nie nach bewusstem Stopp");
+  assert.match(q, /bildErneut: true/);
+  assert.match(fs.readFileSync("public/sw.js", "utf8"), /"\/assets\/ai\/bild-nachholen\.js"/, "offline im Precache");
+});
