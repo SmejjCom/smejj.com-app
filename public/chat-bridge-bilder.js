@@ -610,9 +610,11 @@ async function streamVideoSpur(res, body, videoPrompt, deps, sprache = "de") {
   videoSchritt(res, "laeuft", w.etwa, sprache);
   const beginn = Date.now();
   let phase = w.laeuft;
+  // Sekunden-Einheit wie in der Mal-Zeile ("秒", "초", "sn" …), nicht fest "s".
+  const einheit = bildSchritte(sprache).sek.split("{n}")[1] || " s";
   // Lebenszeichen alle 10 s, damit Zwischenknoten die Leitung nicht kappen.
   const takt = setInterval(() => {
-    videoSchritt(res, "laeuft", `${phase} … ${Math.round((Date.now() - beginn) / 1000)} s`, sprache);
+    videoSchritt(res, "laeuft", `${phase} … ${Math.round((Date.now() - beginn) / 1000)}${einheit}`, sprache);
   }, 10000);
   let video = null;
   try {

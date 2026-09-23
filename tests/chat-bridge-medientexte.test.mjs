@@ -77,3 +77,9 @@ test("franzoesisch: ist die Video-Engine weg, stehen Zeile, Hinweis und Vorschla
   assert.match(text, /Dessine une image de/);
   assert.doesNotMatch(text, /Video-Engine|Zeichne ein Bild/);
 });
+
+test("die Sekunden-Einheit der Video-Zeile folgt der Sprache wie in der Mal-Zeile", () => {
+  const quelle = readFileSync(new URL("../public/chat-bridge-bilder.js", import.meta.url), "utf8");
+  assert.match(quelle, /\$\{phase\} … \$\{Math\.round\(\(Date\.now\(\) - beginn\) \/ 1000\)\}\$\{einheit\}/);
+  assert.doesNotMatch(quelle, /\$\{phase\} … [^`]*\} s`/);
+});
