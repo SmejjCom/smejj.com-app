@@ -59,6 +59,13 @@ MAX_B64 = 8_000_000
 # CRF-Stufen sind sichtbar weniger Matsch; ein 8-s-Video waechst von ~90 auf
 # ~140 KB und bleibt weit unter dem 8-MB-Deckel der Bruecke.
 CRF = int(os.environ.get("SMEJJ_VIDEO_CRF", "23"))
+# Uebertragung ist der Flaschenhals, nicht das Kodieren (Messung 23.09.2026: das
+# MP4 kommt als base64 im Chat-Strom, 647 KB mit ~17 KB/s = 38 s; das Kodieren
+# selbst dauert ~1 s). "slow" statt "veryfast" gibt bei GLEICHEM CRF, also
+# gleicher Bildqualitaet, eine deutlich kleinere Datei. Die Stimme ist Sprache:
+# mono 48 kbit/s statt stereo 96 kbit/s hoert man nicht, spart aber die Haelfte.
+PRESET = os.environ.get("SMEJJ_VIDEO_PRESET", "slow")
+TON_BITRATE = os.environ.get("SMEJJ_VIDEO_TON_BITRATE", "48k")
 # Nachschaerfen des Basisbilds (2026-08-13): SD-Turbo malt weich, und die
 # bilineare Abtastung beim Warping glaettet zusaetzlich. EINMAL am Bild
 # geschaerft (nicht je Frame — das waere 96x der Aufwand) hebt die
@@ -590,7 +597,7 @@ def mische_ton(mp4_bytes, wav_bytes):
                 datei.write(wav_bytes)
             lauf = subprocess.run(
                 [get_ffmpeg_exe(), "-y", "-i", stumm, "-i", ton,
-                 "-c:v", "copy", "-c:a", "aac", "-b:a", "96k",
+                 "-c:v", "copy", "-c:a", "aac", "-b:a", TON_BITRATE, "-ac", "1",
                  "-shortest", "-movflags", "+frag_keyframe+empty_moov+default_base_moof", ziel],
                 capture_output=True, timeout=60,
             )
@@ -615,7 +622,7 @@ def kodiere_mp4(frames):
             fps=FPS,
             codec="libx264",
             quality=None,
-            ffmpeg_params=["-crf", str(CRF), "-preset", "veryfast", "-pix_fmt", "yuv420p", "-movflags", "+frag_keyframe+empty_moov+default_base_moof"],
+            ffmpeg_params=["-crf", str(CRF), "-preset", PRESET, "-pix_fmt", "yuv420p", "-movflags", "+frag_keyframe+empty_moov+default_base_moof"],
         )
         for frame in frames:
             schreiber.append_data(np.asarray(frame))
