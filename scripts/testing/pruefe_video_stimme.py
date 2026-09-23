@@ -43,7 +43,13 @@ def stubbe_umgebung():
             return {}
 
     requests = types.ModuleType("requests")
-    requests.post = lambda *a, **k: antworten.get("post", Antwort(b""))
+    def post(url, *a, **k):
+        antworten.setdefault("aufrufe", []).append((url.rsplit("/", 1)[-1], k.get("json")))
+        if url.endswith("/download"):
+            return antworten.get("download", Antwort(b"ok"))
+        return antworten.get("post", Antwort(b""))
+
+    requests.post = post
     requests.get = lambda *a, **k: antworten.get("get", Antwort(b""))
     sys.modules["requests"] = requests
 
@@ -95,6 +101,26 @@ def main():
         if hat_ton != erwartet_ton:
             fehler.append(f"{name}: erwartet {'Ton' if erwartet_ton else 'kein Ton'}")
 
+    # Sprache der Erzaehlung (2026-09-23): passende Piper-Stimme nachladen und
+    # benutzen; ohne Stimme oder bei Ladefehler STUMM statt deutscher Stimme.
+    antworten["post"] = Antwort(mach_wav(6.0))
+    for name, sprache, download, erwartet_ton, erwartet_stimme in [
+        ("Englisch: Stimme laden und sprechen", "en", Antwort(b"en_US-lessac-medium"), True, "en_US-lessac-medium"),
+        ("Deutsch: Standardstimme, kein Nachladen", "de", Antwort(b"x"), True, None),
+        ("Japanisch: keine Stimme -> stumm", "ja", Antwort(b"x"), False, None),
+        ("Laden scheitert -> stumm", "fr", Antwort(b"", ok=False, status=500), False, None),
+    ]:
+        antworten["aufrufe"] = []
+        antworten["download"] = download
+        ergebnis = server.hole_erzaehlstimme(text, sprache)
+        synth = [j for (pfad, j) in antworten["aufrufe"] if pfad == "synthesize"]
+        stimme = synth[0].get("voice") if synth else None
+        geladen = any(pfad == "download" for (pfad, _) in antworten["aufrufe"])
+        gut = (ergebnis is not None) == erwartet_ton and stimme == erwartet_stimme and (geladen == (sprache not in ("de", "ja")))
+        print(f"  {'OK ' if gut else 'FEHLER'} {name}: {'Ton' if ergebnis else 'kein Ton'}, Stimme {stimme}")
+        if not gut:
+            fehler.append(f"{name}: falsch")
+
     # Kuerzen darf nie mitten im Wort enden — Piper spricht Bruchstuecke aus.
     lang = "Erster Satz hier. Zweiter Satz folgt. " + "Ein dritter sehr langer Satz der weit hinausgeht. " * 5
     gekuerzt = server.kuerze_auf_satz(lang, 60)
@@ -108,7 +134,7 @@ def main():
     if fehler:
         print("\nBEFUND:\n  - " + "\n  - ".join(fehler))
         return 1
-    print(f"\nAlle {len(faelle) + 2} Pruefungen gruen.")
+    print(f"\nAlle {len(faelle) + 6} Pruefungen gruen.")
     return 0
 
 
