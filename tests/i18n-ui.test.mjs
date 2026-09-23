@@ -39,7 +39,8 @@ const ersteSchritte = fs.readFileSync(path.join(publicDir, "erste-schritte.js"),
 const voiceOverlayUi = fs.readFileSync(path.join(publicDir, "voice-overlay-ui.js"), "utf8");
 const voiceRealtime = fs.readFileSync(path.join(publicDir, "voice-realtime.js"), "utf8");
 const composerTools = fs.readFileSync(path.join(publicDir, "composer-tools.js"), "utf8")
-  + fs.readFileSync(path.join(publicDir, "composer-dictation.js"), "utf8"); // Diktat-Hinweise (Geraetebefund 23.09.2026)
+  + fs.readFileSync(path.join(publicDir, "composer-dictation.js"), "utf8") // Diktat-Hinweise (Geraetebefund 23.09.2026)
+  + fs.readFileSync(path.join(publicDir, "chat-store.js"), "utf8"); // Hinweis Bild-Rettung (24.09.2026)
 // Oberflaechen-Reste (20.09.2026): Schrittzeile, Arbeitsflaechen-Karte, Erste
 // Fuehrung — bis dahin feste deutsche Texte, jetzt uebersetzbar.
 const schritteAnzeige = fs.readFileSync(path.join(publicDir, "ai", "chat-schritte-anzeige.js"), "utf8");

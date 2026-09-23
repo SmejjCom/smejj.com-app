@@ -251,3 +251,85 @@ test("(6) Bild erneut anfordern ohne Neumalen: abgerissener Strom -> dasselbe Bi
   assert.match(q, /bildErneut: true/);
   assert.match(fs.readFileSync("public/sw.js", "utf8"), /"\/assets\/ai\/bild-nachholen\.js"/, "offline im Precache");
 });
+
+test("(7) Code-Schreibfeld unten transparent wie im Chat (Betreiber-Freigabe 24.09.) — Verlauf laeuft darunter weiter", async () => {
+  assert.match(REGELN, /body #code\.view \.codeunten\.codeunten\{position:absolute;left:0;right:0;bottom:0;z-index:5;background:none\}/);
+  assert.match(REGELN, /body #code\.view \.codefeld\.codefeld\{background:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:none!important/);
+  assert.match(REGELN, /padding-bottom:calc\(var\(--code-feld-hoehe,58px\) \+ 14px\)/);
+  // Die Regeln stehen im Handy-Block (max-width:600px), der Desktop bleibt unberuehrt.
+  const handy = REGELN.slice(REGELN.indexOf("@media (max-width:600px){"), REGELN.indexOf("@media (display-mode:standalone)"));
+  assert.ok(handy.includes(".codeunten.codeunten{position:absolute"), "nur am Handy");
+  const { verdrahteCodeFeldHoehe } = await import("../public/mobil-dock.js");
+  const stil = new Map();
+  let beobachtet = null;
+  const unten = { getBoundingClientRect: () => ({ height: 54 }) };
+  const halter = { scrollHeight: 2000, scrollTop: 1100, clientHeight: 900 };
+  const doc = { querySelector: () => unten, getElementById: () => halter, documentElement: { style: { setProperty: (k, v) => stil.set(k, v) } } };
+  const win = { ResizeObserver: class { constructor(fn) { beobachtet = fn; } observe() {} } };
+  assert.equal(verdrahteCodeFeldHoehe(doc, win), true);
+  assert.equal(stil.get("--code-feld-hoehe"), "54px");
+  unten.getBoundingClientRect = () => ({ height: 120 });
+  halter.scrollHeight = 2100;
+  beobachtet();
+  assert.equal(stil.get("--code-feld-hoehe"), "120px", "waechst mit dem Feld");
+  assert.equal(halter.scrollTop, 2100, "am Ende bleibt der Verlauf am Ende");
+});
+
+test("(8) Rettung nach App-Neustart: verwaister Bild-Platzhalter -> Bild aus der Ablage, sonst Hinweis statt ewigem Schimmer", async () => {
+  const { rettePlatzhalter, auftragAus } = await import("../public/ai/bild-nachholen.js");
+  const png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+  const bild = `Hier ist dein Bild:\n\n![Erstelltes Bild](data:image/png;base64,${png})`;
+  const sse = `data: ${JSON.stringify({ choices: [{ delta: { content: bild } }] })}\n\ndata: [DONE]\n\n`;
+  // Kleine DOM-Attrappe: Nutzerblase, Schritte-Eintrag mit Platzhalter und Standzeile.
+  function baue() {
+    const eintraege = [];
+    const knoten = (klassen, text = "") => {
+      const k = { klassen: new Set(klassen), textContent: text, dataset: {}, kinder: [], entfernt: false,
+        matches: (sel) => sel.split(".").filter(Boolean).every((c) => k.klassen.has(c)),
+        remove() { k.entfernt = true; }, cloneNode() { return { textContent: k.textContent, querySelectorAll: () => [] }; },
+        querySelectorAll: (sel) => k.kinder.filter((c) => sel.includes(".chat-schritt-stand") ? c.klassen.has("chat-schritt-stand") : c.klassen.has("chat-bild-platzhalter")),
+        querySelector: (sel) => (sel === "img" ? null : null) };
+      return k;
+    };
+    const nutzer = knoten(["entry", "user"], "Generate an image of: a blue hot air balloon over Cappadocia");
+    const schritte = knoten(["entry", "assistant", "chat-schritte"]);
+    const stand = knoten(["chat-schritt-stand"], " running … 20 s");
+    const karte = knoten(["chat-bild-platzhalter"]);
+    karte.closest = () => schritte;
+    schritte.kinder.push(stand, karte);
+    eintraege.push(nutzer, schritte);
+    const nachbar = (k, d) => { const i = eintraege.indexOf(k); return eintraege[i + d] || null; };
+    for (const k of [nutzer, schritte]) {
+      Object.defineProperty(k, "nextElementSibling", { get: () => nachbar(k, 1) });
+      Object.defineProperty(k, "previousElementSibling", { get: () => nachbar(k, -1) });
+    }
+    schritte.after = (neu) => eintraege.splice(eintraege.indexOf(schritte) + 1, 0, neu);
+    const log = { querySelectorAll: () => (karte.entfernt ? [] : [karte]) };
+    const doc = { createElement: () => ({ className: "", textContent: "" }) };
+    return { log, doc, eintraege, stand, karte };
+  }
+  // Treffer in der Ablage.
+  let gefragt = "";
+  const a = baue();
+  let gerendert = 0;
+  const n = await rettePlatzhalter(a.log, { doc: a.doc, renderMarkdown: () => { gerendert += 1; },
+    anfrage: async (auftrag) => { gefragt = auftrag; return { ok: true, text: async () => sse }; } });
+  assert.equal(n, 1);
+  assert.equal(gefragt, "Generate an image of: a blue hot air balloon over Cappadocia", "genau der urspruengliche Auftrag");
+  assert.equal(a.eintraege[2].textContent, bild, "Bild steht unter den Schritten");
+  assert.equal(a.eintraege[2].className, "entry assistant");
+  assert.equal(gerendert, 1);
+  assert.equal(a.karte.entfernt, true, "kein Schimmer mehr");
+  assert.equal(a.stand.textContent, " ✓");
+  // Kein Treffer / kein Netz: ehrlicher Hinweis, Schimmer weg.
+  const b = baue();
+  assert.equal(await rettePlatzhalter(b.log, { doc: b.doc, hinweis: "HINWEIS", anfrage: async () => { throw new Error("offline"); } }), 0);
+  assert.equal(b.eintraege[2].textContent, "HINWEIS");
+  assert.equal(b.karte.entfernt, true);
+  assert.equal(b.stand.textContent, " —");
+  assert.equal(auftragAus(null), "");
+  // Einhaengung in chat-store.js: nur bildNurAblage (nie neu malen).
+  const store = fs.readFileSync("public/chat-store.js", "utf8");
+  assert.match(store, /if \(log\.querySelector\("\.chat-bild-platzhalter"\)\) rettePlatzhalterSpaeter\(log\);/);
+  assert.match(store, /bildErneut: true, bildNurAblage: true/);
+});
