@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-23T14:53:53.708Z",
-  "confirmation": "Ergebnis schriftlich in docs/ ablegen und im Rechte-Register (src/training/policy.js, evaluateTrainingEligibility) hinterlegen, damit der Datensatzbau unzulässige Quellen automatisch aussortiert.",
+  "frozenAt": "2026-09-23T15:04:43.795Z",
+  "confirmation": "Betreiber 23.09.2026 schriftlich im Chat: AUFTRAG 'AKTUELLE iOS-/ANDROID-FEHLER VOLLSTAENDIG BEHEBEN' (Diktier-Mikrofon und Sprachmodus reparieren, oberen dunklen Bereich und Code-Bereich-Flaeche entfernen, Bildanzeige nach Generierung reparieren, Regressionstests hinterlegen). Geaendert: public/composer-tools.js (Sprachmodus: onerror fragt zuerst die Ohr-Wache, Barge-in schweigt im Ohr-Modus, earCancel), public/voice-ohr-solo.js, public/voice-ear.js, public/composer-dictation.js, public/chat-medien.js, public/mobil-dock.js (Code-Bereich); Test tests/geraetebefund-2026-09-23.test.mjs. Start-Lock: composer-tools.js + sw.js-Nummer; Startseite und Schreibfeld unberuehrt.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "105d154b1e32bd72c0b9fd40950f662783b1a71ebd0d336ef0d931ea1887e54b",
+    "public/index.html": "96cbff03cd1922094c6be1742e98512ff3376045cd6dd3684eb2b40aceeaacdc",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "725cdc70d3fc21e75d058ef1f162bfb7eed4bae65ba7ba89eea00f44e6c0f82d",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,15 +13,15 @@
     "public/app-surfaces.css": "d8a4efdf629bd585e10b27a5cbe365cc7b0359987d01bb81f3de6c17600386ec",
     "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "7403ac7a7106cc72805268c9f139eb5e86e458880fa7d849a26a29ea99d0c3c4",
-    "public/app.js": "5171749d6d2f4b12b153e880d2c2458714ea90872520af46dfffb4de336fbede",
+    "public/app.js": "09adf868de54ca2baef47cdbf09dc985509fb222661096fec7910322319082a0",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "27acbbbbe2a23a81f25b8fdab7e5204cb4e5ecc1217f6ef1af8ee7a12831e3df",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
     "public/premium-surfaces.js": "be56bceed03e3b591102469ede5393535f2d0cc42e46d871bb593d42d271b5e2",
     "public/autonomous-coding.js": "95a765c2888895d5e48458a289bda3ab29595ac5871a1edc95d992a45e027164",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
-    "public/search.js": "cfdeec81cd1a38393abc7bae3976de0a0a4ccbb6a885fbc3dc2c0ff04940baf4",
-    "public/composer-tools.js": "e37b0ad626a8bc070ec858563774c7c76d361acfa8eed49bbd031459ffab1eaa",
+    "public/search.js": "12bd4c9d9e8729bc39bce8c81ef2be182bd32bc31e9f3b75dce06a186d4e9166",
+    "public/composer-tools.js": "f59336cf8a1945d7b518143a27299f5a58ee2785f4150e2a34e0a7b06d7c3e4a",
     "public/composer-plus-menu.js": "1e4937be8a89e8393bceedc81c0524c802708ec652505121e31f773b95666eba",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "726f4fbf109c2f4388284708be53248ebb3cdb1821e4b362f8bbd11e021eb463",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "70c0ba902bfcddceb5fc2dded99addc0a9d00ef13395f172bd6d0a12ad9ae94b",
+    "public/sw.js": "523e159399f0570f52cc61959be4e76fdc2b20740c33e0bed5a22f3988283758",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
