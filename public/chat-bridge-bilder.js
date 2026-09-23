@@ -490,7 +490,7 @@ export function videoHinweis(engine, ton = false, sprache = "de") {
 // Laesst smejj 1.0 zwei Saetze zur Szene schreiben, die Piper spricht.
 // Fail-safe: bei jedem Fehler entsteht das Video eben stumm.
 async function schreibeErzaehltext(prompt, sprache = "de") {
-  if (!BILDER_API_KEY || !BILDER_BASE_URL) return "";
+  if (!BILDER_API_KEY || !BILDER_BASE_URL) { console.log("smejj Erzaehltext leer: kein Modellzugang"); return ""; }
   try {
     const antwort = await fetch(`${BILDER_BASE_URL}/chat/completions`, {
       method: "POST",
@@ -519,13 +519,19 @@ async function schreibeErzaehltext(prompt, sprache = "de") {
         max_tokens: 800
       })
     });
-    if (!antwort.ok) return "";
-    const text = String((await antwort.json())?.choices?.[0]?.message?.content || "")
+    // Jeder stille Ausfall bekommt EINE Logzeile (ohne Inhalt, ohne Schluessel):
+    // der leere Erzaehltext blieb so einen Monat lang unbemerkt.
+    if (!antwort.ok) { console.log(`smejj Erzaehltext leer: http_${antwort.status}`); return ""; }
+    const wahl = (await antwort.json())?.choices?.[0] || {};
+    const text = String(wahl.message?.content || "")
       .replace(/[*_`#>]/g, "")
       .replace(/\s+/g, " ")
       .trim();
-    return text.length >= 10 && text.length <= 300 ? text : "";
-  } catch {
+    if (text.length >= 10 && text.length <= 300) return text;
+    console.log(`smejj Erzaehltext leer: laenge ${text.length}, finish ${wahl.finish_reason || "?"}, sprache ${sprache}`);
+    return "";
+  } catch (fehler) {
+    console.log(`smejj Erzaehltext leer: ${fehler?.name || "Fehler"}`);
     return "";
   }
 }
