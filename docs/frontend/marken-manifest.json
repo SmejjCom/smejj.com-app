@@ -78,8 +78,8 @@
       "finger": "518d644a4f3dc1f4"
     },
     "premium-surfaces.js": {
-      "marke": "b47v-16",
-      "finger": "5f83d5e17c14b6b7"
+      "marke": "b47v-17",
+      "finger": "be56bceed03e3b59"
     },
     "composer-tools.js": {
       "marke": "werkzeuge-33",
@@ -249,6 +249,10 @@
       "marke": "emojifrei-20260825",
       "finger": "72cebfa9838bcdcc"
     },
+    "lern-hinweis.js": {
+      "marke": "1",
+      "finger": "147a6dbb41aa5df6"
+    },
     "chat-actions-text.js": {
       "marke": "1",
       "finger": "23d958d0582aaaaf"
@@ -398,8 +402,8 @@
       "finger": "224dace78b92459e"
     },
     "app.js": {
-      "marke": "model-picker-20260735",
-      "finger": "47e5b74c91bca69b"
+      "marke": "lernweg-20260923",
+      "finger": "5171749d6d2f4b12"
     },
     "pwa-schnellstart.js": {
       "marke": "25",
@@ -418,8 +422,8 @@
       "finger": "60e153de6e7962c0"
     },
     "chat-actions.js": {
-      "marke": "b80",
-      "finger": "4e808d7f996ec7bb"
+      "marke": "b81",
+      "finger": "b31f45317f3af5e1"
     },
     "panel-status.js": {
       "marke": "1",
@@ -454,12 +458,12 @@
       "finger": "95a765c2888895d5"
     },
     "settings-surface.js": {
-      "marke": "b68",
-      "finger": "e5c29e44da13a400"
+      "marke": "b69",
+      "finger": "ec720496914af140"
     },
     "account-privacy.js": {
-      "marke": "14",
-      "finger": "f97224fba837f6f3"
+      "marke": "15",
+      "finger": "cab8dff245689474"
     },
     "auth-gate.js": {
       "marke": "8",

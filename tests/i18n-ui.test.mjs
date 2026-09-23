@@ -48,7 +48,9 @@ const fuehrung = fs.readFileSync(path.join(publicDir, "fuehrung.js"), "utf8");
 // stehen deutsch in chat-actions-menu.js, uebersetzt wird beim Einhaengen (chat-menue-mehr.js).
 const inhaltMelden = fs.readFileSync(path.join(publicDir, "inhalt-melden.js"), "utf8");
 // Stufe 1 der Uebersetzungs-Inventur (20.09.2026): Chat-Oberflaeche.
-const chatActions = fs.readFileSync(path.join(publicDir, "chat-actions.js"), "utf8");
+const chatActions = fs.readFileSync(path.join(publicDir, "chat-actions.js"), "utf8")
+  // Lern-Hinweis nach Daumen hoch (23.09.2026) — eigenes, nachgeladenes Modul.
+  + fs.readFileSync(path.join(publicDir, "lern-hinweis.js"), "utf8");
 const chatActionsMenu = fs.readFileSync(path.join(publicDir, "chat-actions-menu.js"), "utf8");
 const chatHistoryCards = fs.readFileSync(path.join(publicDir, "chat-history-cards.js"), "utf8");
 const chatHistoryView = fs.readFileSync(path.join(publicDir, "chat-history-view.js"), "utf8");
