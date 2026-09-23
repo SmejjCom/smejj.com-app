@@ -65,7 +65,7 @@ DNSimple „Why DNSSEC and Secondary DNS may not work together".
   +30 min Speicherzeit mehr Risiko als Nutzen sind. Zone nachweislich unverändert (Werte gleich, SOA-Serial 1789735811).
 - **Neu gesehen, im Soll-Register bisher nicht geführt:** `cloud.smejj.com CNAME smejj-cloud.zeabur.app` (Standardgruppe)
   und `admin.smejj.com A 15.197.162.184` (Spaceship-URL-Weiterleitung, TTL 5 min). Die Spaceship-Weiterleitungsgruppe
-  hält MX/SPF mit 20 min fest (nicht änderbar). Beides beim nächsten Umbau in die Ist-Tabelle aufnehmen.
+  hält MX/SPF mit 20 min fest (nicht änderbar). Seit 23.09. in `DNS_SOLL` (Nr. 87 prüft beide mit).
 - **Folge:** Echte Ausfallsicherheit gibt es nur mit C2 (Zone umziehen, Abschnitt 6). Solange Nr. 87 keine weiteren
   Ausfälle zählt, bleibt es beim Messen.
 

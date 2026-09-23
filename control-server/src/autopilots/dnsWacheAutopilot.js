@@ -44,6 +44,12 @@ export const DNS_SOLL = Object.freeze({
   a: Object.freeze(["185.199.108.153", "185.199.109.153", "185.199.110.153", "185.199.111.153"]),
   aaaa: Object.freeze(["2606:50c0:8000::153", "2606:50c0:8001::153", "2606:50c0:8002::153", "2606:50c0:8003::153"]),
   apiCname: "smejj-control.zeabur.app",
+  // Seit 23.09. mitbewacht (Betreiber: „nimm cloud und admin in DNS_SOLL auf"). admin ist eine
+  // Spaceship-URL-Weiterleitung — ändert Spaceship die Adresse seiner Weiterleitung, meldet das hier Rot.
+  cloud: "cloud.smejj.com",
+  cloudCname: "smejj-cloud.zeabur.app",
+  admin: "admin.smejj.com",
+  adminA: Object.freeze(["15.197.162.184"]),
   mx: Object.freeze(["mx1.efwd.spaceship.net", "mx2.efwd.spaceship.net"]),
   caa: Object.freeze(["issue letsencrypt.org"])
 });
@@ -70,12 +76,15 @@ function baueResolver(ip) {
  */
 export async function frageNameserver(ip, { resolverFabrik = baueResolver } = {}) {
   const begonnen = Date.now();
-  const erg = { ip, ok: false, fehler: null, a: [], aaaa: [], cname: [], mx: [], caa: [], ms: 0 };
+  const erg = { ip, ok: false, fehler: null, a: [], aaaa: [], cname: [], cloudCname: [], adminA: [], mx: [], caa: [], ms: 0 };
   try {
     const r = resolverFabrik(ip);
     erg.a = await r.resolve4(DNS_SOLL.zone);
     erg.aaaa = await r.resolve6(DNS_SOLL.zone).catch(() => []);
     erg.cname = await r.resolveCname(DNS_SOLL.api);
+    // Fehlt einer der beiden, ist das eine Soll-Abweichung, kein gestörter Nameserver.
+    erg.cloudCname = await r.resolveCname(DNS_SOLL.cloud).catch(() => []);
+    erg.adminA = await r.resolve4(DNS_SOLL.admin).catch(() => []);
     erg.mx = (await r.resolveMx(DNS_SOLL.zone)).map((m) => m.exchange);
     erg.caa = (await r.resolveCaa(DNS_SOLL.zone)).map((c) => (c.issue ? `issue ${c.issue}` : c.issuewild ? `issuewild ${c.issuewild}` : JSON.stringify(c)));
     erg.ok = true;
@@ -105,12 +114,14 @@ export async function frageDoh(name, typ, { fetchImpl = fetch } = {}) {
   }
 }
 
-/** Vergleicht einen Ist-Stand (a/aaaa/cname/mx/caa) mit DNS_SOLL. Leere Liste = alles wie eingefroren. */
+/** Vergleicht einen Ist-Stand (a/aaaa/cname/cloudCname/adminA/mx/caa) mit DNS_SOLL. Leere Liste = alles wie eingefroren. */
 export function vergleicheSoll(ist) {
   const ab = [];
   if (!gleich(ist.a, DNS_SOLL.a)) ab.push(`A ${norm(ist.a).join(",") || "—"} statt ${DNS_SOLL.a.join(",")}`);
   if (ist.aaaa?.length && !gleich(ist.aaaa, DNS_SOLL.aaaa)) ab.push(`AAAA ${norm(ist.aaaa).join(",")}`);
   if (!gleich(ist.cname, [DNS_SOLL.apiCname])) ab.push(`api.smejj.com → ${norm(ist.cname).join(",") || "—"} statt ${DNS_SOLL.apiCname}`);
+  if (!gleich(ist.cloudCname, [DNS_SOLL.cloudCname])) ab.push(`cloud.smejj.com → ${norm(ist.cloudCname).join(",") || "—"} statt ${DNS_SOLL.cloudCname}`);
+  if (!gleich(ist.adminA, DNS_SOLL.adminA)) ab.push(`admin.smejj.com A ${norm(ist.adminA).join(",") || "—"} statt ${DNS_SOLL.adminA.join(",")}`);
   if (!gleich(ist.mx, DNS_SOLL.mx)) ab.push(`MX ${norm(ist.mx).join(",") || "—"}`);
   if (!gleich(ist.caa, DNS_SOLL.caa)) ab.push(`CAA ${norm(ist.caa).join(",") || "—"}`);
   return ab;
@@ -143,7 +154,7 @@ export function beurteile({ netzOk, udpMoeglich, nameserver = [], doh, dohApi, a
   if (gestoert.length) hinweise.push(`HINWEIS: ein Nameserver gestört (${gestoert.map((n) => `${n.ip}: ${n.fehler}`).join(", ")}) — Auflösung geht noch über den zweiten`);
   if (!udpMoeglich) hinweise.push("HINWEIS: Nameserver vom Server aus nicht einzeln messbar (UDP/53 gesperrt) — Urteil nur über Google-DNS");
   const gesund = nameserver.filter((n) => n.ok);
-  const kopf = `Nameserver ${gesund.length}/${nameserver.length} antworten${gesund.length ? ` (${gesund.map((n) => `${n.ms} ms`).join(", ")})` : ""}, Google-DNS Status 0 mit DNSSEC, Zone = Soll (4 A, 4 AAAA, CNAME, 2 MX, CAA)`;
+  const kopf = `Nameserver ${gesund.length}/${nameserver.length} antworten${gesund.length ? ` (${gesund.map((n) => `${n.ms} ms`).join(", ")})` : ""}, Google-DNS Status 0 mit DNSSEC, Zone = Soll (4 A, 4 AAAA, 3 CNAME/A, 2 MX, CAA)`;
   return { ok: true, stufe: hinweise.length ? "hinweis" : "gruen", meldung: [kopf, ...hinweise].join("; ") };
 }
 
@@ -161,9 +172,10 @@ export function fuehreSelbsttestAus() {
   const einer = beurteile({ netzOk: true, udpMoeglich: true, nameserver: [ns(true), ns(false, "2.2.2.2")], doh: dohGut, dohApi: { ok: true }, abweichungen: [] });
   if (!einer.ok || einer.stufe !== "hinweis") fehler.push("ein gestörter Nameserver ist ein Hinweis, kein Ausfall");
   if (!beurteile({ netzOk: false }).ok) fehler.push("eigener Netzfehler darf kein Urteil sein");
-  const soll = vergleicheSoll({ a: [...DNS_SOLL.a].reverse(), aaaa: [], cname: [`${DNS_SOLL.apiCname}.`], mx: [...DNS_SOLL.mx], caa: [...DNS_SOLL.caa] });
+  const extra = { cloudCname: [DNS_SOLL.cloudCname], adminA: [...DNS_SOLL.adminA] };
+  const soll = vergleicheSoll({ a: [...DNS_SOLL.a].reverse(), aaaa: [], cname: [`${DNS_SOLL.apiCname}.`], ...extra, mx: [...DNS_SOLL.mx], caa: [...DNS_SOLL.caa] });
   if (soll.length) fehler.push(`Soll-Vergleich meldet Abweichung, wo keine ist: ${soll.join(" | ")}`);
-  if (!vergleicheSoll({ a: ["1.2.3.4"], aaaa: [], cname: [DNS_SOLL.apiCname], mx: DNS_SOLL.mx, caa: DNS_SOLL.caa }).length) fehler.push("eine fremde A-Adresse muss als Abweichung gelten");
+  if (!vergleicheSoll({ a: ["1.2.3.4"], aaaa: [], cname: [DNS_SOLL.apiCname], ...extra, mx: DNS_SOLL.mx, caa: DNS_SOLL.caa }).length) fehler.push("eine fremde A-Adresse muss als Abweichung gelten");
   return { bestanden: fehler.length === 0, fehler };
 }
 
@@ -204,11 +216,12 @@ export async function laufDnsWache({ mitNetz = true, fetchImpl = fetch, resolver
   // Soll-Ist: vom ersten gesunden Nameserver, sonst über Google-DNS (A/AAAA/CNAME/MX/CAA).
   let ist = nameserver.find((n) => n.ok);
   if (!ist) {
-    const [aaaa, cname, mx, caa] = await Promise.all([
+    const [aaaa, cname, cloud, admin, mx, caa] = await Promise.all([
       frageDoh(DNS_SOLL.zone, "AAAA", { fetchImpl }), frageDoh(DNS_SOLL.api, "CNAME", { fetchImpl }),
+      frageDoh(DNS_SOLL.cloud, "CNAME", { fetchImpl }), frageDoh(DNS_SOLL.admin, "A", { fetchImpl }),
       frageDoh(DNS_SOLL.zone, "MX", { fetchImpl }), frageDoh(DNS_SOLL.zone, "CAA", { fetchImpl })
     ]);
-    ist = { a: doh.daten, aaaa: aaaa.daten, cname: cname.daten, mx: mx.daten.map((m) => String(m).split(/\s+/).pop()), caa: caa.daten.map((c) => String(c).replace(/^\d+\s+/, "").replace(/"/g, "")) };
+    ist = { a: doh.daten, aaaa: aaaa.daten, cname: cname.daten, cloudCname: cloud.daten, adminA: admin.daten, mx: mx.daten.map((m) => String(m).split(/\s+/).pop()), caa: caa.daten.map((c) => String(c).replace(/^\d+\s+/, "").replace(/"/g, "")) };
   }
   const abweichungen = doh.ok ? vergleicheSoll(ist) : [];
   const urteil = beurteile({ netzOk: true, udpMoeglich, nameserver, doh, dohApi, abweichungen });
