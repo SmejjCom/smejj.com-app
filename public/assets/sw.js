@@ -316,6 +316,7 @@ const SHELL = [
   "/assets/voice-premium-tts.js",
   "/assets/voice-warmup.js",
   "/assets/ai/chat-stream.js",
+  "/assets/ai/bild-nachholen.js",
   // Live-Daten im Browser (Nachdenken holt Wetter/Websuche selbst, 07.09.).
   "/assets/ai/live-daten.js",
   "/assets/chat-bridge-weather.js",
