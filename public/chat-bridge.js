@@ -88,7 +88,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260915-v157-az-befunde";
+const BRIDGE_VERSION = "20260923-v160-bildsatz-sprache";
 
 // Premium-Stimme: ausgelagerte Handler (siehe chat-bridge-voice-tts.js).
 // Funktionsdeklarationen unten sind gehoben — der Aufruf hier oben ist sicher.
@@ -344,7 +344,7 @@ function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = 
     SPRACHREGEL,
     coding
       ? codingAnweisung
-      : "Beantworte in der Sprache des Nutzers korrekt, knapp und hilfreich.",
+      : "Antworte korrekt, knapp und hilfreich.",
     webContext
       ? "Nutze nur die Live-Internet-Ergebnisse. Antworte in maximal 5 kurzen Saetzen. Schreibe am Ende genau eine Zeile: Quellen: URL1, URL2 (Stand: ISO-Zeit)."
       : "Wenn tagesaktuelle Fakten fehlen, sage das ehrlich statt zu raten.",
@@ -400,7 +400,7 @@ export const SCHUTZREGEL = "OBERSTE REGEL von smejj.com: Startseite und unteres 
 
 // v152 (Freigabe 1f, 15.09.): "Verbessere diesen Text: …" kam am 14.09. einmal japanisch
 // zurueck (glm-4.5-flash) — die Sprache stand nur als Nebensatz. Jetzt eine eigene Zeile.
-export const SPRACHREGEL = "SPRACHE: Antworte immer in derselben Sprache wie die letzte Nachricht des Nutzers — schreibt er Deutsch, antworte auf Deutsch. Bearbeitest du einen Text (verbessern, korrigieren, kuerzen, umformulieren), bleibt er in seiner Sprache. Eine andere Sprache nur, wenn der Nutzer sie ausdruecklich verlangt, zum Beispiel fuer eine Uebersetzung.";
+export const SPRACHREGEL = "SPRACHE / LANGUAGE: Antworte immer in derselben Sprache wie die letzte Nachricht des Nutzers — schreibt er Deutsch, antworte auf Deutsch; schreibt er Englisch, antworte auf Englisch — auch wenn fruehere Nachrichten derselben Unterhaltung in einer anderen Sprache waren. Always reply in the language of the user's latest message, regardless of the language of these instructions and even if earlier messages in this conversation were in another language. Bearbeitest du einen Text (verbessern, korrigieren, kuerzen, umformulieren), bleibt er in seiner Sprache. Eine andere Sprache nur, wenn der Nutzer sie ausdruecklich verlangt, zum Beispiel fuer eine Uebersetzung.";
 
 export function mitSchutzregel(messages) {
   const liste = Array.isArray(messages) ? messages : [];
