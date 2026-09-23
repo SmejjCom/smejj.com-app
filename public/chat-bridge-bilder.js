@@ -22,6 +22,7 @@
 import { meldeAktion } from "./chat-bridge-evolution.js";
 import { istWeltMalAuftrag } from "./chat-bridge-bildsprachen.js";
 import { bildSchritte, schrittSekunden } from "./chat-bridge-bildschritte.js";
+import { bildFehler, videoTexte } from "./chat-bridge-medientexte.js";
 
 // Eigene Namen (BILDER_*): das Deploy-Buendel legt alle Bridge-Module in EINEN
 // Gueltigkeitsbereich (bundle_chat_bridge.mjs prueft Kollisionen hart).
@@ -473,14 +474,15 @@ export function videoMotiv(prompt) {
 // Sagt dem Nutzer, WAS sich im Video bewegt. Exportiert, damit die
 // Erwartungs-Ehrlichkeit pruefbar bleibt (tests/chat-bridge-video-e2e).
 // `ton` kommt aus der Worker-Antwort — nur wenn dort wirklich Stimme drin ist.
-export function videoHinweis(engine, ton = false) {
+export function videoHinweis(engine, ton = false, sprache = "de") {
   const name = String(engine || "");
-  const stimme = ton ? " Erzählt von der Stimme von smejj 1.0." : "";
+  const w = videoTexte(sprache);
+  const stimme = ton ? ` ${w.stimme}` : "";
   if (name.startsWith("parallax")) {
-    return `\n\n*Räumliche Kamerafahrt durch ein gemaltes Bild: Vorder- und Hintergrund bewegen sich gegeneinander, das Motiv selbst bleibt ruhig.${stimme}*`;
+    return `\n\n*${w.parallax}${stimme}*`;
   }
   if (name.startsWith("kenburns")) {
-    return `\n\n*Bewegte Szene aus einem gemalten Bild: die Kamera fährt, das Motiv selbst bleibt ruhig.${stimme}*`;
+    return `\n\n*${w.kenburns}${stimme}*`;
   }
   return ton ? `\n\n*${stimme.trim()}*` : "";
 }
@@ -527,8 +529,8 @@ async function schreibeErzaehltext(prompt) {
 // Video dauert 1-2 Minuten — ohne das waeren es ein Dutzend gestapelter Zeilen.
 // platzhalter "bild" ist Absicht: die App (ai/chat-stream.js) kennt genau diese
 // eine schimmernde Karte, und sie passt fuer das 512er-Video unveraendert.
-function videoSchritt(res, zustand, stand) {
-  res.write(`data: ${JSON.stringify({ smejj_schritt: { art: "video", zustand, text: "Erzeuge dein Video", stand, platzhalter: "bild" } })}\n\n`);
+function videoSchritt(res, zustand, stand, sprache = "de") {
+  res.write(`data: ${JSON.stringify({ smejj_schritt: { art: "video", zustand, text: videoTexte(sprache).titel, stand, platzhalter: "bild" } })}\n\n`);
 }
 
 // Ein Versuch beim Video-Maler.
@@ -586,19 +588,18 @@ async function erzeugeVideoMitGeduld(prompt, erzaehltext, melde) {
  * Ausgelagert, weil streamBilderLane sonst zwei Spuren in einer Funktion
  * traegt — und weil der Andrang-Zaehler eine klare Klammer braucht.
  */
-async function streamVideoSpur(res, body, videoPrompt, deps) {
+async function streamVideoSpur(res, body, videoPrompt, deps, sprache = "de") {
+  const w = videoTexte(sprache);
   if (!(await videoWorkerBereit())) {
     // Reserve: ehrlicher Infrastruktur-Status, solange der Video-Worker-Dienst
     // nicht freigeschaltet ist (Zeabur-Freigabe faellt der Betreiber —
     // Memory smejj-zeabur-expansion-approval).
     bilderSseKopf(res, deps, body, "video-hinweis", "smejj-video-engine");
-    videoSchritt(res, "laeuft", "prüfe Video-Engine …");
+    videoSchritt(res, "laeuft", w.pruefe, sprache);
     // Der Hinweiskasten wird von chat-markdown.js gerendert (seit 2026-08-13);
     // vorher stand "> [!NOTE]" woertlich im Chat.
-    const antwortText = `> [!NOTE]\n` +
-      `> Die eigene Video-Engine ist gerade nicht erreichbar. Sobald sie läuft, entsteht hier ein kurzes Video zu deinem Auftrag.\n\n` +
-      `Bilder gehen weiter — versuch es mit *"Zeichne ein Bild von ${videoMotiv(videoPrompt)}"*.`;
-    videoSchritt(res, "fertig", "Video-Engine nicht erreichbar");
+    const antwortText = `> [!NOTE]\n> ${w.engineWeg}\n\n` + w.ersatz.replace("{motiv}", videoMotiv(videoPrompt));
+    videoSchritt(res, "fertig", w.weg, sprache);
     bilderSendeInhalt(res, antwortText);
     res.write("data: [DONE]\n\n");
     res.end();
@@ -606,12 +607,12 @@ async function streamVideoSpur(res, body, videoPrompt, deps) {
   }
 
   bilderSseKopf(res, deps, body, "video-erzeugung", "video-worker:kenburns");
-  videoSchritt(res, "laeuft", "läuft … (ca. 1-2 Minuten)");
+  videoSchritt(res, "laeuft", w.etwa, sprache);
   const beginn = Date.now();
-  let phase = "läuft";
+  let phase = w.laeuft;
   // Lebenszeichen alle 10 s, damit Zwischenknoten die Leitung nicht kappen.
   const takt = setInterval(() => {
-    videoSchritt(res, "laeuft", `${phase} … ${Math.round((Date.now() - beginn) / 1000)} s`);
+    videoSchritt(res, "laeuft", `${phase} … ${Math.round((Date.now() - beginn) / 1000)} s`, sprache);
   }, 10000);
   let video = null;
   try {
@@ -623,26 +624,26 @@ async function streamVideoSpur(res, body, videoPrompt, deps) {
       schreibeErzaehltext(videoPrompt)
     ]);
     video = await erzeugeVideoMitGeduld(malPrompt, erzaehltext, (neu) => {
-      phase = neu;
+      phase = neu === "wartet auf freien Platz" ? w.wartet : w.laeuft;
     });
   } finally {
     clearInterval(takt);
   }
 
   if (video) {
-    videoSchritt(res, "fertig", "fertig");
+    videoSchritt(res, "fertig", w.fertig, sprache);
     // Ehrlich sagen, WAS sich bewegt — sonst erwartet der Nutzer bei
     // "fliegender Adler" einen flatternden Adler. Nur animatediff bewegt das
     // Motiv selbst; die CPU-Engines bewegen die Kamera (parallax raeumlich
     // ueber eine Tiefenkarte, kenburns flach als Zoom).
     // Alt-Text traegt die Tonspur-Information zur App: ein erzaehltes Video
     // darf nicht stummgeschaltet und nicht endlos wiederholt werden.
-    const alt = video.ton ? "Erzähltes Video" : "Erstelltes Video";
-    bilderSendeInhalt(res, `Hier ist dein Video:\n\n![${alt}](${video.url})${videoHinweis(video.engine, video.ton)}`);
+    const alt = video.ton ? w.altTon : w.alt;
+    bilderSendeInhalt(res, `${w.hier}\n\n![${alt}](${video.url})${videoHinweis(video.engine, video.ton, sprache)}`);
   } else {
     // Mitten im Strom: kein Rueckweg zum Text-Pfad mehr — ehrliche Absage.
-    videoSchritt(res, "fertig", "fehlgeschlagen");
-    bilderSendeInhalt(res, "Die Video-Erzeugung ist gerade fehlgeschlagen — bitte versuch es gleich noch einmal.");
+    videoSchritt(res, "fertig", w.fehl, sprache);
+    bilderSendeInhalt(res, w.videoFehl);
   }
   res.write("data: [DONE]\n\n");
   res.end();
@@ -654,6 +655,9 @@ async function streamVideoSpur(res, body, videoPrompt, deps) {
  * deps liefert die brueckenlokalen Helfer: { corsHeaders, securityHeaders, timeoutMs }.
  */
 export async function streamBilderLane(res, body, task, deps) {
+  // Einmal bestimmt, an ALLE Wege weitergereicht (Video, Maler, SVG, Absagen) —
+  // wer nur einen uebersetzt, laesst die anderen deutsch.
+  const sprache = spracheAusAnfrage(body, deps.acceptLanguage);
   const videoPrompt = erkenneVideoAuftrag(task);
   if (videoPrompt) {
     // Pruefen UND zaehlen ohne await dazwischen: sonst kommen gleichzeitige
@@ -663,15 +667,15 @@ export async function streamBilderLane(res, body, task, deps) {
       // Zu viele zugleich: SOFORT und ehrlich absagen. Eine Schlange, die der
       // Server nie abarbeitet, waere nur eine langsamere Enttaeuschung.
       bilderSseKopf(res, deps, body, "video-andrang", "smejj-video-engine");
-      videoSchritt(res, "fertig", "gerade zu viele Videos");
-      bilderSendeInhalt(res, "Gerade werden schon mehrere Videos erzeugt — bitte versuch es in ein paar Minuten noch einmal.");
+      videoSchritt(res, "fertig", videoTexte(sprache).andrang, sprache);
+      bilderSendeInhalt(res, videoTexte(sprache).andrangText);
       res.write("data: [DONE]\n\n");
       res.end();
       return true;
     }
     videoAndrang += 1;
     try {
-      return await streamVideoSpur(res, body, videoPrompt, deps);
+      return await streamVideoSpur(res, body, videoPrompt, deps, sprache);
     } finally {
       videoAndrang -= 1;
     }
@@ -680,10 +684,6 @@ export async function streamBilderLane(res, body, task, deps) {
   const prompt = erkenneBildAuftrag(task);
   if (!prompt) return false;
 
-  // Einmal bestimmt, an beide Wege weitergereicht: den eigenen Bild-Maler und
-  // den SVG-Rueckfall. Wer nur einen von beiden uebersetzt, laesst den
-  // haeufigeren Fall deutsch.
-  const sprache = spracheAusAnfrage(body, deps.acceptLanguage);
 
   // deps.fetchImpl gibt es nur im Test — im Betrieb bleibt es das echte fetch.
   const malerZustand = await bilderMalerZustand(deps.fetchImpl || fetch);
@@ -716,7 +716,7 @@ export async function streamBilderLane(res, body, task, deps) {
     bilderSchritt(res, "fertig", inhalt
       ? worte.fertig
       : `${worte.fehl} (${notiz.grund || "unbekannt"})`, sprache);
-    bilderSendeInhalt(res, inhalt || "Das Malen ist gerade fehlgeschlagen — bitte versuch es gleich noch einmal.");
+    bilderSendeInhalt(res, inhalt || bildFehler(sprache).malenFehl);
     res.write("data: [DONE]\n\n");
     res.end();
     return true;
@@ -733,12 +733,11 @@ export async function streamBilderLane(res, body, task, deps) {
     // es nie wieder. Waermt der Maler nur auf, sagen wir genau das.
     if (malerZustand.grund === "waermt auf" || malerZustand.grund === "gestoert") {
       const sek = Number(malerZustand.ladezeitSek) || 0;
-      const seit = sek > 0 ? ` (seit ${sek} s)` : "";
+      const f = bildFehler(sprache);
+      const seit = sek > 0 ? f.seit.replace("{n}", String(sek)) : "";
       bilderSseKopf(res, deps, body, "bilder-warten", "bild-maler:aufwaermen");
       bilderSchritt(res, "fertig", bildSchritte(sprache).startet, sprache);
-      bilderSendeInhalt(res, malerZustand.grund === "gestoert"
-        ? "Der Bild-Dienst meldet gerade eine Stoerung. Ich kann sonst Bilder malen — bitte versuch es in ein paar Minuten noch einmal."
-        : `Der Bild-Dienst startet gerade${seit} und laedt sein Modell. Ich kann Bilder malen — bitte versuch es in ein bis zwei Minuten noch einmal.`);
+      bilderSendeInhalt(res, malerZustand.grund === "gestoert" ? f.stoerung : f.startet.replace("{seit}", seit));
       res.write("data: [DONE]\n\n");
       res.end();
       return true;
