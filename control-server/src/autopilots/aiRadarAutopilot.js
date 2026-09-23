@@ -283,9 +283,15 @@ async function lueckenSignale({ env, store = signalStore }) {
   const liste = await store.liste({ env });
   if (!liste?.ok) return null;
   // "regenerate" sendet das Frontend (noch) nicht; es bleibt vorgesehen.
-  return (liste.datensaetze || [])
-    .filter((d) => d?.signalType === "thumbs_down" || d?.signalType === "regenerate")
-    .map((d) => `${d.promptVoll || d.promptSample || ""} ${d.antwortSample || ""}`);
+  // EINE Frage = EIN Signal, egal wie oft neu erzeugt und verworfen (live
+  // 23.09.2026: 13 Signale, alle dieselbe Frage mit wechselnden Antworten).
+  const jeFrage = new Map();
+  for (const d of liste.datensaetze || []) {
+    if (d?.signalType !== "thumbs_down" && d?.signalType !== "regenerate") continue;
+    const frage = String(d.promptVoll || d.promptSample || "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (!jeFrage.has(frage)) jeFrage.set(frage, `${d.promptVoll || d.promptSample || ""} ${d.antwortSample || ""}`);
+  }
+  return [...jeFrage.values()];
 }
 
 /** Fuer den Adminbereich: was wuerden die Wissensluecken JETZT ergeben? (ohne zu schreiben) */
@@ -340,14 +346,20 @@ async function gegenpruefen({ env, jetzt, suche, stores, vorhandene, rest, zaehl
       if (!pruefeFremdtext(fund).ok) continue;
       const b = bewerteFund({ url: fund?.url, title: entschaerfe(fund?.title, { maxZeichen: 160 }), snippet: entschaerfe(fund?.snippet || fund?.body, { maxZeichen: 400 }) }, { jetzt });
       if (!b.tauglich || eigeneHosts.has(b.host)) continue;
-      if ((b.markierungen || []).some((m) => m === "geruecht" || m === "unbelegt")) continue;
+      // "unbelegt" heisst nur: der Auszug nennt selbst keine Quelle ("laut ...").
+      // Fuer eine BESTAETIGUNG zaehlt, dass eine zweite, unabhaengige Seite
+      // dasselbe berichtet — gemessen live 23.09.2026: sechs Fachseiten zu
+      // "Lockdown Mode" trugen alle "unbelegt" und bestaetigten dennoch dasselbe.
+      // Geruecht und Werbung bleiben Ausschlussgruende.
+      if ((b.markierungen || []).some((m) => m === "geruecht" || m === "werbung")) continue;
       if (aehnlichesThema(b.auszug, e.aussage)) { bestaetigung = b; break; }
     }
     let neu;
     if (bestaetigung) {
       const belege = [...(e.belege || []), {
         url: bestaetigung.url, host: bestaetigung.host, titel: bestaetigung.titel, guete: bestaetigung.guete,
-        veroeffentlicht: bestaetigung.veroeffentlicht ?? null, abgerufenAm: bestaetigung.abgerufenAm, markierungen: bestaetigung.markierungen || []
+        veroeffentlicht: bestaetigung.veroeffentlicht ?? null, abgerufenAm: bestaetigung.abgerufenAm,
+        markierungen: (bestaetigung.markierungen || []).filter((m) => m !== "unbelegt").concat("bestaetigung")
       }];
       neu = { ...e, belege, pruefstatus: pruefstatusAus(belege), aktualisiertAm: jetzt,
         gegenpruefung: { am: jetzt, ergebnis: "bestaetigt", host: bestaetigung.host, url: bestaetigung.url } };
