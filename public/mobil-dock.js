@@ -171,6 +171,15 @@ export const REGELN = "@media (max-width:600px){"
   //      der Verlauf bis an die Oberkante. Dazu die 4 px Kopfrand der Code-Ansicht — wie im Chat.
   + "body #code #codeLogHalter #startLog.start-log{overflow:visible;border-top:0;flex:0 0 auto;min-height:auto}"
   + "body #code.view.is-active.is-active{padding-top:0}"
+  // (18) Betreiber 24.09.2026 schriftlich: "ja, Code-Schreibfeld unten auch transparent machen". Wie das Chat-Feld
+  //      (V14/V15/V16): das Feld schwebt absolut an der Unterkante der Code-Ansicht, ohne eigene Platte, Weichzeichner
+  //      oder Schatten; der Verlauf laeuft darunter weiter und hat unten genau die gemessene Feldhoehe als Polster
+  //      (--code-feld-hoehe, verdrahteCodeFeldHoehe unten). Lesbarkeit wie V15: weicher Schatten an Text und Symbolen.
+  + "body #code.view .codeunten.codeunten{position:absolute;left:0;right:0;bottom:0;z-index:5;background:none}"
+  + "body #code.view .codefeld.codefeld{background:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:none!important;border-color:transparent!important}"
+  + "body #code.view .codefeld #codeAufgabe{text-shadow:0 1px 3px rgba(0,0,0,.85)}"
+  + "body #code.view .codefeld svg{filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))}"
+  + "body #code #codeLogHalter.code-log-halter.code-log-halter{padding-bottom:calc(var(--code-feld-hoehe,58px) + 14px);scroll-padding-bottom:calc(var(--code-feld-hoehe,58px) + 14px)}"
   + "}"
   // (10) Vollbild-Versatz der installierten App (Betreiber 17:32, iPhone, frisch installiert):
   //      iOS legt die Layout-Flaeche oben an, rechnet sie aber um die Statusleistenhoehe
@@ -323,6 +332,22 @@ export function verdrahteAuswahl(doc = document, win = window) {
   return true;
 }
 
+/** (18) Misst die Hoehe des Code-Schreibfelds (waechst beim Tippen) als --code-feld-hoehe fuer das Verlaufspolster.
+ *  Stand der Verlauf am Ende, bleibt er dort (sonst verschwaende die letzte Zeile hinter dem wachsenden Feld). */
+export function verdrahteCodeFeldHoehe(doc = document, win = window) {
+  const unten = doc.querySelector("#code .codeunten");
+  const halter = doc.getElementById("codeLogHalter");
+  if (!unten || typeof win.ResizeObserver !== "function") return false;
+  const setze = () => {
+    const warUnten = halter ? halter.scrollHeight - halter.scrollTop - halter.clientHeight < 40 : false;
+    doc.documentElement.style.setProperty("--code-feld-hoehe", `${Math.round(unten.getBoundingClientRect().height)}px`);
+    if (warUnten && halter) halter.scrollTop = halter.scrollHeight;
+  };
+  new win.ResizeObserver(setze).observe(unten);
+  setze();
+  return true;
+}
+
 export function sorgeFuerStil(doc = document) {
   if (doc.getElementById(STIL_ID)) return false;
   const stil = doc.createElement("style");
@@ -337,6 +362,7 @@ if (typeof document !== "undefined" && document.querySelector("#startMessage, #c
   verdrahteTastatur();
   verdrahteKopfglas();
   verdrahteAuswahl();
+  verdrahteCodeFeldHoehe();
   // Ansichten nach dem Login (Profil, Einstellungen, Verlauf, Dateien …) — eigenes Modul, ohne Marke.
   import("/assets/mobil-ansichten.js").catch(() => {});
   // Vollbild-Chat (17.09.2026): misst das schwebende Feld (--feld-hoehe), design-v14-vollbild-chat.css.
