@@ -89,6 +89,26 @@ test("Gegenpruefung ohne Bestaetigung: vermerkt, bleibt Einzelquelle, 7 Tage Ruh
   assert.equal(bald.gegenpruefung.length, 0);
 });
 
+test("Gegenpruefung: eine zweite Seite ohne 'laut ...' im Auszug bestaetigt trotzdem (live 23.09.2026)", async () => {
+  const e = baueEintrag({ themaId: "x", bereich: "sicherheit", aussage: "ChatGPT now offers an optional Lockdown Mode security setting that cuts off browsing and external services.", jetzt: "2026-09-21T08:00:00.000Z",
+    belege: [{ url: "https://reconn-ai.com/a", host: "reconn-ai.com", guete: "presse", markierungen: [] }] });
+  const stores = { wissen: ablage([e]), laeufe: ablage(), konfig: ablage([{ id: "radar-konfig", themenAus: ["*"], themen: [] }]) };
+  const suche = async () => ({ results: [{ url: "https://www.zdnet.com/article/lockdown", title: "ChatGPT Lockdown Mode",
+    snippet: "An optional security setting, ChatGPT Lockdown Mode cuts off browsing and external services for higher-risk users." }] });
+  const lauf = await fuehreRadarLaufAus({ env: {}, jetzt: JETZT, stores, grund: "admin:test", maxThemen: 0, signale: stumm, suche });
+  assert.equal(lauf.gegenpruefung[0].ergebnis, "bestaetigt");
+  assert.equal(stores.wissen.daten[0].pruefstatus, "geprueft");
+  assert.ok(stores.wissen.daten[0].belege[1].markierungen.includes("bestaetigung"));
+});
+
+test("Luecken im Lauf: dieselbe Frage mit wechselnden Antworten ist EIN Signal", async () => {
+  const sig = ablage(Array.from({ length: 13 }, (_, i) => ({ id: `s${i}`, signalType: "thumbs_down", promptVoll: "Generate an image of: giraffe", antwortSample: `Bild ${i}` })));
+  const stores = { wissen: ablage(), laeufe: ablage(), konfig: ablage([{ id: "radar-konfig", themenAus: ["*"], themen: [] }]) };
+  const lauf = await fuehreRadarLaufAus({ env: {}, jetzt: JETZT, stores, grund: "admin:test", maxThemen: 0, signale: sig, suche: async () => ({ results: [] }) });
+  assert.equal(lauf.luecken.signale, 1);
+  assert.equal(lauf.luecken.verschieden, 1);
+});
+
 test("suchworteAus nimmt tragende Woerter und Zahlen, keine Fuellwoerter", () => {
   assert.equal(suchworteAus("Die EU hat am 2026-08-02 den AI Act verschaerft und Strafen erhoeht."), "2026-08-02 verschaerft Strafen erhoeht");
 });
