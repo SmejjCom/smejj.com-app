@@ -20,6 +20,7 @@
 // Fail-safe: false = kein Byte gesendet, der Text-Weg uebernimmt unveraendert.
 
 import { meldeAktion } from "./chat-bridge-evolution.js";
+import { istWeltMalAuftrag } from "./chat-bridge-bildsprachen.js";
 
 // Eigene Namen (BILDER_*): das Deploy-Buendel legt alle Bridge-Module in EINEN
 // Gueltigkeitsbereich (bundle_chat_bridge.mjs prueft Kollisionen hart).
@@ -129,6 +130,8 @@ export function erkenneBildAuftrag(task) {
     const rest = text.replace(BILDER_MALVERB_ALLEIN, " ").trim();
     if (rest.length >= 3) return text;
   }
+  // Die 13 weiteren Oberflaechensprachen ("Dessine une pomme rouge", 23.09.2026).
+  if (istWeltMalAuftrag(text)) return text;
   return "";
 }
 
