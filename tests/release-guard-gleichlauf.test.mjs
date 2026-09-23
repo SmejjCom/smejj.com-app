@@ -17,7 +17,7 @@ const ausnahmen = (quelle, name) => (quelle.match(new RegExp(`/IDRIVE_E2_\\(\\?:
 
 test("beide Pruefungen erlauben genau dieselben Workflow-Dateien", () => {
   assert.deepEqual(workflows(release), workflows(sicherheit));
-  assert.equal(workflows(release).length, 2, "die Erlaubnisliste bleibt kurz — jede weitere Datei braucht eine Begruendung");
+  assert.equal(workflows(release).length, 4, "die Erlaubnisliste bleibt kurz — jede weitere Datei braucht eine Begruendung (Stand 23.09.2026: vier, alle mit Begruendung)");
 });
 
 test("beide Pruefungen kennen dieselben Verweis-Formen fuer e2-Zugaenge", () => {

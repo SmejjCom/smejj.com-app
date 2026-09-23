@@ -61,7 +61,11 @@ function walkObject(value, visit, pathParts = []) {
 // war. tests/release-guard-gleichlauf.test.mjs haelt beide Listen gleich.
 export const ERLAUBTE_WORKFLOWS = Object.freeze([
   ".github/workflows/codeberg-spiegel.yml",
-  ".github/workflows/qualitaets-messlauf.yml"
+  ".github/workflows/qualitaets-messlauf.yml",
+  // Betreiber-Freigabe 2026-09-23, gleichlautend mit check-no-paid-services.mjs:
+  // Android-Bau nur auf Knopfdruck (kein Upload), DNS-Wache Stufe B (Issue als Bote).
+  ".github/workflows/android-twa-build.yml",
+  ".github/workflows/dns-wache.yml"
 ]);
 
 function checkNoGitHubActions(files) {
