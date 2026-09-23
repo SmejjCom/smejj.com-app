@@ -1,7 +1,16 @@
-# Cline API Integration
+# Cline API Integration — UEBERHOLT seit 2026-09-10
 
-Status: implemented, deployment remains fail-closed until the credential-vault
-master key is configured outside the repository.
+> **Dieser Anbieter ist entfernt.** Betreiber-Anweisung vom 2026-09-10 im
+> Wortlaut: "Cline muss vollstaendig aus der App entfernt werden." Das Frontend
+> kennt ihn nicht mehr (Menue, Einstellungen, Chatweg, BYOK-Katalog, Precache);
+> "Auto" laeuft seither ueber den eigenen Server-Router.
+>
+> Das Dokument bleibt als Protokoll stehen — es beschreibt, wie die Anbindung
+> gebaut war, und dient dem naechsten Anbieter als Vorlage. Es beschreibt
+> NICHT mehr den Zustand der App.
+
+Status (historisch): implemented, deployment remains fail-closed until the
+credential-vault master key is configured outside the repository.
 
 ## Official contract
 
