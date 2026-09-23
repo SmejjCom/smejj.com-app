@@ -206,7 +206,7 @@ async function baueJobWegFabrik(config, log = console.log) {
       import("../con-autopilot/config.js"),
       import("../con-autopilot/e2.js"),
       import("../../scripts/training/smejj-1-1-trainieren.mjs"),
-      import("../../src/evaluation/evalSuite.js")
+      import("../../src/evaluation/evalPacks.js")
     ]);
     const saladKonfig = trainingsKonfig(leseKonfig(process.env));
     if (!saladKonfig?.salad?.apiKey) return { fabrik: null, hindernis: "salad_schluessel_fehlt" };
