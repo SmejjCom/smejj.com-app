@@ -8,6 +8,59 @@ import {
   isResolvedConsentDecision
 } from "./consent.js";
 
+// Rechte-Register fuer ANTWORTEN FREMDER MODELLE (Betreiber-Auftrag 23.09.2026:
+// "Anbieterrechte klaeren, bevor trainiert wird"). Ein Lernpaar ist Frage +
+// Antwort; die Antwort stammt fast immer von einem fremden Modell, und dessen
+// Nutzungsbedingungen entscheiden, ob sie ein eigenes Modell trainieren darf.
+// Gelesen am 2026-09-23, Belege in docs/compliance/anbieterrechte-training-2026-09-23.md.
+//
+// FAIL-CLOSED: Nur ein ausdruecklich als "allowed" gefuehrtes Modell darf in
+// den Datensatz. Unbekannt, ungeprueft oder "Auflage nicht erfuellt" = raus.
+// Reihenfolge zaehlt: der erste passende Eintrag gewinnt.
+export const ANTWORT_RECHTE_STAND = "2026-09-23";
+export const ANTWORT_RECHTE = Object.freeze([
+  Object.freeze({
+    id: "smejj-eigen", muster: /^smejj[-_ ]?1\b/i, anbieter: "smejj (Hausmodell)",
+    trainingUse: "allowed", derivativeTrainingUse: "allowed",
+    grund: "eigenes Modell; Basis Qwen3-4B-Instruct-2507 unter Apache-2.0 (keine Auflage fuer Ausgaben)",
+    quelle: "https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507"
+  }),
+  Object.freeze({
+    id: "zai-glm-api", muster: /^(glm|zai|zhipu|bigmodel)/i, anbieter: "Z.ai / Zhipu (API)",
+    trainingUse: "denied", derivativeTrainingUse: "denied",
+    grund: "Z.ai-Nutzungsbedingungen III.4.f und API-Zusatz 1.f.xii verbieten, mit Ausgaben konkurrierende Modelle zu trainieren; BigModel verbietet Training/Feintuning mit Ausgaben generell",
+    quelle: "https://docs.z.ai/legal-agreement/terms-of-use"
+  }),
+  Object.freeze({
+    id: "groq-gpt-oss", muster: /^(groq:)?(openai\/)?gpt-oss-(20b|120b)$/i, anbieter: "Groq (gpt-oss)",
+    trainingUse: "allowed", derivativeTrainingUse: "allowed",
+    grund: "Groq: Rechte an Ausgaben beim Kunden, Wettbewerbsverbot nur fuer Hosting-Dienste; gpt-oss unter Apache-2.0",
+    quelle: "https://console.groq.com/docs/legal/services-agreement"
+  }),
+  Object.freeze({
+    id: "llama-namenspflicht", muster: /llama/i, anbieter: "Meta Llama (ueber Groq)",
+    trainingUse: "denied", derivativeTrainingUse: "denied",
+    grund: "Llama-Lizenz 1.b.i erlaubt Training nur, wenn der Modellname mit \"Llama\" beginnt und \"Built with Llama\" angezeigt wird — smejj 1 heisst anders, Auflage nicht erfuellt",
+    quelle: "https://raw.githubusercontent.com/meta-llama/llama-models/main/models/llama3_3/LICENSE"
+  })
+]);
+
+/**
+ * Darf die Antwort dieses Modells in einen Trainingsdatensatz? Rein, ohne Netz.
+ * @param {{modell?: string}|string|null} quelle  Modellkennung der Antwort (x-smejj-model-id)
+ * @returns {{zulaessig: boolean, grund: string, rechtId: string|null}}
+ */
+export function antwortQuelleZulaessig(quelle) {
+  const modell = String((typeof quelle === "string" ? quelle : quelle?.modell) || "").trim();
+  if (!modell) return { zulaessig: false, grund: "herkunft_unbekannt", rechtId: null };
+  const recht = ANTWORT_RECHTE.find((eintrag) => eintrag.muster.test(modell));
+  if (!recht) return { zulaessig: false, grund: "anbieterrecht_ungeprueft", rechtId: null };
+  if (recht.trainingUse !== "allowed" || recht.derivativeTrainingUse !== "allowed") {
+    return { zulaessig: false, grund: "anbieter_verbietet_training", rechtId: recht.id };
+  }
+  return { zulaessig: true, grund: "erlaubt", rechtId: recht.id };
+}
+
 const PERMANENT_DENIALS = new Set([
   "provider_training_use_denied",
   "provider_derivatives_denied",
@@ -118,6 +171,14 @@ export function capturePersistenceAllowed(_candidate, consentDecision, {
 
 function evaluateSource(source, rightsLedger, reasons, now) {
   if (source?.kind === "human-first-party") return;
+  // Antwort eines Modells: zuerst das feste Rechte-Register oben. Verbietet
+  // der Anbieter das Training, hilft auch keine Eintragung im Ledger.
+  if (source?.kind === "model-output") {
+    const urteil = antwortQuelleZulaessig(source);
+    if (urteil.grund === "anbieter_verbietet_training") reasons.push("provider_training_use_denied");
+    else if (!urteil.zulaessig) reasons.push("provider_rights_missing");
+    return;
+  }
   const right = rightsLedger?.entries?.find((entry) => entry.id === source?.rightsId);
   if (!right) return reasons.push("provider_rights_missing");
   if (right.trainingUse === "denied") reasons.push("provider_training_use_denied");

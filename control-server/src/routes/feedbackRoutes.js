@@ -56,12 +56,12 @@ export async function handleFeedbackRoute(req, url, res, { env = process.env, le
   // Daumen hoch MIT Trainings-Einwilligung wird zusaetzlich ein Lernpaar fuer
   // smejj 1 (17.09.2026). Ohne Einwilligung bleibt es beim Signal oben.
   const lern = signalType === "thumbs_up"
-    ? await lernpaar(req.authUser, { frage: body?.prompt, antwort: body?.antwort }, { env })
+    ? await lernpaar(req.authUser, { frage: body?.prompt, antwort: body?.antwort, modell: String(body?.modell || "").slice(0, 80) }, { env })
     : null;
   privateJson(res, 200, {
     ok: true,
     hinweis: "Signal angekommen — es fliesst in die Qualitaetsarbeit ein.",
-    ...(lern ? { lernpaar: { erfasst: lern.erfasst === true, grund: lern.grund || null } } : {})
+    ...(lern ? { lernpaar: { erfasst: lern.erfasst === true, grund: lern.grund || null, ...(lern.erfasst ? { trainingsrecht: lern.trainingsrecht === true } : {}) } } : {})
   });
   return true;
 }
