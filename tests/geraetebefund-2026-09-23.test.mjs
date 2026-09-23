@@ -196,3 +196,22 @@ test("(3) Code-Bereich: Halter ist der einzige Scroller, keine Linie, kein Kopfr
   const v15 = fs.readFileSync("public/design-v15-transparent-chat.css", "utf8");
   assert.match(v15, /\.mobil-kopfglas\.mobil-kopfglas\.mobil-kopfglas \{\s*display: none !important;/);
 });
+
+test("(4) Nach Neustart keine zweite, leere Aktionsleiste: der Arbeitsschritte-Eintrag behaelt .chat-schritte", () => {
+  const q = fs.readFileSync("public/chat-store.js", "utf8");
+  assert.match(q, /node\.classList\.contains\("chat-schritte"\) \? \{ art: "schritte" \} : \{\}/, "Speichern merkt die Art");
+  assert.match(q, /node\.classList\.add\("chat-schritte"\);/, "Wiederherstellen setzt die Klasse");
+  const quelle = q.match(/const SCHRITTE_HTML = (\/.+\/);/)?.[1];
+  assert.ok(quelle, "Erkennung fuer Altbestand vorhanden");
+  const SCHRITTE_HTML = new Function(`return ${quelle}`)();
+  // Altbestand (gemessen im Simulator-Speicher): Faltzeile oder Schrittgruppe am Anfang.
+  assert.ok(SCHRITTE_HTML.test('<details class="chat-schritte-falte"><summary class="chat-schritte-titel">Arbeitsschritte: 1 Schritt</summary>'));
+  assert.ok(SCHRITTE_HTML.test('<div class="chat-schritte-falte chat-schritt-gruppe" data-gruppe="true">'));
+  assert.ok(SCHRITTE_HTML.test('<details class="chat-schritte-falte chat-denken" data-denken="true">'));
+  // Echte Antworten bleiben Antworten (behalten ihre Leiste).
+  for (const antwort of ['<p>Hier ist dein Bild:</p><p><img class="chat-image" src="x"></p>', "<pre><code>print(1)</code></pre>", "<p>Die Hauptstadt ist <strong>Paris</strong>.</p>", ""]) {
+    assert.equal(SCHRITTE_HTML.test(antwort), false, antwort);
+  }
+  const aktionen = fs.readFileSync("public/chat-actions.js", "utf8");
+  assert.match(aktionen, /entry\.classList\.contains\("chat-schritte"\)[^\n]*continue;/, "keine Leiste fuer Schritte");
+});
