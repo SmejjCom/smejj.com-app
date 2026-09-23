@@ -157,6 +157,9 @@ export function pruefeFunde(funde, { themen, bestand = new Map(), jetzt = new Da
 
     const alt = bestand.get(g.schluessel);
     if (alt && alt.kernHash === kernHash) { ergebnisse.push({ ...basis, status: "unveraendert", grund: "steht_schon_so_in_der_wissensbasis" }); continue; }
+    // Feed liefert nur die Ueberschrift, das Wissen hat den Text schon (frueher nachgeladen):
+    // unveraendert — sonst wuerde der leere Feed-Eintrag den gespeicherten Text ueberschreiben.
+    if (alt && !String(f.text || "").trim() && String(alt.kurz || "").trim()) { ergebnisse.push({ ...basis, status: "unveraendert", grund: "text_steht_schon_in_der_wissensbasis" }); continue; }
 
     const geruecht = GERUECHT.test(`${f.titel} ${f.text}`);
     const zweiDomains = g.bestaetigtVon.size >= 2;

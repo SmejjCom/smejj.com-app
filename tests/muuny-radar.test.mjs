@@ -504,3 +504,20 @@ test("Feed nur mit Ueberschrift: die Seite wird nachgeladen — sparsam und ents
   assert.match(e.kurz, /doppelt so schnell/);
   assert.doesNotMatch(e.kurz, /Menue Start Kontakt/, "Navigation gehoert nicht ins Wissen");
 });
+
+test("Nachladen: schon geheilte Eintraege belegen keine Plaetze, ihr Text bleibt erhalten (23.09.)", async () => {
+  const lager = memLager();
+  await mitKonfig(lager, { quellen: [Q.anbieter], themen: [{ ...THEMA, quellen: ["anbieter"] }] });
+  const eintraege = Array.from({ length: 7 }, (_, i) => ({ titel: `Introducing Gemini 3.${i} Flash model`, link: `https://anbieter.example/g${i}`, text: "" }));
+  const seiten = { [Q.anbieter.url]: rss(eintraege) };
+  for (let i = 0; i < 7; i++) seiten[`https://anbieter.example/g${i}`] = `<html><body><p>Gemini 3.${i} Flash model ist ab heute in der API verfuegbar und antwortet schneller als der Vorgaenger.</p></body></html>`;
+  const p1 = await lauf(lager, netz(seiten));
+  assert.equal(p1.abrufe.filter((a) => a.nachgeladen).length, 5, "erster Lauf: hoechstens 5");
+  const p2 = await lauf(lager, netz(seiten));
+  const zweite = p2.abrufe.filter((a) => a.nachgeladen).map((a) => a.url).sort();
+  assert.deepEqual(zweite, ["https://anbieter.example/g5", "https://anbieter.example/g6"], "zweiter Lauf: nur die noch leeren");
+  const idx = await leseIndex(lager, P);
+  const aktiv = Object.values(idx.eintraege).filter((e) => e.status === "aktiv");
+  assert.equal(aktiv.length, 7);
+  for (const e of aktiv) assert.match(e.kurz, /ab heute in der API/, `Text blieb erhalten: ${e.titel}`);
+});

@@ -14,7 +14,7 @@ import { randomUUID } from "node:crypto";
 import { GRENZEN_STANDARD, QUELLEN_STANDARD, THEMEN_STANDARD, pruefeKonfig } from "./konfig.js";
 import { baueAbrufer } from "./abruf.js";
 import { abrufAdresse, seitenText, zerlege } from "./parser.js";
-import { passtZumThema, pruefeFunde } from "./pruefung.js";
+import { passtZumThema, pruefeFunde, schluesselVon } from "./pruefung.js";
 import { bestandAus, leseIndex, speichere } from "./wissen.js";
 
 export const SPERRE_VERWAIST_MS = 10 * 60_000;
@@ -234,6 +234,14 @@ export async function fuehreLaufAus(lager, { prefix = "muuny/", fetchImpl = fetc
     const quellenStand = structuredClone(zustand.quellen || {});
     const kandidaten = [];
     let nachgeladen = 0;
+    // Was schon MIT Text im Wissen steht, wird nicht jedes Mal neu geholt — sonst
+    // verbrauchen dieselben geheilten Eintraege jeden Lauf alle Nachlade-Plaetze und
+    // die noch leeren kommen nie dran (gemessen 23.09.: 5 DeepMind-Eintraege).
+    let mitText = new Set();
+    try {
+      mitText = new Set(Object.values((await leseIndex(lager, prefix)).eintraege)
+        .filter((e) => e.status !== "zurueckgenommen" && String(e.kurz || "").trim()).map((e) => e.schluessel));
+    } catch { /* Wissen unlesbar: dann wie bisher nachladen; die Pruefung unten scheitert ohnehin sauber */ }
     laufImProzess.status = "recherchiert";
     for (const { q, url, themen: fuer } of abrufe.values()) {
       if (abbrechen()) return await ende("abgebrochen", "notaus_oder_abbruch_waehrend_recherche");
@@ -282,7 +290,7 @@ export async function fuehreLaufAus(lager, { prefix = "muuny/", fetchImpl = fetc
         // Seite selbst geholt — sparsam: nur Primaerquellen, nur mit Themenbezug im Titel,
         // hoechstens NACHLADEN_JE_LAUF Stueck, und jeder Abruf zaehlt aufs Budget.
         if (!f.text && f.primaer && nachgeladen < NACHLADEN_JE_LAUF && fuer.some((t) => passtZumThema(f, t))
-            && abrufer.zaehler.anfragen < maxAnfragen) {
+            && !mitText.has(schluesselVon(f)) && abrufer.zaehler.anfragen < maxAnfragen) {
           nachgeladen += 1;
           const seite = await abrufer.hole(f.link, { maxBytes: Math.min(konfig.grenzen.bytesProAbruf, 1024 * 1024) });
           if (seite.ok && seite.text) {
