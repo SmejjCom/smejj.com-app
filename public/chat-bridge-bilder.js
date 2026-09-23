@@ -20,6 +20,7 @@
 // Fail-safe: false = kein Byte gesendet, der Text-Weg uebernimmt unveraendert.
 
 import { meldeAktion } from "./chat-bridge-evolution.js";
+import { bildablageSchluessel, willBildErneut, legeBildAb, holeAbgelegtesBild } from "./chat-bridge-bildablage.js";
 import { istWeltMalAuftrag, istWeltVideoAuftrag } from "./chat-bridge-bildsprachen.js";
 import { bildSchritte, schrittSekunden } from "./chat-bridge-bildschritte.js";
 import { bildFehler, erzaehlSprache, videoTexte } from "./chat-bridge-medientexte.js";
@@ -706,6 +707,17 @@ export async function streamBilderLane(res, body, task, deps) {
 
   const prompt = erkenneBildAuftrag(task);
   if (!prompt) return false;
+  // Bildablage (Betreiber 23.09.2026): fragt die App nach einem abgerissenen Strom mit bildErneut nach,
+  // kommt DASSELBE Bild sofort zurueck — kein neues Malen. Ohne Treffer: normaler Weg.
+  const ablage = bildablageSchluessel(deps.anmeldung, prompt);
+  const abgelegt = willBildErneut(body) ? holeAbgelegtesBild(ablage) : "";
+  if (abgelegt) {
+    bilderSseKopf(res, deps, body, "bilder-ablage", "bild-ablage");
+    for (let i = 0; i < abgelegt.length; i += 65536) res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: abgelegt.slice(i, i + 65536) } }] })}\n\n`);
+    res.write("data: [DONE]\n\n");
+    res.end();
+    return true;
+  }
 
 
   // deps.fetchImpl gibt es nur im Test — im Betrieb bleibt es das echte fetch.
@@ -739,6 +751,7 @@ export async function streamBilderLane(res, body, task, deps) {
     bilderSchritt(res, "fertig", inhalt
       ? worte.fertig
       : `${worte.fehl} (${notiz.grund || "unbekannt"})`, sprache);
+    if (inhalt) legeBildAb(ablage, inhalt);
     bilderSendeInhalt(res, inhalt || bildFehler(sprache).malenFehl);
     res.write("data: [DONE]\n\n");
     res.end();
@@ -770,6 +783,7 @@ export async function streamBilderLane(res, body, task, deps) {
     return false;
   }
   bilderSseKopf(res, deps, body, "bilder-svg", `groq:${BILDER_MODEL}`);
+  legeBildAb(ablage, inhalt);
   bilderSendeInhalt(res, inhalt);
   res.write("data: [DONE]\n\n");
   res.end();

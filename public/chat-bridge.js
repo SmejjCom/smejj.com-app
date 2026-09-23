@@ -89,7 +89,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260923-v170-video-15-sprachen";
+const BRIDGE_VERSION = "20260923-v171-bildablage";
 
 // Premium-Stimme: ausgelagerte Handler (siehe chat-bridge-voice-tts.js).
 // Funktionsdeklarationen unten sind gehoben — der Aufruf hier oben ist sicher.
@@ -231,7 +231,7 @@ async function handleChat(req, res) {
   const task = String(messages[messages.length - 1]?.content || "").trim();
   // v157: ein Bild geht IMMER an die Vision-Spur — auch ohne Begleittext (vorher fiel es dann still ans Textmodell).
   if (await streamVisionLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS, maxBodyBytes: MAX_BODY_BYTES })) return;
-  if (task && await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS, acceptLanguage: req.headers?.["accept-language"] })) return;
+  if (task && await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS, acceptLanguage: req.headers?.["accept-language"], anmeldung: req.headers?.authorization })) return;
   // Anschlussfragen tragen ihr Thema nicht selbst — dann zaehlt die Frage davor.
   // v162: dazu das Radar-Wissen vom Control-Server (chat-bridge-radar.js) — die
   // Schnellspur und /api/chat im Control-Server hatten es vorher nie.
@@ -264,7 +264,7 @@ async function handleAgent(req, res) {
   // Bild-Verstehen (Vision) und Bilder-Zeichnen: bei false laeuft unveraendert
   // der Text-Weg (fail-safe, Details in chat-bridge-vision.js/-bilder.js).
   if (await streamVisionLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS, maxBodyBytes: MAX_BODY_BYTES })) return;
-  if (await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS, acceptLanguage: req.headers?.["accept-language"] })) return;
+  if (await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS, acceptLanguage: req.headers?.["accept-language"], anmeldung: req.headers?.authorization })) return;
   // "schnell" heisst schnell: dann bekommt auch eine Coding- oder Suchfrage die
   // Schnellspur angeboten (streamFastLane entscheidet dann endgueltig).
   const fastTask = stufe === "schnell" || (!coding && !shouldSearchWeb(task));
