@@ -208,7 +208,7 @@ test("gebuendelte bridge reicht projektwissen an das modell durch", async (t) =>
     req.on("end", () => {
       // Seit 2026-08-04 fragt die Bruecke vor jeder Modell-Route nach, ob das
       // Token gilt (Anmeldepflicht). Derselbe Stub beantwortet das mit.
-      // Seit v161 fragt die Bruecke hier auch nach Radar-Wissen (chat-bridge-radar.js).
+      // Seit v162 fragt die Bruecke hier auch nach Radar-Wissen (chat-bridge-radar.js).
       if (req.url === "/api/radar/kontext") { res.writeHead(200, { "Content-Type": "application/json" }); return res.end('{"ok":true,"kontext":""}'); }
       if (req.url === "/api/auth/me") {
         res.writeHead(200, { "Content-Type": "application/json" });

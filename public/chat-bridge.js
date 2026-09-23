@@ -233,7 +233,7 @@ async function handleChat(req, res) {
   if (await streamVisionLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS, maxBodyBytes: MAX_BODY_BYTES })) return;
   if (task && await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS, acceptLanguage: req.headers?.["accept-language"] })) return;
   // Anschlussfragen tragen ihr Thema nicht selbst — dann zaehlt die Frage davor.
-  // v161: dazu das Radar-Wissen vom Control-Server (chat-bridge-radar.js) — die
+  // v162: dazu das Radar-Wissen vom Control-Server (chat-bridge-radar.js) — die
   // Schnellspur und /api/chat im Control-Server hatten es vorher nie.
   const wissen = mitRadar(buildRagBlockMitVerlauf(lastUserContent(messages), previousUserContent(messages)),
     await holeRadarKontext(lastUserContent(messages), req.headers, { origin: CONTROL_ORIGIN }));
@@ -274,7 +274,7 @@ async function handleAgent(req, res) {
   // Block fuer jede Spur. `body.history` endet mit der Frage VOR der aktuellen
   // (app.js schickt die aktuelle nur als `task`), trifft also das Thema, auf
   // das sich eine Anschlussfrage bezieht.
-  // v161: Radar-Wissen fuer die Schnellspur. /api/agent im Control-Server haengt
+  // v162: Radar-Wissen fuer die Schnellspur. /api/agent im Control-Server haengt
   // es selbst an — dorthin geht der Rumpf unveraendert (kein doppelter Block).
   const wissen = mitRadar(buildRagBlockMitVerlauf(task, lastUserContent(body.history)),
     await holeRadarKontext(task, req.headers, { origin: CONTROL_ORIGIN }));
