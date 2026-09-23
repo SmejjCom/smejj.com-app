@@ -37,3 +37,11 @@ test("Chat: laedt den Hinweis nur beim Grund 'Einwilligung fehlt' und schickt di
   const strom = fs.readFileSync(new URL("../public/ai/chat-stream.js", import.meta.url), "utf8");
   assert.match(strom, /output\.dataset\.antwortModell = String\(response\.headers\.get\("x-smejj-model-id"\)/);
 });
+
+test("Chat liest die spaete Modellzeile der Bruecke (': smejj-modell ... id=')", () => {
+  const strom = fs.readFileSync(new URL("../public/ai/chat-stream.js", import.meta.url), "utf8");
+  assert.match(strom, /event\.match\(\/\^: smejj-modell \.\*\\bid=\(\\S\+\)\/m\)/);
+  const zeile = ": smejj-modell backend=zhipu:glm-5.2 id=glm-5-2 fallback=true";
+  assert.equal(zeile.match(/^: smejj-modell .*\bid=(\S+)/m)[1], "glm-5-2");
+  assert.equal(": smejj-modell backend=groq id=openai/gpt-oss-120b fallback=true".match(/^: smejj-modell .*\bid=(\S+)/m)[1], "openai/gpt-oss-120b");
+});
