@@ -45,5 +45,10 @@ Laufnummer im Server-Ohr, Anzeige-Gedächtnis für `data:`-Bilder, Zeitgrenzen/N
 ## Offen
 
 - Echtes iPhone: Diktat live Wort für Wort erst mit Build 5 (Spracherkennung braucht den neuen Info.plist-Eintrag); mit Build 4 greift jetzt das eigene Ohr (Text nach dem Stopp).
-- Schreibfeld-Sperre, nicht geändert: `#startMessage` wächst bis 320 px (`html body #start.view .prompt-glass.prompt-glass.prompt-glass #startMessage{max-height:min(40dvh,320px)}` schlägt die 148-px-Regel aus mobil-dock.js (4)); ein langer Diktattext liegt dann transparent und schwer lesbar über dem Verlauf.
 - Bild-Wiederverwendung auf dem Server (Retry ohne neu malen) ist nicht gebaut; ein abgerissener Bild-Strom zeigt jetzt einen klaren Hinweis statt „?“.
+
+## Nachträge
+
+- **Runde 22 (v969):** Nach einem Neustart stand über der Bild-Antwort eine zweite, leere Aktionsleiste (Befund der Versionswache und im eigenen Simulator). Ursache: `chat-store.js renderEntriesInto` legte jeden Eintrag als `entry assistant` an, `.chat-schritte` ging verloren. Fix: Speichern merkt `art:"schritte"`, Altbestand wird am HTML erkannt. Versionswache: v969 grün, genau eine Leiste. Anker `schutz-100-2026-09-23-app-v969`.
+- **Runde 23 (v970):** Betreiber-Freigabe „ja, Schreibfeld auf 148 px begrenzen“. `mobil-dock.js` Regel (4b) mit drei IDs schlägt die 320-px-Regel des Start-Stils. Live gemessen (440 × 956, SW v970): 300 → 148 px, Feld scrollt innen. Anker `schutz-100-2026-09-23-app-v970`.
+- Schutz erweitert: Test (4) Arbeitsschritte-Art, Test (5) 148-px-Grenze (11 Tests in `tests/geraetebefund-2026-09-23.test.mjs`).
