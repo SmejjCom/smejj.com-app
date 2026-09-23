@@ -64,7 +64,7 @@ test("Gegenpruefung: Einzelquelle + unabhaengige zweite Quelle = geprueft; sonst
   const suche = async (q) => {
     gesucht.push(q);
     return { results: [{ url: "https://news.example.com/gpt-55", title: "GPT-5.5 released",
-      snippet: "OpenAI released GPT-5.5 with a larger context window and lower prices for developers, the company said on Sunday." }] };
+      snippet: "According to the company, developers get lower prices and a larger context window: OpenAI released GPT-5.5 on Sunday." }] };
   };
   const lauf = await fuehreRadarLaufAus({ env: {}, jetzt: JETZT, stores, grund: "admin:test", maxThemen: 0, signale: stumm, suche });
   assert.equal(lauf.gegenpruefung.length, 1);
@@ -156,4 +156,19 @@ test("Radar-Index: veraltet antwortet sofort mit dem alten Stand und erneuert im
   await new Promise((r) => setTimeout(r, 5));
   assert.equal((await radarIndex({ jetztMs: 200_001, lader })).chunks[0].id, "b");
   radarIndexVerwerfen();
+});
+
+test("Gegenpruefung: eine Kopie desselben Textes ist KEINE unabhaengige Bestaetigung", async () => {
+  const { istKopie } = await import("../control-server/src/autopilots/aiRadarAutopilot.js");
+  const text = "Ask Claude Opus, ChatGPT, and Gemini Pro whether we should launch this feature in Q4 and compare the answers side by side.";
+  assert.equal(istKopie(`Tip: ${text}`, text), true);
+  assert.equal(istKopie("An optional security setting, ChatGPT Lockdown Mode cuts off browsing and external services for higher-risk users.",
+    "ChatGPT now offers an optional Lockdown Mode security setting that cuts off browsing and external services."), false);
+  const e = baueEintrag({ themaId: "x", bereich: "modelle", aussage: text, jetzt: "2026-09-21T08:00:00.000Z",
+    belege: [{ url: "https://a.example.org/x", host: "a.example.org", guete: "presse", markierungen: [] }] });
+  const stores = { wissen: ablage([e]), laeufe: ablage(), konfig: ablage([{ id: "radar-konfig", themenAus: ["*"], themen: [] }]) };
+  const suche = async () => ({ results: [{ url: "https://b.example.com/copy", title: "Tipps", snippet: `Tip 3: ${text}` }] });
+  const lauf = await fuehreRadarLaufAus({ env: {}, jetzt: JETZT, stores, grund: "admin:test", maxThemen: 0, signale: stumm, suche });
+  assert.equal(lauf.gegenpruefung[0].ergebnis, "keine_zweite_quelle");
+  assert.equal(stores.wissen.daten[0].pruefstatus, "einzelquelle");
 });

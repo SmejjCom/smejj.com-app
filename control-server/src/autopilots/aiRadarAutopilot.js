@@ -352,7 +352,9 @@ async function gegenpruefen({ env, jetzt, suche, stores, vorhandene, rest, zaehl
       // "Lockdown Mode" trugen alle "unbelegt" und bestaetigten dennoch dasselbe.
       // Geruecht und Werbung bleiben Ausschlussgruende.
       if ((b.markierungen || []).some((m) => m === "geruecht" || m === "werbung")) continue;
-      if (aehnlichesThema(b.auszug, e.aussage)) { bestaetigung = b; break; }
+      // Eine KOPIE desselben Textes (Syndikation, Zweitverwertung) ist keine
+      // unabhaengige Bestaetigung — gleiches Thema ja, fast gleicher Wortlaut nein.
+      if (aehnlichesThema(b.auszug, e.aussage) && !istKopie(b.auszug, e.aussage)) { bestaetigung = b; break; }
     }
     let neu;
     if (bestaetigung) {
@@ -413,6 +415,22 @@ function neueThemenZeiten(protokollThemen, jetzt) {
   const zeiten = {};
   for (const t of protokollThemen) zeiten[t.id] = jetzt;
   return zeiten;
+}
+
+/**
+ * Uebernommener Wortlaut? Eine gemeinsame Folge von mindestens `n` Woertern am
+ * Stueck verraet eine Kopie (Syndikation, Zweitverwertung). Ein eigener Bericht
+ * teilt Schluesselwoerter, aber selten zehn Woerter in derselben Reihenfolge.
+ */
+export function istKopie(a, b, n = 10) {
+  const worte = (t) => String(t || "").toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  const A = worte(a);
+  const B = worte(b);
+  if (A.length < n || B.length < n) return false;
+  const folgen = new Set();
+  for (let i = 0; i + n <= A.length; i += 1) folgen.add(A.slice(i, i + n).join(" "));
+  for (let i = 0; i + n <= B.length; i += 1) if (folgen.has(B.slice(i, i + n).join(" "))) return true;
+  return false;
 }
 
 /** Grober Themenbezug zweier Auszuege — reicht fuer "bestaetigt dieselbe Sache?". */
