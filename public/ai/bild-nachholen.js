@@ -115,3 +115,18 @@ export async function rettePlatzhalter(log, { anfrage, renderMarkdown, hinweis =
   }
   return gerettet;
 }
+
+/** Einstieg fuer chat-store.js nach dem Wiederherstellen: fragt die Bruecke nur nach ihrer Ablage (bildNurAblage, nie neu malen). */
+export async function retteNachNeustart(log) {
+  const [strom, konfig, sprache, markdown] = await Promise.all([import("./chat-stream.js"), import("../config.js"), import("../i18n/ui.js?v=3"), import("/assets/chat-markdown.js?v=1")]);
+  return rettePlatzhalter(log, {
+    renderMarkdown: markdown.renderChatMarkdown,
+    hinweis: sprache.t("Das Bild wurde unterbrochen — bitte den Auftrag erneut senden."),
+    anfrage: (auftrag) => fetch(konfig.CLIENT_ROUTES.api.chat, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...strom.bridgeAuthHeaders() },
+      body: JSON.stringify({ messages: [{ role: "user", content: auftrag }], bildErneut: true, bildNurAblage: true }),
+      signal: AbortSignal.timeout?.(20_000)
+    })
+  });
+}

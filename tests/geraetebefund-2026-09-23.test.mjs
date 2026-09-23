@@ -247,7 +247,8 @@ test("(6) Bild erneut anfordern ohne Neumalen: abgerissener Strom -> dasselbe Bi
   // Ohne Abriss: nichts tun.
   assert.equal(await holeBildNach({ output: { textContent: "Normale Antwort" }, anfrage: async () => { throw new Error("darf nicht"); } }), false);
   const q = fs.readFileSync("public/ai/chat-stream.js", "utf8");
-  assert.match(q, /if \(!lauf\.gestoppt && BILD_ABRISS\.test\(output\?\.textContent \|\| ""\)\)/, "nie nach bewusstem Stopp");
+  assert.match(q, /if \(!lauf\.gestoppt && \/Die Bild-Übertragung ist abgerissen\/\.test\(output\?\.textContent \|\| ""\)\)/, "nie nach bewusstem Stopp");
+  assert.match(q, /import\("\.\/bild-nachholen\.js"\)/, "erst beim Abriss geladen (Startgewicht)");
   assert.match(q, /bildErneut: true/);
   assert.match(fs.readFileSync("public/sw.js", "utf8"), /"\/assets\/ai\/bild-nachholen\.js"/, "offline im Precache");
 });
@@ -330,6 +331,6 @@ test("(8) Rettung nach App-Neustart: verwaister Bild-Platzhalter -> Bild aus der
   assert.equal(auftragAus(null), "");
   // Einhaengung in chat-store.js: nur bildNurAblage (nie neu malen).
   const store = fs.readFileSync("public/chat-store.js", "utf8");
-  assert.match(store, /if \(log\.querySelector\("\.chat-bild-platzhalter"\)\) rettePlatzhalterSpaeter\(log\);/);
-  assert.match(store, /bildErneut: true, bildNurAblage: true/);
+  assert.match(store, /if \(log\.querySelector\("\.chat-bild-platzhalter"\)\) import\("\/assets\/ai\/bild-nachholen\.js"\)\.then\(\(m\) => m\.retteNachNeustart\(log\)\)/, "Modul erst bei Bedarf (Startgewicht)");
+  assert.match(fs.readFileSync("public/ai/bild-nachholen.js", "utf8"), /bildErneut: true, bildNurAblage: true/, "nie neu malen");
 });
