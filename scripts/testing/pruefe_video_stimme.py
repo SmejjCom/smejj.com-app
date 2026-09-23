@@ -107,7 +107,8 @@ def main():
     for name, sprache, download, erwartet_ton, erwartet_stimme in [
         ("Englisch: Stimme laden und sprechen", "en", Antwort(b"en_US-lessac-medium"), True, "en_US-lessac-medium"),
         ("Deutsch: Standardstimme, kein Nachladen", "de", Antwort(b"x"), True, None),
-        ("Japanisch: keine Stimme -> stumm", "ja", Antwort(b"x"), False, None),
+        ("Japanisch: Stimme laden und sprechen", "ja", Antwort(b"ja_JP-hi_fi_captain-medium"), True, "ja_JP-hi_fi_captain-medium"),
+        ("unbekannte Sprache: keine Stimme -> stumm", "xx", Antwort(b"x"), False, None),
         ("Laden scheitert -> stumm", "fr", Antwort(b"", ok=False, status=500), False, None),
     ]:
         antworten["aufrufe"] = []
@@ -116,7 +117,7 @@ def main():
         synth = [j for (pfad, j) in antworten["aufrufe"] if pfad == "synthesize"]
         stimme = synth[0].get("voice") if synth else None
         geladen = any(pfad == "download" for (pfad, _) in antworten["aufrufe"])
-        gut = (ergebnis is not None) == erwartet_ton and stimme == erwartet_stimme and (geladen == (sprache not in ("de", "ja")))
+        gut = (ergebnis is not None) == erwartet_ton and stimme == erwartet_stimme and (geladen == (sprache not in ("de", "xx")))
         print(f"  {'OK ' if gut else 'FEHLER'} {name}: {'Ton' if ergebnis else 'kein Ton'}, Stimme {stimme}")
         if not gut:
             fehler.append(f"{name}: falsch")
@@ -134,7 +135,7 @@ def main():
     if fehler:
         print("\nBEFUND:\n  - " + "\n  - ".join(fehler))
         return 1
-    print(f"\nAlle {len(faelle) + 6} Pruefungen gruen.")
+    print(f"\nAlle {len(faelle) + 7} Pruefungen gruen.")
     return 0
 
 
