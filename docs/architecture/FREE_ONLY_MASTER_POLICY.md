@@ -12,8 +12,14 @@ Diese Datei ist die zentrale Architekturregel fuer smejj.com.
 - GitHub Pages (Free) ist das einzige Hosting fuer die statische Website/PWA-Shell.
 - Keine GitHub Pro-, Team-, Enterprise-, Actions-Minuten-, Storage-, Packages-, LFS-, Codespaces- oder sonstigen kostenpflichtigen GitHub-Dienste.
 - Keine Cloudflare-Dienste jeglicher Art (weder Free noch Paid).
-- Salad.com nur pay-per-use hinter Budget-Gate und Laufzeit-Watchdog; kein Abo, kein Auto-Billing-Fallback.
-- Oracle Cloud wird NICHT genutzt (schriftliche Nutzer-Entscheidung 2026-07-03: "Oracle rausnehmen, wir arbeiten mit Salad weiter"; die kurzzeitige Always-Free-Zulassung vom selben Tag ist damit revidiert und ein Konto wurde nie angelegt). Der Betriebsweg fuer Rechen- und Serverdienste ist Salad.com — pay-per-use vom vorhandenen Guthaben, hinter Budget-Gate/Watchdog, Auto-Recharge bleibt aus.
+- Salad.com wird NICHT mehr genutzt (Betreiber-Entscheidung 2026-08-15:
+  "Salad.com vollstaendig ignorieren und entfernen. Wir arbeiten
+  ausschliesslich mit Zeabur.com"). Der Ausstieg lief am 2026-08-11;
+  seitdem zeigt die gesamte Konfiguration auf Zeabur. Kein Konto, keine
+  Container-Gruppe, keine Kostenposition mehr.
+- Rechen- und Serverdienste laufen ausschliesslich ueber Zeabur.com
+  (Control Server, 6 USD/Monat, feste eingeplante Ausgabe).
+- Oracle Cloud wird NICHT genutzt (schriftliche Nutzer-Entscheidung 2026-07-03: "Oracle rausnehmen"; die kurzzeitige Always-Free-Zulassung vom selben Tag ist damit revidiert und ein Konto wurde nie angelegt). Der Betriebsweg fuer Rechen- und Serverdienste ist Zeabur.com — fester Control Server, hinter Budget-Gate/Watchdog, kein Auto-Billing-Fallback.
 - Keine Trial-Angebote.
 - Keine Auto-Billing-Fallbacks.
 - Keine Funktion, die nach einem kostenlosen Limit automatisch Geld kosten kann.

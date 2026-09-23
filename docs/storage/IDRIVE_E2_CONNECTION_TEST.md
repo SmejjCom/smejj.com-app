@@ -45,6 +45,22 @@ und `CONFIRM_IDRIVE_CONNECTION_TEST=YES` ausgefuehrt:
 
 Zusaetzlich wurde der fehlende-ENV-Pfad geprueft und blockiert fail-closed.
 
+## Nachmessung Eimer-Isolation (2026-08-30)
+
+Im Rahmen der Infra-Vollverifikation mit dem geprueften Skript
+`scripts/model-management/check_idrive_e2_storage.mjs` (Laptop-Schluessel aus
+`~/.config/smejj.com/env.local`):
+
+| Eimer | Ergebnis | Bedeutung |
+| --- | --- | --- |
+| `smejj-model-files` | list OK | Laptop darf lesen (Deploy-Artefakte, capsules/) |
+| `smejj-app` | **HTTP 403 AccessDenied** | Nutzdaten-Eimer nur mit Server-Schluessel — Isolation greift |
+| `smejj-sicherung` | **HTTP 403 AccessDenied** | Backup-Eimer von keinem Dienst-Schluessel erreichbar — Isolation greift |
+
+Die 403 sind der BEWEIS der gewollten Abschottung, kein Fehler. Kontrolle des
+Backup-Eimers bleibt der IDrive-Konsole vorbehalten (Login beim Betreiber;
+der Google-SSO-Popup im Agent-Browser bleibt bewusst wirkungslos).
+
 ## Verbote
 
 - Keine IDrive Secrets im Browser.
