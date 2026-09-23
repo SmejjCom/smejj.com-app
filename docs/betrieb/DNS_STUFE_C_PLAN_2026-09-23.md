@@ -50,7 +50,7 @@ DNSimple „Why DNSSEC and Secondary DNS may not work together".
 |---|---|---|---|---|---|---|
 | **C0** | TTL der Nutzeinträge auf 1 Tag, negative TTL auf 5 min | teilweise: wer den Namen im Speicher hat (fast alle Wiederkehrer), merkt Ausfälle bis ~1 Tag nicht | bleibt | 0 € | **gering**, jederzeit umkehrbar | 10 min im Spaceship-Panel |
 | **C1** | Eigener „versteckter Primär" (signiert selbst, z. B. Knot DNS) + Hurricane Electric + Spaceship-unabhängige NS | voll | bleibt (neue Schlüssel, DS-Wechsel) | Rechenzeit auf Zeabur (unklar, ggf. > 0 €) + Betrieb | **hoch** (DS-Wechsel, eigener Dienst mit Port 53) | mehrere Arbeitsrunden |
-| **C2** | Zone zu einem Anbieter mit eigenem Anycast-Netz und DNSSEC umziehen (z. B. deSEC), Spaceship bleibt nur Registrar | gegen *Spaceship*-Ausfall ja, aber wieder EIN Anbieter | bleibt (neuer DS) | 0 € | mittel–hoch (DS-Wechsel, Mail-Weiterleitung) | eine Arbeitsrunde |
+| **C2** | Zone zu einem Anbieter mit eigenem Anycast-Netz und DNSSEC umziehen (z. B. deSEC), Spaceship bleibt nur Registrar | gegen *Spaceship*-Ausfall ja, aber wieder EIN Anbieter | ~4 Tage aus, dann neuer DS | 0 € | mittel–hoch (DS-Wechsel, Mail-Weiterleitung) | eine Arbeitsrunde |
 | **C3** | Zwei Anbieter ohne DNSSEC (z. B. Spaceship-unabhängiger Primär + HE/1984 Sekundär) | voll | **fällt weg** | 0 € | mittel (Sicherheitsverlust) | eine Arbeitsrunde |
 | **C4** | Multi-Signer nach RFC 8901 | voll | bleibt | 0 € | sehr hoch, zwei Anbieter müssen es können | — nicht verfügbar bei kostenlosen Anbietern |
 
@@ -88,25 +88,30 @@ betroffenen Eintrags 24 h vorher auf 300 senken, danach wieder anheben.
 
 ## 6. Ablauf C2 (vorbereitet für später — Zone zu deSEC, Spaceship bleibt Registrar)
 
-Die Reihenfolge ist so gewählt, dass die DNSSEC-Kette **nie** bricht (Schlüssel-Doppelphase, RFC 6781 „Double-DS"):
+Zwei Anbieter, die nicht zusammenarbeiten, signieren mit **verschiedenen** Schlüsseln. Ein „Double-DS" allein
+reicht dann nicht: ein Resolver mit dem alten DNSKEY-Satz im Speicher (TTL 3600) verwirft die Signaturen des neuen
+Anbieters. Der sichere Weg ohne Multi-Signer ist darum eine **kurze Phase ohne DNSSEC** — die Domain bleibt dabei
+jederzeit auflösbar, sie ist nur für einige Tage nicht signiert:
 
 1. **Betreiber** legt das deSEC-Konto an (Konto-Anlage darf die Sitzung nicht) und legt die Domain smejj.com dort an.
 2. **Sitzung** trägt über die deSEC-API (Token vom Betreiber in `~/.config/smejj.com/env.local`) alle 16 Nutzeinträge aus
    Abschnitt 1 ein und prüft sie direkt bei `ns1.desec.io`/`ns2.desec.org` (Werte 1:1, TTL 300 für die Umzugsphase).
 3. **Bei Spaceship** bestätigen lassen, dass die Mail-Weiterleitung mit fremden Nameservern weiterläuft. Wenn nein:
    **Abbruch** vor Schritt 4, oder vorher eigene Mail-Lösung klären.
-4. **Double-DS:** Betreiber trägt im Spaceship-Panel den **zusätzlichen** DS von deSEC ein (der alte 18410 bleibt).
-   Warten ≥ 2 × DS-TTL (bei .com 1 Tag → 2 Tage). Prüfen: `dig DS smejj.com @a.gtld-servers.net` zeigt beide.
+4. **DNSSEC aus (nur die Kette):** Betreiber entfernt bei Spaceship den DS 18410. Warten ≥ 2 Tage (DS-TTL bei .com
+   1 Tag, doppelt). Prüfen: `dig DS smejj.com @a.gtld-servers.net` leer, dns.google Status 0 mit `"AD":false`.
+   Nr. 87 meldet hier bewusst Rot („DNSSEC-Kette") — **vorher** als vorbereiteter Commit die AD-Prüfung für die
+   Umzugsphase auf Gelb stellen.
 5. **Nameserver-Wechsel:** Betreiber stellt bei Spaceship auf „Custom nameservers" `ns1.desec.io`, `ns2.desec.org`.
-   Warten ≥ 2 Tage (Delegations-TTL 172800). In dieser Zeit antworten beide Anbieter mit gültiger Signatur, weil
-   beide DS in der .com-Zone stehen.
-6. **Aufräumen:** alten DS 18410 entfernen, `DNS_SOLL.nameserver` in `dnsWacheAutopilot.js` und die Action
-   `dns-wache.yml` auf deSEC umstellen (**vor** Schritt 5 als vorbereiteter Commit, ausgeliefert zeitgleich), TTL
-   wieder auf 86400.
-7. **Rückweg** in jeder Phase: bis Schritt 6 steht der alte DS noch — Nameserver im Panel auf Spaceship zurück genügt.
+   Warten ≥ 2 Tage (Delegations-TTL 172800). Beide Anbieter liefern dieselben Werte, ungesigniert gültig.
+6. **DNSSEC wieder an:** Betreiber trägt den DS von deSEC bei Spaceship ein. Prüfen: `"AD":true` bei dns.google.
+7. **Aufräumen:** `DNS_SOLL.nameserver` in `dnsWacheAutopilot.js` und die Action `dns-wache.yml` auf deSEC, AD-Prüfung
+   wieder streng, TTL wieder auf 86400; Spaceship-DNS-Zone erst danach leeren.
+8. **Rückweg:** bis Schritt 5 genügt „DS wieder eintragen"; ab Schritt 5 Nameserver im Panel zurück auf Spaceship
+   (die alte Zone dort bleibt bis Schritt 7 unverändert stehen).
 
-Wer diesen Ablauf verkürzt (DS tauschen statt ergänzen, oder Nameserver vor dem neuen DS wechseln), macht smejj.com
-für alle prüfenden Resolver (Google, Quad9, viele Mobilfunker) bis zu zwei Tage unauflösbar.
+Wer die Reihenfolge verkürzt (neuer DS oder neue Nameserver, solange der alte DS noch wirkt), macht smejj.com für alle
+prüfenden Resolver (Google, Quad9, viele Mobilfunker) bis zu zwei Tage unauflösbar.
 
 ## 7. Was die Sitzung ohne Freigabe NICHT tut
 
