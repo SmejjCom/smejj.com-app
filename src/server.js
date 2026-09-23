@@ -143,12 +143,8 @@ const config = {
 const SHORT_ACCESS_TOKEN = ["1", "true", "yes"].includes(String(process.env.SMEJJ_SHORT_ACCESS_TOKEN || "").toLowerCase());
 const SESSION_COOKIE_SAMESITE = SHORT_ACCESS_TOKEN ? "None; Partitioned" : "Lax";
 
-// Die Sitzungs-Helfer bekommen ihren Kontext EINMAL — danach bleibt jede
-// Aufrufstelle unten unveraendert (Muster wie createVoiceTts in der Bruecke).
-// sessionSecret kommt aus config, NICHT erneut aus der Umgebung: dort laeuft
-// es durch normalizeSecret und kennt den Fallback GOOGLE_SESSION_SECRET.
-// Ein zweiter Nachbau haette Sitzungen mit einem anderen Geheimnis
-// signiert — alle Anmeldungen waeren still ungueltig geworden.
+// Sitzungs-Helfer mit Kontext EINMAL. sessionSecret aus config (normalizeSecret + Fallback GOOGLE_SESSION_SECRET),
+// NICHT neu aus der Umgebung — ein zweiter Nachbau signierte mit anderem Geheimnis, alle Anmeldungen still ungueltig.
 const {
   ensureRegistrySid, erneuereDauerCookie, readSession, serializeAccessToken,
   serializeSessionCookie, serializeSessionToken, sessionStillValid
