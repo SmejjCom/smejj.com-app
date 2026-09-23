@@ -22,7 +22,7 @@ Der Chat selbst hat oben keine Fläche: `.mobil-kopfglas` ist seit V15 am Handy 
 - `public/voice-ohr-solo.js` + `public/composer-tools.js`: Sprachmodus übernimmt in diesem Fall aufs Solo-Ohr (Parallel-Ohr wird freigegeben, Barge-in schweigt im Ohr-Modus).
 - `public/voice-ear.js`: Laufnummer, kein doppelter Start, spät gelieferte Mikrofone werden sofort gestoppt; `finish({budgetMs})`.
 - `public/chat-medien.js`: frisch erzeugtes Bild bleibt ohne Netz sichtbar; Zeitgrenze 15 s für jeden Medien-Abruf; Neuversuch bei `online`/Sichtbarwerden; Ladefehler → neuer Abruf oder sichtbarer Hinweis „Bild nicht vollständig geladen“ statt „?“ (mit Schleifenschutz).
-- `public/mobil-dock.js` Regel (17): im Code-Bereich ist der Halter der einzige Scroller, keine Linie, kein Kopfrand — der Verlauf läuft bis an die Oberkante.
+- `public/mobil-dock.js` Regel (21): im Code-Bereich ist der Halter der einzige Scroller, keine Linie, kein Kopfrand — der Verlauf läuft bis an die Oberkante.
 - iOS-Hülle `~/smejj-ios`: `NSSpeechRecognitionUsageDescription` ergänzt, Build 5 (Rollback: `Info.plist.vor-build5-2026-09-23`).
 - Keine Datenbank-, Storage- oder Schema-Änderung. Bestehende Bilder bleiben unverändert.
 
@@ -32,7 +32,7 @@ Der Chat selbst hat oben keine Fläche: `.mobil-kopfglas` ist seit V15 am Handy 
 Kaskaden-Testliste. Diese Stellen dürfen ohne schriftliche Freigabe des Betreibers nicht geändert,
 entfernt oder abgeschwächt werden: Ohr-Übernahme bei verweigerter Erkennung (Diktat + Sprachmodus),
 Laufnummer im Server-Ohr, Anzeige-Gedächtnis für `data:`-Bilder, Zeitgrenzen/Neuversuch/Hinweis in
-`chat-medien.js`, Regel (17) in `mobil-dock.js`, `NSSpeechRecognitionUsageDescription` der iOS-Hülle.
+`chat-medien.js`, Regel (21) in `mobil-dock.js`, `NSSpeechRecognitionUsageDescription` der iOS-Hülle.
 
 ## Auslieferung und Nachweis
 
@@ -52,3 +52,7 @@ Laufnummer im Server-Ohr, Anzeige-Gedächtnis für `data:`-Bilder, Zeitgrenzen/N
 - **Runde 22 (v969):** Nach einem Neustart stand über der Bild-Antwort eine zweite, leere Aktionsleiste (Befund der Versionswache und im eigenen Simulator). Ursache: `chat-store.js renderEntriesInto` legte jeden Eintrag als `entry assistant` an, `.chat-schritte` ging verloren. Fix: Speichern merkt `art:"schritte"`, Altbestand wird am HTML erkannt. Versionswache: v969 grün, genau eine Leiste. Anker `schutz-100-2026-09-23-app-v969`.
 - **Runde 23 (v970):** Betreiber-Freigabe „ja, Schreibfeld auf 148 px begrenzen“. `mobil-dock.js` Regel (4b) mit drei IDs schlägt die 320-px-Regel des Start-Stils. Live gemessen (440 × 956, SW v970): 300 → 148 px, Feld scrollt innen. Anker `schutz-100-2026-09-23-app-v970`.
 - Schutz erweitert: Test (4) Arbeitsschritte-Art, Test (5) 148-px-Grenze (11 Tests in `tests/geraetebefund-2026-09-23.test.mjs`).
+- **Runde 24 (v971) + Brücke v171:** Bild erneut anfordern ohne Neumalen (Betreiber-Freigabe 23.09.). Brücke: jedes fertige Bild 30 min im Arbeitsspeicher (`chat-bridge-bildablage.js`, Schlüssel sha256 aus Anmelde-Kopf + Auftrag, Deckel 40); `bildErneut:true` liefert dasselbe Bild ohne Maler. App: `ai/bild-nachholen.js` holt bei „Die Bild-Übertragung ist abgerissen“ nach (3 Versuche, nur vollständige Bilder). Diktat-Hinweise über `t()` und als „warn“ (`showToast` zeigt „info“ nie an). Anker `schutz-100-2026-09-23-app-v971`, Brücke design-v11 ac186458.
+- **Befund 24.09. (Simulator + Versionswache):** App mitten im Malen beendet → Platzhalter „Male dein Bild … 20 s“ blieb nach dem Neustart eingefroren.
+- **Runde 25 (v972) + Brücke v172:** Rettung beim Wiederherstellen (`retteNachNeustart`, Brücke `bildNurAblage` – malt nie neu); ohne Ablage-Treffer ein klarer Hinweis statt ewigem Schimmer. Code-Schreibfeld durchsichtig wie im Chat (Betreiber-Freigabe 24.09., `mobil-dock.js` Regel (22), `--code-feld-hoehe`). Startgewicht: Rettung ins Nachlademodul verschoben, eigene Kommentare gekürzt → +1979 statt +2471 Bytes (Grenze 2048). Anker `schutz-100-2026-09-24-app-v972`, Brücke design-v11 6e9b85d2.
+- **Grenze der Bildablage:** nur im Arbeitsspeicher der Brücke; ein Brücken-Neustart (jede Brücken-Auslieferung) leert sie. Schlüssel ist das Anmelde-Token — erneuert sich das Token, findet die Rettung das Bild nicht mehr (dann kommt der Hinweis).
