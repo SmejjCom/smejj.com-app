@@ -215,3 +215,8 @@ test("(4) Nach Neustart keine zweite, leere Aktionsleiste: der Arbeitsschritte-E
   const aktionen = fs.readFileSync("public/chat-actions.js", "utf8");
   assert.match(aktionen, /entry\.classList\.contains\("chat-schritte"\)[^\n]*continue;/, "keine Leiste fuer Schritte");
 });
+
+test("(5) Schreibfeld am Handy hoechstens 148 px (Betreiber-Freigabe 23.09.) — schlaegt die 320-px-Regel des Start-Stils", () => {
+  assert.match(REGELN, /html body #start\.view \.prompt-glass #startMessage#startMessage#startMessage\{max-height:148px\}/);
+  assert.match(REGELN, /body #code \.codefeld #codeAufgabe\{max-height:148px;overflow-y:auto/);
+});
