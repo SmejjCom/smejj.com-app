@@ -23,7 +23,7 @@ test("hoechstens einmal je Sitzung; gesperrter Speicher = lieber gar nicht", () 
 test("Quelle: kein Dialog, Zeile UNTER der Antwort, Sprung per Reiter-Notiz zum Schalter", () => {
   const q = fs.readFileSync(new URL("../public/lern-hinweis.js", import.meta.url), "utf8");
   assert.doesNotMatch(q, /<dialog|showModal|position:\s*fixed/);
-  assert.match(q, /entry\.after\(zeile\)/);
+  assert.match(q, /\(leiste \|\| entry\)\.after\(zeile\)/);
   assert.match(q, /setItem\(KONTO_REITER_SCHLUESSEL, "data"\)/);
   assert.match(q, /getElementById\("privacyTraining"\)/);
   assert.match(q, /role", "status"/);
@@ -32,7 +32,7 @@ test("Quelle: kein Dialog, Zeile UNTER der Antwort, Sprung per Reiter-Notiz zum 
 
 test("Chat: laedt den Hinweis nur beim Grund 'Einwilligung fehlt' und schickt die Antwort-Herkunft mit", () => {
   const q = fs.readFileSync(new URL("../public/chat-actions.js", import.meta.url), "utf8");
-  assert.match(q, /grund === "einwilligung_fehlt_oder_veraltet"\) import\("\.\/lern-hinweis\.js\?v=1"\)/);
+  assert.match(q, /grund === "einwilligung_fehlt_oder_veraltet"\) import\("\.\/lern-hinweis\.js\?v=2"\)/);
   assert.match(q, /modell: entry\.dataset\?\.antwortModell/);
   const strom = fs.readFileSync(new URL("../public/ai/chat-stream.js", import.meta.url), "utf8");
   assert.match(strom, /output\.dataset\.antwortModell = String\(response\.headers\.get\("x-smejj-model-id"\)/);

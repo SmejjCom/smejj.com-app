@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-23T09:19:04.045Z",
-  "confirmation": "Betreiber 23.09.2026 schriftlich im Chat: 'ja, Verschiebung nach Tastatur auch beheben' (Nebenbefund aus der Simulator-Pruefung von v962: Konto-Seite nach Tastatur zu nach oben und links verschoben). Geaendert: nur public/mobil-ansichten.js Regel (7) — Eingabefelder in #profile, #settings, #chatHistory am Handy (bis 600 px) font-size 16px, damit iOS beim Fokus nicht zoomt; Test tests/mobil-ansichten.test.mjs. Start-Lock: nur sw.js-Nummer; Startseite und Schreibfeld unberuehrt.",
+  "frozenAt": "2026-09-23T09:33:46.749Z",
+  "confirmation": "Nach einem Daumen hoch OHNE Einwilligung einen kurzen, freundlichen Hinweis zeigen: was gesammelt wird, wozu, jederzeit widerrufbar, mit direktem Weg zum Schalter (Konto → Datenschutz → Modelltraining erlauben). Höchstens einmal je Sitzung, nie aufdringlich, kein Dialog, der die Antwort verdeckt. Den Schalter selbst verständlich beschriften (kein Fachchinesisch). In 14 Sprachen übersetzt, am Handy und am Rechner gemessen.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "337bf37cb4e16581dda9bfe3115a0a991f1eac471467b765b55a43e7307615b2",
+    "public/index.html": "105d154b1e32bd72c0b9fd40950f662783b1a71ebd0d336ef0d931ea1887e54b",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "725cdc70d3fc21e75d058ef1f162bfb7eed4bae65ba7ba89eea00f44e6c0f82d",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "b30c34f9b3e59f3d2505291181cad567e6dc43d78b5815c5f98a63b7483f88e1",
+    "public/sw.js": "97c10e362b1aac4b3e862a400c234af3a4bab407a8518a6ab36235d430f257cc",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
