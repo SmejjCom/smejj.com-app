@@ -76,3 +76,51 @@ export function istWeltMalAuftrag(text) {
   }
   return MOTIV_MIT_VERB.some(([motiv, verb]) => motiv.test(t) && verb.test(t));
 }
+
+// --- Video-Auftraege (Betreiber 23.09.2026: "erweitere die Videoerkennung auf
+// alle 15 Sprachen"). Befund live: "Haz un video de un faro rojo" fiel in die
+// Textspur, und das Modell antwortete "No puedo crear vídeos" — es verneinte
+// eine Faehigkeit, die smejj hat. Regel wie bei Bildern: Video-Wort UND
+// Erstell-Verb derselben Sprache. Tuerkisch haengt Endungen an ("videosu"),
+// darum dort Praefix statt ganzes Wort.
+const praefix = (liste) => new RegExp(`${L}(?:${liste.join("|")})`, "iu");
+const VIDEO_WELT = [
+  [wort(["vídeo", "video", "vídeos", "videos", "animación", "clip"]), wort(["haz", "hazme", "crea", "créame", "genera", "genérame", "produce"])],                         // es
+  [wort(["vidéo", "vidéos", "film", "clip", "animation"]), wort(["fais", "fais-moi", "crée", "crée-moi", "génère", "génère-moi", "réalise", "produis"])],                // fr
+  [wort(["video", "filmato", "animazione", "clip"]), wort(["fai", "fammi", "crea", "creami", "genera", "generami", "realizza"])],                                         // it
+  [wort(["vídeo", "video", "vídeos", "filme", "animação", "clipe"]), wort(["faça", "faz", "faz-me", "crie", "cria", "gere", "gera", "produza"])],                         // pt
+  [praefix(["video", "animasyon", "klip"]), praefix(["yap", "oluştur", "üret", "hazırla"])],                                                                              // tr
+  [wort(["видео", "ролик", "анимацию", "анимация", "клип"]), wort(["сделай", "сделайте", "создай", "создайте", "сгенерируй", "сними", "смонтируй"])],                   // ru
+  [wort(["فيديو", "مقطع", "رسوم متحركة"]), wort(["اصنع", "أنشئ", "انشئ", "ولّد", "ولد", "اعمل"])],                                                                     // ar
+  [wort(["वीडियो", "एनिमेशन", "क्लिप"]), wort(["बनाओ", "बनाइए", "बनाएं", "बनाएँ", "बना दो", "जनरेट करो"])],                                                              // hi
+  [wort(["ভিডিও", "অ্যানিমেশন", "ক্লিপ"]), wort(["বানাও", "বানান", "তৈরি করো", "তৈরি করুন"])],                                                                          // bn
+  [wort(["video", "animasi", "klip"]), wort(["buat", "buatkan", "buatlah", "bikin", "bikinkan", "hasilkan"])],                                                             // id
+  [frei(["動画", "ビデオ", "アニメーション", "ムービー"]), frei(["作って", "作成", "生成", "作れ"])],                                                                          // ja
+  [frei(["동영상", "영상", "비디오", "애니메이션"]), frei(["만들어", "생성", "제작"])],                                                                                     // ko
+  [frei(["视频", "动画", "影片", "短片"]), frei(["生成", "制作", "做一", "做个", "创建"])]                                                                                   // zh
+];
+
+// Auftraege UEBER ein Video (zusammenfassen, erklaeren, uebersetzen …) oder mit
+// Link sind keine Bestellung — "Fais-moi un résumé de cette vidéo" malt nichts.
+const UEBER_VIDEO = frei([
+  "http", "www.", "youtube", "youtu.be",
+  "résumé", "résume", "résumer", "explique", "analyse", "tradui", "transcri",
+  "resumen", "resume", "explica", "analiza", "traduce", "transcrib",
+  "riassunt", "riassumi", "spiega", "analizza", "traduci", "trascriv",
+  "resumo", "resuma", "analisa", "traduz", "transcrev",
+  "özet", "açıkla", "analiz", "çevir",
+  "резюме", "кратко", "объясни", "проанализируй", "переведи", "перескажи",
+  "لخص", "اشرح", "حلل", "ترجم",
+  "सारांश", "समझाओ", "अनुवाद", "সারাংশ", "ব্যাখ্যা", "অনুবাদ",
+  "ringkas", "jelaskan", "analisis", "terjemah",
+  "要約", "説明", "分析", "翻訳", "文字起こし", "요약", "설명", "분석", "번역", "总结", "摘要", "解释", "翻译"
+]);
+
+/** true, wenn der Text in einer der 13 weiteren Sprachen ein Video bestellt. */
+export function istWeltVideoAuftrag(text) {
+  const t = String(text || "").trim();
+  if (!t || t.length > 600) return false;
+  const klein = t.toLowerCase();
+  if (FRAGE.test(klein) || UEBER_VIDEO.test(klein)) return false;
+  return VIDEO_WELT.some(([motiv, verb]) => motiv.test(t) && verb.test(t));
+}

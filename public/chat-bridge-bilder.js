@@ -20,7 +20,7 @@
 // Fail-safe: false = kein Byte gesendet, der Text-Weg uebernimmt unveraendert.
 
 import { meldeAktion } from "./chat-bridge-evolution.js";
-import { istWeltMalAuftrag } from "./chat-bridge-bildsprachen.js";
+import { istWeltMalAuftrag, istWeltVideoAuftrag } from "./chat-bridge-bildsprachen.js";
 import { bildSchritte, schrittSekunden } from "./chat-bridge-bildschritte.js";
 import { bildFehler, erzaehlSprache, videoTexte } from "./chat-bridge-medientexte.js";
 
@@ -143,6 +143,8 @@ export function erkenneVideoAuftrag(task) {
   if (!text || text.length > 600) return "";
   if (/\b(unterschied|was ist|wie geht|bedeutung|erkläre|erklare|definition)\b/i.test(text)) return "";
   if (VIDEO_MOTIV.test(text) && (VIDEO_VERB.test(text) || /\b(von|zu|aus|mit|über|ueber|eines|ein|eine|einen)\b/i.test(text))) return text;
+  // Die 13 weiteren Oberflaechensprachen ("Haz un video de un faro", 23.09.2026).
+  if (istWeltVideoAuftrag(text)) return text;
   return "";
 }
 
