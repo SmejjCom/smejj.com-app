@@ -66,3 +66,12 @@ test("Kippschalter und Rechtslinks sind volle Ziele (gemessen 46x26 und 16 px ho
   assert.match(m.REGELN, /\.settings-links a,body \.view \.settings-links a\{min-height:44px;display:inline-flex;align-items:center\}/);
 });
 
+
+test("Felder in Konto, Einstellungen und Verlauf tragen 16 px — sonst zoomt iOS beim Antippen und bleibt verschoben", () => {
+  const regel = m.REGELN.match(/body #profile\.view\.view input:not\(\[type=checkbox\]\)[^{]*\{font-size:16px\}/);
+  assert.ok(regel, "Regel fuer 16 px fehlt");
+  for (const teil of ["body #profile.view.view select", "body #profile.view.view textarea", "body #settings.view.view select", "body #settings.view.view textarea", "body #settings.view.view input:not", "body #chatHistory.view.view input:not"]) {
+    assert.ok(regel[0].includes(teil), `${teil} fehlt in der 16-px-Regel`);
+  }
+  assert.doesNotMatch(regel[0], /#start|#code|#startMessage/, "Startseite und Schreibfeld bleiben unberuehrt (Design-Lock)");
+});
