@@ -21,6 +21,7 @@
 
 import { meldeAktion } from "./chat-bridge-evolution.js";
 import { istWeltMalAuftrag } from "./chat-bridge-bildsprachen.js";
+import { bildSchritte, schrittSekunden } from "./chat-bridge-bildschritte.js";
 
 // Eigene Namen (BILDER_*): das Deploy-Buendel legt alle Bridge-Module in EINEN
 // Gueltigkeitsbereich (bundle_chat_bridge.mjs prueft Kollisionen hart).
@@ -452,8 +453,9 @@ export function messeMedienAusgabe(inhalt, { melder = meldeAktion } = {}) {
 
 // Konstanter text = konstante Kennung: die App aktualisiert dann EINE Zeile
 // (Stand + Schimmer-Platzhalter), statt pro 10-s-Meldung eine neue zu stapeln.
-function bilderSchritt(res, zustand, stand) {
-  res.write(`data: ${JSON.stringify({ smejj_schritt: { art: "bild", zustand, text: "Male dein Bild", stand, platzhalter: "bild" } })}\n\n`);
+// Titel und Stand in der Sprache der Anfrage (chat-bridge-bildschritte.js).
+function bilderSchritt(res, zustand, stand, sprache = "de") {
+  res.write(`data: ${JSON.stringify({ smejj_schritt: { art: "bild", zustand, text: bildSchritte(sprache).titel, stand, platzhalter: "bild" } })}\n\n`);
 }
 
 // Zieht das Motiv aus einem Video-Auftrag, damit der Ersatzvorschlag
@@ -689,11 +691,12 @@ export async function streamBilderLane(res, body, task, deps) {
   // Weg 1: der eigene Bild-Maler (nur wenn wach UND Modell geladen).
   if (malerZustand.bereit) {
     bilderSseKopf(res, deps, body, "bilder-foto", "bild-maler:sd-turbo");
-    bilderSchritt(res, "laeuft", "läuft … (ca. 1 Minute)");
+    const worte = bildSchritte(sprache);
+    bilderSchritt(res, "laeuft", worte.etwa, sprache);
     const beginn = Date.now();
     // Lebenszeichen alle 10 s, damit Zwischenknoten die Leitung nicht kappen.
     const takt = setInterval(() => {
-      bilderSchritt(res, "laeuft", `läuft … ${Math.round((Date.now() - beginn) / 1000)} s`);
+      bilderSchritt(res, "laeuft", schrittSekunden(sprache, Math.round((Date.now() - beginn) / 1000)), sprache);
     }, 10000);
     let inhalt = "";
     const notiz = {};
@@ -704,15 +707,15 @@ export async function streamBilderLane(res, body, task, deps) {
     }
     if (!inhalt) {
       // Mitten im Strom: kein Rueckweg zum Text-Pfad mehr — SVG als Reserve.
-      bilderSchritt(res, "laeuft", "ausgelastet — zeichne als Vektorgrafik …");
+      bilderSchritt(res, "laeuft", worte.reserve, sprache);
       inhalt = await erzeugeSvgInhalt(prompt, deps.timeoutMs, sprache);
     }
     // Scheitert AUCH die Reserve, ist der Grund des ersten Versuchs das
     // einzige, was noch etwas erklaert — sonst steht dort ein nacktes
     // "fehlgeschlagen", aus dem niemand etwas ableiten kann.
     bilderSchritt(res, "fertig", inhalt
-      ? "fertig"
-      : `fehlgeschlagen (${notiz.grund || "unbekannt"})`);
+      ? worte.fertig
+      : `${worte.fehl} (${notiz.grund || "unbekannt"})`, sprache);
     bilderSendeInhalt(res, inhalt || "Das Malen ist gerade fehlgeschlagen — bitte versuch es gleich noch einmal.");
     res.write("data: [DONE]\n\n");
     res.end();
@@ -732,7 +735,7 @@ export async function streamBilderLane(res, body, task, deps) {
       const sek = Number(malerZustand.ladezeitSek) || 0;
       const seit = sek > 0 ? ` (seit ${sek} s)` : "";
       bilderSseKopf(res, deps, body, "bilder-warten", "bild-maler:aufwaermen");
-      bilderSchritt(res, "fertig", "Bild-Dienst startet gerade");
+      bilderSchritt(res, "fertig", bildSchritte(sprache).startet, sprache);
       bilderSendeInhalt(res, malerZustand.grund === "gestoert"
         ? "Der Bild-Dienst meldet gerade eine Stoerung. Ich kann sonst Bilder malen — bitte versuch es in ein paar Minuten noch einmal."
         : `Der Bild-Dienst startet gerade${seit} und laedt sein Modell. Ich kann Bilder malen — bitte versuch es in ein bis zwei Minuten noch einmal.`);
