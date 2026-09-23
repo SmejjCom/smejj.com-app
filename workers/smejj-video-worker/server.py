@@ -102,6 +102,19 @@ HIMMEL_ZUG = float(os.environ.get("SMEJJ_VIDEO_HIMMEL_ZUG", "22"))    # Pixel je
 # die smejj 1.0 fragt — der Worker hat bewusst keinen Modell-Zugang.
 STIMME_URL = os.environ.get("SMEJJ_VOICE_TTS_ORIGIN", "http://smejj-voice-piper.zeabur.internal:8080").rstrip("/")
 STIMME_TIMEOUT_S = int(os.environ.get("SMEJJ_VIDEO_STIMME_TIMEOUT_S", "25"))
+# Erzählstimme in der Sprache des Nutzers (Betreiber 2026-09-23). Der Piper-Dienst
+# startet nur mit de_DE-thorsten und lädt weitere Stimmen über POST /download aus
+# rhasspy/piper-voices nach (~65 MB, einmal je Neustart). Deutsch = Standardstimme.
+# Japanisch fehlt bewusst: die Stimme braucht pyopenjtalk, das der Dienst nicht hat.
+# Ohne passende Stimme bleibt das Video STUMM — Thorsten liest nie fremden Text vor.
+STIMMEN = {
+    "en": "en_US-lessac-medium", "es": "es_ES-davefx-medium", "fr": "fr_FR-siwis-medium",
+    "pt": "pt_BR-faber-medium", "it": "it_IT-paola-medium", "tr": "tr_TR-dfki-medium",
+    "ru": "ru_RU-irina-medium", "ar": "ar_JO-kareem-medium", "hi": "hi_IN-pratham-medium",
+    "bn": "bn_BD-google-medium", "id": "id_ID-news_tts-medium", "ko": "ko_KR-kss-medium",
+    "zh": "zh_CN-huayan-medium",
+}
+STIMME_LADEN_TIMEOUT_S = int(os.environ.get("SMEJJ_VIDEO_STIMME_LADEN_TIMEOUT_S", "90"))
 # Deutsch wird mit rund 15 Zeichen pro Sekunde gesprochen: 200 Zeichen sind
 # ~13 s und bleiben damit unter MAX_DAUER_S. Längere Texte würden als Stimme
 # verworfen (siehe hole_erzaehlstimme) — lieber vorher kürzen.
@@ -511,7 +524,7 @@ def kuerze_auf_satz(text, deckel):
     return (schnitt[:luecke] if luecke > 0 else schnitt).rstrip(",;: ") + "."
 
 
-def hole_erzaehlstimme(text):
+def hole_erzaehlstimme(text, sprache="de"):
     """Lässt Piper den Erzähltext sprechen. Liefert (wav_bytes, dauer_s) oder None.
 
     Fail-safe: bei jedem Fehler gibt es das Video eben stumm — eine fehlende
@@ -521,11 +534,17 @@ def hole_erzaehlstimme(text):
     import wave
 
     try:
-        antwort = requests.post(
-            f"{STIMME_URL}/synthesize",
-            json={"text": kuerze_auf_satz(text, MAX_ERZAEHLTEXT)},
-            timeout=STIMME_TIMEOUT_S,
-        )
+        auftrag = {"text": kuerze_auf_satz(text, MAX_ERZAEHLTEXT)}
+        if sprache and sprache != "de":
+            stimme = STIMMEN.get(sprache)
+            if not stimme:
+                return None
+            # Idempotent: vorhandene Dateien lädt Piper nicht erneut.
+            geladen = requests.post(f"{STIMME_URL}/download", json={"voice": stimme}, timeout=STIMME_LADEN_TIMEOUT_S)
+            if not geladen.ok:
+                return None
+            auftrag["voice"] = stimme
+        antwort = requests.post(f"{STIMME_URL}/synthesize", json=auftrag, timeout=STIMME_TIMEOUT_S)
         # RIFF-Kopf statt Content-Type raten: der Piper-http_server beantwortet
         # Winz-Eingaben mit seiner HTML-Demo-Seite — und zwar mit Status 200.
         if not antwort.ok or antwort.content[:4] != b"RIFF":
@@ -753,6 +772,7 @@ async def erzeuge(request: Request):
     if not prompt:
         return JSONResponse({"ok": False, "fehler": "prompt_fehlt"}, status_code=400)
     erzaehltext = str(daten.get("erzaehltext", "")).strip()[:MAX_ERZAEHLTEXT]
+    sprache = str(daten.get("sprache", "de")).strip().lower()[:5] or "de"
 
     # 2 Kerne: immer nur EIN Video; ein zweiter Auftrag bekommt sofort 429,
     # die Brücke antwortet dann mit der ehrlichen Status-Nachricht.
@@ -767,12 +787,12 @@ async def erzeuge(request: Request):
         # ehrlich antworten.
         from fastapi.concurrency import run_in_threadpool
 
-        return await run_in_threadpool(erzeuge_blockierend, prompt, erzaehltext)
+        return await run_in_threadpool(erzeuge_blockierend, prompt, erzaehltext, sprache)
     finally:
         video_sperre.release()
 
 
-def erzeuge_blockierend(prompt, erzaehltext):
+def erzeuge_blockierend(prompt, erzaehltext, sprache="de"):
     """Die eigentliche Videoarbeit — laeuft im Threadpool, Sperre haelt der Aufrufer."""
     try:
         beginn = time.time()
@@ -783,7 +803,7 @@ def erzeuge_blockierend(prompt, erzaehltext):
         # Satz ab (die Falle von 98e7ec8, nur durch die Hintertuer).
         if erzaehltext and EXTERN_KEY:
             erzaehltext = kuerze_auf_satz(erzaehltext, 70)
-        stimme = hole_erzaehlstimme(erzaehltext) if erzaehltext else None
+        stimme = hole_erzaehlstimme(erzaehltext, sprache) if erzaehltext else None
         dauer = min(MAX_DAUER_S, stimme[1] + 0.6) if stimme else DAUER_S
 
         if EXTERN_KEY:
