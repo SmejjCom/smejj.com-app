@@ -13,10 +13,50 @@
 // Zeitpunkt und den Einwilligungsbeleg (src/training/lernpaare.js).
 import { createHash } from "node:crypto";
 import { jsonl, pruefePaar } from "../con-autopilot/daten.js";
+import { antwortQuelleZulaessig } from "../../src/training/policy.js";
 
 export const LERNPAAR_PRAEFIX = "training/fragen/lernpaare/";
 export const LERNRUNDE_STAND_KEY = "smejj/lernrunde/stand.json";
 export const AKTIVER_ADAPTER_KEY = "smejj/hausmodell/aktiver-adapter.json";
+export const EINWILLIGUNG_PRAEFIX = "training/consents/v1/";
+
+/**
+ * Rein: darf dieses Lernpaar in den Datensatz? (23.09.2026)
+ *  - die Antwort stammt von einem Modell mit Trainingsrecht (Register in policy.js)
+ *  - der Mensch hat seine Einwilligung NICHT widerrufen (widerrufen = Set der subjectRefs)
+ * Fail-closed: fehlt die Herkunft, ist das Paar draussen.
+ */
+export function lernpaarZulaessig(lp, widerrufen = new Set()) {
+  const recht = antwortQuelleZulaessig(lp?.quelle);
+  if (!recht.zulaessig) return { zulaessig: false, grund: recht.grund };
+  const wer = String(lp?.einwilligung?.subjectRef || "");
+  if (!wer) return { zulaessig: false, grund: "einwilligung_ohne_beleg" };
+  if (widerrufen.has(wer)) return { zulaessig: false, grund: "einwilligung_widerrufen" };
+  return { zulaessig: true, grund: "erlaubt" };
+}
+
+/**
+ * Welche Menschen haben widerrufen? Liest die Ereignisse unter
+ * training/consents/v1/<subjectRef>/ — ein Widerruf sperrt den Geltungsbereich
+ * DAUERHAFT (Ledger-Regel), also genuegt irgendein revoke-Ereignis.
+ * Nicht lesbar = alle gelten als widerrufen: lieber keine Runde als eine mit
+ * Paaren, deren Einwilligung niemand pruefen konnte.
+ */
+export async function widerrufeneSubjekte(e2, subjekte) {
+  const widerrufen = new Set();
+  for (const wer of subjekte) {
+    if (!/^sub_[a-f0-9]{16,128}$/.test(wer)) { widerrufen.add(wer); continue; }
+    try {
+      const schluessel = (await e2.liste(`${EINWILLIGUNG_PRAEFIX}${wer}/`)).map((o) => o.key);
+      if (schluessel.some((k) => /revocation/i.test(k))) { widerrufen.add(wer); continue; }
+      for (const key of schluessel.filter((k) => k.endsWith(".json"))) {
+        const ereignis = await e2.getJson(key, null);
+        if (ereignis === null || ["revoke", "revocation-sentinel"].includes(ereignis?.eventType)) { widerrufen.add(wer); break; }
+      }
+    } catch { widerrufen.add(wer); }
+  }
+  return widerrufen;
+}
 
 /** Rein: ist eine Lernrunde faellig? */
 export function lernrundeFaellig({ anzahlJetzt, anzahlBeiLetzterRunde = 0, ziel = 500 }) {
@@ -90,15 +130,30 @@ export function baueLernrundenTor({ e2, ziel = 500, basisName, datensatzName, je
       }
       const basisText = await e2.getText(`datasets/${basisName}/train.jsonl`);
       if (!basisText) return { vorhanden: false, gruende: [`basis_datensatz_fehlt:${basisName}`] };
-      const lernpaare = [];
+      const gelesen = [];
       for (const key of schluessel) {
         const lp = await e2.getJson(key, null);
-        if (lp) lernpaare.push(lp);
+        if (lp) gelesen.push(lp);
       }
-      const { text, manifest } = baueLernrundenDatensatz({ basisText, lernpaare, name: datensatzName, basisName, jetzt });
+      // Anbieterrechte + Widerruf (23.09.2026): erst hier wird aussortiert,
+      // denn das Register kann sich seit der Ablage geaendert haben.
+      const widerrufen = await widerrufeneSubjekte(e2, new Set(gelesen.map((lp) => String(lp?.einwilligung?.subjectRef || "")).filter(Boolean)));
+      const aussortiert = {};
+      const lernpaare = gelesen.filter((lp) => {
+        const u = lernpaarZulaessig(lp, widerrufen);
+        if (!u.zulaessig) aussortiert[u.grund] = (aussortiert[u.grund] || 0) + 1;
+        return u.zulaessig;
+      });
+      const zulaessig = lernrundeFaellig({ anzahlJetzt: lernpaare.length, anzahlBeiLetzterRunde: stand?.zulaessige ?? stand?.lernpaare, ziel });
+      if (!zulaessig.faellig) {
+        const weg = Object.entries(aussortiert).map(([g, n]) => `${g}=${n}`).join(",") || "keine";
+        return { vorhanden: false, gruende: [`lernrunde_wartet:${zulaessig.neu}_von_${ziel}_zulaessigen_lernpaaren(aussortiert:${weg})`] };
+      }
+      const { text, manifest: roh } = baueLernrundenDatensatz({ basisText, lernpaare, name: datensatzName, basisName, jetzt });
+      const manifest = { ...roh, lernpaareOhneRecht: aussortiert };
       await e2.putText(`datasets/${datensatzName}/train.jsonl`, text, "application/x-ndjson; charset=utf-8");
       await e2.putJson(`datasets/${datensatzName}/manifest.json`, manifest);
-      await e2.putJson(LERNRUNDE_STAND_KEY, { lernpaare: schluessel.length, datensatz: datensatzName, am: jetzt().toISOString() });
+      await e2.putJson(LERNRUNDE_STAND_KEY, { lernpaare: schluessel.length, zulaessige: lernpaare.length, datensatz: datensatzName, am: jetzt().toISOString() });
       log(`[smejj-lora-loop] Lernrunde: ${urteil.neu} neue Lernpaare, Datensatz ${datensatzName} mit ${manifest.paare} Paaren`);
       return { vorhanden: true, zeilen: manifest.paare, name: datensatzName };
     } catch (fehler) {

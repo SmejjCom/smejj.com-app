@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { bindConsentScope, consentDecision, createConsentGrant, trainingConsentConfig } from "../src/training/consent.js";
 import { TRAINING_CONSENT_REPOSITORY } from "../src/training/constants.js";
 import { LERNPAAR_ABLEHNUNG, lernpaarObjektSchluessel, pruefeLernpaar } from "../src/training/lernpaare.js";
+import { ANTWORT_RECHTE, antwortQuelleZulaessig, evaluateTrainingEligibility } from "../src/training/policy.js";
 import { sichereLernpaar } from "../control-server/src/routes/lernpaarAblage.js";
 import { handleFeedbackRoute } from "../control-server/src/routes/feedbackRoutes.js";
 import { laufTrainingsReife, lernrundeZiel, zaehleFragen, zaehleLernpaare } from "../control-server/src/autopilots/trainingsReifeAutopilot.js";
@@ -44,7 +45,7 @@ function schreiber(ergebnis = { conditionEnforced: true, contentVerified: true, 
 
 const ruf = (entscheidung, optionen = {}) => {
   const s = optionen.schreiber || schreiber();
-  return sichereLernpaar("authUser" in optionen ? optionen.authUser : NUTZER, { frage: optionen.frage ?? FRAGE, antwort: optionen.antwort ?? ANTWORT }, {
+  return sichereLernpaar("authUser" in optionen ? optionen.authUser : NUTZER, { frage: optionen.frage ?? FRAGE, antwort: optionen.antwort ?? ANTWORT, modell: optionen.modell ?? "smejj-1" }, {
     env: optionen.env || ENV, now: NOW, randomUUID: uuid,
     ledgerFactory: optionen.ledgerFactory || (() => ({ resolve: async () => entscheidung })),
     writerFactory: s.fabrik
@@ -75,7 +76,7 @@ test("pruefeLernpaar: Fehlertexte, zu kurze Antworten und Schluessel werden nie 
 
 test("sichereLernpaar legt unter training/fragen/lernpaare/ ab — ohne Kennung des Menschen im Schluessel", async () => {
   const { e, s } = await ruf(einwilligung());
-  assert.deepEqual(e, { erfasst: true, grund: null });
+  assert.deepEqual(e, { erfasst: true, grund: null, trainingsrecht: true });
   assert.equal(s.abgelegt.length, 1);
   assert.match(s.abgelegt[0].key, /^training\/fragen\/lernpaare\/2026\/09\/17\/[0-9a-f-]{36}\.json$/);
   assert.ok(!s.abgelegt[0].key.includes("4711"));
@@ -132,7 +133,7 @@ test("/api/feedback: nur Daumen HOCH fragt nach einem Lernpaar, das Ergebnis ste
   await handleFeedbackRoute(feedbackAnfrage({ signalType: "thumbs_up", prompt: FRAGE, antwort: ANTWORT }), new URL("https://api.smejj.com/api/feedback"), hoch, deps);
   assert.equal(hoch.code, 200);
   assert.deepEqual(hoch.koerper.lernpaar, { erfasst: false, grund: "einwilligung_fehlt_oder_veraltet" });
-  assert.deepEqual(aufrufe, [{ frage: FRAGE, antwort: ANTWORT }]);
+  assert.deepEqual(aufrufe, [{ frage: FRAGE, antwort: ANTWORT, modell: "" }]);
 
   const runter = antwortAttrappe();
   await handleFeedbackRoute(feedbackAnfrage({ signalType: "thumbs_down", prompt: FRAGE, antwort: ANTWORT }), new URL("https://api.smejj.com/api/feedback"), runter, deps);
@@ -147,13 +148,14 @@ test("Reife-Wache: Lernpaare zaehlen getrennt von Fragen und stehen als 'X von 5
     IDRIVE_E2_TRAINING_BUCKET: "smejj-model-files", IDRIVE_E2_TRAINING_ACCESS_KEY: "training-access-key", IDRIVE_E2_TRAINING_SECRET_KEY: "training-secret-key-value",
     IDRIVE_E2_TRAINING_ALLOWED_PREFIXES: "training/consents/v1/,training/fragen/"
   };
-  const alle = ["training/fragen/2026/09/04/a.json", "training/fragen/lernpaare/2026/09/17/p1.json", "training/fragen/lernpaare/2026/09/17/p2.json"];
+  const alle = ["training/fragen/2026/09/04/a.json", "training/fragen/lernpaare/2026/09/17/p1.json", "training/fragen/lernpaare/2026/09/17/p2.json",
+    "training/fragen/lernpaare-ohne-trainingsrecht/2026/09/23/g1.json"];
   const listImpl = async ({ prefix }) => ({
     response: { ok: true, status: 200 },
     body: `<ListBucketResult>${alle.filter((k) => k.startsWith(prefix)).map((k) => `<Contents><Key>${k}</Key></Contents>`).join("")}<IsTruncated>false</IsTruncated></ListBucketResult>`
   });
-  assert.equal((await zaehleFragen({ env, listImpl })).anzahl, 1, "Lernpaare sind keine erfassten Fragen");
-  assert.equal((await zaehleLernpaare({ env, listImpl })).anzahl, 2);
+  assert.equal((await zaehleFragen({ env, listImpl })).anzahl, 1, "Lernpaare (auch gesperrte) sind keine erfassten Fragen");
+  assert.equal((await zaehleLernpaare({ env, listImpl })).anzahl, 2, "gesperrte Paare zaehlen nicht zur Lernrunde");
   assert.equal(lernrundeZiel({ env: {} }), 500);
   assert.equal(lernrundeZiel({ env: { SMEJJ_LERNRUNDE_ZIEL_PAARE: "50" } }), 50);
 
@@ -167,6 +169,55 @@ test("Reife-Wache: Lernpaare zaehlen getrennt von Fragen und stehen als 'X von 5
     lernpaarZaehler: async () => ({ lesbar: true, anzahl: 2 })
   });
   assert.equal(lauf.ok, true);
-  assert.match(lauf.meldung, /Lernrunde smejj 1: 2 von 500 Lernpaaren/);
+  assert.match(lauf.meldung, /Lernrunde smejj 1: 2 von 500 Lernpaaren mit Trainingsrecht/);
   assert.deepEqual(karten[0].lernrunde, { lernpaare: 2, ziel: 500, reif: false });
+});
+
+// --- Anbieterrechte (23.09.2026): welche Antwort darf smejj 1 trainieren? ---
+
+test("Rechte-Register: eigene und gpt-oss-Antworten ja, GLM/Llama nein, Unbekanntes nie", () => {
+  const u = (m) => antwortQuelleZulaessig(m);
+  assert.equal(u("smejj-1").zulaessig, true);
+  assert.equal(u("smejj-1-basis").zulaessig, true);
+  assert.equal(u("openai/gpt-oss-120b").zulaessig, true);
+  assert.equal(u("openai/gpt-oss-20b").zulaessig, true);
+  for (const m of ["glm-5-2", "glm-5.2", "glm-4.5-flash"]) assert.deepEqual([u(m).zulaessig, u(m).grund], [false, "anbieter_verbietet_training"], m);
+  assert.equal(u("llama-3.3-70b-versatile").grund, "anbieter_verbietet_training");
+  assert.equal(u("qwen/qwen3.6-27b").grund, "anbieterrecht_ungeprueft");
+  assert.equal(u("kimi-k2-7").grund, "anbieterrecht_ungeprueft");
+  assert.equal(u("").grund, "herkunft_unbekannt");
+  assert.equal(u(null).grund, "herkunft_unbekannt");
+  assert.ok(ANTWORT_RECHTE.every((r) => r.quelle.startsWith("https://")), "jeder Eintrag nennt seinen Beleg");
+});
+
+test("evaluateTrainingEligibility sortiert Modellantworten nach dem Register aus", () => {
+  const gruende = (modell) => evaluateTrainingEligibility({ provenance: { sources: [{ kind: "model-output", modell }] } }, { entries: [] }, { now: NOW }).reasons;
+  assert.ok(gruende("glm-5-2").includes("provider_training_use_denied"));
+  assert.equal(evaluateTrainingEligibility({ provenance: { sources: [{ kind: "model-output", modell: "glm-5-2" }] } }, { entries: [] }, { now: NOW }).state, "denied");
+  assert.ok(gruende("irgendwas-neues").includes("provider_rights_missing"));
+  const eigen = gruende("smejj-1");
+  assert.ok(!eigen.includes("provider_training_use_denied") && !eigen.includes("provider_rights_missing"));
+});
+
+test("Lernpaar traegt seine Herkunft; ohne Trainingsrecht liegt es getrennt", async () => {
+  const gut = pruefeLernpaar(FRAGE, ANTWORT, { consentDecision: einwilligung(), env: ENV, now: NOW, modell: "smejj-1" });
+  assert.deepEqual(gut.satz.quelle, { modell: "smejj-1", trainingsrecht: true, rechtGrund: "erlaubt", rechtId: "smejj-eigen" });
+  const glm = pruefeLernpaar(FRAGE, ANTWORT, { consentDecision: einwilligung(), env: ENV, now: NOW, modell: "glm-5-2" });
+  assert.equal(glm.satz.quelle.trainingsrecht, false);
+  const boese = pruefeLernpaar(FRAGE, ANTWORT, { consentDecision: einwilligung(), env: ENV, now: NOW, modell: "smejj-1\n<script>" });
+  assert.equal(boese.satz.quelle.modell, null, "nur Kennzeichen-Zeichen werden uebernommen");
+  assert.equal(boese.satz.quelle.trainingsrecht, false);
+
+  const s1 = schreiber();
+  const e1 = await sichereLernpaar(NUTZER, { frage: FRAGE, antwort: ANTWORT, modell: "glm-5-2" }, {
+    env: ENV, now: NOW, randomUUID: uuid, ledgerFactory: () => ({ resolve: async () => einwilligung() }), writerFactory: s1.fabrik
+  });
+  assert.deepEqual(e1, { erfasst: true, grund: null, trainingsrecht: false });
+  assert.match(s1.abgelegt[0].key, /^training\/fragen\/lernpaare-ohne-trainingsrecht\/2026\/09\/17\//);
+  const s2 = schreiber();
+  const e2 = await sichereLernpaar(NUTZER, { frage: FRAGE, antwort: ANTWORT, modell: "openai/gpt-oss-120b" }, {
+    env: ENV, now: NOW, randomUUID: uuid, ledgerFactory: () => ({ resolve: async () => einwilligung() }), writerFactory: s2.fabrik
+  });
+  assert.equal(e2.trainingsrecht, true);
+  assert.match(s2.abgelegt[0].key, /^training\/fragen\/lernpaare\/2026\/09\/17\//);
 });

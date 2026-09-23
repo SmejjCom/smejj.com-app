@@ -22,7 +22,7 @@ import { createIdriveConsentLedger } from "../training/consentLedger.js";
 const standardLedger = (env, config) => createIdriveConsentLedger(env, { config });
 const standardSchreiber = (env) => createConditionalIdriveWriter(readTrainingIdriveConfig(env));
 
-export async function sichereLernpaar(authUser, { frage, antwort }, {
+export async function sichereLernpaar(authUser, { frage, antwort, modell = "" }, {
   env = process.env,
   now = new Date().toISOString(),
   randomUUID = () => globalThis.crypto.randomUUID(),
@@ -47,11 +47,11 @@ export async function sichereLernpaar(authUser, { frage, antwort }, {
       return { erfasst: false, grund: "einwilligung_nicht_erreichbar" };
     }
 
-    const ergebnis = pruefeLernpaar(frage, antwort, { consentDecision: entscheidung, env, now });
+    const ergebnis = pruefeLernpaar(frage, antwort, { consentDecision: entscheidung, env, now, modell });
     if (!ergebnis.erfassen) return { erfasst: false, grund: ergebnis.grund };
 
     const ablage = await writerFactory(env).putObject(createImmutableTrainingObject({
-      key: lernpaarObjektSchluessel(now, randomUUID()),
+      key: lernpaarObjektSchluessel(now, randomUUID(), { trainingsrecht: ergebnis.satz.quelle.trainingsrecht }),
       contentType: "application/json; charset=utf-8",
       body: `${JSON.stringify({ schemaVersion: 1, ...ergebnis.satz }, null, 2)}\n`,
       statusLast: false
@@ -59,7 +59,11 @@ export async function sichereLernpaar(authUser, { frage, antwort }, {
     // Erst ein NACHWEISLICH unveraenderlich abgelegtes und zurueckgeprueftes
     // Objekt gilt als erfasst — wie bei den Fragen.
     const bewiesen = ablage?.conditionEnforced === true && ablage?.contentVerified === true && ablage?.created === true;
-    return bewiesen ? { erfasst: true, grund: null } : { erfasst: false, grund: "nicht_gespeichert" };
+    // trainingsrecht sagt dem Klienten ehrlich, ob das Paar smejj 1 je
+    // trainieren darf — gespeichert ist es in beiden Faellen.
+    return bewiesen
+      ? { erfasst: true, grund: null, trainingsrecht: ergebnis.satz.quelle.trainingsrecht }
+      : { erfasst: false, grund: "nicht_gespeichert" };
   } catch {
     return { erfasst: false, grund: "nicht_gespeichert" };
   }

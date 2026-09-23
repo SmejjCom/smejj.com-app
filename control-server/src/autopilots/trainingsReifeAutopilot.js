@@ -46,7 +46,8 @@ export const DATENSATZ_INDEX = "datasets/index.json";
 
 /** Zaehlt die erfassten Fragen per LIST (nur Schluessel, nie Inhalte). Lernpaare liegen darunter und zaehlen getrennt. */
 export async function zaehleFragen({ env = process.env, listImpl = signedS3List, fetchImpl = fetch } = {}) {
-  return zaehleSchluessel({ env, listImpl, fetchImpl, praefix: FRAGEN_PRAEFIX, ausser: `${LERNPAAR_PRAEFIX}/` });
+  // Ohne Schraegstrich: schliesst lernpaare/ UND lernpaare-ohne-trainingsrecht/ aus.
+  return zaehleSchluessel({ env, listImpl, fetchImpl, praefix: FRAGEN_PRAEFIX, ausser: LERNPAAR_PRAEFIX });
 }
 
 /**
@@ -210,7 +211,7 @@ export async function laufTrainingsReife({
     else gemessen.push({ name: `erfasste Fragen (nicht zaehlbar: ${fragen.grund || "unbekannt"})`, lesbar: true, anzahl: 0 });
     const lern = await Promise.resolve().then(() => lernpaarZaehler({ env })).catch((f) => ({ lesbar: false, grund: String(f?.message || f).slice(0, 60) }));
     lernpaare = lern.lesbar ? lern.anzahl : null;
-    if (lern.lesbar) gemessen.push({ name: "Lernpaare (Daumen hoch mit Einwilligung)", lesbar: true, anzahl: lern.anzahl });
+    if (lern.lesbar) gemessen.push({ name: "Lernpaare mit Trainingsrecht (Daumen hoch + Einwilligung)", lesbar: true, anzahl: lern.anzahl });
     else gemessen.push({ name: `Lernpaare (nicht zaehlbar: ${lern.grund || "unbekannt"})`, lesbar: true, anzahl: 0 });
     // Die gebauten Paare — getrennt benannt, damit niemand sie fuer echte
     // Nutzerfragen haelt.
@@ -254,7 +255,7 @@ export async function laufTrainingsReife({
   return {
     ok: true,
     meldung: `Selbsttest 5/5; Reife Stufe ${urteil.stufe}/3 (${urteil.grund}): ${zahlen}; `
-      + (lernpaare === null ? "Lernrunde smejj 1: nicht zaehlbar; " : `Lernrunde smejj 1: ${lernpaare} von ${lernrundeZiel({ env })} Lernpaaren; `)
+      + (lernpaare === null ? "Lernrunde smejj 1: nicht zaehlbar; " : `Lernrunde smejj 1: ${lernpaare} von ${lernrundeZiel({ env })} Lernpaaren mit Trainingsrecht; `)
       + `${capture}; GPU-Start bleibt hinter Betreiber-Freigabe; ${karteStatus}`
   };
 }

@@ -13,11 +13,18 @@
 // stehen auch die Rechte an Antworten fremder Anbieter.
 import { isCaptureEnabled } from "./constants.js";
 import { consentDecisionReference } from "./consent.js";
-import { capturePersistenceAllowed } from "./policy.js";
+import { antwortQuelleZulaessig, capturePersistenceAllowed } from "./policy.js";
 import { sanitizeTrainingValue, scanSensitiveStrings } from "./sanitize.js";
 
 /** Unterordner im erlaubten Praefix training/fragen/ — kein neuer Zeabur-Wert noetig. */
 export const LERNPAAR_PRAEFIX = "training/fragen/lernpaare";
+
+// Paare, deren Antwort von einem Modell ohne Trainingsrecht stammt (23.09.2026,
+// Rechte-Register in policy.js). Sie liegen GETRENNT, damit jeder Zaehler unter
+// LERNPAAR_PRAEFIX/ nur verwendbare Paare sieht — "37 von 500" soll nicht 30
+// gesperrte mitzaehlen. Aufbewahrt statt verworfen: der Mensch hat eingewilligt,
+// und aendert sich die Rechtslage (z. B. eigene GLM-Gewichte), sind sie da.
+export const LERNPAAR_GESPERRT_PRAEFIX = "training/fragen/lernpaare-ohne-trainingsrecht";
 
 export const LERNPAAR_GRENZEN = Object.freeze({ frageMin: 8, frageMax: 2000, antwortMin: 3, antwortMax: 4000 });
 
@@ -47,7 +54,7 @@ function sauber(text) {
  * Darf dieses Paar als Lernpaar abgelegt werden?
  * @returns {{erfassen: boolean, grund: string|null, satz: object|null}}
  */
-export function pruefeLernpaar(frage, antwort, { consentDecision, env = process.env, now = new Date().toISOString() } = {}) {
+export function pruefeLernpaar(frage, antwort, { consentDecision, env = process.env, now = new Date().toISOString(), modell = "" } = {}) {
   const ab = (grund) => ({ erfassen: false, grund, satz: null });
   if (!isCaptureEnabled(env)) return ab(LERNPAAR_ABLEHNUNG.SCHALTER_AUS);
   if (!capturePersistenceAllowed({}, consentDecision, { now })) return ab(LERNPAAR_ABLEHNUNG.KEINE_EINWILLIGUNG);
@@ -60,6 +67,11 @@ export function pruefeLernpaar(frage, antwort, { consentDecision, env = process.
   if (FEHLERTEXTE.some((muster) => muster.test(a))) return ab(LERNPAAR_ABLEHNUNG.FEHLERTEXT);
   if (!sauber(f) || !sauber(a)) return ab(LERNPAAR_ABLEHNUNG.SENSIBEL);
 
+  // Herkunft der Antwort: die Modellkennung, die der Server im Kopf
+  // x-smejj-model-id mitgeschickt hat. Nur Kennzeichen-Zeichen, sonst leer —
+  // ein leeres Feld heisst "unbekannt" und damit gesperrt, nie erlaubt.
+  const kennung = /^[a-z0-9][a-z0-9._:/-]{0,79}$/i.test(String(modell || "").trim()) ? String(modell).trim() : "";
+  const recht = antwortQuelleZulaessig(kennung);
   return {
     erfassen: true,
     grund: null,
@@ -68,15 +80,16 @@ export function pruefeLernpaar(frage, antwort, { consentDecision, env = process.
       antwort: a,
       herkunft: "daumen_hoch",
       erfasstAm: now,
+      quelle: { modell: kennung || null, trainingsrecht: recht.zulaessig, rechtGrund: recht.grund, rechtId: recht.rechtId },
       einwilligung: consentDecisionReference(consentDecision)
     }
   };
 }
 
 /** Objektschluessel: nach Tag getrennt, ohne jede Kennung des Menschen. */
-export function lernpaarObjektSchluessel(erfasstAm, id) {
+export function lernpaarObjektSchluessel(erfasstAm, id, { trainingsrecht = true } = {}) {
   const tag = String(erfasstAm || "").slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(tag)) throw new Error("lernpaar_zeitpunkt_ungueltig");
   if (!/^[a-f0-9-]{36}$/i.test(String(id || ""))) throw new Error("lernpaar_id_ungueltig");
-  return `${LERNPAAR_PRAEFIX}/${tag.slice(0, 4)}/${tag.slice(5, 7)}/${tag.slice(8, 10)}/${id}.json`;
+  return `${trainingsrecht ? LERNPAAR_PRAEFIX : LERNPAAR_GESPERRT_PRAEFIX}/${tag.slice(0, 4)}/${tag.slice(5, 7)}/${tag.slice(8, 10)}/${id}.json`;
 }
