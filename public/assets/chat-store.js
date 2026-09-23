@@ -4,8 +4,8 @@
 // der Browser chat-markdown.js ein zweites Mal als eigenstaendiges Modul.
 import { renderChatMarkdown } from "/assets/chat-markdown.js?v=1";
 // Papierkorb & Projekte/Bereiche: chat-store-bereiche.js (Diaet 25.08.); Re-Export = EINE Instanz.
-import { aktualisiereBereichsAnweisung, verbraucheBereichVormerkung, BEREICH_ANWEISUNG_KEY, BEREICH_NEU_KEY } from "./chat-store-bereiche.js?v=23";
-export { PAPIERKORB_TAGE, restoreChat, endgueltigLoeschen, listGeloeschteChats, listEigeneChatsMitGeloeschten, listProjekte, getProjekt, erstelleProjekt, benenneProjektUm, setzeProjektAnweisung, neuesGespraechImBereich, loescheProjekt, setzeChatProjekt, importProjekt } from "./chat-store-bereiche.js?v=23";
+import { aktualisiereBereichsAnweisung, verbraucheBereichVormerkung, BEREICH_ANWEISUNG_KEY, BEREICH_NEU_KEY } from "./chat-store-bereiche.js?v=24";
+export { PAPIERKORB_TAGE, restoreChat, endgueltigLoeschen, listGeloeschteChats, listEigeneChatsMitGeloeschten, listProjekte, getProjekt, erstelleProjekt, benenneProjektUm, setzeProjektAnweisung, neuesGespraechImBereich, loescheProjekt, setzeChatProjekt, importProjekt } from "./chat-store-bereiche.js?v=24";
 
 // Nachrichten-Modell (2026-07-28): liefert Rohtext, Zeitstempel, Modell und Bewertung je
 // Nachricht.
@@ -467,6 +467,22 @@ async function parkerBereit(messages) {
 // Ein gespeicherter Schritte-Eintrag beginnt mit seiner Faltzeile oder einer Schrittgruppe.
 const SCHRITTE_HTML = /^\s*<(details|div)\b[^>]*class="[^"]*\bchat-(schritte-falte|schritt-gruppe|schritt|denken)\b/;
 
+// Nie neu malen: bildNurAblage laesst die Bruecke nur ihre Ablage pruefen (v172). Fail-safe: jeder Fehler bleibt still.
+function rettePlatzhalterSpaeter(log) {
+  Promise.all([import("/assets/ai/bild-nachholen.js"), import("/assets/ai/chat-stream.js"), import("./config.js"), import("./i18n/ui.js?v=3")])
+    .then(([nachholen, strom, konfig, sprache]) => nachholen.rettePlatzhalter(log, {
+      renderMarkdown: renderChatMarkdown,
+      hinweis: sprache.t("Das Bild wurde unterbrochen — bitte den Auftrag erneut senden."),
+      anfrage: (auftrag) => fetch(konfig.CLIENT_ROUTES.api.chat, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...strom.bridgeAuthHeaders() },
+        body: JSON.stringify({ messages: [{ role: "user", content: auftrag }], bildErneut: true, bildNurAblage: true }),
+        signal: AbortSignal.timeout?.(20_000)
+      })
+    }))
+    .catch(() => {});
+}
+
 function renderEntriesInto(log, messages) {
   restoring = true;
   try {
@@ -508,6 +524,8 @@ function renderEntriesInto(log, messages) {
     if (last) last.scrollIntoView({ block: "end" });
     // Ausgelagerte Medien holen.
     medienHolen(log);
+    // Verwaister Bild-Platzhalter (App mitten im Malen beendet, Befund 24.09.2026): Bild aus der Bruecken-Ablage holen.
+    if (log.querySelector(".chat-bild-platzhalter")) rettePlatzhalterSpaeter(log);
   } finally {
     setTimeout(() => { restoring = false; }, 50);
   }
