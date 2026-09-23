@@ -54,6 +54,21 @@ DNSimple „Why DNSSEC and Secondary DNS may not work together".
 | **C3** | Zwei Anbieter ohne DNSSEC (z. B. Spaceship-unabhängiger Primär + HE/1984 Sekundär) | voll | **fällt weg** | 0 € | mittel (Sicherheitsverlust) | eine Arbeitsrunde |
 | **C4** | Multi-Signer nach RFC 8901 | voll | bleibt | 0 € | sehr hoch, zwei Anbieter müssen es können | — nicht verfügbar bei kostenlosen Anbietern |
 
+## 3a. Ergebnis der Freigabe „C0 freigegeben" (23.09.2026, im Spaceship-Panel geprüft, NICHT ausgeführt)
+
+- **Spaceship bietet als höchste TTL 60 min an** (Auswahl: 1, 5, 20, 30 = Standard, 60 min). Ein Tag ist dort nicht
+  möglich — C0 schrumpft damit auf 30 → 60 min: halbe Wirkung von „ein Ausfall unter 30 min trifft nur einen Teil".
+- **Keine Sammeländerung:** jede Zeile einzeln mit „Aktualisieren"; schon die erste löste die Warnung „Mit
+  widersprüchlichem A-Eintrag aktualisieren?" aus (gemischte TTL innerhalb der vier A-Einträge), deren Knopf
+  „Neuen Eintrag hinzufügen" heißt — unklar, ob er ändert oder dupliziert.
+- **Entscheidung der Sitzung: abgebrochen** („Rückgängig machen"), weil 15 Einzelschritte mit Konfliktwarnung für
+  +30 min Speicherzeit mehr Risiko als Nutzen sind. Zone nachweislich unverändert (Werte gleich, SOA-Serial 1789735811).
+- **Neu gesehen, im Soll-Register bisher nicht geführt:** `cloud.smejj.com CNAME smejj-cloud.zeabur.app` (Standardgruppe)
+  und `admin.smejj.com A 15.197.162.184` (Spaceship-URL-Weiterleitung, TTL 5 min). Die Spaceship-Weiterleitungsgruppe
+  hält MX/SPF mit 20 min fest (nicht änderbar). Beides beim nächsten Umbau in die Ist-Tabelle aufnehmen.
+- **Folge:** Echte Ausfallsicherheit gibt es nur mit C2 (Zone umziehen, Abschnitt 6). Solange Nr. 87 keine weiteren
+  Ausfälle zählt, bleibt es beim Messen.
+
 ## 4. Empfehlung
 
 1. **Jetzt C0** — der größte Gewinn für null Risiko. Der Vorfall vom 21.09. dauerte ~8 Minuten; mit 1 Tag TTL hätte
