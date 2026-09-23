@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-23T08:21:13.828Z",
-  "confirmation": "Betreiber 23.09.2026 schriftlich im Chat (Auftrag 'smejj.com App, Stand 23.09.2026 nach v960'): 'Sprachdateien aufteilen: alle 14 public/i18n/{en,es,fr,it,pt,tr,ru,ja,ko,zh,ar,hi,bn,id}.js stehen bei 788 Zeilen (Limit 800) ... dann per Kaskade ausliefern und auf Android + iPhone nachtesten' sowie 'Zwei iPhone-Nebenbefunde von v960 (Konto-Seite in der App): (a) das Logo oben links überlappt die Kopfzeile ACCOUNT & PRIVACY; (b) nach Tastatur auf/zu wird der Chip Local-first · fail-closed etwa doppelt so groß gezeichnet ... beheben, Kaskade, am iPhone nachmessen.' Nachbesserung v962 (am iPhone v961 gemessen: Regel von mobil-ansichten.js ueberstimmt): padding calc(56px + env(safe-area-inset-top)) in mobil-ansichten.js fuer #profile/#settings. Vorher v961: Block vor ...zusatz nach xx-2.js (?v=10, Deep-Equal geprueft); account-privacy.css/-formulare.css padding-top + env(safe-area-inset-top), text-size-adjust 100% auf #profile, KONTO_STIL_MARKE b52. Start-Lock: nur sw.js-Nummer.",
+  "frozenAt": "2026-09-23T09:01:24.576Z",
+  "confirmation": "Nach einem Daumen hoch OHNE Einwilligung einen kurzen, freundlichen Hinweis zeigen: was gesammelt wird, wozu, jederzeit widerrufbar, mit direktem Weg zum Schalter (Konto → Datenschutz → Modelltraining erlauben). Höchstens einmal je Sitzung, nie aufdringlich, kein Dialog, der die Antwort verdeckt. Den Schalter selbst verständlich beschriften (kein Fachchinesisch). In 14 Sprachen übersetzt, am Handy und am Rechner gemessen.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "badda102f2edccee2fd6e72d5bb69564a1c22f701c2f123702f0a5044b767e19",
+    "public/index.html": "337bf37cb4e16581dda9bfe3115a0a991f1eac471467b765b55a43e7307615b2",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "725cdc70d3fc21e75d058ef1f162bfb7eed4bae65ba7ba89eea00f44e6c0f82d",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,11 +13,11 @@
     "public/app-surfaces.css": "d8a4efdf629bd585e10b27a5cbe365cc7b0359987d01bb81f3de6c17600386ec",
     "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "7403ac7a7106cc72805268c9f139eb5e86e458880fa7d849a26a29ea99d0c3c4",
-    "public/app.js": "47e5b74c91bca69bcd7783173c7b1b112cdb5f725a96bd8f0eb16bde1fcb4dd1",
+    "public/app.js": "5171749d6d2f4b12b153e880d2c2458714ea90872520af46dfffb4de336fbede",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "27acbbbbe2a23a81f25b8fdab7e5204cb4e5ecc1217f6ef1af8ee7a12831e3df",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "5f83d5e17c14b6b78a42ea84f5f23dc058172f0031ca97b271b95023b8ff0993",
+    "public/premium-surfaces.js": "be56bceed03e3b591102469ede5393535f2d0cc42e46d871bb593d42d271b5e2",
     "public/autonomous-coding.js": "95a765c2888895d5e48458a289bda3ab29595ac5871a1edc95d992a45e027164",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "cfdeec81cd1a38393abc7bae3976de0a0a4ccbb6a885fbc3dc2c0ff04940baf4",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "9d5370bddca0a97997b5bc0998fca6f19f270ea8183640b3350622c348c2adbe",
+    "public/sw.js": "a06e885c656ca8040c451948e5ff903f194bc0e9b74d40411f2970ba0ff8e7a7",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
