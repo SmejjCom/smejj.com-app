@@ -21,9 +21,9 @@ function resolverDoppel({ tot = [], a = DNS_SOLL.a, cname = [DNS_SOLL.apiCname] 
     const stirbt = tot.includes(ip);
     const wirf = () => { const e = new Error("queryA ETIMEOUT"); e.code = "ETIMEOUT"; throw e; };
     return {
-      resolve4: async () => (stirbt ? wirf() : [...a]),
+      resolve4: async (name) => (stirbt ? wirf() : name === DNS_SOLL.admin ? [...DNS_SOLL.adminA] : [...a]),
       resolve6: async () => [...DNS_SOLL.aaaa],
-      resolveCname: async () => [...cname],
+      resolveCname: async (name) => (name === DNS_SOLL.cloud ? [DNS_SOLL.cloudCname] : [...cname]),
       resolveMx: async () => DNS_SOLL.mx.map((exchange) => ({ priority: 0, exchange })),
       resolveCaa: async () => [{ critical: 0, issue: "letsencrypt.org" }]
     };
@@ -40,6 +40,8 @@ function dohDoppel(sonder = {}) {
     const antwort = sonder[key] || (() => {
       if (name === "dns.google") return { Status: 0, AD: false, Answer: [{ type: 1, data: "8.8.8.8" }] };
       if (name.endsWith("spaceship.net")) return { Status: 0, AD: false, Answer: [{ type: 1, data: name.startsWith("launch1") ? "162.159.26.38" : "162.159.27.32" }] };
+      if (name === DNS_SOLL.cloud) return { Status: 0, AD: true, Answer: typ === "CNAME" ? [{ type: 5, data: `${DNS_SOLL.cloudCname}.` }] : [] };
+      if (name === DNS_SOLL.admin) return { Status: 0, AD: true, Answer: typ === "A" ? DNS_SOLL.adminA.map((d) => ({ type: 1, data: d })) : [] };
       if (name === DNS_SOLL.api) return { Status: 0, AD: true, Answer: [{ type: 5, data: `${DNS_SOLL.apiCname}.` }, { type: 1, data: "43.166.240.69" }].filter((x) => typ === "CNAME" ? x.type === 5 : x.type === 1) };
       const daten = { A: DNS_SOLL.a, AAAA: DNS_SOLL.aaaa, MX: DNS_SOLL.mx.map((m) => `0 ${m}.`), CAA: ['0 issue "letsencrypt.org"'] }[typ] || [];
       return { Status: 0, AD: true, Answer: daten.map((d) => ({ type: typNr[typ], data: d })) };
@@ -137,7 +139,11 @@ test("Bausteine: Nameserver-Abfrage wirft nie, DoH-Netzfehler wird zum Feld, Sol
   assert.equal(tot.ok, false); assert.equal(tot.fehler, "ETIMEOUT");
   const netz = await frageDoh("smejj.com", "A", { fetchImpl: async () => { throw new Error("fetch failed"); } });
   assert.equal(netz.ok, false); assert.match(netz.fehler, /fetch failed/);
-  assert.deepEqual(vergleicheSoll({ a: [...DNS_SOLL.a].reverse(), aaaa: [], cname: ["smejj-control.Zeabur.App."], mx: [...DNS_SOLL.mx].reverse(), caa: [...DNS_SOLL.caa] }), []);
+  const extra = { cloudCname: ["smejj-cloud.zeabur.app."], adminA: [...DNS_SOLL.adminA] };
+  assert.deepEqual(vergleicheSoll({ a: [...DNS_SOLL.a].reverse(), aaaa: [], cname: ["smejj-control.Zeabur.App."], ...extra, mx: [...DNS_SOLL.mx].reverse(), caa: [...DNS_SOLL.caa] }), []);
+  // Neu am 23.09.: cloud und admin sind Teil des Solls — fehlen oder umgebogen = Abweichung im Klartext.
+  const ab = vergleicheSoll({ a: [...DNS_SOLL.a], aaaa: [], cname: [DNS_SOLL.apiCname], cloudCname: ["boese.example"], adminA: [], mx: [...DNS_SOLL.mx], caa: [...DNS_SOLL.caa] });
+  assert.equal(ab.length, 2); assert.match(ab.join(" "), /cloud\.smejj\.com → boese\.example/); assert.match(ab.join(" "), /admin\.smejj\.com A —/);
   assert.equal(beurteile({ netzOk: true, udpMoeglich: true, nameserver: [], doh: { ok: true, ad: true }, dohApi: { ok: false, status: 2 }, abweichungen: [] }).ok, false);
 });
 
