@@ -332,6 +332,8 @@ const SHELL = [
   "/assets/chat-title-auto.js",
   "/assets/chat-messages.js",
   "/assets/chat-actions.js",
+  // Lern-Hinweis nach Daumen hoch (23.09.2026), per import() aus chat-actions.js.
+  "/assets/lern-hinweis.js",
   "/assets/chat-neu-versuch.js",
   // Beispiel-Chips der Startseite (2026-08-13). index.html laedt sie per
   // <script>; ohne Eintrag hier fehlen sie offline — check:precache-imports
