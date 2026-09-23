@@ -18,10 +18,12 @@ const esc = (s) => s.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 for (const sprache of SPRACHEN) {
   const pfad = `public/i18n/${sprache}.js`;
   let inhalt = readFileSync(pfad, "utf8");
+  // Teil 2 (xx-2.js) zaehlt mit: ein Schluessel, der dort schon steht, ist nicht neu.
+  const bekannt = inhalt + readFileSync(`public/i18n/${sprache}-2.js`, "utf8");
   let block = `  // ${kommentar}\n`;
   let neu = 0;
   for (const [schluessel, werte] of Object.entries(tabelle)) {
-    if (inhalt.includes(`"${esc(schluessel)}":`)) continue;
+    if (bekannt.includes(`"${esc(schluessel)}":`)) continue;
     const wert = werte[sprache];
     if (!wert) { console.error(`FEHLT ${sprache}: ${schluessel}`); process.exit(1); }
     block += `  "${esc(schluessel)}": "${esc(wert)}",\n`;
