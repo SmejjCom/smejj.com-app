@@ -85,8 +85,8 @@ else
   echo "  Der Server meldet weiter 'nicht konfiguriert'."
   echo "  Haeufigste Ursachen: der Dienst wurde noch nicht neu gestartet, ein"
   echo "  Variablenname hat einen Tippfehler, oder der Schluessel wurde nur"
-  echo "  teilweise eingefuegt (er muss mit -----BEGIN PRIVATE KEY----- anfangen"
-  echo "  und mit -----END PRIVATE KEY----- aufhoeren)."
+  echo "  teilweise eingefuegt (er muss mit der BEGIN-Zeile des privaten"
+  echo "  Schluessels anfangen und mit der END-Zeile aufhoeren)."
 fi
 echo
 read "?Zum Schliessen die Eingabetaste druecken."
