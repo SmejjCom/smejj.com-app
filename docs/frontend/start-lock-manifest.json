@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-23T09:36:52.254Z",
-  "confirmation": "Nach einem Daumen hoch OHNE Einwilligung einen kurzen, freundlichen Hinweis zeigen: was gesammelt wird, wozu, jederzeit widerrufbar, mit direktem Weg zum Schalter (Konto → Datenschutz → Modelltraining erlauben). Höchstens einmal je Sitzung, nie aufdringlich, kein Dialog, der die Antwort verdeckt. Den Schalter selbst verständlich beschriften (kein Fachchinesisch). In 14 Sprachen übersetzt, am Handy und am Rechner gemessen.",
+  "frozenAt": "2026-09-23T14:53:53.708Z",
+  "confirmation": "Ergebnis schriftlich in docs/ ablegen und im Rechte-Register (src/training/policy.js, evaluateTrainingEligibility) hinterlegen, damit der Datensatzbau unzulässige Quellen automatisch aussortiert.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "105d154b1e32bd72c0b9fd40950f662783b1a71ebd0d336ef0d931ea1887e54b",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "97c10e362b1aac4b3e862a400c234af3a4bab407a8518a6ab36235d430f257cc",
+    "public/sw.js": "70c0ba902bfcddceb5fc2dded99addc0a9d00ef13395f172bd6d0a12ad9ae94b",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
