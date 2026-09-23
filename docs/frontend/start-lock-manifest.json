@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-22T23:51:57.270Z",
-  "confirmation": "Betreiber 23.09.2026 im Chat: 'Die drei Geraetebefunde beheben, A bis Z' (Befunde vom 22.09.: Profilmenue-Tipp geht durch, iOS-Auswahlleiste klebt, Gastfrage haengt). Geaendert: profile-dock-menu.js/profile-dock.css (Lage + Bedienflaeche), mobil-dock.js (Auswahl aufheben), gast-frage.js + willkommen-sprache.js + willkommen.html (Hinweis, Wache), Marke profile-dock.js -14, Buendel, Cache v960. Nichts sonst an der Startseite.",
+  "frozenAt": "2026-09-23T08:00:59.180Z",
+  "confirmation": "Betreiber 23.09.2026 schriftlich im Chat (Auftrag 'smejj.com App, Stand 23.09.2026 nach v960'): 'Sprachdateien aufteilen: alle 14 public/i18n/{en,es,fr,it,pt,tr,ru,ja,ko,zh,ar,hi,bn,id}.js stehen bei 788 Zeilen (Limit 800) ... dann per Kaskade ausliefern und auf Android + iPhone nachtesten' sowie 'Zwei iPhone-Nebenbefunde von v960 (Konto-Seite in der App): (a) das Logo oben links überlappt die Kopfzeile ACCOUNT & PRIVACY; (b) nach Tastatur auf/zu wird der Chip Local-first · fail-closed etwa doppelt so groß gezeichnet ... beheben, Kaskade, am iPhone nachmessen.' Umsetzung: Block vor ...zusatz nach xx-2.js (?v=10, Deep-Equal geprueft); account-privacy.css/-formulare.css padding-top + env(safe-area-inset-top), text-size-adjust 100% auf #profile, KONTO_STIL_MARKE b52. Start-Lock: nur sw.js-Nummer.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "badda102f2edccee2fd6e72d5bb69564a1c22f701c2f123702f0a5044b767e19",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "238b02f4b4a5ee3ad4d2eff30bf5e9421da79ec9169b49233722e39f64b82f90",
+    "public/sw.js": "4bf9833313c35f63ae88868bb31946b6f419ee9583dbe0e94147fd9cdd9ebd45",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
