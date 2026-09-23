@@ -34,7 +34,15 @@ function checkNoGitHubActions() {
   // Verbotsliste): wer eine braucht, traegt sie hier mit Begruendung ein.
   const erlaubt = new Set([
     ".github/workflows/codeberg-spiegel.yml",
-    ".github/workflows/qualitaets-messlauf.yml"
+    ".github/workflows/qualitaets-messlauf.yml",
+    // Betreiber-Freigabe 2026-09-23 ("check:security wieder gruen machen"):
+    // beide laufen nur im oeffentlichen Repo (0 EUR), keiner erzeugt Kosten.
+    // android-twa-build.yml: baut das Android-Bundle nur auf Knopfdruck
+    //   (workflow_dispatch), laedt nichts zu Google hoch.
+    // dns-wache.yml: Stufe B der DNS-Wache Nr. 87 — meldet einen
+    //   Nameserver-Ausfall per Issue, wenn der Autopilot selbst nicht erreichbar ist.
+    ".github/workflows/android-twa-build.yml",
+    ".github/workflows/dns-wache.yml"
   ]);
   const workflows = files.filter((file) => file.startsWith(".github/workflows/") && !erlaubt.has(file));
   if (workflows.length) failures.push(`GitHub Actions workflows are not allowed: ${workflows.join(", ")}`);
