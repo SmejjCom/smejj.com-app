@@ -92,3 +92,25 @@ test("chat-bridge.js reicht den Anmelde-Kopf an beide Bildspuren weiter", () => 
   const q = fs.readFileSync("public/chat-bridge.js", "utf8");
   assert.equal((q.match(/anmeldung: req\.headers\?\.authorization \}\)\) return;/g) || []).length, 2);
 });
+
+test("bildNurAblage (v172, Rettung nach App-Neustart): Treffer liefert das Bild, ohne Treffer NIE neu malen", async () => {
+  let gemalt = 0;
+  const fetchImpl = async (adresse) => {
+    const pfad = String(adresse);
+    if (pfad.endsWith("/health")) return new Response(JSON.stringify({ ok: true, bereit: true }), { status: 200 });
+    if (pfad.endsWith("/erzeuge")) { gemalt += 1; return new Response(JSON.stringify({ ok: true, b64: PNG_B64 }), { status: 200 }); }
+    return new Response("{}", { status: 404 });
+  };
+  const deps = { corsHeaders: () => ({}), securityHeaders: () => ({}), timeoutMs: 5000, acceptLanguage: "de-DE", anmeldung: "Bearer rettung", fetchImpl };
+  const leer = sammelAntwort();
+  assert.equal(await streamBilderLane(leer, { bildErneut: true, bildNurAblage: true }, "Male ein Bild von einem Heissluftballon", deps), true);
+  assert.equal(gemalt, 0, "ohne Ablage-Treffer wird NICHT gemalt");
+  assert.equal(leer.inhalt, "");
+  assert.equal(leer.kopf?.["x-smejj-profile"], "bilder-ablage-leer");
+  await streamBilderLane(sammelAntwort(), {}, "Male ein Bild von einem Heissluftballon", deps);
+  assert.equal(gemalt, 1);
+  const treffer = sammelAntwort();
+  await streamBilderLane(treffer, { bildErneut: true, bildNurAblage: true }, "Male ein Bild von einem Heissluftballon", deps);
+  assert.equal(gemalt, 1, "Treffer aus der Ablage, kein zweites Malen");
+  assert.match(treffer.inhalt, /data:image\/png;base64,/);
+});

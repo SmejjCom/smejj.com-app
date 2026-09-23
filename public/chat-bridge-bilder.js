@@ -718,6 +718,13 @@ export async function streamBilderLane(res, body, task, deps) {
     res.end();
     return true;
   }
+  // bildNurAblage (v172, Rettung nach App-Neustart): nie neu malen — ohne Treffer ein leerer Strom.
+  if (body?.bildNurAblage === true) {
+    bilderSseKopf(res, deps, body, "bilder-ablage-leer", "bild-ablage");
+    res.write("data: [DONE]\n\n");
+    res.end();
+    return true;
+  }
 
 
   // deps.fetchImpl gibt es nur im Test — im Betrieb bleibt es das echte fetch.
