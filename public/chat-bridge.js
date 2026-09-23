@@ -8,6 +8,7 @@ import { TEXTARBEIT, buildWebContext } from "./chat-bridge-websuche.js";
 // Wer fragen darf: Anmeldepflicht vor den modellkostenden Routen (seit 2026-08-05
 // wieder scharf); der Zaehler in /health zeigt daneben, was wirklich ankommt.
 import { allowAuthenticated, anmeldeStatistik, bearerToken, befreiteKonten, beobachteAnmeldung, istBefreit } from "./chat-bridge-auth.js";
+import { holeRadarKontext, mitRadar } from "./chat-bridge-radar.js";
 import { FRAGE_WERKZEUG, pipeMitInhalt, pipeVisibleStream } from "./chat-bridge-strom.js";
 import { KOPF_VORLAUF_MS, modellKommentar, schreibeStromFehler, starteVorlauf } from "./chat-bridge-lebenszeichen.js";
 import { gesundheitFuer, securityHeaders } from "./chat-bridge-sicherheit.js";
@@ -88,7 +89,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260923-v161-bildauftrag-15-sprachen";
+const BRIDGE_VERSION = "20260923-v162-radar-wissen";
 
 // Premium-Stimme: ausgelagerte Handler (siehe chat-bridge-voice-tts.js).
 // Funktionsdeklarationen unten sind gehoben — der Aufruf hier oben ist sicher.
@@ -232,7 +233,10 @@ async function handleChat(req, res) {
   if (await streamVisionLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS, maxBodyBytes: MAX_BODY_BYTES })) return;
   if (task && await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS, acceptLanguage: req.headers?.["accept-language"] })) return;
   // Anschlussfragen tragen ihr Thema nicht selbst — dann zaehlt die Frage davor.
-  const wissen = buildRagBlockMitVerlauf(lastUserContent(messages), previousUserContent(messages));
+  // v161: dazu das Radar-Wissen vom Control-Server (chat-bridge-radar.js) — die
+  // Schnellspur und /api/chat im Control-Server hatten es vorher nie.
+  const wissen = mitRadar(buildRagBlockMitVerlauf(lastUserContent(messages), previousUserContent(messages)),
+    await holeRadarKontext(lastUserContent(messages), req.headers, { origin: CONTROL_ORIGIN }));
   // Wechselndes ans Ende: der Wissensblock aendert sich mit jeder Frage und
   // stand bisher an Stelle 1 — damit war alles dahinter (Systemregeln folgen
   // dort nicht, aber der ganze Verlauf) fuer den Anbieter-Cache wertlos.
@@ -270,7 +274,10 @@ async function handleAgent(req, res) {
   // Block fuer jede Spur. `body.history` endet mit der Frage VOR der aktuellen
   // (app.js schickt die aktuelle nur als `task`), trifft also das Thema, auf
   // das sich eine Anschlussfrage bezieht.
-  const wissen = buildRagBlockMitVerlauf(task, lastUserContent(body.history));
+  // v161: Radar-Wissen fuer die Schnellspur. /api/agent im Control-Server haengt
+  // es selbst an — dorthin geht der Rumpf unveraendert (kein doppelter Block).
+  const wissen = mitRadar(buildRagBlockMitVerlauf(task, lastUserContent(body.history)),
+    await holeRadarKontext(task, req.headers, { origin: CONTROL_ORIGIN }));
   // Rechen-Fast-Path: eine Finanzierungsfrage bekommt die Zahlen EXAKT vorgelegt,
   // statt sie das Modell schaetzen zu lassen. Leer, wenn die Werte nicht
   // eindeutig erkennbar sind — dann laeuft alles unveraendert weiter.

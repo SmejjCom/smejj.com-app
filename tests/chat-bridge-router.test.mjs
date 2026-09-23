@@ -11,6 +11,8 @@ test("chat bridge proxies model choice to the registry router and keeps legacy G
     for await (const chunk of req) raw += chunk;
     // Seit 2026-08-04 fragt die Bruecke vor jeder Modell-Route hier nach, ob das
     // Token gilt (Anmeldepflicht). Ohne diese Antwort bekaeme der Test 401.
+    // Seit v161 fragt die Bruecke hier auch nach Radar-Wissen (chat-bridge-radar.js).
+    if (req.url === "/api/radar/kontext") { res.writeHead(200, { "Content-Type": "application/json" }); return res.end('{"ok":true,"kontext":""}'); }
     if (req.url === "/api/auth/me") {
       res.writeHead(200, { "Content-Type": "application/json" });
       return res.end(JSON.stringify({ authenticated: req.headers.authorization === "Bearer test-token", user: { email: "test@smejj.com" } }));
