@@ -122,7 +122,9 @@ async function main() {
     const PROBE_SCHLUESSEL = "abbild-probe-" + Math.random().toString(36).slice(2, 10);
     const kind = spawn(process.execPath, [EINSTIEG], {
       cwd: ziel, env: { PATH: process.env.PATH, PORT: String(PORT), SMEJJ_HOST: "127.0.0.1", MUUNY_RADAR_HOST: "127.0.0.1",
-        ...(SCHUTZ ? { [SCHUTZ.env]: PROBE_SCHLUESSEL } : {}) },
+        ...(SCHUTZ ? { [SCHUTZ.env]: PROBE_SCHLUESSEL } : {}),
+        // muuny-web startet ohne eigene Geheimnisse bewusst nicht (fail-closed).
+        ...(EINSTIEG.includes("muuny-web") ? { MUUNY_WEB_SITZUNG_SCHLUESSEL: PROBE_SCHLUESSEL.repeat(3), MUUNY_WEB_PFEFFER: PROBE_SCHLUESSEL.repeat(3) } : {}) },
       stdio: ["ignore", "pipe", "pipe"]
     });
     let ausgabe = "";

@@ -81,3 +81,5 @@ schemas/*
 !workers/muuny-laufzeit/**
 !workers/muuny-radar
 !workers/muuny-radar/**
+!workers/muuny-web
+!workers/muuny-web/**

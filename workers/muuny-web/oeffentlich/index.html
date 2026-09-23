@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>muuny</title>
+<meta name="description" content="muuny – der KI-Assistent von muuny.com">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/stil.css">
+<script src="/app.js" defer></script>
+</head>
+<body>
+<header class="kopf">
+  <div class="marke"><img src="/logo.svg" alt="" width="28" height="28"><span>muuny</span></div>
+  <nav id="menue" hidden>
+    <button id="widerrufen" class="leise" type="button" hidden>Einwilligung widerrufen</button>
+    <button id="abmelden" class="leise" type="button">Abmelden</button>
+  </nav>
+</header>
+
+<main id="laden" class="mitte"><p class="grau">Lädt …</p></main>
+
+<main id="anmeldung" class="mitte" hidden>
+  <h1>Willkommen bei muuny</h1>
+  <p class="grau">Melde dich mit deiner E-Mail an. Du bekommst einen 6-stelligen Code. Ein Passwort gibt es nicht.</p>
+  <form id="form-email" class="stapel">
+    <label for="email">E-Mail</label>
+    <input id="email" type="email" autocomplete="email" required maxlength="254" placeholder="du@beispiel.de">
+    <button type="submit">Code senden</button>
+  </form>
+  <form id="form-code" class="stapel" hidden>
+    <label for="code">Code aus der E-Mail</label>
+    <input id="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required placeholder="123456">
+    <button type="submit">Anmelden</button>
+    <button id="zurueck" class="leise" type="button">Andere E-Mail</button>
+  </form>
+  <p id="anmeldung-meldung" class="meldung" role="status"></p>
+  <p class="klein"><a href="/datenschutz">Datenschutz</a></p>
+</main>
+
+<main id="chat" class="chat" hidden>
+  <section id="einwilligung" class="karte" hidden>
+    <h2>Hilf muuny beim Lernen</h2>
+    <p>Wenn du bei einer guten Antwort auf 👍 tippst, darf muuny aus genau dieser Frage und Antwort lernen. Dafür brauchen wir drei ausdrückliche Ja. Ohne Einwilligung funktioniert muuny genauso, es wird nur nichts gespeichert.</p>
+    <label class="haken"><input type="checkbox" id="ja-training"> <span><strong>Training:</strong> Meine mit 👍 markierten Fragen und Antworten dürfen zum Training künftiger muuny-Modelle verwendet werden.</span></label>
+    <label class="haken"><input type="checkbox" id="ja-pruefung"> <span><strong>Prüfung:</strong> Sie dürfen vorher automatisch und von Menschen geprüft werden.</span></label>
+    <label class="haken"><input type="checkbox" id="ja-rechte"> <span><strong>Rechte:</strong> Meine Fragen verletzen keine Rechte Dritter und enthalten keine fremden persönlichen Daten.</span></label>
+    <p class="klein">Details im <a href="/datenschutz" target="_blank" rel="noopener">Datenschutzhinweis</a>. Du kannst jederzeit widerrufen.</p>
+    <div class="reihe">
+      <button id="einwilligen" type="button" disabled>Einwilligen</button>
+      <button id="nicht-jetzt" class="leise" type="button">Nicht jetzt</button>
+    </div>
+    <p id="einwilligung-meldung" class="meldung" role="status"></p>
+  </section>
+
+  <ol id="verlauf" class="verlauf" aria-live="polite"></ol>
+
+  <form id="form-frage" class="eingabe">
+    <textarea id="frage" rows="1" maxlength="4000" placeholder="Frag muuny …" required></textarea>
+    <button id="senden" type="submit" aria-label="Senden">➤</button>
+  </form>
+  <p class="klein fuss">muuny kann sich irren. Keine sensiblen Daten eingeben. <a href="/datenschutz">Datenschutz</a></p>
+</main>
+</body>
+</html>
