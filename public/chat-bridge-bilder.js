@@ -22,7 +22,7 @@
 import { meldeAktion } from "./chat-bridge-evolution.js";
 import { istWeltMalAuftrag } from "./chat-bridge-bildsprachen.js";
 import { bildSchritte, schrittSekunden } from "./chat-bridge-bildschritte.js";
-import { bildFehler, videoTexte } from "./chat-bridge-medientexte.js";
+import { bildFehler, erzaehlSprache, videoTexte } from "./chat-bridge-medientexte.js";
 
 // Eigene Namen (BILDER_*): das Deploy-Buendel legt alle Bridge-Module in EINEN
 // Gueltigkeitsbereich (bundle_chat_bridge.mjs prueft Kollisionen hart).
@@ -489,7 +489,7 @@ export function videoHinweis(engine, ton = false, sprache = "de") {
 
 // Laesst smejj 1.0 zwei Saetze zur Szene schreiben, die Piper spricht.
 // Fail-safe: bei jedem Fehler entsteht das Video eben stumm.
-async function schreibeErzaehltext(prompt) {
+async function schreibeErzaehltext(prompt, sprache = "de") {
   if (!BILDER_API_KEY || !BILDER_BASE_URL) return "";
   try {
     const antwort = await fetch(`${BILDER_BASE_URL}/chat/completions`, {
@@ -503,7 +503,7 @@ async function schreibeErzaehltext(prompt) {
             role: "system",
             content: [
               "Du schreibst die Erzählstimme für ein kurzes Video (etwa 8 Sekunden).",
-              "Antworte mit ZWEI kurzen deutschen Sätzen, die die Szene beschreiben — bildhaft, ruhig, ohne Anrede.",
+              `Antworte mit ZWEI kurzen Sätzen ${erzaehlSprache(sprache)}, die die Szene beschreiben — bildhaft, ruhig, ohne Anrede.`,
               "Keine Aufzählung, keine Überschrift, keine Anführungszeichen, kein Markdown. Nur die zwei Sätze."
             ].join(" ")
           },
@@ -537,12 +537,12 @@ function videoSchritt(res, zustand, stand, sprache = "de") {
 // Liefert { url, engine } bei Erfolg, "besetzt" wenn gerade ein anderes Video
 // laeuft (HTTP 429), sonst null. Die Engine entscheidet ueber den Hinweis im
 // Antworttext (kenburns bewegt die Kamera, animatediff das Motiv selbst).
-async function versucheVideo(prompt, erzaehltext) {
+async function versucheVideo(prompt, erzaehltext, sprache = "de") {
   try {
     const antwort = await fetch(`${VIDEO_WORKER_URL}/erzeuge`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(VIDEO_WORKER_KEY ? { "x-smejj-key": VIDEO_WORKER_KEY } : {}) },
-      body: JSON.stringify({ prompt, erzaehltext: erzaehltext || "" }),
+      body: JSON.stringify({ prompt, erzaehltext: erzaehltext || "", sprache }),
       signal: AbortSignal.timeout(VIDEO_TIMEOUT_MS)
     });
     if (antwort.status === 429) return "besetzt";
@@ -565,10 +565,10 @@ async function versucheVideo(prompt, erzaehltext) {
  *
  * `melde(phase)` faerbt den laufenden Fortschritt ("wartet" statt "läuft").
  */
-async function erzeugeVideoMitGeduld(prompt, erzaehltext, melde) {
+async function erzeugeVideoMitGeduld(prompt, erzaehltext, melde, sprache = "de") {
   const bis = Date.now() + VIDEO_WARTE_MAX_MS;
   for (;;) {
-    const ergebnis = await versucheVideo(prompt, erzaehltext);
+    const ergebnis = await versucheVideo(prompt, erzaehltext, sprache);
     if (ergebnis !== "besetzt") return ergebnis;
     // Besetzt: warten, aber nie laenger als das Geduldsbudget. Danach lieber
     // ehrlich absagen als den Nutzer endlos vertroesten.
@@ -623,11 +623,11 @@ async function streamVideoSpur(res, body, videoPrompt, deps, sprache = "de") {
     // nacheinander gewarteter Sekunden.
     const [malPrompt, erzaehltext] = await Promise.all([
       uebersetzeMalPrompt(videoPrompt),
-      schreibeErzaehltext(videoPrompt)
+      schreibeErzaehltext(videoPrompt, sprache)
     ]);
     video = await erzeugeVideoMitGeduld(malPrompt, erzaehltext, (neu) => {
       phase = neu === "wartet auf freien Platz" ? w.wartet : w.laeuft;
-    });
+    }, sprache);
   } finally {
     clearInterval(takt);
   }

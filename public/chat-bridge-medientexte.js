@@ -166,3 +166,16 @@ export function videoTexte(sprache) {
 export function bildFehler(sprache) {
   return BILD_FEHLER[sprache] || BILD_FEHLER.de;
 }
+
+// Fuer den Erzaehltext-Auftrag an smejj 1.0 ("in welcher Sprache sprechen?").
+// Deutsch bleibt wortgleich zum alten Auftrag ("zwei kurzen deutschen Saetzen").
+const ERZAEHL_SPRACHE = Object.freeze({
+  de: "auf Deutsch", en: "auf Englisch", es: "auf Spanisch", fr: "auf Französisch", pt: "auf Portugiesisch",
+  it: "auf Italienisch", tr: "auf Türkisch", ru: "auf Russisch", ar: "auf Arabisch", hi: "auf Hindi",
+  bn: "auf Bengalisch", id: "auf Indonesisch", ja: "auf Japanisch", ko: "auf Koreanisch", zh: "auf Chinesisch (vereinfacht)"
+});
+
+/** "auf Französisch" — Zielsprache der gesprochenen Erzaehlung im Video. */
+export function erzaehlSprache(sprache) {
+  return ERZAEHL_SPRACHE[sprache] || ERZAEHL_SPRACHE.de;
+}

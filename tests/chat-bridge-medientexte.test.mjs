@@ -83,3 +83,14 @@ test("die Sekunden-Einheit der Video-Zeile folgt der Sprache wie in der Mal-Zeil
   assert.match(quelle, /\$\{phase\} … \$\{Math\.round\(\(Date\.now\(\) - beginn\) \/ 1000\)\}\$\{einheit\}/);
   assert.doesNotMatch(quelle, /\$\{phase\} … [^`]*\} s`/);
 });
+
+test("die Erzaehlstimme folgt der Sprache: Auftrag an smejj 1.0 und Sprache an den Video-Maler", async () => {
+  const { erzaehlSprache } = await import("../public/chat-bridge-medientexte.js");
+  assert.equal(erzaehlSprache("fr"), "auf Französisch");
+  assert.equal(erzaehlSprache("xx"), "auf Deutsch");
+  const quelle = readFileSync(new URL("../public/chat-bridge-bilder.js", import.meta.url), "utf8");
+  assert.match(quelle, /ZWEI kurzen Sätzen \$\{erzaehlSprache\(sprache\)\}/);
+  assert.match(quelle, /JSON\.stringify\(\{ prompt, erzaehltext: erzaehltext \|\| "", sprache \}\)/);
+  assert.match(quelle, /schreibeErzaehltext\(videoPrompt, sprache\)/);
+  assert.match(quelle, /\}, sprache\);/, "erzeugeVideoMitGeduld bekommt die Sprache");
+});
