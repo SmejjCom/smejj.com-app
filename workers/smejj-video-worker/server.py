@@ -105,14 +105,15 @@ STIMME_TIMEOUT_S = int(os.environ.get("SMEJJ_VIDEO_STIMME_TIMEOUT_S", "25"))
 # Erzählstimme in der Sprache des Nutzers (Betreiber 2026-09-23). Der Piper-Dienst
 # startet nur mit de_DE-thorsten und lädt weitere Stimmen über POST /download aus
 # rhasspy/piper-voices nach (~65 MB, einmal je Neustart). Deutsch = Standardstimme.
-# Japanisch fehlt bewusst: die Stimme braucht pyopenjtalk, das der Dienst nicht hat.
+# Japanisch braucht pyopenjtalk ('piper-tts[ja]' im Startbefehl des Piper-Dienstes);
+# fehlt es, antwortet Piper mit Fehler -> Video stumm (kein RIFF), nie Thorsten.
 # Ohne passende Stimme bleibt das Video STUMM — Thorsten liest nie fremden Text vor.
 STIMMEN = {
     "en": "en_US-lessac-medium", "es": "es_ES-davefx-medium", "fr": "fr_FR-siwis-medium",
     "pt": "pt_BR-faber-medium", "it": "it_IT-paola-medium", "tr": "tr_TR-dfki-medium",
     "ru": "ru_RU-irina-medium", "ar": "ar_JO-kareem-medium", "hi": "hi_IN-pratham-medium",
     "bn": "bn_BD-google-medium", "id": "id_ID-news_tts-medium", "ko": "ko_KR-kss-medium",
-    "zh": "zh_CN-huayan-medium",
+    "zh": "zh_CN-huayan-medium", "ja": "ja_JP-hi_fi_captain-medium",
 }
 STIMME_LADEN_TIMEOUT_S = int(os.environ.get("SMEJJ_VIDEO_STIMME_LADEN_TIMEOUT_S", "90"))
 # Deutsch wird mit rund 15 Zeichen pro Sekunde gesprochen: 200 Zeichen sind
