@@ -511,7 +511,12 @@ async function schreibeErzaehltext(prompt, sprache = "de") {
         ],
         stream: false,
         temperature: 0.7,
-        max_tokens: 120
+        // gpt-oss denkt vor der Antwort, und die Denk-Tokens zaehlen in
+        // max_tokens: mit 120 blieb content leer, jedes Video kam stumm
+        // (gemessen 23.09.2026). Wie im Hauptchat (chat-bridge.js): wenig
+        // Denken, genug Raum — der Text selbst bleibt unten auf 300 Zeichen gedeckelt.
+        ...(/gpt-oss/i.test(BILDER_MODEL) ? { reasoning_effort: "low" } : {}),
+        max_tokens: 800
       })
     });
     if (!antwort.ok) return "";

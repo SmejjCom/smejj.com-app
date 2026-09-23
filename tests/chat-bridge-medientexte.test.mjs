@@ -94,3 +94,11 @@ test("die Erzaehlstimme folgt der Sprache: Auftrag an smejj 1.0 und Sprache an d
   assert.match(quelle, /schreibeErzaehltext\(videoPrompt, sprache\)/);
   assert.match(quelle, /\}, sprache\);/, "erzeugeVideoMitGeduld bekommt die Sprache");
 });
+
+test("Erzaehltext: gpt-oss bekommt wenig Denken und genug Tokens (sonst bleibt content leer, Video stumm)", () => {
+  const quelle = readFileSync(new URL("../public/chat-bridge-bilder.js", import.meta.url), "utf8");
+  const aufruf = quelle.slice(quelle.indexOf("async function schreibeErzaehltext"), quelle.indexOf("async function schreibeErzaehltext") + 2200);
+  assert.match(aufruf, /reasoning_effort: "low"/);
+  const tokens = Number((aufruf.match(/max_tokens: (\d+)/) || [])[1]);
+  assert.ok(tokens >= 600, `max_tokens ${tokens} ist zu knapp fuer ein denkendes Modell`);
+});
