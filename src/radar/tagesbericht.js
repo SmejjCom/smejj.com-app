@@ -42,6 +42,8 @@ export function baueTagesbericht({ laeufe = [], eintraege = [], tag = new Date()
     dauerMsGesamt: tagesLaeufe.reduce((s, l) => s + (Number(l.dauerMs) || 0), 0),
     themenErgaenzt: tagesLaeufe.flatMap((l) => l.themenErgaenzt || []),
     verschoben: tagesLaeufe.filter((l) => l.grund === "nutzer_hat_vorrang" || l.grund === "schonfrist_nach_nutzeranfrage").length,
+    // Gegenpruefung der Einzelquellen (23.09.2026): was bestaetigt wurde, was nicht.
+    gegenpruefung: tagesLaeufe.flatMap((l) => l.gegenpruefung || []),
     quellenGeprueft: tagesLaeufe.reduce((s, l) => s + (Number(l.quellenGeprueft) || 0), 0),
     themen,
     neu: neu.map(kurz),

@@ -81,7 +81,7 @@ import { erstelleWebhookRelayRoute } from "../control-server/src/routes/webhookR
 import { beobachteAnfrage } from "../control-server/src/autopilots/missbrauchsWacheAutopilot.js";
 import { clientKeyFromRequest } from "../control-server/src/http/rateLimiter.js";
 import { handleSupportRoute } from "../control-server/src/routes/supportRoutes.js";
-import { handleFeedbackRoute } from "../control-server/src/routes/feedbackRoutes.js";
+import { handleFeedbackRoute, handleRadarKontextRoute } from "../control-server/src/routes/feedbackRoutes.js";
 import { handleInhaltMeldungRoute } from "../control-server/src/routes/inhaltMeldungRoutes.js";
 import { starteAutopiloten } from "../control-server/src/autopilots/start.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
@@ -300,7 +300,7 @@ const server = http.createServer(async (req, res) => {
     // Kundensupport Stufe 1: Ticket + KI-Sofortantwort (angemeldete Nutzer) — supportRoutes.js.
     if (await handleSupportRoute(req, url, res)) return;
     // Daten-Schwungrad Stufe 1: Daumen-Signale der Nutzer — feedbackRoutes.js.
-    if (await handleFeedbackRoute(req, url, res)) return;
+    if (await handleFeedbackRoute(req, url, res) || await handleRadarKontextRoute(req, url, res)) return;
     // Anstoessige KI-Inhalte melden — Pflicht der Google-Play-Richtlinie fuer
     // KI-generierte Inhalte (Ablehnung 20.09.2026): inhaltMeldungRoutes.js.
     if (await handleInhaltMeldungRoute(req, url, res)) return;
