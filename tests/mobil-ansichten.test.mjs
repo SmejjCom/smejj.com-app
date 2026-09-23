@@ -41,3 +41,37 @@ test("keine Schrift unter 15 px, keine Ziele unter 44 px; Modul haengt an mobil-
   const sw = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
   assert.ok(sw.includes('"/assets/mobil-ansichten.js",'));
 });
+
+// ---- Betreiber-Screenshot 08.09. 08:48: Einstellungen liessen sich seitlich verschieben --------
+test("Einstellungen schieben nicht mehr seitlich: Rasterspalte gedeckelt, Felder duerfen schrumpfen", () => {
+  assert.match(m.REGELN, /#settings\.view,body #profile\.view\{overflow-x:hidden\}/);
+  // Wurzel war grid-template-columns:403px — ein Rasterfeld hat min-width:auto und waechst mit dem Inhalt.
+  assert.match(m.REGELN, /\.settings-content\.settings-content\{grid-template-columns:minmax\(0,1fr\);min-width:0\}/);
+  assert.match(m.REGELN, /\.settings-content>\*,body #settings \.settings-panel\.settings-panel\{min-width:0;max-width:100%\}/);
+  assert.match(m.REGELN, /\.ac-sub,body #settings \.ac-subhead[^{]*\{white-space:normal\}/, "nowrap-Untertitel trieb die Breite");
+  assert.match(m.REGELN, /#settings select,body #settings input[^{]*\{max-width:100%;min-width:0;box-sizing:border-box\}/);
+});
+
+test("Cline-Knoepfe einspaltig und 44 px hoch (gemessen 177x38 in zwei Spalten)", () => {
+  assert.match(m.REGELN, /\.cline-actions\.cline-actions\{grid-template-columns:minmax\(0,1fr\)\}/);
+  assert.match(m.REGELN, /\.cline-actions button\{width:100%;min-height:44px\}/);
+});
+
+test("Suchfeld in der Reiterzeile bleibt bedienbar (schrumpfte auf 26 px)", () => {
+  assert.match(m.REGELN, /\.settings-nav #settingsSuche\{flex:0 0 clamp\(160px,48vw,220px\);min-width:160px;min-height:44px/);
+});
+
+test("Kippschalter und Rechtslinks sind volle Ziele (gemessen 46x26 und 16 px hoch)", () => {
+  assert.match(m.REGELN, /\.settings-switch,body #profile \.settings-switch\{min-height:44px;display:inline-flex;align-items:center\}/);
+  assert.match(m.REGELN, /\.settings-links a,body \.view \.settings-links a\{min-height:44px;display:inline-flex;align-items:center\}/);
+});
+
+
+test("Felder in Konto, Einstellungen und Verlauf tragen 16 px — sonst zoomt iOS beim Antippen und bleibt verschoben", () => {
+  const regel = m.REGELN.match(/body #profile\.view\.view input:not\(\[type=checkbox\]\)[^{]*\{font-size:16px\}/);
+  assert.ok(regel, "Regel fuer 16 px fehlt");
+  for (const teil of ["body #profile.view.view select", "body #profile.view.view textarea", "body #settings.view.view select", "body #settings.view.view textarea", "body #settings.view.view input:not", "body #chatHistory.view.view input:not"]) {
+    assert.ok(regel[0].includes(teil), `${teil} fehlt in der 16-px-Regel`);
+  }
+  assert.doesNotMatch(regel[0], /#start|#code|#startMessage/, "Startseite und Schreibfeld bleiben unberuehrt (Design-Lock)");
+});
