@@ -102,3 +102,12 @@ test("Erzaehltext: gpt-oss bekommt wenig Denken und genug Tokens (sonst bleibt c
   const tokens = Number((aufruf.match(/max_tokens: (\d+)/) || [])[1]);
   assert.ok(tokens >= 600, `max_tokens ${tokens} ist zu knapp fuer ein denkendes Modell`);
 });
+
+test("Malprompt-Uebersetzung: gpt-oss bekommt wenig Denken und genug Tokens, Ausfall hinterlaesst eine Logzeile", () => {
+  const quelle = readFileSync(new URL("../public/chat-bridge-bilder.js", import.meta.url), "utf8");
+  const start = quelle.indexOf("async function uebersetzeMalPrompt");
+  const aufruf = quelle.slice(start, start + 2400);
+  assert.match(aufruf, /reasoning_effort: "low"/);
+  assert.ok(Number((aufruf.match(/max_tokens: (\d+)/) || [])[1]) >= 600);
+  assert.match(aufruf, /smejj Malprompt unuebersetzt/);
+});

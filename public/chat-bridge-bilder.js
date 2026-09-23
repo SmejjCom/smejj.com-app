@@ -332,13 +332,21 @@ async function uebersetzeMalPrompt(rohPrompt) {
         ],
         stream: false,
         temperature: 0.2,
-        max_tokens: 120
+        // Wie beim Erzaehltext (v167): gpt-oss verbrauchte die 120 Tokens beim
+        // Denken, content blieb leer, der Maler bekam den Rohtext statt eines
+        // englischen Foto-Prompts — still, seit dem Modellwechsel im August.
+        ...(/gpt-oss/i.test(BILDER_MODEL) ? { reasoning_effort: "low" } : {}),
+        max_tokens: 800
       })
     });
-    if (!antwort.ok) return prompt;
-    const text = String((await antwort.json())?.choices?.[0]?.message?.content || "").trim();
-    return text && text.length <= 400 ? text : prompt;
-  } catch {
+    if (!antwort.ok) { console.log(`smejj Malprompt unuebersetzt: http_${antwort.status}`); return prompt; }
+    const wahl = (await antwort.json())?.choices?.[0] || {};
+    const text = String(wahl.message?.content || "").trim();
+    if (text && text.length <= 400) return text;
+    console.log(`smejj Malprompt unuebersetzt: laenge ${text.length}, finish ${wahl.finish_reason || "?"}`);
+    return prompt;
+  } catch (fehler) {
+    console.log(`smejj Malprompt unuebersetzt: ${fehler?.name || "Fehler"}`);
     return prompt;
   }
 }
