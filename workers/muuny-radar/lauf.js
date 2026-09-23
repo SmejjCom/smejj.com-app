@@ -13,11 +13,13 @@ import os from "node:os";
 import { randomUUID } from "node:crypto";
 import { GRENZEN_STANDARD, QUELLEN_STANDARD, THEMEN_STANDARD, pruefeKonfig } from "./konfig.js";
 import { baueAbrufer } from "./abruf.js";
-import { abrufAdresse, zerlege } from "./parser.js";
+import { abrufAdresse, seitenText, zerlege } from "./parser.js";
 import { passtZumThema, pruefeFunde } from "./pruefung.js";
 import { bestandAus, leseIndex, speichere } from "./wissen.js";
 
 export const SPERRE_VERWAIST_MS = 10 * 60_000;
+/** Hoechstens so viele Seiten je Lauf nachladen, wenn ein Feed nur Ueberschriften liefert. */
+export const NACHLADEN_JE_LAUF = 5;
 export const STATUS = Object.freeze(["recherchiert", "prueft", "wartet", "pausiert", "fehler"]);
 
 export function radarSchluessel(prefix = "muuny/") {
@@ -231,6 +233,7 @@ export async function fuehreLaufAus(lager, { prefix = "muuny/", fetchImpl = fetc
     const maxAnfragen = Math.min(konfig.grenzen.anfragenProLauf, rest.anfragen);
     const quellenStand = structuredClone(zustand.quellen || {});
     const kandidaten = [];
+    let nachgeladen = 0;
     laufImProzess.status = "recherchiert";
     for (const { q, url, themen: fuer } of abrufe.values()) {
       if (abbrechen()) return await ende("abgebrochen", "notaus_oder_abbruch_waehrend_recherche");
@@ -275,6 +278,24 @@ export async function fuehreLaufAus(lager, { prefix = "muuny/", fetchImpl = fetc
       protokoll.abrufe.push(eintrag);
       for (const f of funde) {
         protokoll.zahlen.gefunden += 1;
+        // Manche Feeds liefern NUR die Ueberschrift (DeepMind, Hugging Face). Dann wird die
+        // Seite selbst geholt — sparsam: nur Primaerquellen, nur mit Themenbezug im Titel,
+        // hoechstens NACHLADEN_JE_LAUF Stueck, und jeder Abruf zaehlt aufs Budget.
+        if (!f.text && f.primaer && nachgeladen < NACHLADEN_JE_LAUF && fuer.some((t) => passtZumThema(f, t))
+            && abrufer.zaehler.anfragen < maxAnfragen) {
+          nachgeladen += 1;
+          const seite = await abrufer.hole(f.link, { maxBytes: Math.min(konfig.grenzen.bytesProAbruf, 1024 * 1024) });
+          if (seite.ok && seite.text) {
+            const s2 = seitenText(seite.text);
+            f.text = s2.text;
+            f.versteckt += s2.versteckt;
+            f.anweisungsversuche += s2.anweisungsversuche;
+            f.versteckteAnweisungen = (f.versteckteAnweisungen || 0) + s2.versteckteAnweisungen;
+            f.nachgeladen = true;
+          }
+          protokoll.abrufe.push({ quelle: q.id, url: f.link, nachgeladen: true, ok: seite.ok, status: seite.status,
+            bytes: seite.bytes || 0, ms: seite.ms, grund: seite.grund || null, zeichen: f.text.length });
+        }
         protokoll.zahlen.anweisungsversucheGeblockt += f.anweisungsversuche;
         const thema = fuer.find((t) => passtZumThema(f, t)) || fuer[0];
         kandidaten.push({ fund: f, themaId: thema.id });

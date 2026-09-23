@@ -42,10 +42,20 @@ export function zuText(html) {
   return { text: s, versteckt, versteckterText: weg.join(" ").replace(/\s+/g, " ").trim() };
 }
 
-/** Markdown (Release-Notizen) -> schlichter Text. */
+/**
+ * Markdown (Release-Notizen) -> schlichter Text.
+ * GitHub-Notizen enthalten fast immer auch HTML (<details>, <img>, <summary>) — gemessen
+ * am 23.09. an llama.cpp b11118 und transformers 5.17.0, deren Text mit "<details open"
+ * begann. Darum laeuft der Text danach durch zuText: Tags weg, Verstecktes weg, Entitaeten
+ * aufgeloest.
+ */
 function ausMarkdown(md) {
-  return String(md || "").replace(/```[\s\S]*?```/g, " ").replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[#*_`>|]/g, " ").replace(/\s+/g, " ").trim();
+  // ERST das HTML (zuText), DANN die Markdown-Zeichen: andersherum zerstoert das
+  // Entfernen von ">" die Tags, und zuText findet nichts mehr zu entfernen — der Text
+  // kam dann leer heraus (im Test gemessen).
+  const { text } = zuText(String(md || "").replace(/```[\s\S]*?```/g, " "));
+  return text.replace(/!\[[^\]]*\]\([^)]*\)/g, " ").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[#*_`>|]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function feld(block, ...namen) {
@@ -99,7 +109,9 @@ export function zerlege(q, roh, { max = 15 } = {}) {
     const daten = JSON.parse(roh);
     if (q.art === "github-releases") {
       if (!Array.isArray(daten)) return { funde: [], fehler: "keine_liste" };
-      return { funde: daten.filter((r) => !r.draft).slice(0, max).map((r) => fund(q, { titel: r.name || r.tag_name, link: r.html_url,
+      // "v1.8.0" allein sagt niemandem, WESSEN Version das ist — im Bericht wie in der Suche.
+      const mitAnbieter = (t) => (q.anbieter && !String(t).toLowerCase().includes(String(q.anbieter).toLowerCase()) ? `${q.anbieter} ${t}` : String(t));
+      return { funde: daten.filter((r) => !r.draft).slice(0, max).map((r) => fund(q, { titel: mitAnbieter(r.name || r.tag_name), link: r.html_url,
         veroeffentlicht: datum(r.published_at || r.created_at), text: ausMarkdown(r.body).slice(0, 1500) })), fehler: null };
     }
     if (q.art === "hf-models") {
@@ -118,6 +130,22 @@ export function zerlege(q, roh, { max = 15 } = {}) {
   } catch (f) {
     return { funde: [], fehler: `unlesbar:${String(f?.message || f).slice(0, 60)}` };
   }
+}
+
+/**
+ * Aus der HTML-Seite eines Fundes den Fliesstext gewinnen — fuer Feeds, die NUR
+ * Ueberschriften liefern (DeepMind- und Hugging-Face-Blog, gemessen 23.09.).
+ * Derselbe Weg wie bei Feed-Inhalten: Verstecktes zaehlen, Anweisungen entschaerfen.
+ * @returns {{text, versteckt, anweisungsversuche}}
+ */
+export function seitenText(html, { maxZeichen = 900 } = {}) {
+  const roh = zuText(String(html || "").replace(/<(nav|header|footer|aside|form)\b[\s\S]*?<\/\1>/gi, " "));
+  const entwaffnet = entwaffneFremdtext(roh.text);
+  const versteckteAnweisungen = entwaffneFremdtext(roh.versteckterText || "").funde;
+  // Navigationsreste sind kurze Zeilen ohne Satzzeichen; der erste echte Absatz zaehlt.
+  const absaetze = entwaffnet.text.split("\n").map((z) => z.trim()).filter((z) => z.length > 80 || /[.!?]$/.test(z));
+  return { text: absaetze.join(" ").slice(0, maxZeichen).trim(), versteckt: roh.versteckt,
+    anweisungsversuche: entwaffnet.funde + versteckteAnweisungen, versteckteAnweisungen };
 }
 
 /** Die Abruf-Adresse einer Quelle fuer ein Thema (Suche bei arXiv und HN). */
