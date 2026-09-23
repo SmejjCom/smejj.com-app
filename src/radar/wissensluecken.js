@@ -24,23 +24,62 @@ export const ERLAUBTE_BEGRIFFE = Object.freeze([
   "benchmark", "preise", "abo", "api", "token", "kontext", "halluzination", "sicherheit", "prompt injection"
 ]);
 
-const MINDEST_TREFFER = 3;
+export const MINDEST_TREFFER = 3;
+
+// Nutzer schreiben selten den Listenbegriff selbst ("Generate an image of ...",
+// "mach ein Bild"). Diese festen Umschreibungen zaehlen fuer den Listenbegriff —
+// nach draussen geht weiterhin NUR der Listenbegriff (23.09.2026).
+export const UMSCHREIBUNGEN = Object.freeze({
+  bildgenerierung: ["bild", "bilder", "image", "images", "picture", "foto", "zeichne", "draw"],
+  videogenerierung: ["video", "videos", "clip"],
+  sprachmodus: ["stimme", "voice", "vorlesen", "diktieren"],
+  websuche: ["web search", "internet", "google"],
+  preise: ["preis", "kosten", "price", "pricing"]
+});
+
+const WORTZEICHEN = "a-z0-9äöüß";
+/** Ganzes Wort statt Teilwort: "rag" steckt in "Frage", "api" in "Kapitel" (Befund 23.09.2026). */
+function enthaeltWort(klein, wort) {
+  const muster = wort.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/ /g, "\\s+");
+  return new RegExp(`(^|[^${WORTZEICHEN}])${muster}($|[^${WORTZEICHEN}])`, "u").test(klein);
+}
 
 /**
  * Zaehlt erlaubte Begriffe in Signalen. `signale` sind bereits PII-bereinigte
  * Texte aus der eigenen Ablage (z. B. Daumen-runter-Ereignisse) — sie bleiben
  * im Haus; nach draussen geht nur der gefundene Begriff.
+ *
+ * Gezaehlt werden VERSCHIEDENE Signale: dieselbe Frage 13-mal verworfen (gemessen
+ * 19.09.2026, ein Mensch klickte mehrfach) ist EIN Hinweis, kein Muster.
  */
 export function zaehleBegriffe(signale = [], erlaubt = ERLAUBTE_BEGRIFFE) {
   const zaehler = new Map();
-  for (const text of signale) {
-    const klein = String(text || "").toLowerCase();
+  const verschieden = [...new Set(signale.map((t) => String(t || "").toLowerCase().replace(/\s+/g, " ").trim()).filter(Boolean))];
+  for (const klein of verschieden) {
     for (const begriff of erlaubt) {
-      if (!klein.includes(begriff)) continue;
+      const woerter = [begriff, ...(UMSCHREIBUNGEN[begriff] || [])];
+      if (!woerter.some((w) => enthaeltWort(klein, w))) continue;
       zaehler.set(begriff, (zaehler.get(begriff) || 0) + 1);
     }
   }
   return [...zaehler.entries()].map(([begriff, treffer]) => ({ begriff, treffer })).sort((a, b) => b.treffer - a.treffer);
+}
+
+/**
+ * Die Messung hinter der Entscheidung — fuer Protokoll und Adminbereich, damit
+ * "nichts ergaenzt" nachpruefbar wird (wie viele Signale, wie viele verschieden,
+ * welcher Begriff wie nah an der Schwelle). Enthaelt KEINEN Nutzertext.
+ */
+export function lueckenAnalyse(signale = [], { vorhandeneIds = [], mindestTreffer = MINDEST_TREFFER } = {}) {
+  const verschieden = new Set(signale.map((t) => String(t || "").toLowerCase().replace(/\s+/g, " ").trim()).filter(Boolean)).size;
+  const begriffe = zaehleBegriffe(signale).slice(0, 8);
+  return {
+    signale: signale.length,
+    verschieden,
+    schwelle: mindestTreffer,
+    begriffe,
+    vorschlaege: themenAusLuecken(signale, { vorhandeneIds, mindestTreffer }).map((t) => t.id)
+  };
 }
 
 /**

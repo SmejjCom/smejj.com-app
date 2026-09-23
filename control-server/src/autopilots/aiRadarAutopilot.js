@@ -22,8 +22,8 @@ import { faelligeThemen, naechsteFaelligkeit, themenListe } from "../../../src/r
 import { anfragenFuerLauf, darfLaufen, grenzenAus } from "../../../src/radar/radarBudget.js";
 import { pruefeFremdtext, entschaerfe } from "../../../src/radar/injektionsschutz.js";
 import { bewerteFund, nachGuete } from "../../../src/radar/quellenGuete.js";
-import { PRUEFSTATUS, VERGLEICH, baueEintrag, fuerAbruf, neueFassung, vergleiche } from "../../../src/radar/wissensbasis.js";
-import { themenAusLuecken } from "../../../src/radar/wissensluecken.js";
+import { PRUEFSTATUS, VERGLEICH, baueEintrag, fuerAbruf, neueFassung, pruefstatusAus, vergleiche } from "../../../src/radar/wissensbasis.js";
+import { lueckenAnalyse, themenAusLuecken } from "../../../src/radar/wissensluecken.js";
 import { darfHintergrundLaufen, vorrangStand } from "./radarVorrang.js";
 
 export const WISSEN_ABLAGE = "radar/wissen";
@@ -79,7 +79,9 @@ export async function fuehreRadarLaufAus({
   suche = searchWebDetailed,
   stores = { wissen: wissenStore, laeufe: laufStore, konfig: konfigStore },
   maxThemen = 3,
-  grund = "takt"
+  grund = "takt",
+  vorrangPruefung = darfHintergrundLaufen,
+  signale = signalStore
 } = {}) {
   const begonnenAm = jetzt;
   // Die Dauer wird an der ECHTEN Uhr gemessen, nicht an `jetzt` — das ist in
@@ -98,9 +100,14 @@ export async function fuehreRadarLaufAus({
   // gehen vor. Der Takt verschiebt sich dann einfach; von Hand ausgeloeste
   // Laeufe (Adminknopf) laufen trotzdem — dort wartet ein Mensch davor.
   if (grund === "takt") {
-    const vorrang = darfHintergrundLaufen({ jetztMs: Date.parse(jetzt) || Date.now() });
+    const vorrang = vorrangPruefung({ jetztMs: Date.parse(jetzt) || Date.now() });
     if (!vorrang.erlaubt) {
-      return protokoll({ begonnenAm, ok: true, grund: vorrang.grund, rest: erlaubnis.rest, gestartetWegen: grund, vorrang: vorrangStand() });
+      // ABGELEGT (23.09.2026): vorher kehrte der verschobene Lauf ohne Spur
+      // zurueck — der Tagesbericht zaehlte "Dem Nutzer gewichen" darum immer 0.
+      // Ohne Anfragen, also ohne Budget; der Takt versucht es beim naechsten Tick.
+      const verschoben = protokoll({ begonnenAm, ok: true, grund: vorrang.grund, rest: erlaubnis.rest, gestartetWegen: grund, vorrang: vorrangStand() });
+      try { await stores.laeufe.schreib(verschoben, { env, timeoutMs: 8000 }); } catch { verschoben.protokollAbgelegt = false; }
+      return verschoben;
     }
   }
 
@@ -108,7 +115,7 @@ export async function fuehreRadarLaufAus({
   // Wissensluecken aus der eigenen Nutzung: nur Begriffe aus der festen Liste,
   // nie Nutzertext (wissensluecken.js). Neue Themen ergaenzen sich damit
   // selbst — innerhalb der Themen- und Budgetgrenzen, wie im Auftrag erlaubt.
-  const ergaenzt = await themenAusLueckenErgaenzen({ env, konfig, stores });
+  const ergaenzt = await themenAusLueckenErgaenzen({ env, konfig, stores, signale });
   const themen = themenListe(ergaenzt.konfig);
   const letzteLaeufe = letzteThemenLaeufe(laeufe);
   const faellig = faelligeThemen(themen, letzteLaeufe, Date.parse(jetzt)).slice(0, maxThemen);
@@ -119,6 +126,7 @@ export async function fuehreRadarLaufAus({
   let anfragen = 0;
   let quellenGeprueft = 0;
   const gespeicherteIds = [];
+  const gegenpruefung = [];
 
   try {
     for (const thema of faellig) {
@@ -214,6 +222,10 @@ export async function fuehreRadarLaufAus({
       }
       protokollThemen.push(eintragThema);
     }
+    // Gegenpruefung (23.09.2026): Einzelquellen bekommen mit dem Restbudget eine
+    // gezielte zweite Suche. Findet sie eine unabhaengige Bestaetigung, steigt
+    // der Pruefstatus; sonst wird der Versuch vermerkt (naechster in 7 Tagen).
+    gegenpruefung.push(...await gegenpruefen({ env, jetzt, suche, stores, vorhandene, rest: budgetAnfragen - anfragen, zaehle: () => { anfragen += 1; } }));
   } finally {
     laeuftGerade = false;
   }
@@ -224,6 +236,8 @@ export async function fuehreRadarLaufAus({
     grund: null,
     dauerMs: Date.now() - startMs,
     themenErgaenzt: ergaenzt.neue,
+    luecken: ergaenzt.analyse,
+    gegenpruefung,
     rest: erlaubnis.rest,
     gestartetWegen: grund,
     themen: protokollThemen,
@@ -248,22 +262,108 @@ export async function fuehreRadarLaufAus({
  * zwei je Lauf. Faellt die Signal-Ablage aus, bleibt alles beim Alten: eine
  * stumme Ablage darf den Radar nicht anhalten (und erst recht nichts erfinden).
  */
-async function themenAusLueckenErgaenzen({ env, konfig, stores }) {
+async function themenAusLueckenErgaenzen({ env, konfig, stores, signale = signalStore }) {
   try {
-    const liste = await signalStore.liste({ env });
-    if (!liste?.ok) return { konfig, neue: [] };
-    const signale = (liste.datensaetze || [])
-      .filter((d) => d?.signalType === "thumbs_down" || d?.signalType === "regenerate")
-      .map((d) => `${d.promptVoll || d.promptSample || ""} ${d.antwortSample || ""}`);
+    const texte = await lueckenSignale({ env, store: signale });
+    if (!texte) return { konfig, neue: [], analyse: null };
     const vorhandeneIds = themenListe(konfig).map((t) => t.id);
-    const neue = themenAusLuecken(signale, { vorhandeneIds });
-    if (!neue.length) return { konfig, neue: [] };
+    const analyse = lueckenAnalyse(texte, { vorhandeneIds });
+    const neue = themenAusLuecken(texte, { vorhandeneIds });
+    if (!neue.length) return { konfig, neue: [], analyse };
     const erweitert = { ...(konfig || {}), themen: [...((konfig || {}).themen || []), ...neue] };
     await schreibeKonfig(erweitert, { env, store: stores.konfig });
-    return { konfig: erweitert, neue: neue.map((t) => ({ id: t.id, titel: t.titel, herkunft: t.herkunft })) };
+    return { konfig: erweitert, neue: neue.map((t) => ({ id: t.id, titel: t.titel, herkunft: t.herkunft })), analyse };
   } catch {
-    return { konfig, neue: [] };
+    return { konfig, neue: [], analyse: null };
   }
+}
+
+/** Die Texte der Daumen-runter-Signale — bleiben im Haus. null = Ablage stumm. */
+async function lueckenSignale({ env, store = signalStore }) {
+  const liste = await store.liste({ env });
+  if (!liste?.ok) return null;
+  // "regenerate" sendet das Frontend (noch) nicht; es bleibt vorgesehen.
+  return (liste.datensaetze || [])
+    .filter((d) => d?.signalType === "thumbs_down" || d?.signalType === "regenerate")
+    .map((d) => `${d.promptVoll || d.promptSample || ""} ${d.antwortSample || ""}`);
+}
+
+/** Fuer den Adminbereich: was wuerden die Wissensluecken JETZT ergeben? (ohne zu schreiben) */
+export async function lueckenStand({ env = process.env, store = signalStore, konfigStore: ks = konfigStore } = {}) {
+  const texte = await lueckenSignale({ env, store }).catch(() => null);
+  if (!texte) return { lesbar: false };
+  const konfig = await leseKonfig({ env, store: ks });
+  return { lesbar: true, ...lueckenAnalyse(texte, { vorhandeneIds: themenListe(konfig).map((t) => t.id) }) };
+}
+
+const GEGENPRUEFUNG_ABSTAND_MS = 7 * 86_400_000;
+
+/** Suchworte aus einer (oeffentlichen) Aussage: die tragenden Woerter, keine Fuellwoerter. */
+export function suchworteAus(aussage, max = 8) {
+  const gesehen = new Set();
+  const worte = [];
+  for (const w of String(aussage || "").split(/[^\p{L}\p{N}.-]+/u)) {
+    const sauber = w.replace(/^[.-]+|[.-]+$/g, "");
+    const klein = sauber.toLowerCase();
+    if ((sauber.length < 5 && !/\d/.test(sauber)) || gesehen.has(klein)) continue;
+    gesehen.add(klein);
+    worte.push(sauber);
+    if (worte.length >= max) break;
+  }
+  return worte.join(" ");
+}
+
+async function gegenpruefen({ env, jetzt, suche, stores, vorhandene, rest, zaehle, max = 2 }) {
+  const jetztMs = Date.parse(jetzt) || Date.now();
+  const kandidaten = fuerAbruf(vorhandene, { jetztMs })
+    .filter((e) => e.pruefstatus === PRUEFSTATUS.EINZELQUELLE)
+    .filter((e) => !(e.gegenpruefung?.am && jetztMs - Date.parse(e.gegenpruefung.am) < GEGENPRUEFUNG_ABSTAND_MS))
+    .reverse() // aelteste zuerst
+    .slice(0, Math.max(0, Math.min(max, rest)));
+  const ergebnisse = [];
+  for (const e of kandidaten) {
+    const anfrage = suchworteAus(e.aussage);
+    if (!anfrage) continue;
+    let treffer;
+    try {
+      const antwort = await suche(anfrage, { limit: 6 });
+      treffer = Array.isArray(antwort?.results) ? antwort.results : [];
+    } catch (fehler) {
+      ergebnisse.push({ id: e.id, ergebnis: "suche_fehlgeschlagen", fehler: String(fehler?.message || fehler).slice(0, 80) });
+      zaehle();
+      continue;
+    }
+    zaehle();
+    const eigeneHosts = new Set((e.belege || []).map((b) => b.host));
+    let bestaetigung = null;
+    for (const fund of treffer) {
+      if (!pruefeFremdtext(fund).ok) continue;
+      const b = bewerteFund({ url: fund?.url, title: entschaerfe(fund?.title, { maxZeichen: 160 }), snippet: entschaerfe(fund?.snippet || fund?.body, { maxZeichen: 400 }) }, { jetzt });
+      if (!b.tauglich || eigeneHosts.has(b.host)) continue;
+      if ((b.markierungen || []).some((m) => m === "geruecht" || m === "unbelegt")) continue;
+      if (aehnlichesThema(b.auszug, e.aussage)) { bestaetigung = b; break; }
+    }
+    let neu;
+    if (bestaetigung) {
+      const belege = [...(e.belege || []), {
+        url: bestaetigung.url, host: bestaetigung.host, titel: bestaetigung.titel, guete: bestaetigung.guete,
+        veroeffentlicht: bestaetigung.veroeffentlicht ?? null, abgerufenAm: bestaetigung.abgerufenAm, markierungen: bestaetigung.markierungen || []
+      }];
+      neu = { ...e, belege, pruefstatus: pruefstatusAus(belege), aktualisiertAm: jetzt,
+        gegenpruefung: { am: jetzt, ergebnis: "bestaetigt", host: bestaetigung.host, url: bestaetigung.url } };
+    } else {
+      neu = { ...e, gegenpruefung: { am: jetzt, ergebnis: "keine_zweite_quelle", funde: treffer.length } };
+    }
+    try {
+      await stores.wissen.schreib(neu, { env, timeoutMs: 8000 });
+      const stelle = vorhandene.findIndex((x) => x.id === e.id);
+      if (stelle >= 0) vorhandene[stelle] = neu;
+      ergebnisse.push({ id: e.id, aussage: e.aussage.slice(0, 100), ergebnis: neu.gegenpruefung.ergebnis, pruefstatus: neu.pruefstatus, host: neu.gegenpruefung.host || null });
+    } catch (fehler) {
+      ergebnisse.push({ id: e.id, ergebnis: "ablage_fehler", fehler: String(fehler?.message || fehler).slice(0, 80) });
+    }
+  }
+  return ergebnisse;
 }
 
 function protokoll(felder) {
@@ -276,6 +376,8 @@ function protokoll(felder) {
     anfragen: 0,
     quellenGeprueft: 0,
     gespeicherteIds: [],
+    gegenpruefung: [],
+    luecken: null,
     vorschlaege: [],
     offeneFragen: [],
     protokollAbgelegt: true,
@@ -375,6 +477,8 @@ export async function radarStand({ env = process.env, stores = { wissen: wissenS
     wissenGesamt: (wissen || []).length,
     wissenLesbar: Array.isArray(wissen),
     wissenAktiv: fuerAbruf(wissen || []).length,
+    wissenEinzelquelle: fuerAbruf(wissen || []).filter((e) => e.pruefstatus === PRUEFSTATUS.EINZELQUELLE).length,
+    vorrang: vorrangStand(),
     grenzen,
     verbrauch: erlaubnis.rest,
     themen: themen.map((t) => ({ id: t.id, titel: t.titel, bereich: t.bereich, intervallStunden: t.intervallStunden, prioritaet: t.prioritaet }))

@@ -20,16 +20,27 @@ const INDEX_TTL_MS = 120_000;      // Radar-Wissen aendert sich mehrmals taeglic
 export const RADAR_MIN_SCORE = 1.2;
 let cache = null;
 
+let erneuerung = null;
+
+async function neuBauen(jetztMs, lader) {
+  const chunks = await lader().catch(() => []);
+  cache = { gebautAm: jetztMs, chunks, index: chunks.length ? buildIndex(chunks) : null };
+  return cache;
+}
+
+// Veraltet = der alte Stand antwortet SOFORT, erneuert wird im Hintergrund
+// (23.09.2026): die Chat-Bruecke wartet hoechstens 1,2 s — ein e2-Abruf mitten
+// in ihrer Frist liesse jede Frage nach Ablauf der 2 Minuten leer ausgehen.
 export async function radarIndex({ jetztMs = Date.now(), lader = ladeRadarChunks } = {}) {
-  if (!cache || jetztMs - cache.gebautAm > INDEX_TTL_MS) {
-    const chunks = await lader().catch(() => []);
-    cache = { gebautAm: jetztMs, chunks, index: chunks.length ? buildIndex(chunks) : null };
+  if (!cache) return neuBauen(jetztMs, lader);
+  if (jetztMs - cache.gebautAm > INDEX_TTL_MS && !erneuerung) {
+    erneuerung = neuBauen(jetztMs, lader).finally(() => { erneuerung = null; });
   }
   return cache;
 }
 
 /** Testhilfe und Notausgang: beim naechsten Ruf wird neu gebaut. */
-export function radarIndexVerwerfen() { cache = null; }
+export function radarIndexVerwerfen() { cache = null; erneuerung = null; }
 
 /**
  * Der Prompt-Block. Leer, wenn nichts passt — nie ein "leider nichts gefunden".

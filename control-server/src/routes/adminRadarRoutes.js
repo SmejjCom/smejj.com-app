@@ -7,6 +7,8 @@
 //   POST /api/admin/radar/schalter        { ein: true|false }
 //   POST /api/admin/radar/konfig          Themen, Intervalle, Grenzen
 //   POST /api/admin/radar/zuruecknehmen   { eintragId, grund }
+//   GET  /api/admin/radar/luecken         Wissensluecken jetzt: Signale, Begriffe, Schwelle
+//   POST /api/admin/radar/takt            Lauf WIE der Takt — weicht Nutzeranfragen (Vorrang)
 //
 // WARUM EINE EIGENE DATEI (wie bei den Entscheidungen): adminOpsRoutes.js und
 // adminSurfaceRoutes.js stehen im Admin-Lock. Diese Route haengt deshalb an
@@ -24,7 +26,7 @@ import { appendAuditEntry } from "../admin/auditLog.js";
 import { createRecordStore } from "../admin/recordStore.js";
 import {
   KONFIG_ABLAGE, LAUF_ABLAGE, WISSEN_ABLAGE,
-  fuehreRadarLaufAus, leseKonfig, radarStand, schreibeKonfig
+  fuehreRadarLaufAus, leseKonfig, lueckenStand, radarStand, schreibeKonfig
 } from "../autopilots/aiRadarAutopilot.js";
 import { baueTagesbericht } from "../../../src/radar/tagesbericht.js";
 import { zurueckNehmen } from "../../../src/radar/wissensbasis.js";
@@ -65,11 +67,11 @@ export async function handleAdminRadarRoute(req, url, res, {
 } = {}) {
   if (url.pathname !== PREFIX && !url.pathname.startsWith(`${PREFIX}/`)) return false;
   const aktion = url.pathname.slice(PREFIX.length).replace(/^\//, "");
-  const bekannt = ["", "bericht", "verlauf", "jetzt", "schalter", "konfig", "zuruecknehmen"];
+  const bekannt = ["", "bericht", "verlauf", "jetzt", "schalter", "konfig", "zuruecknehmen", "luecken", "takt"];
   if (!bekannt.includes(aktion)) return false;
 
   const lesen = req.method === "GET" || req.method === "HEAD";
-  const schreibAktionen = ["jetzt", "schalter", "konfig", "zuruecknehmen"];
+  const schreibAktionen = ["jetzt", "schalter", "konfig", "zuruecknehmen", "takt"];
   if (!lesen && req.method !== "POST") {
     privateJson(res, 405, { ok: false, error: "admin_method_not_allowed" });
     return true;
@@ -95,6 +97,10 @@ export async function handleAdminRadarRoute(req, url, res, {
   }
 
   try {
+    if (lesen && aktion === "luecken") {
+      privateJson(res, 200, { ok: true, luecken: await lueckenStand({ env }) });
+      return true;
+    }
     if (lesen) return await lies(aktion, url, res, { env, stores, jetzt });
     return await schreib(aktion, req, res, { env, stores, lauf, actor, jetzt, protokoll });
   } catch (fehler) {
@@ -141,13 +147,16 @@ async function schreib(aktion, req, res, { env, stores, lauf, actor, jetzt, prot
   const body = await readJson(req).catch(() => ({}));
   const vorher = await leseKonfig({ env, store: stores.konfig });
 
-  if (aktion === "jetzt") {
-    const ergebnis = await lauf({ env, jetzt: jetzt(), stores, grund: `admin:${actor.email}` });
+  // "takt" (23.09.2026): derselbe Lauf wie der 30-Minuten-Takt, mit Vorrang-
+  // Pruefung — damit laesst sich live zeigen, dass der Radar einem laufenden
+  // Chat weicht. "jetzt" dagegen laeuft immer (ein Mensch wartet davor).
+  if (aktion === "jetzt" || aktion === "takt") {
+    const ergebnis = await lauf({ env, jetzt: jetzt(), stores, grund: aktion === "takt" ? "takt" : `admin:${actor.email}` });
     await protokoll({
-      actor, action: "radar.jetzt", target: "smejj-ai-radar",
+      actor, action: `radar.${aktion}`, target: "smejj-ai-radar",
       before: { zustand: "wartet" },
       after: { ok: ergebnis.ok, grund: ergebnis.grund, anfragen: ergebnis.anfragen, gespeichert: ergebnis.gespeicherteIds.length },
-      reason: "Recherche von Hand ausgeloest (Adminbereich)", ip: clientIp(req)
+      reason: aktion === "takt" ? "Takt-Lauf von Hand angestossen (mit Vorrang)" : "Recherche von Hand ausgeloest (Adminbereich)", ip: clientIp(req)
     }, { env }).catch(() => null);
     privateJson(res, 200, { ok: true, lauf: ergebnis });
     return true;

@@ -65,3 +65,7 @@ export async function handleFeedbackRoute(req, url, res, { env = process.env, le
   });
   return true;
 }
+
+// Radar-Wissen fuer die Chat-Bruecke (23.09.2026) — ueber diesen Import
+// eingehaengt, weil src/server.js an seiner Zeilengrenze steht.
+export { handleRadarKontextRoute } from "./radarKontextRoutes.js";

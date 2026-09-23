@@ -84,6 +84,10 @@ export async function laufAiRadar({ mitNetz = true, stand = radarStand, lauf = f
 
   const ergebnis = await lauf({ grund: "takt" });
   if (!ergebnis.ok) return { ok: false, meldung: `smejj ai radar kam nicht zum Zug: ${ergebnis.grund}; ${kopf}` };
+  // Dem Nutzer gewichen: ehrlich benennen statt "0 Anfrage(n) zu keins" (23.09.2026).
+  if (ergebnis.grund === "nutzer_hat_vorrang" || ergebnis.grund === "schonfrist_nach_nutzeranfrage") {
+    return { ok: true, meldung: `smejj ai radar verschoben — ${ergebnis.grund === "nutzer_hat_vorrang" ? "ein Mensch arbeitet gerade" : "Schonfrist nach einer Nutzeranfrage"}; ${kopf}` };
+  }
   const gespeichert = ergebnis.gespeicherteIds.length;
   const themen = ergebnis.themen.map((t) => t.titel).join(", ") || "keins";
   return {
