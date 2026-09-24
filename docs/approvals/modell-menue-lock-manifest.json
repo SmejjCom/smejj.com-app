@@ -1,10 +1,10 @@
 {
   "lock": "smejj modell-menue lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-24T10:32:22.130Z",
-  "confirmation": "Betreiber 24.09.2026 schriftlich im Chat: 'smejj 1 soll nicht eigenes Modell stehen (Nur: slow stehen)' — public/code-modell-menue.js: Unterzeile von 'smejj 1' nur noch 'langsam' (uebersetzt, en 'slow'), Reihenfolge und Eintraege unveraendert.",
+  "frozenAt": "2026-09-24T10:47:38.313Z",
+  "confirmation": "Betreiber 24.09.2026 schriftlich im Chat: '\"Unsere Modelle\" auch übersetzen' und '\"Automatic\" auch als Überschrift prüfen' — public/code-modell-menue.js: beide Überschriften laufen über t() (14 Sprachen), Reihenfolge und Einträge unverändert.",
   "rule": "Keine Aenderung an der Modell-Liste (das Menue und seine ausgelieferte Kopie) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
-    "public/code-modell-menue.js": "45a37c566b77da782416fbce344e6a75f5f57936f256de291c1a037a88dbea0c",
-    "public/assets/code-modell-menue.js": "45a37c566b77da782416fbce344e6a75f5f57936f256de291c1a037a88dbea0c"
+    "public/code-modell-menue.js": "455e37d38ea0c430f2f658883b94f26e8f31ab60228bd4d1d79bd4dcda977570",
+    "public/assets/code-modell-menue.js": "455e37d38ea0c430f2f658883b94f26e8f31ab60228bd4d1d79bd4dcda977570"
   }
 }

@@ -48,7 +48,7 @@ test("das Menue zeichnet die Zeile unter der Staffel und vor Automatisch", () =>
   const menue = readFileSync("public/code-modell-menue.js", "utf8");
   const staffel = menue.indexOf("for (const eintrag of nachVersionAbsteigend(SMEJJ_STAFFEL))");
   const eigen = menue.indexOf("titel: EIGENES_MODELL.titel");
-  const automatisch = menue.indexOf('TRENNER.textContent = "Automatisch"');
+  const automatisch = menue.search(/TRENNER\.textContent = (?:t\()?"Automatisch"/);
   assert.ok(staffel > 0 && eigen > staffel && automatisch > eigen,
     "Reihenfolge: Staffel, dann smejj 1, dann der Bereich Automatisch");
 });
