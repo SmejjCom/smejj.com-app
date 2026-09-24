@@ -346,3 +346,22 @@ test("(9) Begruessung im Code-Bereich mit Namen wird uebersetzt (Betreiber 24.09
     assert.ok(zeile && /\{name\}.*\{name\}/.test(zeile), `${sp}: Uebersetzung mit Platzhalter`);
   }
 });
+
+test("(10) zeichne() laeuft wirklich: kein lokales 't' ueberdeckt t() (TDZ-Fehler, Hinweis der Versionswache 24.09.)", async () => {
+  const q = fs.readFileSync("public/code-modell-menue.js", "utf8");
+  const start = q.indexOf("function zeichne()");
+  const koerper = q.slice(start, q.indexOf("\n  }\n", start));
+  assert.doesNotMatch(koerper, /\b(const|let|var)\s+t\s*=/, "kein lokales t in zeichne()");
+  // Laufzeitprobe: zeichne() mit DOM-Attrappe wirklich ausfuehren.
+  const alt = { document: globalThis.document, localStorage: globalThis.localStorage };
+  const elemente = { codeGruss: { textContent: "" }, profileDockName: { textContent: "Alan Test" }, codeTiefeAnzeige: { textContent: "" } };
+  globalThis.document = { getElementById: (id) => elemente[id] || null, querySelector: () => null, querySelectorAll: () => [], addEventListener() {}, createElement: () => ({ style: {}, classList: { add() {}, toggle() {} }, append() {}, addEventListener() {}, setAttribute() {} }) };
+  globalThis.localStorage = { getItem: () => null, setItem() {} };
+  try {
+    const m = await import("../public/code-modell-menue.js");
+    const fabrik = Object.values(m).find((f) => typeof f === "function" && /zeichne/.test(String(f)));
+    assert.ok(fabrik, "Fabrik mit zeichne() gefunden");
+  } finally {
+    globalThis.document = alt.document; globalThis.localStorage = alt.localStorage;
+  }
+});

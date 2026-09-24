@@ -1,10 +1,10 @@
 {
   "lock": "smejj modell-menue lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-24T08:17:40.698Z",
-  "confirmation": "Betreiber 24.09.2026 schriftlich im Chat: 'ja, Begrüßungssatz im Code-Bereich auch übersetzen' — public/code-modell-menue.js: Gruss 'Was steht als Nächstes an, {name}?' läuft jetzt über t() (14 Sprachen), Menü-Verhalten unverändert.",
+  "frozenAt": "2026-09-24T08:28:52.069Z",
+  "confirmation": "Betreiber 24.09.2026 schriftlich im Chat: 'ja, Begrüßungssatz im Code-Bereich auch übersetzen' — Nachbesserung: lokale Variable t in zeichne() in tiefeAnzeige umbenannt (überdeckte t(), TDZ-Fehler).",
   "rule": "Keine Aenderung an der Modell-Liste (das Menue und seine ausgelieferte Kopie) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
-    "public/code-modell-menue.js": "2a81d0da2aace8a775348ed687540611348bd18d3bf81b331b3d7f959a3006b1",
-    "public/assets/code-modell-menue.js": "2a81d0da2aace8a775348ed687540611348bd18d3bf81b331b3d7f959a3006b1"
+    "public/code-modell-menue.js": "8b430e69874842335fb5a564369f37e6ea969a76e7643b1d7307db2eca1fb744",
+    "public/assets/code-modell-menue.js": "8b430e69874842335fb5a564369f37e6ea969a76e7643b1d7307db2eca1fb744"
   }
 }
