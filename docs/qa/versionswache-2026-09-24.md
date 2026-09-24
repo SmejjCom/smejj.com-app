@@ -18,3 +18,16 @@
   `listChats()` 0 Einträge, `getChat()` null, **0 unbehandelte Ablehnungen**; danach wieder 54 Chats.
 - **iPhone (App):** Verlauf lädt normal (206 Gespräche), keine Störung.
 - **Nr. 50** wird grün, sobald die drei Alt-Meldungen aus dem 24-h-Fenster fallen.
+
+## v979 + v980 — Menüüberschriften übersetzt, Videos in den Nutzdaten-Eimer (fremde Lieferungen)
+
+- **v979** (Menüüberschriften übersetzt; dazu Server: Nutzervideos in den Nutzdaten-Eimer, Ablauf nach 8 Tagen) und **v980**
+  (Runde 29, Nachlieferung „Unsere Modelle" übersetzt, Anker `schutz-100-2026-09-24-app-v980` → 6aeb9c48).
+- **Vorprüfung v980:** Offline-Liste 246/246, Markenkette, Precache, Modul-Syntax, Regeln, Start-/Sicherheits-Lock,
+  Schutz-Echtheit (lokal) und check:assets (247) grün; Tests 4367/4372, rot nur die 5 bekannten.
+- **Android (Emulator, englisch):** nur Cache v980, keine Fehler; Code-Gruß „What's next, E2E?"; Modell-Menü:
+  „Our models | smejj 1.3 | … | smejj 1 | slow | Automatic | Auto" — keine deutschen Reste.
+- **iPhone (App):** startet normal, Code-Chat sichtbar.
+- **Ampel:** 86/87; rot nur Nr. 82 Schutz-Echtheit aus dem Lauf 11:17 UTC — gemessen mitten in der Auslieferung (sw.js und
+  code-modell-menue.js standen noch auf dem Vorgänger). Nach Ende der Kaskade lokal grün; Neubewertung im nächsten Lauf.
+- **Nr. 50 Fehler-Fänger** ist nach v978 wieder grün.
