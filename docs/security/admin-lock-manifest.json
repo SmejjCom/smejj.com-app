@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-22T11:31:49.467Z",
-  "confirmation": "Betreiber 22.09.2026 schriftlich im Chat: 'Baue Stufe A und B der DNS-Wache' — nach dem Vorschlag docs/betrieb/DNS_WACHE_VORSCHLAG_2026-09-21.md (Betreiber 21.09.: 'Arbeite einen Vorschlag fuer die DNS-Wache aus'), Anlass der DNS-Ausfall vom 21.09.2026 (~13:40-13:48, beide Nameserver launch1/launch2.spaceship.net SERVFAIL). Umsetzung: Autopilot Nr. 87 'dns-wache' (control-server/src/autopilots/dnsWacheAutopilot.js: zwei Nameserver direkt, Google-DNS mit DNSSEC-Nachweis, Soll-Ist-Vergleich, zweiter Blick, eigener Netzfehler kein Urteil) im Laeufer, in der Registry und im Bereich 'Betrieb & Auslieferung' (Admin-Lock), Nummern-Register um 87 ergaenzt; Stufe B .github/workflows/dns-wache.yml (alle 30 min von GitHub aus, meldet per Issue, kein Geheimnis). Start-Lock: nur die Cache-Nummer in sw.js. Auslieferung durch die Sitzung selbst (Betreiber 22.09. schriftlich: 'mach du selber als expert').",
+  "frozenAt": "2026-09-24T00:03:00.219Z",
+  "confirmation": "smejj ai radar als zweite Schiene fuer autonome Internetrecherche einrichten und in den Autopilot-Adminbereich integrieren",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
