@@ -334,3 +334,15 @@ test("(8) Rettung nach App-Neustart: verwaister Bild-Platzhalter -> Bild aus der
   assert.match(store, /if \(log\.querySelector\("\.chat-bild-platzhalter"\)\) import\("\/assets\/ai\/bild-nachholen\.js"\)\.then\(\(m\) => m\.retteNachNeustart\(log\)\)/, "Modul erst bei Bedarf (Startgewicht)");
   assert.match(fs.readFileSync("public/ai/bild-nachholen.js", "utf8"), /bildErneut: true, bildNurAblage: true/, "nie neu malen");
 });
+
+test("(9) Begruessung im Code-Bereich mit Namen wird uebersetzt (Betreiber 24.09.) — kein 'Was steht als Nächstes an, E2E?' in der englischen App", () => {
+  const q = fs.readFileSync("public/code-modell-menue.js", "utf8");
+  assert.match(q, /t\("Was steht als Nächstes an, \{name\}\?"\)\.replace\("\{name\}", name\.split\(" "\)\[0\]\)/);
+  assert.match(q, /: t\("Was steht als Nächstes an\?"\);/);
+  assert.doesNotMatch(q, /`Was steht als Nächstes an, \$\{/, "kein fester deutscher Satz mehr");
+  for (const sp of ["en", "fr", "es", "it", "pt", "tr", "ru", "ar", "hi", "bn", "id", "ja", "ko", "zh"]) {
+    const datei = fs.readFileSync(`public/i18n/${sp}-2.js`, "utf8");
+    const zeile = datei.split("\n").find((z) => z.includes('"Was steht als Nächstes an, {name}?"'));
+    assert.ok(zeile && /\{name\}.*\{name\}/.test(zeile), `${sp}: Uebersetzung mit Platzhalter`);
+  }
+});

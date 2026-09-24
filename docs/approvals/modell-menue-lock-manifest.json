@@ -1,10 +1,10 @@
 {
   "lock": "smejj modell-menue lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-15T00:38:30.423Z",
-  "confirmation": "Betreiber, 2026-09-15 (schriftlich, Freigabe 3 per Auswahl): Standard soll ehrlich ‚Auto' anzeigen und Auto senden. — public/code-modell-menue.js: ohne gespeicherte Wahl zeigt der Chip Auto und das Menue markiert Auto; Hinweis smejj 1.0 'Schnellste Antwort', Auto 'Standard — …'. Reihenfolge und Eintraege unveraendert.",
+  "frozenAt": "2026-09-24T08:17:40.698Z",
+  "confirmation": "Betreiber 24.09.2026 schriftlich im Chat: 'ja, Begrüßungssatz im Code-Bereich auch übersetzen' — public/code-modell-menue.js: Gruss 'Was steht als Nächstes an, {name}?' läuft jetzt über t() (14 Sprachen), Menü-Verhalten unverändert.",
   "rule": "Keine Aenderung an der Modell-Liste (das Menue und seine ausgelieferte Kopie) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
-    "public/code-modell-menue.js": "24a1c54b12b1af2370a061d15ee93e19d6ee3c98c255ffb4b8089c5d5c7784b9",
-    "public/assets/code-modell-menue.js": "24a1c54b12b1af2370a061d15ee93e19d6ee3c98c255ffb4b8089c5d5c7784b9"
+    "public/code-modell-menue.js": "2a81d0da2aace8a775348ed687540611348bd18d3bf81b331b3d7f959a3006b1",
+    "public/assets/code-modell-menue.js": "2a81d0da2aace8a775348ed687540611348bd18d3bf81b331b3d7f959a3006b1"
   }
 }
