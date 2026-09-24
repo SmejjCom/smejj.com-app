@@ -16,7 +16,7 @@
 // die App zeigt danach "Video abgelaufen". 7 Tage sind die Obergrenze von
 // SigV4 (604800 s).
 import crypto from "node:crypto";
-import { signedS3Put } from "../storage/s3Signer.js";
+import { signedS3Delete, signedS3List, signedS3Put, parseS3ListPage } from "../storage/s3Signer.js";
 import { idriveConfig } from "../chats/chatSyncStore.js";
 import { inhaltPasstZuTyp } from "../chats/medienStore.js";
 import { json } from "../http/respond.js";
@@ -27,6 +27,54 @@ export const VIDEO_PRAEFIX = "medien-video";
 // Deckel wie in der Bruecke (VIDEO_MAX_B64) plus JSON-Huelle.
 const MAX_KOERPER_BYTES = 8_200_000;
 const TYPEN = Object.freeze({ mp4: "video/mp4", webm: "video/webm" });
+// Aufraeumen: der Link gilt 7 Tage, die Datei bleibt noch einen Tag Puffer.
+export const AUFBEWAHRUNG_TAGE = 8;
+
+/**
+ * Wohin mit Nutzervideos (Betreiber 24.09.2026: Punkt 1): in den Nutzdaten-
+ * Eimer, nicht in den Standard-Eimer des Control-Servers (smejj-model-files,
+ * dort liegen Modelldateien und der Laptop-Schluessel kann lesen). Reihenfolge:
+ * SMEJJ_MEDIEN_BUCKET, sonst der Capsule-Eimer (smejj-app, vom Maus-Replay her
+ * mit dem Server-Schluessel erreichbar), sonst wie bisher.
+ */
+export function medienEimer(env, cfg) {
+  return String(env.SMEJJ_MEDIEN_BUCKET || env.IDRIVE_E2_CAPSULES_BUCKET || cfg.bucket).trim();
+}
+
+/** Tagesordner medien-video/JJJJ-MM-TT/, die aelter als AUFBEWAHRUNG_TAGE sind. */
+export function abgelaufeneTage(keys, jetzt = new Date()) {
+  const grenze = new Date(jetzt.getTime() - AUFBEWAHRUNG_TAGE * 86_400_000).toISOString().slice(0, 10);
+  return keys.filter((k) => {
+    const tag = (String(k).match(new RegExp(`^${VIDEO_PRAEFIX}/(\\d{4}-\\d{2}-\\d{2})/`)) || [])[1];
+    return tag && tag < grenze;
+  });
+}
+
+let letzterAufraeumTag = "";
+/**
+ * Loescht abgelaufene Videos (Betreiber 24.09.2026: Punkt 2) — hoechstens einmal
+ * am Tag, im Hintergrund nach einer Ablage, in JEDEM Eimer, in dem je Videos
+ * lagen (auch dem alten Standard-Eimer). Fehler sind still: Aufraeumen darf nie
+ * eine Ablage kosten; der naechste Tag versucht es erneut.
+ */
+export async function raeumeAbgelaufeneAuf(cfg, eimerListe, { fetchImpl = fetch, jetzt = new Date(), erzwingen = false } = {}) {
+  const heute = jetzt.toISOString().slice(0, 10);
+  if (!erzwingen && letzterAufraeumTag === heute) return { geloescht: 0, uebersprungen: true };
+  letzterAufraeumTag = heute;
+  let geloescht = 0;
+  for (const bucket of [...new Set(eimerListe.filter(Boolean))]) {
+    try {
+      const liste = await signedS3List({ ...cfg, bucket, prefix: `${VIDEO_PRAEFIX}/`, fetchImpl, timeoutMs: 30_000 });
+      for (const key of abgelaufeneTage(parseS3ListPage(liste?.body || "").keys, jetzt).slice(0, 500)) {
+        await signedS3Delete({ ...cfg, bucket, key, fetchImpl, timeoutMs: 30_000 }).then(() => { geloescht += 1; }).catch(() => {});
+      }
+    } catch (fehler) {
+      console.log(`medien-video: Aufraeumen in ${bucket} fehlgeschlagen (${fehler?.name || "Fehler"})`);
+    }
+  }
+  if (geloescht) console.log(`medien-video: ${geloescht} abgelaufene Videos geloescht`);
+  return { geloescht, uebersprungen: false };
+}
 
 /** Liest den Koerper mit eigenem Deckel (readJson deckelt bei 1 MB — zu klein fuer Videos). */
 export function liesKoerper(req, max = MAX_KOERPER_BYTES) {
@@ -92,13 +140,16 @@ export async function handleVideoAblage(req, res, { env = process.env, fetchImpl
   if (!inhaltPasstZuTyp(inhalt, TYPEN[format])) return json(res, 400, { ok: false, error: "kein_echtes_video" });
 
   const key = videoSchluessel(format, jetzt());
+  const eimer = medienEimer(env, cfg);
   try {
-    await signedS3Put({ ...cfg, key, body: inhalt, contentType: TYPEN[format], fetchImpl, timeoutMs: 60_000 });
+    await signedS3Put({ ...cfg, bucket: eimer, key, body: inhalt, contentType: TYPEN[format], fetchImpl, timeoutMs: 60_000 });
   } catch (fehler) {
     console.log(`medien-video: Ablage fehlgeschlagen (${fehler?.name || "Fehler"})`);
     return json(res, 502, { ok: false, error: "ablage_fehlgeschlagen" });
   }
   const start = jetzt();
-  const url = vorsignierteLeseAdresse({ ...cfg, key, jetzt: start });
+  const url = vorsignierteLeseAdresse({ ...cfg, bucket: eimer, key, jetzt: start });
+  // Im Hintergrund, nie abwarten: hoechstens einmal am Tag abgelaufene Videos loeschen.
+  raeumeAbgelaufeneAuf(cfg, [eimer, cfg.bucket], { fetchImpl }).catch(() => {});
   return json(res, 200, { ok: true, url, gueltigBis: new Date(start.getTime() + VIDEO_GUELTIG_S * 1000).toISOString(), bytes: inhalt.length });
 }
