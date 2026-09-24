@@ -69,7 +69,7 @@ process.on("exit", () => {
  * @param {{version: number, stores: string[]}|null} anfang - Startzustand der
  *   Datenbank, oder null fuer "existiert noch nicht".
  */
-function baueIndexedDb(anfang) {
+function baueIndexedDb(anfang, { leseFehler = false } = {}) {
   let db = anfang ? { version: anfang.version, stores: new Map(anfang.stores.map((n) => [n, new Map()])) } : null;
   const protokoll = { geoeffnet: [], geschlossen: 0, aufgebaut: [] };
 
@@ -98,20 +98,28 @@ function baueIndexedDb(anfang) {
         const daten = db.stores.get(name);
         const offen = [];
         const trans = { oncomplete: null, onerror: null, onabort: null };
-        const nachfassen = (fn) => {
-          const r = { onsuccess: null, onerror: null, result: null };
-          offen.push(() => { r.result = fn(); r.onsuccess?.(); });
+        let gescheitert = false;
+        const nachfassen = (fn, lesen = false) => {
+          const r = { onsuccess: null, onerror: null, result: null, error: null };
+          offen.push(() => {
+            // WebKit/Chrome nach hartem Beenden: ausgelagerter grosser Wert fehlt.
+            if (lesen && leseFehler) {
+              r.error = Object.assign(new Error("Failed to read large IndexedDB value"), { name: "UnknownError" });
+              gescheitert = true; trans.error = r.error; r.onerror?.(); return;
+            }
+            r.result = fn(); r.onsuccess?.();
+          });
           return r;
         };
         trans.objectStore = () => ({
-          getAll: () => nachfassen(() => [...daten.values()]),
-          get: (id) => nachfassen(() => daten.get(id)),
+          getAll: () => nachfassen(() => [...daten.values()], true),
+          get: (id) => nachfassen(() => daten.get(id), true),
           put: (wert) => nachfassen(() => { daten.set(wert.id, wert); return wert.id; }),
           delete: (id) => nachfassen(() => { daten.delete(id); return undefined; })
         });
         setTimeout(() => {
           for (const fn of offen) fn();
-          setTimeout(() => trans.oncomplete?.(), 0);
+          setTimeout(() => (gescheitert ? trans.onerror?.() : trans.oncomplete?.()), 0);
         }, 0);
         return trans;
       }
@@ -142,8 +150,8 @@ function baueIndexedDb(anfang) {
 }
 
 /** Laedt chat-store.js frisch (eigener Modul-Zustand je Fall) gegen eine gebaute Datenbank. */
-async function lade(anfang) {
-  const fake = baueIndexedDb(anfang);
+async function lade(anfang, optionen) {
+  const fake = baueIndexedDb(anfang, optionen);
   const lager = new Map();
   const speicher = {
     getItem: (k) => (lager.has(k) ? lager.get(k) : null),
@@ -262,4 +270,23 @@ test("eine voruebergehende Stoerung vergiftet den Verlauf nicht dauerhaft", asyn
   // und JEDEN weiteren Aufruf dieser Sitzung mitgerissen.
   assert.deepEqual(await modul.listChats(), [], "der naechste Versuch laeuft wieder gegen die echte Datenbank");
   assert.ok(fake.protokoll.geoeffnet.length >= 1, "es wurde erneut geoeffnet, nicht aus dem Zwischenspeicher geantwortet");
+});
+
+test("Lesefehler grosser Wert (Nr. 50, 24.09.): kein 'Unhandled rejection', Verlauf faellt leer statt zu haengen", async () => {
+  // Fehler-Faenger meldete 3x "Unhandled rejection: Failed to read large IndexedDB value". Ursache: tx() bekam
+  // das innere Promise der Leseanfrage zurueck; bei einem Lesefehler lehnten innen UND die Transaktion ab —
+  // abgefangen wurde nur die Transaktion, das innere Promise blieb unbehandelt liegen.
+  const offen = [];
+  const merke = (grund) => offen.push(String(grund?.message || grund));
+  process.on("unhandledRejection", merke);
+  try {
+    const { modul } = await lade({ version: 2, stores: [STORE, PROJEKT_STORE] }, { leseFehler: true });
+    globalThis.localStorage.setItem("smejj.session.v1", JSON.stringify({ authenticated: true, userId: "user_test" }));
+    assert.deepEqual(await modul.listChats(), [], "Lesefehler -> leere Liste statt Absturz");
+    assert.equal(await modul.getChat("chat_x"), null, "Lesefehler -> kein Chat statt Absturz");
+    await new Promise((r) => setTimeout(r, 20));
+    assert.deepEqual(offen, [], "keine unbehandelte Ablehnung mehr");
+  } finally {
+    process.off("unhandledRejection", merke);
+  }
 });
