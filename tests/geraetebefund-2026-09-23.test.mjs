@@ -378,3 +378,16 @@ test("(11) Menuezeile 'smejj 1' zeigt nur 'langsam' / 'slow' — kein 'eigenes M
     assert.ok(w && w !== "langsam", `${sp}: Uebersetzung fuer 'langsam'`);
   }
 });
+
+test("(12) Menuekopf 'Unsere Modelle' wird uebersetzt (Betreiber 24.09.) — kein deutscher Kopf in der englischen App", async () => {
+  const q = fs.readFileSync("public/code-modell-menue.js", "utf8");
+  assert.match(q, /kopf\.textContent = t\("Unsere Modelle"\);/);
+  assert.match(q, /TRENNER\.textContent = t\("Automatisch"\);/, "zweite Ueberschrift ebenso");
+  assert.equal((await import("../public/i18n/en-2.js")).default["Unsere Modelle"], "Our models");
+  for (const sp of ["en", "fr", "es", "it", "pt", "tr", "ru", "ar", "hi", "bn", "id", "ja", "ko", "zh"]) {
+    const w = (await import(`../public/i18n/${sp}-2.js`)).default["Unsere Modelle"];
+    assert.ok(w && w !== "Unsere Modelle", `${sp}: Uebersetzung fuer 'Unsere Modelle'`);
+    const w2 = (await import(`../public/i18n/${sp}.js`)).default["Automatisch"];
+    assert.ok(w2 && w2 !== "Automatisch", `${sp}: Uebersetzung fuer 'Automatisch'`);
+  }
+});

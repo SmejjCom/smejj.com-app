@@ -64,8 +64,9 @@ export function sortiertNachZahl(nachVersionAbsteigend) {
 
 /** Genau zwei Bereiche, in dieser Reihenfolge: unsere Modelle, dann Auto. */
 export function zweiBereiche(text) {
-  const unsere = text.indexOf('kopf.textContent = "Unsere Modelle"');
-  const automatisch = text.indexOf('TRENNER.textContent = "Automatisch"');
+  // Seit 24.09.2026 laeuft der Kopf ueber t() (Betreiber: "Unsere Modelle" auch uebersetzen).
+  const unsere = text.search(/kopf\.textContent = (?:t\()?"Unsere Modelle"/);
+  const automatisch = text.search(/TRENNER\.textContent = (?:t\()?"Automatisch"/);
   const auto = text.indexOf('titel: "Auto"');
   return unsere > 0 && automatisch > unsere && auto > automatisch;
 }
