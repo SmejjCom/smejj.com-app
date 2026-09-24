@@ -1,10 +1,10 @@
 {
   "lock": "smejj autopilot nummern lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-22T11:32:10.583Z",
-  "confirmation": "Betreiber 22.09.2026 schriftlich im Chat: 'Baue Stufe A und B der DNS-Wache' — nach dem Vorschlag docs/betrieb/DNS_WACHE_VORSCHLAG_2026-09-21.md (Betreiber 21.09.: 'Arbeite einen Vorschlag fuer die DNS-Wache aus'), Anlass der DNS-Ausfall vom 21.09.2026 (~13:40-13:48, beide Nameserver launch1/launch2.spaceship.net SERVFAIL). Umsetzung: Autopilot Nr. 87 'dns-wache' (control-server/src/autopilots/dnsWacheAutopilot.js: zwei Nameserver direkt, Google-DNS mit DNSSEC-Nachweis, Soll-Ist-Vergleich, zweiter Blick, eigener Netzfehler kein Urteil) im Laeufer, in der Registry und im Bereich 'Betrieb & Auslieferung' (Admin-Lock), Nummern-Register um 87 ergaenzt; Stufe B .github/workflows/dns-wache.yml (alle 30 min von GitHub aus, meldet per Issue, kein Geheimnis). Start-Lock: nur die Cache-Nummer in sw.js. Auslieferung durch die Sitzung selbst (Betreiber 22.09. schriftlich: 'mach du selber als expert').",
+  "frozenAt": "2026-09-24T13:07:57.080Z",
+  "confirmation": "Betreiber 24.09.2026: Ja, stempeln und ausliefern (Autopilot Nr. 88 Messlatte)",
   "rule": "Eine vergebene Autopiloten-Nummer darf ohne ausdrueckliche schriftliche Freigabe des Betreibers nicht wandern, nicht doppelt vergeben und nicht geloescht werden. Neue Nummern fuer neue Autopiloten bleiben erlaubt.",
   "quelle": "control-server/src/admin/opsAutopilotenListe.js",
-  "anzahl": 87,
+  "anzahl": 88,
   "nummern": {
     "10": "memory-sync",
     "11": "self-healing",
@@ -84,6 +84,7 @@
     "85": "code-sicherung",
     "86": "smejj-ai-radar",
     "87": "dns-wache",
+    "88": "messlatte",
     "01": "qualitaetsmessung",
     "02": "codeberg-spiegel",
     "03": "voice-region-check",
