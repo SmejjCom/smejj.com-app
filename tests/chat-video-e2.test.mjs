@@ -42,6 +42,14 @@ test("CSP erlaubt genau den e2-Host fuer Medien — sonst spielt der Browser nic
 test("der Renderer laedt das Modul nur bei Bedarf (Startgewicht) und prueft auch wiederhergestellte Verlaeufe", () => {
   const quelle = readFileSync("public/chat-markdown.js", "utf8");
   assert.doesNotMatch(quelle, /^import .*chat-video-e2/m, "kein statischer Import");
-  assert.match(quelle, /import\("\.\/chat-video-e2\.js\?v=1"\)/);
+  assert.match(quelle, /import\("\.\/chat-video-e2\.js\?v=2"\)/);
   assert.match(quelle, /e2Videos\(document\)/);
+});
+
+test("erzaehlte Videos werden in allen 15 Sprachen erkannt (Alt-Texte seit v164 uebersetzt)", async () => {
+  const alle = ["Erzähltes Video", "Narrated video", "Vídeo narrado", "Vidéo narrée", "Video narrato", "Anlatımlı video", "Видео с озвучкой", "فيديو مع تعليق صوتي", "आवाज़ वाला वीडियो", "বর্ণনাসহ ভিডিও", "Video dengan narasi", "ナレーション付き動画", "내레이션 동영상", "带旁白的视频"];
+  for (const alt of alle) assert.equal(ersatzFuer(LINK, alt, START + 1000).muted, false, alt);
+  assert.equal(ersatzFuer(LINK, "Generated video", START + 1000).muted, true);
+  const quelle = readFileSync("public/chat-markdown.js", "utf8");
+  for (const alt of alle) assert.ok(quelle.includes(alt), `chat-markdown kennt ${alt}`);
 });
