@@ -82,3 +82,17 @@ test("Nr. 88 ist eingehaengt, eingetragen und einem Bereich zugeordnet", () => {
   assert.equal(eintragListe?.nummer, "88");
   assert.equal(bereichVon("messlatte"), "Antwortqualität & Sprache");
 });
+
+test("zu wenig Radar-Fakten in der Vorwoche = ausgesetzt, nicht rot; Golden-Rot bleibt rot", async () => {
+  const ablagen = { aktuell: speicher({ "letzter-lauf": { id: "letzter-lauf", ok: false, grund: "nicht messbar: nur 0 messbare Radar-Fakten in der Vorwoche (mindestens 5)" } }), golden: speicher(), verlauf: speicher() };
+  const gruen = await laufMesslatte({ mitNetz: true, jetztMs: JETZT, ablagen, messen: async (o) => (o.kennung === "messlatte-aktuelles" ? { ok: false, meldung: "nicht messbar: nur 0 messbare Radar-Fakten" } : { ok: true, meldung: "Note 90 %" }) });
+  assert.equal(gruen.ok, true);
+  assert.match(gruen.meldung, /Aktuelles: ausgesetzt — nur 0 messbare Radar-Fakten/);
+  const rot = await laufMesslatte({ mitNetz: true, jetztMs: JETZT, ablagen, messen: async (o) => (o.kennung === "messlatte-aktuelles" ? { ok: false, meldung: "nicht messbar: nur 0 messbare Radar-Fakten" } : { ok: false, meldung: "Note 60 %" }) });
+  assert.equal(rot.ok, false);
+});
+
+test("Datumsangaben sind kein Detail (13 July 2026, 21.09., Sep 10)", () => {
+  assert.deepEqual(zerlegeAussage("OpenAI senkt den Preis von GPT-5 mini am 21.09. auf 0,15 USD."), { gegenstand: "OpenAI", details: ["0,15 USD", "GPT-5"] });
+  assert.equal(zerlegeAussage("Perplexity’s 13 July 2026 release gives its Computer agent Brain"), null);
+});

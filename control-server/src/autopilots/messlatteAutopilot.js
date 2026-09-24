@@ -26,6 +26,8 @@ export const WOCHE_MS = 7 * 24 * 60 * 60 * 1000;
 export const GOLDEN_MINDEST_NOTE = 0.8;
 /** Unter so vielen messbaren Fragen ist eine Wochenzahl Zufall. */
 export const AKTUELLES_MIN_FAELLE = 5;
+/** Kennwort der Meldung, wenn die Vorwoche zu wenig Radar-Fakten hat. */
+export const ZU_WENIG_FAKTEN = "messbare Radar-Fakten";
 
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const THEMEN_TITEL = Object.fromEntries(STANDARD_THEMEN.map((t) => [t.id, t.titel]));
@@ -36,7 +38,7 @@ export async function ladeAktuellesFaelle({ env = process.env, store = createRec
   if (!liste?.ok) throw new Error("Radar-Wissensbasis nicht lesbar");
   const suite = baueAktuellesSuite(liste.datensaetze || [], { jetzt: wochenStichtag(jetztMs), themenTitel: THEMEN_TITEL });
   if (suite.cases.length < AKTUELLES_MIN_FAELLE) {
-    throw new Error(`nur ${suite.cases.length} messbare Radar-Fakten in der Vorwoche (mindestens ${AKTUELLES_MIN_FAELLE})`);
+    throw new Error(`nur ${suite.cases.length} ${ZU_WENIG_FAKTEN} in der Vorwoche (mindestens ${AKTUELLES_MIN_FAELLE})`);
   }
   return suite.cases;
 }
@@ -107,5 +109,10 @@ export async function laufMesslatte({ mitNetz = true, env = process.env, jetztMs
   try { aktuell = await speicher.aktuell.lies(ABLAGE_ID); } catch { /* noch keine */ }
   try { golden = await speicher.golden.lies(ABLAGE_ID); } catch { /* noch keine */ }
   const zeile = await fuehreVerlauf({ aktuell, golden, verlauf: speicher.verlauf, jetztMs });
-  return { ok: a.ok && g.ok, meldung: `Selbsttest ${probe.geprueft}/${probe.geprueft}; ${zeile} — Aktuelles: ${a.meldung}; Golden: ${g.meldung}` };
+  // Zu wenig Radar-Fakten in der Vorwoche ist ein Befund ueber das Radar, kein
+  // Ausfall der Messlatte (Live 24.09.: Radar lief erst seit 21.09., die Woche
+  // davor war leer -> Rot und Selbstheilung, obwohl nichts kaputt war).
+  const aktuellAusgesetzt = !a.ok && (String(aktuell?.grund || "").includes(ZU_WENIG_FAKTEN) || String(a.meldung || "").includes(ZU_WENIG_FAKTEN));
+  const aText = aktuellAusgesetzt ? `ausgesetzt — ${String(aktuell?.grund || a.meldung).replace(/^nicht messbar: /, "")}` : a.meldung;
+  return { ok: (a.ok || aktuellAusgesetzt) && g.ok, meldung: `Selbsttest ${probe.geprueft}/${probe.geprueft}; ${zeile} — Aktuelles: ${aText}; Golden: ${g.meldung}` };
 }

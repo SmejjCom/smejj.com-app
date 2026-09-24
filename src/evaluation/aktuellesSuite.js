@@ -58,7 +58,13 @@ function zahlenAus(aussage) {
  * Zerlegt eine Aussage in Gegenstand (fuer die Frage) und Details (Erwartung).
  * @returns {{gegenstand: string, details: string[]} | null} null = nicht messbar
  */
-export function zerlegeAussage(aussage) {
+// Datumsangaben tragen keinen Fakt, den eine Antwort nennen muesste ("13 July
+// 2026" ergab sonst das Detail "13"; live gemessen an Radar-Aussagen 24.09.).
+const MONAT = "(?:jan(?:uar|uary)?|feb(?:ruar|ruary)?|m(?:ae|ä)rz|mar(?:ch)?|apr(?:il)?|mai|may|jun[ie]?|jul[iy]?|aug(?:ust)?|sep(?:t(?:ember)?)?|okt(?:ober)?|oct(?:ober)?|nov(?:ember)?|de[cz](?:ember)?)\\.?";
+const DATUM = new RegExp(`\\b(?:\\d{1,2}\\.?\\s+${MONAT}(?:\\s+\\d{4})?|${MONAT}\\s+\\d{1,2}(?:st|nd|rd|th)?,?(?:\\s+\\d{4})?|\\d{4}-\\d{2}-\\d{2}|\\d{1,2}\\.\\d{1,2}\\.(?:\\d{2,4})?)`, "gi");
+
+export function zerlegeAussage(rohAussage) {
+  const aussage = String(rohAussage || "").replace(DATUM, " ");
   const namen = namenAus(aussage);
   if (namen.length === 0) return null;
   // Gegenstand: das erste Produkt/Markenwort; sonst der erste Satzanfang-Name.
