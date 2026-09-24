@@ -15,6 +15,7 @@ import { json, readJson } from "../http/respond.js";
 import { createRateLimiter } from "../http/rateLimiter.js";
 import { heartbeatAnnehmen, persistiereHerzschlag } from "../admin/opsAutopiloten.js";
 import { erfasseBewertung } from "../evolution/aiEvolutionEngine.js";
+import { PFAD_VIDEO_ABLAGE, handleVideoAblage } from "../medien/videoAblage.js";
 
 const PFAD = "/api/autopilot/heartbeat";
 // Zweiter Eingang derselben Art (2026-08-14): Die Brücke ist ein eigener
@@ -75,6 +76,17 @@ export async function handleEvolutionAktion(req, res, { env = process.env } = {}
 }
 
 export async function handleAutopilotHeartbeat(req, url, res, { env = process.env } = {}) {
+  // Video-Ablage der Bruecke (24.09.2026): gleicher Maschinen-Ausweis wie die
+  // Evolution-Meldungen, eigene Mengenbremse ueber dasselbe gate.
+  if (url.pathname === PFAD_VIDEO_ABLAGE) {
+    if (req.method !== "POST") { json(res, 405, { ok: false, error: "medien_method_not_allowed" }); return true; }
+    const ausweis = pruefeEvolutionToken(req, env);
+    if (!ausweis.ok) { json(res, ausweis.status, { ok: false, error: ausweis.error }); return true; }
+    const limit = gate.take(`video:${req.socket?.remoteAddress || "unbekannt"}`, 1);
+    if (!limit.allowed) { res.setHeader("Retry-After", String(limit.retryAfterSec)); json(res, 429, { ok: false, error: "medien_rate_limit" }); return true; }
+    await handleVideoAblage(req, res, { env });
+    return true;
+  }
   if (url.pathname === PFAD_AKTION) {
     if (req.method !== "POST") {
       json(res, 405, { ok: false, error: "evolution_method_not_allowed", hinweis: "Meldungen kommen per POST." });

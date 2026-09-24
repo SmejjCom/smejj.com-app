@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-22T07:57:26.999Z",
-  "confirmation": "Runde 4 (Betreiber 22.09.2026: 'Login Reinfolge: Google, Apple, GitHub, Fingerabdruck, eMail — alle mit Logos wie jetzt') — nur die Reihenfolge der Knoepfe, kein Knopf geaendert. Davor Runde 2 (Betreiber: 'mach die anderen Anmeldewege auch Apple Login') — GitHub, Apple und der Anmeldelink bekommen denselben Rueckweg wie Google. Runde 1 war: Betreiber 22.09.2026 im Chat: 'Ich habe App Testversion runtergeladen in mein iPhone, aber wenn ich mich versuche einloggen mit Google Login, ich bleibe immer im Browser, dann geht er nicht wieder zurueck zum App' — danach auf die Rueckfrage 'Ja'. Auftrag: den Rueckweg bauen. Geaendert sind nur der Rueckweg der Anmeldung (native=1, Ticket bleibt im Browser liegen, App holt es ab), 3 Texte in 14 Sprachen und die Cache-Nummer. Keine Aenderung an Pruefung, Rechten oder Abo-Kette.",
+  "frozenAt": "2026-09-24T01:38:50.081Z",
+  "confirmation": "Betreiber 24.09.2026 im Chat: „Ja, beschleunige die Videoübertragung“ und Wahl „IDrive e2, 7 Tage (Empfehlung)“ — „Die Brücke legt jedes Video privat in IDrive e2 ab, der Chat bekommt einen 7 Tage gültigen Link … Die App-Anzeige und die Sicherheitsregel für Videos werden angepasst.“",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "5517f14a85a614021c5313d135ef7cabd8f3838c59c80f6f4e3e104a0b0b8b11",
@@ -9,10 +9,10 @@
     "public/auth/auth-page.js": "d9b30771cf1319b1cf341e3043698839e50128e2fbeeed4ee8b054dcd6d11715",
     "public/auth/auth.css": "ae2641fdb167358f9bad1f4b844d68aec2b6c41268882973a63de81896c3a910",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
-    "src/shared/controlAccessPolicy.js": "0ed406d8088ee14f25162cf21161efbd9e326c6a4f6b06b8e8ee268916e4916d",
+    "src/shared/controlAccessPolicy.js": "9f8f98328f90dc7ebd6a15ae72d68b8d6dea7ce5a02ca0f2ec12085fb618ea19",
     "public/account-sessions.js": "25330ad02f3f5e4e8b525ff0521ba9ffe94daa9d47a5cd8501f3f4994fba393a",
     "public/chat-history-context.js": "fb3b2ce06399428b9166a46a00769234f738c3bf87571334168bda5097babfe5",
-    "public/chat-bridge.js": "dc3408d7ded59ca37c4a30350ec335f75676351cc993d13979767658258725e9",
+    "public/chat-bridge.js": "d1d0ca02660fab217796439905458220cb102dded2594ec20e7626a9df059627",
     "public/ai/fetch-retry.js": "c9cc00145776d34fecae036769ddd73dbeb67b924db1fb4479666bc724f052b2",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }
