@@ -24,7 +24,9 @@ const ZUORDNUNG = Object.freeze({
     "antwort-tuev", "angelina-autopilot", "process-reward", "user-feedback-flywheel",
     "self-improvement", "self-healing", "ai-evolution-engine", "autopilot-supervisor",
     // Nr. 75 (2026-09-03, Runde 2): die tiefe Spur (GLM) taeglich gegen die Kernsuite.
-    "tiefe-spur-messung"
+    "tiefe-spur-messung",
+    // Nr. 88 (2026-09-24): Messlatte — Radar-Wissen der Vorwoche + goldene Fragen, woechentlich.
+    "messlatte"
   ],
   "Code & Bauen": [
     "werkstatt-autopilot", "autonomous-git-bot", "instant-web-container",

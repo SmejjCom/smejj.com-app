@@ -26,6 +26,7 @@ import { laufSchutzEchtheit } from "./schutzEchtheitAutopilot.js";
 import { laufSmejjVersionsTakt } from "./smejjVersionsTaktAutopilot.js";
 import { laufWebhookWache } from "./webhookWacheAutopilot.js";
 import { laufDnsWache } from "./dnsWacheAutopilot.js";
+import { laufMesslatte } from "./messlatteAutopilot.js";
 import { fuehreRadarLaufAus, radarStand } from "./aiRadarAutopilot.js";
 
 /** Die Kennungen, damit der Läufer sie in IM_LAEUFER_BETRIEBEN aufführen kann. */
@@ -57,7 +58,10 @@ export const DECKUNG_IDS = Object.freeze([
   "smejj-ai-radar",
   // Nr. 87 (2026-09-22): die DNS-Wache. Am 21.09. war smejj.com ~8 min nicht
   // aufloesbar (Nameserver des Anbieters), die Seite lief, keine Ampel sah es.
-  "dns-wache"
+  "dns-wache",
+  // Nr. 88 (2026-09-24): die Messlatte — woechentlich Radar-Wissen der Vorwoche
+  // und goldene Fragen ueber den Nutzerweg, mit Vorwochenvergleich.
+  "messlatte"
 ]);
 
 /**
@@ -135,6 +139,8 @@ export function baueDeckungsLaeufe({ mitNetz = true, kontenLeser = null } = {}) 
     ["webhook-wache", () => laufWebhookWache({ mitNetz })],
     // Nr. 87: fragt die zwei Nameserver direkt und Google-DNS (DNSSEC), vergleicht
     // mit dem eingefrorenen Soll — nur Lesen, keine Kosten, kein neuer Anbieter.
-    ["dns-wache", () => laufDnsWache({ mitNetz })]
+    ["dns-wache", () => laufDnsWache({ mitNetz })],
+    // Nr. 88: Hintergrund-Messlaeufe gegen die Bruecke (woechentlich), Stand aus der Ablage.
+    ["messlatte", () => laufMesslatte({ mitNetz })]
   ];
 }

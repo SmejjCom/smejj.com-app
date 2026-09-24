@@ -280,5 +280,21 @@ export const DECKUNG_AUTOPILOTEN = Object.freeze([
     verbessert: "Am 21.09. lieferten beide Nameserver ~8 Minuten SERVFAIL; Google und Cloudflare konnten smejj.com nicht aufloesen, Besucher sahen keine App, Mail an die Domain stand still — und keine der 86 Wachen meldete es. Jetzt ist die Aufloesung alle 30 Minuten eine Zahl, von zwei Standorten.",
     neuigkeiten: ["Neu am 2026-09-22 (Betreiber-Freigabe nach dem Ausfall vom 21.09.; Vorschlag docs/betrieb/DNS_WACHE_VORSCHLAG_2026-09-21.md)"],
     ...LAEUFER
+  },
+  {
+    id: "messlatte",
+    name: "Messlatte",
+    nummer: "88",
+    kurz: "Weiss smejj, was das eigene Radar letzte Woche geprueft hat? Misst woechentlich Fragen aus der Radar-Wissensbasis und die goldenen Fragen ueber den Nutzerweg — mit Vorwochenvergleich.",
+    funktionen: [
+      "Aktuelles: aus den GEPRUEFTEN Radar-Eintraegen der Vorwoche (Stichtag Montag 00:00 UTC) wird je Gegenstand eine Frage (\"Was gibt es Neues zu Gemini 3.5 Flash?\"); die Antwort muss die tragenden Details nennen (Zahlen, Produktnamen). Zurueckgenommene Eintraege werden nie abgefragt.",
+      "Goldene Fragen: die 8 Fehler, die Menschen im Live-Chat gefunden haben; Messlatte 80 %.",
+      "Beide Messungen laufen ueber POST /api/agent — den Weg, auf dem die Bruecke Radar-Wissen und Websuche dazuholt, genau wie fuer echte Nutzer. Bewertung mit scoreCase/aggregateCaseScores wie jede Suite.",
+      "Wochenverlauf in autopiloten/messlatte-verlauf; die Meldung nennt die Vorwoche und die Veraenderung in Punkten. Eine niedrige Aktuelles-Note ist ein Befund, kein Alarm; zu wenige messbare Radar-Fakten (unter 5) sind 'nicht messbar'."
+    ],
+    trainiert: "Nichts — sie misst hoechstens 38 Fragen je Woche",
+    verbessert: "Plan 'smejj lernt selbst' (24.09.): ob frisches, geprueftes Wissen smejj wirklich besser macht, ist jetzt eine Wochenzahl statt eine Behauptung.",
+    neuigkeiten: ["Neu am 2026-09-24 (Betreiber: Plan 'smejj lernt selbst', Stufe 1 Messlatte)"],
+    ...LAEUFER
   }
 ]);
