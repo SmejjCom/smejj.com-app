@@ -50,6 +50,9 @@ export function createVoiceTts({
     .split(",").map((eintrag) => eintrag.trim().toLowerCase()).filter(Boolean));
 
   function voiceLangAllowed(lang) {
+    // v175: Piper hat jetzt eine Stimme je Sprache — die Liste der Stimmen
+    // entscheidet. SMEJJ_VOICE_TTS_LANGS=de stammt aus der Ein-Stimmen-Zeit.
+    if (VOICE_TTS_KIND === "piper") return piperStimmeFuer(lang).bedient;
     if (VOICE_TTS_LANGS.size === 0) return true;
     return VOICE_TTS_LANGS.has(String(lang || "").toLowerCase().split("-")[0]);
   }
