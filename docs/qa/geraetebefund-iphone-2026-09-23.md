@@ -45,7 +45,7 @@ Laufnummer im Server-Ohr, Anzeige-Gedächtnis für `data:`-Bilder, Zeitgrenzen/N
 ## Offen
 
 - Echtes iPhone: Diktat live Wort für Wort erst mit Build 5 (Spracherkennung braucht den neuen Info.plist-Eintrag); mit Build 4 greift jetzt das eigene Ohr (Text nach dem Stopp).
-- Bild-Wiederverwendung auf dem Server (Retry ohne neu malen) ist nicht gebaut; ein abgerissener Bild-Strom zeigt jetzt einen klaren Hinweis statt „?“.
+- ~~Bild-Wiederverwendung auf dem Server~~ — erledigt mit Runde 24/25 und Brücke v171/v172 (siehe Nachträge).
 
 ## Nachträge
 
