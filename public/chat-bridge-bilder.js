@@ -24,6 +24,7 @@ import { bildablageSchluessel, willBildErneut, legeBildAb, holeAbgelegtesBild } 
 import { istWeltMalAuftrag, istWeltVideoAuftrag } from "./chat-bridge-bildsprachen.js";
 import { bildSchritte, schrittSekunden } from "./chat-bridge-bildschritte.js";
 import { bildFehler, erzaehlSprache, videoTexte } from "./chat-bridge-medientexte.js";
+import { e2VideoMeldung, legeVideoAb } from "./chat-bridge-videoablage.js";
 
 // Eigene Namen (BILDER_*): das Deploy-Buendel legt alle Bridge-Module in EINEN
 // Gueltigkeitsbereich (bundle_chat_bridge.mjs prueft Kollisionen hart).
@@ -447,6 +448,7 @@ function bilderSendeInhalt(res, inhalt) {
 export function messeMedienAusgabe(inhalt, { melder = meldeAktion } = {}) {
   const text = String(inhalt || "");
   const treffer = text.match(/\]\((data:(image|video)\/([a-z0-9+.-]+);base64,)([A-Za-z0-9+/=]+)\)/i);
+  if (!treffer && e2VideoMeldung(text)) return melder(e2VideoMeldung(text));
   if (!treffer) {
     // Kein Medium drin: dann war es eine Textantwort (meist eine Absage).
     return melder({ art: "text", ergebnis: text, quelle: "bruecke-bilder", betrifft: "bilder-spur" });
@@ -662,8 +664,8 @@ async function streamVideoSpur(res, body, videoPrompt, deps, sprache = "de") {
     // ueber eine Tiefenkarte, kenburns flach als Zoom).
     // Alt-Text traegt die Tonspur-Information zur App: ein erzaehltes Video
     // darf nicht stummgeschaltet und nicht endlos wiederholt werden.
-    const alt = video.ton ? w.altTon : w.alt;
-    bilderSendeInhalt(res, `${w.hier}\n\n![${alt}](${video.url})${videoHinweis(video.engine, video.ton, sprache)}`);
+    const alt = video.ton ? w.altTon : w.alt; // e2-Link (24.09.2026) oder, wenn die Ablage scheitert, eingebettet:
+    bilderSendeInhalt(res, `${w.hier}\n\n![${alt}](${(await legeVideoAb(video.url)) || video.url})${videoHinweis(video.engine, video.ton, sprache)}`);
   } else {
     // Mitten im Strom: kein Rueckweg zum Text-Pfad mehr — ehrliche Absage.
     videoSchritt(res, "fertig", w.fehl, sprache);

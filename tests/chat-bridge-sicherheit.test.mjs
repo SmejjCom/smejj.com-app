@@ -98,7 +98,7 @@ test("Bruecke: Kopfzeilen auf /health, 404, Preflight und SSE; /health anonym kn
     pruefeKopf(r, "/health");
     const anonym = await r.json();
     assert.deepEqual(Object.keys(anonym).sort(), ["app", "ok", "version"]);
-    assert.match(anonym.version, /^20260924-v172-/);
+    assert.match(anonym.version, /^20260924-v173-/);
     for (const verboten of ["anmeldung", "publicRateLimit", "premiumVoiceConfigured", "evolutionMelder", "projektwissen", "earConfigured"]) {
       assert.equal(verboten in anonym, false, `${verboten} anonym sichtbar`);
     }
