@@ -48,8 +48,8 @@ test("gueltiges MP4 wird abgelegt und als signierter 7-Tage-Link zurueckgegeben"
   const { url, gueltigBis } = res.daten();
   assert.match(url, /^https:\/\/s3\.us-west-2\.idrivee2\.com\/smejj-test\/medien-video\/\d{4}-\d{2}-\d{2}\/[0-9a-f]{32}\.mp4\?/);
   assert.ok(Date.parse(gueltigBis) - Date.now() > 6.9 * 24 * 3600 * 1000);
-  assert.equal(puts.length, 1);
-  assert.equal(puts[0].method, "PUT");
+  // Genau EINE Ablage (das Aufraeumen im Hintergrund liest und loescht nur).
+  assert.equal(puts.filter((p) => p.method === "PUT").length, 1);
 });
 
 test("kein echtes Video, falsches Format oder kaputtes base64 -> 400, nichts abgelegt", async () => {
@@ -79,4 +79,47 @@ test("Route verlangt den Maschinen-Ausweis der Bruecke (401 ohne, 405 bei GET)",
   req.method = "GET";
   await handleAutopilotHeartbeat(req, url, get, { env: ENV });
   assert.equal(get.status, 405);
+});
+
+import { AUFBEWAHRUNG_TAGE, abgelaufeneTage, medienEimer, raeumeAbgelaufeneAuf } from "../control-server/src/medien/videoAblage.js";
+
+test("Punkt 1: Nutzervideos in den Nutzdaten-Eimer (SMEJJ_MEDIEN_BUCKET > Capsule-Eimer > Standard)", async () => {
+  assert.equal(medienEimer({ SMEJJ_MEDIEN_BUCKET: "m", IDRIVE_E2_CAPSULES_BUCKET: "c" }, { bucket: "s" }), "m");
+  assert.equal(medienEimer({ IDRIVE_E2_CAPSULES_BUCKET: "smejj-app" }, { bucket: "smejj-model-files" }), "smejj-app");
+  assert.equal(medienEimer({}, { bucket: "smejj-model-files" }), "smejj-model-files");
+  const puts = [];
+  const fetchImpl = async (url, init) => { puts.push({ url: String(url), method: init?.method }); return new Response("<ListBucketResult></ListBucketResult>", { status: 200 }); };
+  const res = antwort();
+  await handleVideoAblage(anfrage({ format: "mp4", b64: MP4.toString("base64") }), res, { env: { ...ENV, IDRIVE_E2_CAPSULES_BUCKET: "smejj-app" }, fetchImpl });
+  assert.equal(res.status, 200);
+  assert.match(res.daten().url, /idrivee2\.com\/smejj-app\/medien-video\//);
+  assert.match(puts.find((p) => p.method === "PUT").url, /\/smejj-app\/medien-video\//);
+});
+
+test("Punkt 2: nur Tagesordner aelter als 8 Tage gelten als abgelaufen", () => {
+  assert.equal(AUFBEWAHRUNG_TAGE, 8);
+  const jetzt = new Date("2026-09-24T12:00:00Z");
+  const keys = ["medien-video/2026-09-15/a.mp4", "medien-video/2026-09-16/b.mp4", "medien-video/2026-09-17/c.mp4", "medien-video/2026-09-24/d.mp4", "chat-medien/2026-01-01/x.png", "medien-video/kaputt/e.mp4"];
+  // Ordner vom 16.09.: Links gelten bis 23.09. 24:00, plus ein Tag Puffer -> erst am 25.09. weg.
+  assert.deepEqual(abgelaufeneTage(keys, jetzt), ["medien-video/2026-09-15/a.mp4"]);
+});
+
+test("Punkt 2: Aufraeumen loescht in allen Eimern, hoechstens einmal am Tag, Fehler sind still", async () => {
+  const geloescht = [];
+  const xml = (eimer) => `<ListBucketResult><Contents><Key>medien-video/2026-09-10/alt-${eimer}.mp4</Key></Contents><Contents><Key>medien-video/2026-09-24/neu.mp4</Key></Contents></ListBucketResult>`;
+  const fetchImpl = async (url, init) => {
+    const u = new URL(String(url));
+    const eimer = u.pathname.split("/")[1];
+    if ((init?.method || "GET") === "DELETE") { geloescht.push(`${eimer}:${decodeURIComponent(u.pathname.split("/").slice(2).join("/"))}`); return new Response(null, { status: 204 }); }
+    return new Response(xml(eimer), { status: 200 });
+  };
+  const cfg = { endpoint: ENV.IDRIVE_E2_ENDPOINT, region: "us-west-2", accessKey: "AK", secretKey: "SK", bucket: "smejj-model-files" };
+  const jetzt = new Date("2026-09-24T12:00:00Z");
+  const r1 = await raeumeAbgelaufeneAuf(cfg, ["smejj-app", "smejj-model-files"], { fetchImpl, jetzt, erzwingen: true });
+  assert.equal(r1.geloescht, 2);
+  assert.deepEqual(geloescht.sort(), ["smejj-app:medien-video/2026-09-10/alt-smejj-app.mp4", "smejj-model-files:medien-video/2026-09-10/alt-smejj-model-files.mp4"]);
+  const r2 = await raeumeAbgelaufeneAuf(cfg, ["smejj-app"], { fetchImpl, jetzt });
+  assert.equal(r2.uebersprungen, true, "am selben Tag kein zweiter Lauf");
+  const kaputt = await raeumeAbgelaufeneAuf(cfg, ["x"], { fetchImpl: async () => { throw new TypeError("netz"); }, jetzt: new Date("2026-09-25T12:00:00Z") });
+  assert.equal(kaputt.geloescht, 0);
 });
