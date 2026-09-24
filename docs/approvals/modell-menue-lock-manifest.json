@@ -1,10 +1,10 @@
 {
   "lock": "smejj modell-menue lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-24T08:29:52.926Z",
-  "confirmation": "Betreiber 24.09.2026 schriftlich im Chat: 'ja, Begrüßungssatz im Code-Bereich auch übersetzen' — Nachbesserung: lokale Variable t in zeichne() in tiefeAnzeige umbenannt (überdeckte t(), TDZ-Fehler).",
+  "frozenAt": "2026-09-24T10:32:22.130Z",
+  "confirmation": "Betreiber 24.09.2026 schriftlich im Chat: 'smejj 1 soll nicht eigenes Modell stehen (Nur: slow stehen)' — public/code-modell-menue.js: Unterzeile von 'smejj 1' nur noch 'langsam' (uebersetzt, en 'slow'), Reihenfolge und Eintraege unveraendert.",
   "rule": "Keine Aenderung an der Modell-Liste (das Menue und seine ausgelieferte Kopie) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
-    "public/code-modell-menue.js": "8b430e69874842335fb5a564369f37e6ea969a76e7643b1d7307db2eca1fb744",
-    "public/assets/code-modell-menue.js": "8b430e69874842335fb5a564369f37e6ea969a76e7643b1d7307db2eca1fb744"
+    "public/code-modell-menue.js": "45a37c566b77da782416fbce344e6a75f5f57936f256de291c1a037a88dbea0c",
+    "public/assets/code-modell-menue.js": "45a37c566b77da782416fbce344e6a75f5f57936f256de291c1a037a88dbea0c"
   }
 }

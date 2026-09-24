@@ -365,3 +365,16 @@ test("(10) zeichne() laeuft wirklich: kein lokales 't' ueberdeckt t() (TDZ-Fehle
     globalThis.document = alt.document; globalThis.localStorage = alt.localStorage;
   }
 });
+
+test("(11) Menuezeile 'smejj 1' zeigt nur 'langsam' / 'slow' — kein 'eigenes Modell' mehr (Betreiber 24.09.)", async () => {
+  const q = fs.readFileSync("public/code-modell-menue.js", "utf8");
+  assert.match(q, /klein: "langsam",/);
+  assert.doesNotMatch(q, /klein: "[^"]*eigenes Modell/, "kein 'eigenes Modell' unter smejj 1");
+  assert.match(q, /s\.textContent = t\(klein\);/, "Unterzeile laeuft ueber t()");
+  const en = (await import("../public/i18n/en-2.js")).default;
+  assert.equal(en.langsam, "slow");
+  for (const sp of ["en", "fr", "es", "it", "pt", "tr", "ru", "ar", "hi", "bn", "id", "ja", "ko", "zh"]) {
+    const w = (await import(`../public/i18n/${sp}-2.js`)).default.langsam;
+    assert.ok(w && w !== "langsam", `${sp}: Uebersetzung fuer 'langsam'`);
+  }
+});
