@@ -149,6 +149,9 @@ const OEFFENTLICH_EXAKT = new Set([
   //     Automatik (autopilotRoutes.js prueft ihn selbst).
   "/api/autopilot/heartbeat",
   "/api/evolution/aktion",
+  // Video-Ablage der Bruecke (24.09.2026) — gleicher Maschinen-Ausweis wie
+  // /api/evolution/aktion, geprueft in autopilotRoutes.js.
+  "/api/medien/video",
 
   // (c) Die oeffentliche Statusseite /status.html fragt genau diese beiden ab.
   //     Wer wissen will, ob der Dienst laeuft, kann sich per Definition gerade

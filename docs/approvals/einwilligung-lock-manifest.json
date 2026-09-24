@@ -1,7 +1,7 @@
 {
   "lock": "smejj einwilligung lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-22T23:11:33.563Z",
-  "confirmation": "Betreiber-Freigabe 23.09.2026 im Chat auf die Frage 'Soll ich sie nachstempeln?': 'Ja, nachstempeln'. Nachgetragen werden drei bereits freigegebene Eintraege in src/shared/controlAccessPolicy.js, die der security-lock fuer dieselbe Datei am 22.09.2026 schon traegt: (1) /api/auth/apple und /api/auth/apple/callback oeffentlich, Rueckkehr als form_post mit Origin appleid.apple.com (Apple-Richtlinie 4.8, Betreiber 19.09.: 'apple login 4.8 machen'); (2) /api/browser/page als offene Lese-Route, gleichrangig zu /api/browser/fetch (Betreiber 20.09.). Keine Erfassungs- und keine Einwilligungsroute wurde dadurch offener.",
+  "frozenAt": "2026-09-24T01:47:47.710Z",
+  "confirmation": "Betreiber 24.09.2026 im Chat: „Ja, beschleunige die Videoübertragung“ und Wahl „IDrive e2, 7 Tage (Empfehlung)“ — „Die Brücke legt jedes Video privat in IDrive e2 ab, der Chat bekommt einen 7 Tage gültigen Link … Die App-Anzeige und die Sicherheitsregel für Videos werden angepasst.“ Einzige Änderung hier: Zugriffsliste um /api/medien/video (Maschinen-Ausweis der Brücke).",
   "rule": "Keine Aenderung an der Einwilligungs- und Erfassungskette (ob erfasst werden darf, wogegen eingewilligt wird, wer die Routen erreicht) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "src/training/fragenerfassung.js": "5de1223542ffd62f840e3bffcd79eabe56870dda8f8e47e6b96c60f3d1f4c79d",
@@ -9,7 +9,7 @@
     "src/training/consent.js": "01d4a4a7b15e1647848bde1b1c5172714923f93e8e301428ad8629316e2a9fa6",
     "control-server/src/routes/trainingConsentRoutes.js": "6dd0b44d89cf8d9e0e23a244905c82666f82f8e94b1b2782104d4abdd15836cf",
     "src/training/constants.js": "5b5e533d89279711579c2c8845ccb98cc12bab1cf3eed75a4a14303c89b4337c",
-    "src/shared/controlAccessPolicy.js": "0ed406d8088ee14f25162cf21161efbd9e326c6a4f6b06b8e8ee268916e4916d",
+    "src/shared/controlAccessPolicy.js": "9f8f98328f90dc7ebd6a15ae72d68b8d6dea7ce5a02ca0f2ec12085fb618ea19",
     "public/datenschutz.html": "10683aeee228127a4be6dca5f725c6bb0d2264bf861e91a735800630c8665b20"
   }
 }

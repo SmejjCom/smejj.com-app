@@ -59,6 +59,7 @@ const chatHistoryView = fs.readFileSync(path.join(publicDir, "chat-history-view.
 const composerChips = fs.readFileSync(path.join(publicDir, "composer-anhang-chips.js"), "utf8");
 const chatStream = fs.readFileSync(path.join(publicDir, "ai", "chat-stream.js"), "utf8");
 const medienAnsicht = fs.readFileSync(path.join(publicDir, "chat-medien-ansicht.js"), "utf8");
+const videoE2 = fs.readFileSync(path.join(publicDir, "chat-video-e2.js"), "utf8");
 // Stufe 3 (20.09.2026): Verlauf-Inhalte, Browser-Fenster und Maus.
 const historyText = fs.readFileSync(path.join(publicDir, "chat-history-text.js"), "utf8");
 const browserFenster = ["browser-pane-render.js", "browser-pane-sicherheit.js", "browser-pane-suche.js", "google-login.js", "browser-pane-menue.js", "browser-pane-nachrichten.js",
@@ -119,7 +120,7 @@ test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer ueb
     + schritteAnzeige + arbeitsflaeche + fuehrung
     + inhaltMelden
     + chatActions + chatActionsMenu + chatHistoryCards + chatHistoryView
-    + composerChips + chatStream + medienAnsicht
+    + composerChips + chatStream + medienAnsicht + videoE2
     + historyText + browserFenster + ansichtenStufe5;
   // HTML schreibt Zeichen als Entitaet ("Hilfe &amp; Rueckmeldung"), der Text-
   // knoten im Browser traegt aber das Zeichen selbst — und genau der ist der

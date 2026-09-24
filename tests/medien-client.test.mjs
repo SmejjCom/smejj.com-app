@@ -152,7 +152,7 @@ test("Upload geht roh; die Ansicht ist vorgeladen und darf Videos von der API sp
   const sw = lies("../public/sw.js");
   assert.match(sw, /"\/assets\/chat-medien-ansicht\.js"/);
   const index = lies("../public/index.html");
-  assert.match(index, /media-src 'self' blob: https:\/\/api\.smejj\.com;/);
+  assert.match(index, /media-src 'self' blob: https:\/\/api\.smejj\.com https:\/\/s3\.us-west-2\.idrivee2\.com;/); // e2-Videos seit 24.09.2026 (chat-video-e2.js)
   const ansicht = lies("../public/chat-medien-ansicht.js");
   assert.match(ansicht, /border-radius:0!important/, "viereckig");
   assert.match(ansicht, /Nur einmal öffnen/);
