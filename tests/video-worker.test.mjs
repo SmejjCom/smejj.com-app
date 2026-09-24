@@ -59,7 +59,8 @@ describe("smejj video worker & video player markdown integration", () => {
     const markdown = fs.readFileSync("public/chat-markdown.js", "utf8");
     // muted/loop nur fuer stumme Szenen — sonst hoert der Nutzer nichts bzw.
     // die Erzaehlung wiederholt sich endlos.
-    assert.ok(markdown.includes('startsWith("Erzähltes")'), "Ton-Erkennung im Player fehlt");
+    // Seit v974 in allen 15 Sprachen (Alt-Texte der Bruecke sind uebersetzt).
+    assert.ok(/const ERZAEHLT = \/\^\(Erzähltes Video\|Narrated video/.test(markdown) && markdown.includes("ERZAEHLT.test("), "Ton-Erkennung im Player fehlt");
     assert.ok(!/controls loop muted/.test(markdown), "loop/muted duerfen nicht mehr fest verdrahtet sein");
   });
 

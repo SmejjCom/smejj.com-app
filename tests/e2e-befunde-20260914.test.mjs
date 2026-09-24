@@ -107,8 +107,8 @@ test("E24/E25: Chips 'Bild verstehen'/'Datei' laden die Composer-Werkzeuge und s
   const laden = chips.indexOf("window.smejjLadeComposerTools?.()");
   const ohneVorlage = chips.indexOf("if (aktion && !knopf.dataset.chip)");
   assert.ok(laden > -1 && ohneVorlage > laden, "erst laden, dann Dateiwahl");
-  assert.match(lies("code-nachladen.js"), /window\.smejjLadeComposerTools\?\.\(\) \|\| import\("\.\/composer-tools\.js\?v=werkzeuge-\d+"\)/);
-  const marke = (d) => (lies(d).match(/composer-tools\.js\?v=(werkzeuge-\d+)/) || [])[1];
+  assert.match(lies("code-nachladen.js"), /window\.smejjLadeComposerTools\?\.\(\) \|\| import\("\.\/composer-tools\.js\?v=werkzeuge-\d+(?:-\d+)*"\)/);
+  const marke = (d) => (lies(d).match(/composer-tools\.js\?v=(werkzeuge-\d+(?:-\d+)*)/) || [])[1];
   assert.equal(marke("code-nachladen.js"), marke("app.js"), "gleiche Marke, sonst laedt das Modul doppelt");
 });
 
