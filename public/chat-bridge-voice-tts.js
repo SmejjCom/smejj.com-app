@@ -10,6 +10,7 @@
 // json/readJson/securityHeaders leben nun einmal im Einstieg. Die Fabrik
 // bekommt sie gereicht und gibt die drei Handler zurueck.
 import { readAudioBody, transcribeWithGroq } from "./chat-bridge-voice-ear.js";
+import { createPiperStimmenLader, piperStimmeFuer } from "./chat-bridge-piper-stimmen.js";
 
 export function createVoiceTts({
   json,
@@ -107,12 +108,32 @@ export function createVoiceTts({
   // Piper-Probe: liefert der CPU-Stimmen-Dienst hoerbares WAV fuer einen Mini-Text?
   // piper.http_server (1.6): POST /synthesize mit JSON {text} -> audio/wav
   // (belegt durch die eingebaute Demo-Seite); GET / ist nur die Demo-Seite.
-  async function piperSpeak(text, timeoutMs) {
+  // 24.09.2026: mit Stimme je Sprache — ohne "voice" sprach Thorsten jede Sprache.
+  async function piperSpeak(text, timeoutMs, stimme = null) {
     return xttsFetch("/synthesize", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
+      body: JSON.stringify(stimme ? { text, voice: stimme } : { text })
     }, timeoutMs);
+  }
+
+  // Weitere Stimmen laedt Piper per POST /download nach (idempotent).
+  const piperStimmen = createPiperStimmenLader({
+    laden: async (stimme) => {
+      const antwort = await xttsFetch("/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voice: stimme })
+      }, Math.max(VOICE_TTS_TIMEOUT_MS, 90000));
+      return antwort.ok;
+    }
+  });
+
+  // Welche Piper-Stimme spricht diese Sprache? null-Ergebnis = nicht bedient.
+  async function piperStimmeBereit(lang) {
+    const { bedient, stimme } = piperStimmeFuer(lang);
+    if (!bedient) return { ok: false, stimme: null };
+    return { ok: await piperStimmen.sicherstellen(stimme), stimme };
   }
 
   async function probePiper() {
@@ -142,6 +163,11 @@ export function createVoiceTts({
     }
     if (language && !voiceLangAllowed(language)) {
       return json(res, 200, { ok: true, premiumVoice: false, reason: "language_not_supported" });
+    }
+    // Piper: die Stimme der Sprache schon beim Oeffnen des Sprachmodus laden —
+    // sonst frisst der Download das 3-s-Budget des ersten Satzes.
+    if (VOICE_TTS_KIND === "piper" && language && !(await piperStimmeBereit(language)).ok) {
+      return json(res, 200, { ok: true, premiumVoice: false, reason: "voice_not_available" });
     }
     const now = Date.now();
     if (now - voiceStatusCache.at < VOICE_STATUS_CACHE_MS) {
@@ -199,14 +225,19 @@ export function createVoiceTts({
     if (!text) return json(res, 400, { ok: false, error: "Missing text" });
     if (!voiceLangAllowed(body?.language)) return json(res, 400, { ok: false, error: "language_not_supported" });
     if (VOICE_TTS_KIND === "piper") {
+      const bereit = await piperStimmeBereit(body?.language);
+      if (!bereit.ok) return json(res, 400, { ok: false, error: "voice_not_available" });
       let upstream;
       try {
-        upstream = await piperSpeak(text);
+        upstream = await piperSpeak(text, VOICE_TTS_TIMEOUT_MS, bereit.stimme);
       } catch (error) {
         voiceStatusCache = { at: Date.now(), up: false };
         return json(res, 502, { ok: false, error: `tts_upstream_failed: ${error?.message || "fetch"}` });
       }
-      if (!upstream.ok || !upstream.body) return json(res, 502, { ok: false, error: `tts_upstream_${upstream.status}` });
+      if (!upstream.ok || !upstream.body) {
+        piperStimmen.vergessen(bereit.stimme); // naechstes Mal neu laden
+        return json(res, 502, { ok: false, error: `tts_upstream_${upstream.status}` });
+      }
       return pipeWav(res, upstream);
     }
     let speaker;
