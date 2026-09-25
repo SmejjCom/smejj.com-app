@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-25T15:05:21.948Z",
-  "confirmation": "ich habe smejj 1 gestet, funktiniert nicht richtig, geh chrome browser teste, soll blitz schnell sein.",
+  "frozenAt": "2026-09-25T19:31:11.555Z",
+  "confirmation": "Betreiber 23.09.2026 schriftlich im Chat: AUFTRAG 'AKTUELLE iOS-/ANDROID-FEHLER VOLLSTAENDIG BEHEBEN' (Diktier-Mikrofon und Sprachmodus reparieren, oberen dunklen Bereich und Code-Bereich-Flaeche entfernen, Bildanzeige nach Generierung reparieren, Regressionstests hinterlegen). Geaendert: public/composer-tools.js (Sprachmodus: onerror fragt zuerst die Ohr-Wache, Barge-in schweigt im Ohr-Modus, earCancel), public/voice-ohr-solo.js, public/voice-ear.js, public/composer-dictation.js, public/chat-medien.js, public/mobil-dock.js (Code-Bereich); Test tests/geraetebefund-2026-09-23.test.mjs. Start-Lock: composer-tools.js + sw.js-Nummer; Startseite und Schreibfeld unberuehrt. NACHTRAG Runde 27: Auftrag 23.09.2026 Punkt 7 (Erfolg erst bestaetigen, wenn das Bild da ist) — public/ai/chat-stream.js entferneAbgerisseneMedien, public/chat-medien.js erfolgszeile, public/ai/bild-nachholen.js Wartezeit 240 s. NACHTRAG Runde 26b: lokale Variable t in zeichne() umbenannt (TDZ). NACHTRAG Runde 26: Betreiber 24.09.2026 schriftlich 'ja, Begrüßungssatz im Code-Bereich auch übersetzen' — public/code-modell-menue.js (t() fuer den Gruss, Modell-Menue-Sperre gestempelt), public/i18n/*-2.js. NACHTRAG Runde 25: Betreiber 24.09.2026 schriftlich 'ja, Code-Schreibfeld unten auch transparent machen' — public/mobil-dock.js Regel (18); dazu Bild-Rettung nach App-Neustart (public/chat-store.js, public/ai/bild-nachholen.js, public/i18n/*-2.js) im Rahmen von 'ja, Bild erneut anfordern ohne Neumalen auch bauen'. NACHTRAG Runde 24: Betreiber 23.09.2026 schriftlich 'ja, Bild erneut anfordern ohne Neumalen auch bauen' — public/ai/bild-nachholen.js (neu), public/ai/chat-stream.js, public/composer-dictation.js, public/i18n/*-2.js, sw.js Precache-Eintrag. NACHTRAG Runde 23: Betreiber 23.09.2026 schriftlich 'ja, Schreibfeld auf 148 px begrenzen' — public/mobil-dock.js Regel (4b), #startMessage max-height 148px am Handy. NACHTRAG Runde 22 (Punkt 8 desselben Auftrags, UI nach Neustart): public/chat-store.js — Arbeitsschritte-Eintrag behaelt .chat-schritte beim Wiederherstellen (keine zweite, leere Aktionsleiste); nur Versionsmarken in app.js/index.html.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "a246cc3e6787ce6dac2a2ff50d15bce08668d49ae4848aefad10e2c1af88c086",
+    "public/index.html": "e5638cfaa0aaac330aaaef2678c28f3cb58d758d11a75832ea429b85d0c94f2e",
     "public/styles.css": "0bb3518047642700e1bce8662f3440f2fdbef1986afb1cf5743f0e57c5bf8f51",
     "public/start-styles.css": "725cdc70d3fc21e75d058ef1f162bfb7eed4bae65ba7ba89eea00f44e6c0f82d",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,14 +13,14 @@
     "public/app-surfaces.css": "d8a4efdf629bd585e10b27a5cbe365cc7b0359987d01bb81f3de6c17600386ec",
     "public/composer-tools.css": "2b19af1a8f3e12bfe797c09d39e3ecb910b69bb0291a2ab76a62bcfc18b3123e",
     "public/browser-pane.css": "7403ac7a7106cc72805268c9f139eb5e86e458880fa7d849a26a29ea99d0c3c4",
-    "public/app.js": "ed8164eb59e9f6b72cbcb999e1ed6f82c054e3e9031973c91296f808cf444156",
+    "public/app.js": "212cf2a7032ff1ae6acfd789d7ab5ca9700d2f5246c179125f47d1bfd7c53587",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "27acbbbbe2a23a81f25b8fdab7e5204cb4e5ecc1217f6ef1af8ee7a12831e3df",
     "public/components.js": "416d4bdf03ae77a37a6698dd6cecf453bd9cb420351f7d06e650c529db24b17c",
     "public/premium-surfaces.js": "be56bceed03e3b591102469ede5393535f2d0cc42e46d871bb593d42d271b5e2",
     "public/autonomous-coding.js": "95a765c2888895d5e48458a289bda3ab29595ac5871a1edc95d992a45e027164",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
-    "public/search.js": "5bc17659a0fbdaffceacc890065ab4562fb1a59e49d76e7fe3627b58e27c2290",
+    "public/search.js": "00f2192131ec068a770a7b80ddbb71464f62f2f5bd1864a9ee7a30f4bc105613",
     "public/composer-tools.js": "76aa1d3a8784221387ab0468e5e5701a2da600710c2ecd74ce9d62c7f226d270",
     "public/composer-plus-menu.js": "233fabf8a75f03a1bf540a162010f603cdb4ba6e8b60db590eff421a8860517d",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "0e10fc0bcb03ef102031ec3c319746286325a5c5a2a323d28a555a323cf251ee",
+    "public/sw.js": "ce5c278ec4bd806485c1a745afcbb0f9a27e0cef357b1b78f29e9fbdad3e7b6a",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
