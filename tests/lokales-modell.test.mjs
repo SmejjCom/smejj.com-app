@@ -252,3 +252,34 @@ test("ohne Speicher zaehlt es nicht mit — aber faellt auch nicht um", () => {
   assert.equal(merkeEntscheidung("geeignet", null), false);
   assert.deepEqual(lokalStatistik(null).tage, []);
 });
+
+// --- 25.09.2026: das Geraet darf nie bremsen (gemessen 15,7 s bis zum ersten Wort) ---
+
+test("zu langsames Geraetemodell: nach der Frist uebernimmt der Server", async () => {
+  const langsamStart = { LanguageModel: { availability: async () => "available", create: () => new Promise((r) => setTimeout(() => r({ destroy() {} }), 500)) } };
+  const a = await frageLokal("Wie funktioniert eine Waermepumpe?", { umgebung: langsamStart, ersteWortFristMs: 50 });
+  assert.deepEqual([a.ok, a.grund], [false, "zu-langsam"]);
+  const langsamesErstesWort = { LanguageModel: { availability: async () => "available", create: async () => ({
+    destroy() {},
+    async *promptStreaming() { await new Promise((r) => setTimeout(r, 500)); yield "Die Waermepumpe nutzt Umweltwaerme und Strom."; }
+  }) } };
+  const b = await frageLokal("Wie funktioniert eine Waermepumpe?", { umgebung: langsamesErstesWort, ersteWortFristMs: 50 });
+  assert.deepEqual([b.ok, b.grund], [false, "zu-langsam"]);
+  const flink = { LanguageModel: { availability: async () => "available", create: async () => ({
+    destroy() {},
+    async *promptStreaming() { yield "Die Waermepumpe "; await new Promise((r) => setTimeout(r, 120)); yield "Die Waermepumpe nutzt Umweltwaerme und Strom."; }
+  }) } };
+  const c = await frageLokal("Wie funktioniert eine Waermepumpe?", { umgebung: flink, ersteWortFristMs: 50 });
+  assert.equal(c.ok, true, "die Frist gilt nur bis zum ERSTEN Wort, nicht fuer die ganze Antwort");
+  assert.equal(c.text, "Die Waermepumpe nutzt Umweltwaerme und Strom.");
+});
+
+test("ausdruecklich gewaehltes Modell (z. B. smejj 1) geht nie ans Geraet", async () => {
+  const fs = await import("node:fs");
+  const q = fs.readFileSync(new URL("../public/ai/chat-stream.js", import.meta.url), "utf8");
+  const muster = q.match(/if \(\/(\^smejj\[- \]1\$[^/]+)\/i\.test\(String\(body\?\.model/);
+  assert.ok(muster, "Sperre in versucheLokaleAntwort vorhanden");
+  const re = new RegExp(muster[1], "i");
+  for (const m of ["smejj 1", "smejj-1", "smejj 1.2", "smejj 1.3", "GLM-5.2", "Kimi K2.7"]) assert.equal(re.test(m), true, m);
+  for (const m of ["smejj 1.0", "smejj 1.1", "Auto", ""]) assert.equal(re.test(m), false, m);
+});
