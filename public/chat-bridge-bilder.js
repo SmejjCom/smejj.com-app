@@ -20,7 +20,7 @@
 // Fail-safe: false = kein Byte gesendet, der Text-Weg uebernimmt unveraendert.
 
 import { meldeAktion } from "./chat-bridge-evolution.js";
-import { bildablageSchluessel, willBildErneut, legeBildAb, holeAbgelegtesBild } from "./chat-bridge-bildablage.js";
+import { bildablageSchluessel, legeBildAb, bedieneAusAblage, beginneMalen } from "./chat-bridge-bildablage.js";
 import { istWeltMalAuftrag, istWeltVideoAuftrag } from "./chat-bridge-bildsprachen.js";
 import { bildSchritte, schrittSekunden } from "./chat-bridge-bildschritte.js";
 import { bildFehler, erzaehlSprache, videoTexte } from "./chat-bridge-medientexte.js";
@@ -712,23 +712,7 @@ export async function streamBilderLane(res, body, task, deps) {
   // Bildablage (Betreiber 23.09.2026): fragt die App nach einem abgerissenen Strom mit bildErneut nach,
   // kommt DASSELBE Bild sofort zurueck — kein neues Malen. Ohne Treffer: normaler Weg.
   const ablage = bildablageSchluessel(deps.anmeldung, prompt);
-  const abgelegt = willBildErneut(body) ? holeAbgelegtesBild(ablage) : "";
-  if (abgelegt) {
-    bilderSseKopf(res, deps, body, "bilder-ablage", "bild-ablage");
-    for (let i = 0; i < abgelegt.length; i += 65536) res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: abgelegt.slice(i, i + 65536) } }] })}\n\n`);
-    res.write("data: [DONE]\n\n");
-    res.end();
-    return true;
-  }
-  // bildNurAblage (v172, Rettung nach App-Neustart): nie neu malen — ohne Treffer ein leerer Strom.
-  if (body?.bildNurAblage === true) {
-    bilderSseKopf(res, deps, body, "bilder-ablage-leer", "bild-ablage");
-    res.write("data: [DONE]\n\n");
-    res.end();
-    return true;
-  }
-
-
+  if (await bedieneAusAblage(res, body, ablage, { kopf: (profil) => bilderSseKopf(res, deps, body, profil, "bild-ablage"), fehltext: bildFehler(sprache).malenFehl })) return true;
   // deps.fetchImpl gibt es nur im Test — im Betrieb bleibt es das echte fetch.
   const malerZustand = await bilderMalerZustand(deps.fetchImpl || fetch);
 
@@ -744,6 +728,7 @@ export async function streamBilderLane(res, body, task, deps) {
     }, 10000);
     let inhalt = "";
     const notiz = {};
+    const malenFertig = beginneMalen(ablage); // v177: Nachfragen warten auf dieses Malen statt neu zu malen
     try {
       inhalt = await erzeugeFotoInhalt(await uebersetzeMalPrompt(prompt), BILDER_FOTO_TIMEOUT_MS, notiz, deps.fetchImpl || fetch, sprache);
     } finally {
@@ -761,6 +746,7 @@ export async function streamBilderLane(res, body, task, deps) {
       ? worte.fertig
       : `${worte.fehl} (${notiz.grund || "unbekannt"})`, sprache);
     if (inhalt) legeBildAb(ablage, inhalt);
+    malenFertig(inhalt);
     bilderSendeInhalt(res, inhalt || bildFehler(sprache).malenFehl);
     res.write("data: [DONE]\n\n");
     res.end();

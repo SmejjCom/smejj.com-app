@@ -114,3 +114,36 @@ test("bildNurAblage (v172, Rettung nach App-Neustart): Treffer liefert das Bild,
   assert.equal(gemalt, 1, "Treffer aus der Ablage, kein zweites Malen");
   assert.match(treffer.inhalt, /data:image\/png;base64,/);
 });
+
+test("v177: Nachfrage WAEHREND des Malens wartet auf dieses Malen — kein zweites Malen (Ashburn ~165 s)", async () => {
+  let gemalt = 0;
+  let loslassen;
+  const fetchImpl = async (adresse) => {
+    const pfad = String(adresse);
+    if (pfad.endsWith("/health")) return new Response(JSON.stringify({ ok: true, bereit: true }), { status: 200 });
+    if (pfad.endsWith("/erzeuge")) {
+      gemalt += 1;
+      await new Promise((r) => { loslassen = r; }); // der Maler braucht (hier kuenstlich) lange
+      return new Response(JSON.stringify({ ok: true, b64: PNG_B64 }), { status: 200 });
+    }
+    return new Response("{}", { status: 404 });
+  };
+  const deps = { corsHeaders: () => ({}), securityHeaders: () => ({}), timeoutMs: 5000, acceptLanguage: "de-DE", anmeldung: "Bearer langsam", fetchImpl };
+  const auftrag = "Male ein Bild von einer langsamen Schnecke";
+  const erst = sammelAntwort();
+  const ersterLauf = streamBilderLane(erst, {}, auftrag, deps);
+  while (!loslassen) await new Promise((r) => setTimeout(r, 5));
+  const nach = sammelAntwort();
+  const nachfrage = streamBilderLane(nach, { bildErneut: true }, auftrag, deps);
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(gemalt, 1, "die Nachfrage malt NICHT neu");
+  assert.equal(nach.beendet, false, "sie wartet auf das laufende Malen");
+  assert.equal(nach.kopf?.["x-smejj-profile"], "bilder-ablage-warten");
+  loslassen();
+  await Promise.all([ersterLauf, nachfrage]);
+  assert.equal(gemalt, 1);
+  assert.match(nach.inhalt, /data:image\/png;base64,/, "die Nachfrage bekommt dasselbe Bild");
+  assert.equal(nach.inhalt, erst.inhalt);
+  const { maltGerade, bildablageSchluessel } = await import("../public/chat-bridge-bildablage.js");
+  assert.equal(maltGerade(bildablageSchluessel("Bearer langsam", auftrag)), false, "danach aufgeraeumt");
+});

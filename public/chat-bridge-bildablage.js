@@ -57,3 +57,61 @@ export function holeAbgelegtesBild(schluessel, jetzt = Date.now()) {
 export function bildablageGroesse() {
   return bildablage.size;
 }
+
+// ---- v177: laufendes Malen je Schluessel (Betreiber 25.09.2026, Ashburn-Maler ~165 s) ----
+// Reisst der Strom mitten im Malen ab, fragt die App sofort mit bildErneut nach. Frueher war die Ablage
+// dann noch leer und die Bruecke malte ein ZWEITES Mal — der einzige Maler arbeitete doppelt. Jetzt wartet
+// die Nachfrage auf das laufende Malen desselben Nutzers und Auftrags.
+const laufendesMalen = new Map();
+const MALEN_MAX_MS = 6 * 60 * 1000;
+
+/** Meldet ein Malen an; die Rueckgabe wird mit dem fertigen Inhalt ("" = gescheitert) aufgerufen. */
+export function beginneMalen(schluessel) {
+  if (!schluessel) return () => {};
+  let erledige = () => {};
+  const versprechen = new Promise((fertig) => { erledige = fertig; });
+  laufendesMalen.set(schluessel, versprechen);
+  // Obergrenze: bricht das Malen ab, ohne sich zu melden, warten Nachfragen nie ewig.
+  const notbremse = setTimeout(() => { erledige(""); if (laufendesMalen.get(schluessel) === versprechen) laufendesMalen.delete(schluessel); }, MALEN_MAX_MS);
+  notbremse.unref?.();
+  return (inhalt) => {
+    clearTimeout(notbremse);
+    erledige(String(inhalt || ""));
+    if (laufendesMalen.get(schluessel) === versprechen) laufendesMalen.delete(schluessel);
+  };
+}
+
+/** Laeuft fuer diesen Schluessel gerade ein Malen? (nur fuer Tests und Diagnose) */
+export function maltGerade(schluessel) {
+  return Boolean(schluessel) && laufendesMalen.has(schluessel);
+}
+
+function sendeAusAblage(res, inhalt) {
+  for (let i = 0; i < inhalt.length; i += 65536) res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: inhalt.slice(i, i + 65536) } }] })}\n\n`);
+}
+
+/**
+ * Bedient eine Nachfrage aus der Ablage — true = erledigt (Antwort gesendet), false = normaler Mal-Weg.
+ * Reihenfolge: fertiges Bild > laufendes Malen abwarten (mit Lebenszeichen) > bildNurAblage leer.
+ * @param {{kopf: (profil: string) => void, fehltext: string, taktMs?: number}} optionen
+ */
+export async function bedieneAusAblage(res, body, schluessel, { kopf, fehltext, taktMs = 10_000 }) {
+  if (!willBildErneut(body) && body?.bildNurAblage !== true) return false;
+  const abgelegt = willBildErneut(body) ? holeAbgelegtesBild(schluessel) : "";
+  const imGange = !abgelegt && willBildErneut(body) ? laufendesMalen.get(schluessel) : null;
+  if (!abgelegt && !imGange && body?.bildNurAblage !== true) return false;
+  kopf(abgelegt ? "bilder-ablage" : imGange ? "bilder-ablage-warten" : "bilder-ablage-leer");
+  if (abgelegt) sendeAusAblage(res, abgelegt);
+  else if (imGange) {
+    const takt = setInterval(() => res.write(": smejj-malt-noch\n\n"), taktMs); // Leitung offen halten
+    try {
+      const inhalt = await imGange;
+      sendeAusAblage(res, inhalt || (body?.bildNurAblage === true ? "" : fehltext));
+    } finally {
+      clearInterval(takt);
+    }
+  }
+  res.write("data: [DONE]\n\n");
+  res.end();
+  return true;
+}
