@@ -39,6 +39,7 @@ import { PROTECTED_FILES as ADMIN_FILES } from "./check-admin-lock.mjs";
 import { PROTECTED_FILES as DEPLOY_FILES } from "./check-deploy-lock.mjs";
 import { PROTECTED_FILES as ABO_FILES } from "./check-abo-lock.mjs";
 import { PROTECTED_FILES as EINWILLIGUNG_FILES } from "./check-einwilligung-lock.mjs";
+import { PROTECTED_FILES as IMPRESSUM_FILES } from "./check-impressum-lock.mjs";
 // EINE Wahrheit fuer die Ausnahmen: dieselbe Liste, die auch der Sync
 // respektiert. Zwei getrennte Listen wuerden auseinanderlaufen, und dieser
 // Waechter wuerde dann "npm run build:assets" empfehlen fuer Dateien, die
@@ -61,7 +62,8 @@ export const SPERREN = Object.freeze({
   admin: ADMIN_FILES,
   deploy: DEPLOY_FILES,
   abo: ABO_FILES,
-  einwilligung: EINWILLIGUNG_FILES
+  einwilligung: EINWILLIGUNG_FILES,
+  impressum: IMPRESSUM_FILES
 });
 
 const sha256 = (pfad) => createHash("sha256").update(readFileSync(pfad)).digest("hex");
