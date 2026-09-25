@@ -391,3 +391,26 @@ test("(12) Menuekopf 'Unsere Modelle' wird uebersetzt (Betreiber 24.09.) — kei
     assert.ok(w2 && w2 !== "Automatisch", `${sp}: Uebersetzung fuer 'Automatisch'`);
   }
 });
+
+test("(11) Kein Erfolg ohne Bild (Punkt 7): Abriss und Ladefehler nehmen die Ankuendigung 'Hier ist dein Bild:' weg", async () => {
+  const { entferneAbgerisseneMedien } = await import("../public/ai/chat-stream.js");
+  for (const satz of ["Hier ist dein Bild:", "Here is your image:", "Voici ton image :", "这是你的图片："]) {
+    const aus = entferneAbgerisseneMedien(`${satz}\n\n![Bild](data:image/png;base64,iVBORw0KGgoAAA`);
+    assert.ok(!aus.includes(satz), `${satz} darf nicht stehen bleiben`);
+    assert.match(aus, /^Die Bild-Übertragung ist abgerissen/);
+  }
+  // Text VOR der Ankuendigung bleibt, vollstaendige Bilder bleiben unberuehrt.
+  assert.match(entferneAbgerisseneMedien("Ein Satz davor.\nHier ist dein Bild:\n\n![B](data:image/png;base64,iVBO"), /^Ein Satz davor\.\n\nDie Bild-Übertragung/);
+  const ganz = "Hier ist dein Bild:\n\n![B](data:image/png;base64,iVBORw0KGgo=)";
+  assert.equal(entferneAbgerisseneMedien(ganz), ganz);
+  const { erfolgszeile } = await import("../public/chat-medien.js");
+  const zeile = { tagName: "P", textContent: "Here is your image:", hidden: false, dataset: {} };
+  const bild = { closest: () => ({ previousElementSibling: zeile }) };
+  assert.equal(erfolgszeile(bild, true), true);
+  assert.equal(zeile.hidden, true, "bei Ladefehler ausgeblendet");
+  erfolgszeile(bild, false);
+  assert.equal(zeile.hidden, false, "laedt das Bild doch, kommt die Zeile zurueck");
+  const fremd = { tagName: "P", textContent: "Ganz normaler Absatz.", hidden: false, dataset: {} };
+  assert.equal(erfolgszeile({ closest: () => ({ previousElementSibling: fremd }) }, true), false, "nur Ankuendigungen mit Doppelpunkt");
+  assert.equal(fremd.hidden, false);
+});
