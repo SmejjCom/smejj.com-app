@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-25T09:13:36.144Z",
-  "confirmation": "Betreiber 25.09.2026 schriftlich im Chat: 'Vertreten durch den Managing Member Wof Kadavanich nehm raus.' Geaendert: public/impressum.html, public/assets/impressum.html (Vertreterzeile gestrichen); Start-Lock nur sw.js-Nummer; Startseite und Schreibfeld unberuehrt.",
+  "frozenAt": "2026-09-25T15:04:55.708Z",
+  "confirmation": "ich habe smejj 1 gestet, funktiniert nicht richtig, geh chrome browser teste, soll blitz schnell sein.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "a246cc3e6787ce6dac2a2ff50d15bce08668d49ae4848aefad10e2c1af88c086",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "1ccb58804332a0f7d05ef1a679424e969e2c2ee02a78d7afeb18c22b5be3aee8",
+    "public/sw.js": "0e10fc0bcb03ef102031ec3c319746286325a5c5a2a323d28a555a323cf251ee",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
