@@ -46,6 +46,7 @@ export const MANIFESTE = Object.freeze([
   { name: "favicon-lock", pfad: "docs/frontend/favicon-lock-manifest.json", stempel: "scripts/check-favicon-lock.mjs" },
   { name: "abo-lock", pfad: "docs/approvals/abo-lock-manifest.json", stempel: "scripts/check-abo-lock.mjs" },
   { name: "einwilligung-lock", pfad: "docs/approvals/einwilligung-lock-manifest.json", stempel: "scripts/check-einwilligung-lock.mjs" },
+  { name: "impressum-lock", pfad: "docs/approvals/impressum-lock-manifest.json", stempel: "scripts/check-impressum-lock.mjs" },
   { name: "modell-menue-lock", pfad: "docs/approvals/modell-menue-lock-manifest.json", stempel: "scripts/check-modell-menue-lock.mjs" },
   { name: "deploy-lock", pfad: "docs/deploy/deploy-lock-manifest.json", stempel: "scripts/check-deploy-lock.mjs" }
 ]);

@@ -1,0 +1,11 @@
+{
+  "lock": "smejj impressum lock v1 (100% Schutz)",
+  "frozenAt": "2026-09-25T09:20:46.200Z",
+  "confirmation": "Betreiber 25.09.2026 schriftlich im Chat: Nachdem bist du fertig, sollst du 100% Schutz legen, soll Zukunft nicht ohne schriftliche Bestaetigung geaendert werden oder geloescht werden und so weiter, soll 100% geschuetzt werden.",
+  "rule": "Keine Aenderung und keine Loeschung am Impressum (deutsch, ausgelieferte Kopie, englisch) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
+  "files": {
+    "public/impressum.html": "f898cc4659d472a89be4ec173c217b4acdb99cfa06f375042265079748edfdcd",
+    "public/assets/impressum.html": "f898cc4659d472a89be4ec173c217b4acdb99cfa06f375042265079748edfdcd",
+    "public/en/legal-notice.html": "45d0a2f71ba76952619f680f8215357fe004480ef5f302fb838bac0a19add0ad"
+  }
+}

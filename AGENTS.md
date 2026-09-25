@@ -33,6 +33,12 @@
   darf nicht automatisch neu eingefroren oder umgangen werden.
 - `check:branding` und `check:start-lock` bleiben vor jedem Release Pflicht.
 
+## Impressum-Lock (2026-09-25, 100 % Schutz)
+
+- `public/impressum.html`, `public/assets/impressum.html`, `public/en/legal-notice.html`
+  duerfen ohne schriftliche Bestaetigung des Nutzers weder geaendert noch geloescht werden.
+- `docs/frontend/IMPRESSUM_LOCK.md` ist verbindlich; `npm run check:impressum-lock` muss gruen sein.
+
 ## Change-Lock (2026-07-02, angeordnet von Wof Kadavanich)
 
 - Bestehende, verifizierte Funktionen duerfen nicht kaputtgehen (Non-Regression-Pflicht).

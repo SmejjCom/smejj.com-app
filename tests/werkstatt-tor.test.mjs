@@ -82,9 +82,9 @@ test("Manifest-Pruefung: unveraenderte Manifeste sind in Ordnung", async () => {
   assert.deepEqual(r.veraendert, []);
 });
 
-test("Alle sechs Lock-Manifeste stehen unter Beobachtung", () => {
+test("Alle sieben Lock-Manifeste stehen unter Beobachtung (seit 25.09. mit Impressum)", () => {
   // Wer eine neue Sperre einfuehrt, muss ihr Manifest hier eintragen —
   // sonst laesst sich genau diese Sperre wieder nebenbei neu einfrieren.
-  assert.equal(MANIFESTE.length, 6);
+  assert.equal(MANIFESTE.length, 7);
   for (const pfad of MANIFESTE) assert.ok(pfad.endsWith("-lock-manifest.json"), pfad);
 });

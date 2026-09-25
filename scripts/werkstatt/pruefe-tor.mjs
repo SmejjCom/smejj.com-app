@@ -53,7 +53,8 @@ export const MANIFESTE = Object.freeze([
   "docs/security/security-lock-manifest.json",
   "docs/security/admin-lock-manifest.json",
   "docs/deploy/deploy-lock-manifest.json",
-  "docs/approvals/einwilligung-lock-manifest.json"
+  "docs/approvals/einwilligung-lock-manifest.json",
+  "docs/approvals/impressum-lock-manifest.json"
 ]);
 
 // Die einzelnen Sperren. Reihenfolge = Reihenfolge der Ausgabe.
@@ -64,6 +65,7 @@ export const SPERREN = Object.freeze([
   "check:admin-lock",
   "check:deploy-lock",
   "check:einwilligung-lock",
+  "check:impressum-lock",
   "check:guidelines"
 ]);
 
