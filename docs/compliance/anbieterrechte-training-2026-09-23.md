@@ -48,3 +48,23 @@ Herkunft und ist deshalb **nicht verwendbar**: Stand heute **0 von 500** verwend
 2. GLM-Gewichte (MIT-Lizenz) selbst betreiben — dann gilt die Modell-Lizenz, nicht der API-Vertrag. Großer Umbau.
 3. Paare mit smejj 1 als Antwortgeber sammeln (Menüzeile „smejj 1").
 4. Llama-Paare nur, wenn das nächste Modell „Llama-smejj …" heißen darf und „Built with Llama" zeigt.
+
+## Nachtrag 26.09.2026: Lernpaare aus dem Internet
+
+Betreiber: „Soll von Internet trainieren". Der Trainings-Autopilot erzeugt jetzt selbst Lernpaare
+(`workers/smejj-lora-loop/internetLernpaare.js`):
+
+| Teil | Herkunft | Recht |
+|---|---|---|
+| Frage + Antwort | gpt-oss-120b über Groq | erlaubt (Apache-2.0, siehe oben) |
+| Quellenauszug im Prompt | meistgelesene Wikipedia-Artikel (Wikimedia-Feed) | CC BY-SA 4.0 — Namensnennung steht in jeder Antwort („Quelle: Wikipedia – Titel") und im Paar (`kontext.url`, `kontext.lizenz`) |
+
+- **Keine personenbezogenen Nutzerdaten:** es ist kein Mensch beteiligt, daher keine Einwilligung nötig;
+  `pruefePaar` verwirft trotzdem Schlüssel, Kontaktdaten und Anweisungsversuche.
+- **Trainiert wird die Fähigkeit, Quellen zu lesen**, nicht das Faktenwissen: das Paar hat genau das
+  Format, das smejj 1 im Betrieb bekommt (`src/training/quellenFormat.js`). Aktuelle Fakten holt smejj 1
+  weiter zur Laufzeit (Websuche, Radar).
+- **Offene Rechtsfrage (ehrlich):** Ob ein mit CC-BY-SA-Auszügen trainiertes Modell selbst unter
+  Share-Alike fällt, ist nicht abschließend geklärt; die EU-Ausnahme für Text- und Data-Mining
+  (Art. 4 DSM-RL) deckt das Auswerten, Wikipedia hat keinen Nutzungsvorbehalt erklärt. Bei Bedarf lassen
+  sich alle Internet-Paare über `herkunft: "internet-synthese"` aus jedem Datensatz entfernen.

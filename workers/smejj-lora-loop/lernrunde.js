@@ -14,6 +14,7 @@
 import { createHash } from "node:crypto";
 import { jsonl, pruefePaar } from "../con-autopilot/daten.js";
 import { antwortQuelleZulaessig } from "../../src/training/policy.js";
+import { INTERNET_PRAEFIX } from "./internetLernpaare.js";
 
 export const LERNPAAR_PRAEFIX = "training/fragen/lernpaare/";
 export const LERNRUNDE_STAND_KEY = "smejj/lernrunde/stand.json";
@@ -29,6 +30,12 @@ export const EINWILLIGUNG_PRAEFIX = "training/consents/v1/";
 export function lernpaarZulaessig(lp, widerrufen = new Set()) {
   const recht = antwortQuelleZulaessig(lp?.quelle);
   if (!recht.zulaessig) return { zulaessig: false, grund: recht.grund };
+  // Aus dem Internet erzeugt (26.09.2026): kein Mensch, also keine Einwilligung
+  // noetig — aber nur mit Quelle und im Laufzeitformat (messages).
+  if (lp?.herkunft === "internet-synthese") {
+    const ok = Array.isArray(lp?.messages) && lp.messages.length >= 2 && /^https:\/\//.test(String(lp?.kontext?.url || ""));
+    return ok ? { zulaessig: true, grund: "erlaubt" } : { zulaessig: false, grund: "internet_ohne_quelle" };
+  }
   const wer = String(lp?.einwilligung?.subjectRef || "");
   if (!wer) return { zulaessig: false, grund: "einwilligung_ohne_beleg" };
   if (widerrufen.has(wer)) return { zulaessig: false, grund: "einwilligung_widerrufen" };
@@ -88,7 +95,7 @@ export function baueLernrundenDatensatz({ basisText = "", lernpaare = [], name, 
   let aufgenommen = 0;
   let verworfen = 0;
   for (const lp of lernpaare) {
-    const messages = [
+    const messages = Array.isArray(lp?.messages) ? lp.messages.map((m) => ({ role: m.role, content: String(m.content || "") })) : [
       { role: "user", content: String(lp?.frage || "").trim() },
       { role: "assistant", content: String(lp?.antwort || "").trim() }
     ];
@@ -122,7 +129,8 @@ export function baueLernrundenTor({ e2, ziel = 500, basisName, datensatzName, je
   return async function pruefeDaten() {
     if (!e2 || !basisName || !datensatzName) return { vorhanden: false, gruende: ["lernrunde_unvollstaendig"] };
     try {
-      const schluessel = (await e2.liste(LERNPAAR_PRAEFIX)).map((o) => o.key).filter((k) => k.endsWith(".json"));
+      // Menschen (Daumen hoch + Einwilligung) UND Internet-Lernpaare zaehlen zusammen.
+      const schluessel = [...await e2.liste(LERNPAAR_PRAEFIX), ...await e2.liste(INTERNET_PRAEFIX)].map((o) => o.key).filter((k) => k.endsWith(".json"));
       const stand = await e2.getJson(LERNRUNDE_STAND_KEY, null);
       const urteil = lernrundeFaellig({ anzahlJetzt: schluessel.length, anzahlBeiLetzterRunde: stand?.lernpaare, ziel });
       if (!urteil.faellig) {

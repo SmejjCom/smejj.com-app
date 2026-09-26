@@ -237,6 +237,33 @@ async function baueJobWegFabrik(config, log = console.log) {
   }
 }
 
+/**
+ * Internet-Lernpaare (26.09.2026, Betreiber: "Soll von Internet trainieren"):
+ * alle 30 min bis zu 6 Paare aus den meistgelesenen Wikipedia-Artikeln, Antwort
+ * von gpt-oss. Aus ohne SMEJJ_LLM_GROQ_API_KEY oder mit SMEJJ_INTERNET_LERNEN=NO.
+ */
+export function starteInternetTakt({ env = process.env, log = console.log, setIntervalImpl = setInterval, e2Fabrik = null } = {}) {
+  if (String(env.SMEJJ_INTERNET_LERNEN || "YES").toUpperCase() !== "YES" || !env.SMEJJ_LLM_GROQ_API_KEY) {
+    log("[smejj-lora-loop] Internet-Lernpaare AUS (SMEJJ_INTERNET_LERNEN oder SMEJJ_LLM_GROQ_API_KEY fehlt)");
+    return null;
+  }
+  const ziel = Number(env.SMEJJ_INTERNET_ZIEL || 600);
+  let laeuft = false;
+  const takt = async () => {
+    if (laeuft) return;
+    laeuft = true;
+    try {
+      const [{ internetTakt }, { e2KonfigAusEnv, e2Client }] = await Promise.all([import("./internetLernpaare.js"), import("../con-autopilot/e2.js")]);
+      const e2 = e2Fabrik ? e2Fabrik() : e2Client(e2KonfigAusEnv(env));
+      await internetTakt({ e2, groqKey: env.SMEJJ_LLM_GROQ_API_KEY, ziel, log });
+    } catch (f) {
+      log(`[smejj-lora-loop] Internet-Lernpaare Fehler: ${String(f?.message || f).slice(0, 160)}`);
+    } finally { laeuft = false; }
+  };
+  setTimeout(takt, 60_000);
+  return setIntervalImpl(takt, 30 * 60_000);
+}
+
 async function main() {
   const config = ladeLoopKonfiguration(process.env);
   const { fabrik, hindernis } = await baueJobWegFabrik(config);
@@ -256,6 +283,7 @@ async function main() {
   });
   const server = erzeugeServer({ config, loop });
   starteTakt(loop, { config });
+  starteInternetTakt({ log: console.log });
   // Bewusst VOR dem listen und unabhaengig von loopEnabled: eine laufende Karte
   // kostet auch dann Geld, wenn die Schleife selbst abgeschaltet ist.
   starteWachtTakt({ config });
