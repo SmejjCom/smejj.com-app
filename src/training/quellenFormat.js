@@ -47,6 +47,8 @@ function einheiten(anhang) {
     // sonst ist "75. ↑ ..." eine Fussnote im Auszug, kein Treffer.
     const kopf = /^https?:\/\//.test(String(alle[n + 1] || "").trim()) ? zeile.match(/^(\d+)\.\s+(.*)$/) : null;
     if (kopf) { abschliessen(); block = { titel: kopf[2], url: "", auszug: [] }; continue; }
+    // Nummerierte Zeile ohne Adresse darunter: eigener Eintrag (Fussnoten "75. ↑" bleiben im Auszug).
+    if (block && /^\d+\.\s/.test(zeile) && !/↑/.test(zeile)) { abschliessen(); if (zeile.length >= 25) aus.push({ zeile }); continue; }
     if (block && /^https?:\/\//.test(zeile)) { block.url = zeile; continue; }
     if (block && zeile && !/^[-*]\s/.test(zeile) && !/^(Aktuelles aus|Projektwissen|Live-Internet-Kontext)/i.test(zeile)) { block.auszug.push(zeile); continue; }
     abschliessen();
@@ -74,7 +76,19 @@ export function kompakteFrage(text, { maxKontext = MAX_KONTEXT_ZEICHEN } = {}) {
   // Wortvergleich); aufgenommen wird, was mindestens ein Wort der Frage traegt.
   const gewaehlt = [];
   let laenge = 0;
-  for (const einheit of einheiten(anhang)) {
+  // Geprueftes Radar-Wissen zuerst: kurze, bestaetigte Saetze (Pruefstatus
+  // "geprueft") vor den ungeprueften Suchtreffern — ein 4B-Modell nimmt, was
+  // vorn steht.
+  const radarStart = anhang.search(/Aktuelles aus der eigenen Recherche/i);
+  const alleEinheiten = einheiten(anhang);
+  // Im Radar-Block zaehlen nur die Aufzaehlungszeilen — die Kopfzeilen sind
+  // Anweisungen an grosse Modelle, keine Quellen.
+  const radar = radarStart >= 0
+    ? anhang.slice(radarStart).split("\n").map((z) => z.trim()).filter((z) => /^-\s/.test(z)).map((z) => z.replace(/^-\s+/, ""))
+    : [];
+  const radarHeader = /^(jede mit Quelle|Quelle und sage dazu|Aktuelles aus der eigenen Recherche)/i;
+  const reihenfolge = [...radar, ...alleEinheiten.filter((e) => !radar.includes(e.replace(/^-\s+/, "")) && !radarHeader.test(e))];
+  for (const einheit of reihenfolge) {
     const klein = einheit.toLowerCase();
     let treffer = 0;
     for (const w of worte) if (klein.includes(w)) treffer += 1;
