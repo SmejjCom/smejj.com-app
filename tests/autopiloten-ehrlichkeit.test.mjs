@@ -67,6 +67,7 @@ const MIT_ECHTER_MESSUNG = new Set([
   // ist — die Meldung nennt immer echte Zahlen, nie einen Pauschaltext.
   "smejj-ai-radar",
   "webhook-wache",            // fragt den Smee-Dienst und klopft am eigenen Eingang (Nr. 84)
+  "dns-wache",                // Nr. 87 (22.09.): fragt beide Nameserver direkt + Google-DoH, Soll-Register DNS_SOLL
   "bug-predictor",            // scannt die echten Quelldateien des Containers
   "knowledge-graph",          // baut den Symbolgraphen ueber dieselben Dateien
   "multi-file-repo-architect",// fehlende Importpfade + Zyklen im echten Quelltext (seit 15.09.)
