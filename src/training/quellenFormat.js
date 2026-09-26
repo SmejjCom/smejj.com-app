@@ -21,8 +21,47 @@ export const SCHLANKE_ROLLE = "Du bist smejj, der KI-Assistent von smejj.com. "
  * der erste Treffer, nicht zwingend der passende), bekommt smejj 1 die Frage
  * plus die Zeilen, die am meisten mit der Frage zu tun haben — in der
  * urspruenglichen Reihenfolge, mit Quelle, hoechstens MAX_KONTEXT_ZEICHEN.
+ *
+ * NACHGEMESSEN (26.09.): bei 700 und 1.400 Zeichen fiel der entscheidende
+ * Treffer (ZDF, Platz 5) heraus, smejj 1 antwortete "keine Quelle". Darum 1.700:
+ * alle fuenf Treffer passen hinein, Kopfzeile und volle Adressen fallen weg.
+ * Das spart wenig Zeit — die Grenze ist der 2-Kern-Server, nicht der Text.
  */
-export const MAX_KONTEXT_ZEICHEN = 700;
+export const MAX_KONTEXT_ZEICHEN = 1_700;
+
+/**
+ * Zerlegt den Anhang in Einheiten: nummerierte Suchtreffer (Titel, Adresse,
+ * Auszug ueber mehrere Zeilen) werden EINE Einheit "Titel — Auszug (domain)",
+ * alles andere bleibt zeilenweise. GEMESSEN 26.09.: zeilenweise Auswahl riss
+ * Titel, Adresse und Auszug auseinander und liess den entscheidenden Treffer
+ * (ZDF, Platz 5) fallen — smejj 1 antwortete dann "keine Quelle".
+ */
+function einheiten(anhang) {
+  const aus = [];
+  let block = null;
+  const abschliessen = () => { if (block) { aus.push(block); block = null; } };
+  const alle = anhang.split("\n");
+  for (let n = 0; n < alle.length; n += 1) {
+    const zeile = alle[n].trim();
+    // Ein neuer Treffer beginnt nur, wenn direkt darunter seine Adresse steht —
+    // sonst ist "75. ↑ ..." eine Fussnote im Auszug, kein Treffer.
+    const kopf = /^https?:\/\//.test(String(alle[n + 1] || "").trim()) ? zeile.match(/^(\d+)\.\s+(.*)$/) : null;
+    if (kopf) { abschliessen(); block = { titel: kopf[2], url: "", auszug: [] }; continue; }
+    if (block && /^https?:\/\//.test(zeile)) { block.url = zeile; continue; }
+    if (block && zeile && !/^[-*]\s/.test(zeile) && !/^(Aktuelles aus|Projektwissen|Live-Internet-Kontext)/i.test(zeile)) { block.auszug.push(zeile); continue; }
+    abschliessen();
+    if (zeile.length >= 25 && !/^(Live-Internet-Kontext|Aktuelles aus der eigenen Recherche|Projektwissen)/i.test(zeile)) aus.push({ zeile });
+  }
+  abschliessen();
+  return aus.map((e) => {
+    if (e.zeile) return e.zeile;
+    let domain = "";
+    try { domain = new URL(e.url).hostname.replace(/^www\./, ""); } catch { /* ohne Adresse */ }
+    const auszug = e.auszug.join(" ").replace(/\s+/g, " ").slice(0, 260);
+    if (!auszug) return "";
+    return `${e.titel.replace(/\s*\|.*$/, "").slice(0, 90)} — ${auszug}${domain ? ` (${domain})` : ""}`;
+  });
+}
 
 export function kompakteFrage(text, { maxKontext = MAX_KONTEXT_ZEICHEN } = {}) {
   const roh = String(text || "");
@@ -31,25 +70,21 @@ export function kompakteFrage(text, { maxKontext = MAX_KONTEXT_ZEICHEN } = {}) {
   const anhang = trenn >= 0 ? roh.slice(trenn + 2) : "";
   if (!anhang.trim()) return frage;
   const worte = new Set(frage.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length > 3));
-  const zeilen = anhang.split("\n").map((z) => z.trim()).filter((z) => z.length >= 25);
-  const bewertet = zeilen.map((zeile, i) => {
-    const klein = zeile.toLowerCase();
-    let treffer = 0;
-    for (const w of worte) if (klein.includes(w)) treffer += 1;
-    // Eine Quellenangabe entscheidet nur bei Gleichstand, macht aber keine Zeile passend.
-    return { zeile, i, treffer, wert: treffer + (/https?:\/\/|\bQuelle\b/i.test(zeile) ? 0.5 : 0) };
-  }).filter((z) => z.treffer > 0);
-  bewertet.sort((a, b) => b.wert - a.wert || a.i - b.i);
+  // Reihenfolge der Suchmaschine bleibt (sie ist die bessere Relevanz als ein
+  // Wortvergleich); aufgenommen wird, was mindestens ein Wort der Frage traegt.
   const gewaehlt = [];
   let laenge = 0;
-  for (const z of bewertet) {
-    const stueck = z.zeile.length > 320 ? `${z.zeile.slice(0, 320)} …` : z.zeile;
+  for (const einheit of einheiten(anhang)) {
+    const klein = einheit.toLowerCase();
+    let treffer = 0;
+    for (const w of worte) if (klein.includes(w)) treffer += 1;
+    if (!treffer) continue;
+    if (!einheit) continue;
+    const stueck = einheit.length > 380 ? `${einheit.slice(0, 380)} …` : einheit;
     if (laenge + stueck.length > maxKontext) continue;
-    gewaehlt.push({ ...z, zeile: stueck });
+    gewaehlt.push(stueck);
     laenge += stueck.length + 1;
   }
   if (!gewaehlt.length) return frage;
-  gewaehlt.sort((a, b) => a.i - b.i);
-  return `${frage}\n\nGefundene Quellen (nur verwenden, wenn sie zur Frage passen):\n${gewaehlt.map((z) => z.zeile).join("\n")}`;
+  return `${frage}\n\nGefundene Quellen (nur verwenden, wenn sie zur Frage passen):\n${gewaehlt.map((z) => `- ${z.replace(/^-\s+/, "")}`).join("\n")}`;
 }
-
