@@ -18,15 +18,11 @@ import { getModelDefinition } from "../../../src/shared/modelRegistry.js";
 
 /** Ab dieser Fenstergroesse bekommt ein Modell den vollen Begleittext. */
 export const VOLLES_FENSTER_AB = 16_384;
-/** Die Frage wird hoechstens so lang weitergereicht (Zeichen, nicht Tokens). */
-export const MAX_FRAGE_ZEICHEN = 1_500;
 /** Antwortlaenge fuer kleine Modelle — 5 Woerter je Sekunde, 512 sind rund 100 s. */
 export const MAX_ANTWORT_TOKENS = 512;
 
-export const SCHLANKE_ROLLE = "Du bist smejj, der KI-Assistent von smejj.com. "
-  // Freigabe 1f (15.09.2026): Sprache des Nutzers statt fest Deutsch (gleiche Regel wie Bruecke und Agent).
-  + "Antworte in der Sprache des Nutzers, kurz und sachlich richtig. "
-  + "Wenn du etwas nicht sicher weisst, sag das offen, statt etwas zu erfinden.";
+export { SCHLANKE_ROLLE, kompakteFrage, MAX_KONTEXT_ZEICHEN, MAX_FRAGE_ZEICHEN } from "../../../src/training/quellenFormat.js";
+import { SCHLANKE_ROLLE, kompakteFrage } from "../../../src/training/quellenFormat.js";
 
 /** Braucht dieses Backend die schlanke Fassung? Nur bei bekannt kleinem Fenster. */
 export function brauchtSchlankeAnfrage(backend) {
@@ -46,10 +42,9 @@ export function schlankeNachrichten(messages) {
   const liste = Array.isArray(messages) ? messages : [];
   const letzte = [...liste].reverse().find((m) => m?.role === "user");
   const text = inhaltAlsText(letzte?.content).replace(/^Frage\/Aufgabe:\s*/i, "").trim();
-  const frage = text.length > MAX_FRAGE_ZEICHEN ? `${text.slice(0, MAX_FRAGE_ZEICHEN)} …` : text;
   return [
     { role: "system", content: SCHLANKE_ROLLE },
-    { role: "user", content: frage || "Hallo" }
+    { role: "user", content: kompakteFrage(text) || "Hallo" }
   ];
 }
 

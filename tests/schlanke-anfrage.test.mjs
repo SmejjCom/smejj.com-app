@@ -61,3 +61,27 @@ test("der Router schickt dem Hausmodell den schlanken Rumpf — und GLM den voll
   assert.equal(anGlm.body.tools.length, 1);
   assert.equal(anGlm.body.max_tokens, 4096);
 });
+
+// 26.09.2026: Lesestoff fuer smejj 1 — die passenden Zeilen statt der ersten 1.500 Zeichen.
+test("kompakteFrage: Frage vorn, nur passende Zeilen mit Quelle, hoechstens 700 Zeichen Anhang", async () => {
+  const { kompakteFrage, MAX_KONTEXT_ZEICHEN } = await import("../control-server/src/llm/schlankeAnfrage.js");
+  const anhang = [
+    "Websuche (Stand 26.09.2026, Region DE):",
+    "1. Wetter in Berlin — Sonnig, 18 Grad, kaum Wind in der ganzen Stadt heute. (https://wetter.example/berlin)",
+    "2. Tesla liefert im dritten Quartal mehr Fahrzeuge aus als erwartet (https://tagesschau.example/tesla-q3)",
+    "3. Kochrezept: Spaghetti Carbonara mit Ei und Speck in zwanzig Minuten (https://rezepte.example/carbonara)",
+    "Aktuelles aus der eigenen Recherche (smejj ai radar):",
+    "- Tesla testet Robotaxis in Texas, meldet Reuters am 24.09.2026 (Quelle: reuters.example)",
+    ...Array.from({ length: 20 }, (_, i) => `${i + 4}. Unpassender Treffer Nummer ${i} ueber Gartenarbeit und Blumen im Herbst (https://garten.example/${i})`)
+  ].join("\n");
+  const aus = kompakteFrage(`Was sind die aktuellen Nachrichten zu Tesla?\n\n${anhang}`);
+  assert.match(aus, /^Was sind die aktuellen Nachrichten zu Tesla\?/);
+  assert.match(aus, /tagesschau\.example\/tesla-q3/);
+  assert.match(aus, /Robotaxis in Texas/);
+  assert.doesNotMatch(aus, /Carbonara|Gartenarbeit|Wetter in Berlin/);
+  const kontext = aus.split("\n\n").slice(1).join("\n\n");
+  assert.ok(kontext.length <= MAX_KONTEXT_ZEICHEN + 80, `Anhang ${kontext.length} Zeichen`);
+  assert.ok(aus.indexOf("tesla-q3") < aus.indexOf("Robotaxis"), "urspruengliche Reihenfolge bleibt");
+  assert.equal(kompakteFrage("Was ist 17 mal 3?"), "Was ist 17 mal 3?");
+  assert.equal(kompakteFrage("Was ist 17 mal 3?\n\nGanz anderes Thema ohne jeden Bezug hier."), "Was ist 17 mal 3?");
+});
