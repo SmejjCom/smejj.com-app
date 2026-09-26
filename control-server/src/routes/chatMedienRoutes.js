@@ -29,6 +29,7 @@ import {
 import { erzeugeZugang, pruefeZugang, zugangsSchluessel } from "../chats/medienZugang.js";
 import { holeMedienDienste } from "../chats/medienDienste.js";
 import { tokenGueltig } from "../chats/medienTeilen.js";
+import { findeBildAuftrag, merkeBildAuftrag } from "../chats/bildAblageRegister.js";
 import { createRateLimiter } from "../http/rateLimiter.js";
 import { corsHeadersFor } from "../http/cors.js";
 
@@ -329,6 +330,25 @@ export function createChatMedienRoutes({ env = process.env, readSession, json, r
         json(res, ergebnis.ok ? 200 : (ergebnis.error === "speicher_fehler" ? 503 : 404), ergebnis);
         return;
       }
+    }
+
+    // Register "Bildauftrag -> Medium" (26.09.2026): die Bruecke traegt nach dem Malen ein ({auftrag, id}),
+    // die Rettung nach einem App-Neustart sucht ({auftrag}). Auftrag im Rumpf, nie in der Adresse.
+    if (pfad === "/api/chat-medien/auftrag" && req.method === "POST") {
+      let rumpf;
+      try { rumpf = await readJson(req); } catch { json(res, 400, { ok: false, error: "rumpf_ungueltig" }); return; }
+      const auftrag = String(rumpf?.auftrag || "").slice(0, 2000);
+      if (!auftrag.trim()) { json(res, 400, { ok: false, error: "auftrag_fehlt" }); return; }
+      if (rumpf?.id !== undefined) {
+        // Nur ein Medium, das im EIGENEN Konto liegt, darf eingetragen werden.
+        const da = kennungGueltig(rumpf.id) ? await ladeMedium({ id: rumpf.id, kontoId, env, fetchImpl, range: "bytes=0-0" }) : { ok: false };
+        if (!da.ok) { json(res, 404, { ok: false, error: "medium_fehlt" }); return; }
+        const r = await merkeBildAuftrag({ kontoId, auftrag, id: rumpf.id, env, fetchImpl, jetzt: jetzt() });
+        json(res, r.ok ? 200 : 503, r);
+        return;
+      }
+      json(res, 200, await findeBildAuftrag({ kontoId, auftrag, env, fetchImpl, jetzt: jetzt() }));
+      return;
     }
 
     if (pfad !== "/api/chat-medien") {
