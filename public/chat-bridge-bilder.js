@@ -20,7 +20,7 @@
 // Fail-safe: false = kein Byte gesendet, der Text-Weg uebernimmt unveraendert.
 
 import { meldeAktion } from "./chat-bridge-evolution.js";
-import { bildablageSchluessel, legeBildAb, bedieneAusAblage, beginneMalen } from "./chat-bridge-bildablage.js";
+import { bildablageSchluessel, legeBildAb, bedieneAusAblage, beginneMalen, sichereImKonto } from "./chat-bridge-bildablage.js";
 import { istWeltMalAuftrag, istWeltVideoAuftrag } from "./chat-bridge-bildsprachen.js";
 import { bildSchritte, schrittSekunden } from "./chat-bridge-bildschritte.js";
 import { bildFehler, erzaehlSprache, videoTexte } from "./chat-bridge-medientexte.js";
@@ -712,7 +712,10 @@ export async function streamBilderLane(res, body, task, deps) {
   // Bildablage (Betreiber 23.09.2026): fragt die App nach einem abgerissenen Strom mit bildErneut nach,
   // kommt DASSELBE Bild sofort zurueck — kein neues Malen. Ohne Treffer: normaler Weg.
   const ablage = bildablageSchluessel(deps.anmeldung, prompt);
-  if (await bedieneAusAblage(res, body, ablage, { kopf: (profil) => bilderSseKopf(res, deps, body, profil, "bild-ablage"), fehltext: bildFehler(sprache).malenFehl })) return true;
+  // v178: Register des Kontos (ueberlebt Bruecken-Neustart und Token-Wechsel) — Antwort mit der Serveradresse des Mediums.
+  const konto = { kontrolle: deps.kontrolle, anmeldung: deps.anmeldung, auftrag: prompt, fetchImpl: deps.fetchImpl || fetch,
+    alsAntwort: (url) => { const [satz, alt] = BILD_TEXTE[sprache] || BILD_TEXTE.de; return `${satz}\n\n![${alt}](${url})`; } };
+  if (await bedieneAusAblage(res, body, ablage, { kopf: (profil) => bilderSseKopf(res, deps, body, profil, "bild-ablage"), fehltext: bildFehler(sprache).malenFehl, konto })) return true;
   // deps.fetchImpl gibt es nur im Test — im Betrieb bleibt es das echte fetch.
   const malerZustand = await bilderMalerZustand(deps.fetchImpl || fetch);
 
@@ -746,6 +749,7 @@ export async function streamBilderLane(res, body, task, deps) {
       ? worte.fertig
       : `${worte.fehl} (${notiz.grund || "unbekannt"})`, sprache);
     if (inhalt) legeBildAb(ablage, inhalt);
+    if (inhalt) void sichereImKonto({ ...konto, inhalt }); // v178: dauerhaft, ohne den Strom aufzuhalten
     malenFertig(inhalt);
     bilderSendeInhalt(res, inhalt || bildFehler(sprache).malenFehl);
     res.write("data: [DONE]\n\n");

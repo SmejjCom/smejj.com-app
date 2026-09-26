@@ -95,10 +95,15 @@ function sendeAusAblage(res, inhalt) {
  * Reihenfolge: fertiges Bild > laufendes Malen abwarten (mit Lebenszeichen) > bildNurAblage leer.
  * @param {{kopf: (profil: string) => void, fehltext: string, taktMs?: number}} optionen
  */
-export async function bedieneAusAblage(res, body, schluessel, { kopf, fehltext, taktMs = 10_000 }) {
+export async function bedieneAusAblage(res, body, schluessel, { kopf, fehltext, taktMs = 10_000, konto = null }) {
   if (!willBildErneut(body) && body?.bildNurAblage !== true) return false;
-  const abgelegt = willBildErneut(body) ? holeAbgelegtesBild(schluessel) : "";
+  let abgelegt = willBildErneut(body) ? holeAbgelegtesBild(schluessel) : "";
   const imGange = !abgelegt && willBildErneut(body) ? laufendesMalen.get(schluessel) : null;
+  // v178: nichts im Arbeitsspeicher (Neustart, neues Token) -> das Register des Kontos fragen.
+  if (!abgelegt && !imGange && konto) {
+    const id = await findeImKonto(konto);
+    if (id) abgelegt = konto.alsAntwort(`${konto.kontrolle}/api/chat-medien?id=${encodeURIComponent(id)}`);
+  }
   if (!abgelegt && !imGange && body?.bildNurAblage !== true) return false;
   kopf(abgelegt ? "bilder-ablage" : imGange ? "bilder-ablage-warten" : "bilder-ablage-leer");
   if (abgelegt) sendeAusAblage(res, abgelegt);
@@ -114,4 +119,48 @@ export async function bedieneAusAblage(res, body, schluessel, { kopf, fehltext, 
   res.write("data: [DONE]\n\n");
   res.end();
   return true;
+}
+
+// ---- v178: dauerhaft im Konto (Register, Betreiber-Freigabe 26.09.2026) ----
+// Der Arbeitsspeicher oben ueberlebt keinen Bruecken-Neustart, und sein Schluessel haengt am Token. Darum
+// legt die Bruecke jedes fertige Foto ZUSAETZLICH als Medium im Konto des Nutzers ab (mit dessen eigener
+// Anmeldung, wie die App es auch tut) und traegt "Auftrag -> Medium" im Register des Servers ein
+// (control-server bildAblageRegister.js, Schluessel = Konto + Auftrags-Hash). Fail-safe: jeder Fehler
+// laesst alles wie bisher.
+const KONTROLL_KOPF = { Origin: "https://smejj.com" };
+
+/** Legt ein fertiges Foto im Konto ab und traegt den Auftrag ein. Rueckgabe: Medien-Kennung oder "". */
+export async function sichereImKonto({ kontrolle, anmeldung, auftrag, inhalt, fetchImpl = fetch }) {
+  const treffer = String(inhalt || "").match(/\]\(data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)\)/);
+  if (!treffer || !kontrolle || !anmeldung || !auftrag) return "";
+  try {
+    const hoch = await fetchImpl(`${kontrolle}/api/chat-medien`, {
+      method: "POST", headers: { ...KONTROLL_KOPF, Authorization: anmeldung, "Content-Type": treffer[1] },
+      body: Buffer.from(treffer[2], "base64"), signal: AbortSignal.timeout(20_000)
+    });
+    const id = hoch.ok ? String((await hoch.json())?.id || "") : "";
+    if (!id) return "";
+    const ein = await fetchImpl(`${kontrolle}/api/chat-medien/auftrag`, {
+      method: "POST", headers: { ...KONTROLL_KOPF, Authorization: anmeldung, "Content-Type": "application/json" },
+      body: JSON.stringify({ auftrag, id }), signal: AbortSignal.timeout(10_000)
+    });
+    return ein.ok ? id : "";
+  } catch {
+    return "";
+  }
+}
+
+/** Sucht im Register des Kontos. Rueckgabe: Medien-Kennung oder "". */
+export async function findeImKonto({ kontrolle, anmeldung, auftrag, fetchImpl = fetch }) {
+  if (!kontrolle || !anmeldung || !auftrag) return "";
+  try {
+    const antwort = await fetchImpl(`${kontrolle}/api/chat-medien/auftrag`, {
+      method: "POST", headers: { ...KONTROLL_KOPF, Authorization: anmeldung, "Content-Type": "application/json" },
+      body: JSON.stringify({ auftrag }), signal: AbortSignal.timeout(10_000)
+    });
+    const daten = antwort.ok ? await antwort.json() : null;
+    return daten?.ok && /^[a-f0-9]{40}\.[a-z0-9]{2,4}$/.test(String(daten.id || "")) ? daten.id : "";
+  } catch {
+    return "";
+  }
 }
