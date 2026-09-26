@@ -414,3 +414,28 @@ test("(11) Kein Erfolg ohne Bild (Punkt 7): Abriss und Ladefehler nehmen die Ank
   assert.equal(erfolgszeile({ closest: () => ({ previousElementSibling: fremd }) }, true), false, "nur Ankuendigungen mit Doppelpunkt");
   assert.equal(fremd.hidden, false);
 });
+
+test("(12) Rettung nimmt auch das im Konto abgelegte Bild (Serveradresse, Bruecke v178); Verlauf folgt neuem Bild", async () => {
+  const { holeBildNach, istVollstaendigesBild } = await import("../public/ai/bild-nachholen.js");
+  const url = `https://api.smejj.com/api/chat-medien?id=${"a".repeat(40)}.png`;
+  assert.equal(istVollstaendigesBild(`Here is your image:\n\n![Generated image](${url})`), true);
+  assert.equal(istVollstaendigesBild("![x](https://boese.example/bild.png)"), false, "keine fremden Adressen");
+  assert.equal(istVollstaendigesBild(`![x](https://api.smejj.com/api/chat-medien?id=${"a".repeat(39)}.png)`), false);
+  const out = { textContent: "Die Bild-Übertragung ist abgerissen — bitte fordere es einfach noch einmal an." };
+  const sse = `data: ${JSON.stringify({ choices: [{ delta: { content: `Here is your image:\n\n![Generated image](${url})` } }] })}\n\ndata: [DONE]\n\n`;
+  assert.equal(await holeBildNach({ output: out, warte: async () => {}, anfrage: async () => ({ ok: true, text: async () => sse }) }), true);
+  const { folgeNeuemBild } = await import("../public/chat-medien.js");
+  const bauen = ({ letzter = true, rest = 100 } = {}) => {
+    const log = { scrollHeight: 3000, clientHeight: 800, scrollTop: 3000 - 800 - rest, querySelectorAll: () => (letzter ? [{}, eintrag] : [eintrag, {}]) };
+    const eintrag = { parentElement: log };
+    const bild = { closest: (sel) => (sel === ".entry" ? eintrag : null), getBoundingClientRect: () => ({ height: 400 }) };
+    return { log, bild };
+  };
+  let f = bauen();
+  assert.equal(folgeNeuemBild(f.bild), true);
+  assert.equal(f.log.scrollTop, 3000, "am Ende geblieben");
+  f = bauen({ rest: 2000 });
+  assert.equal(folgeNeuemBild(f.bild), false, "wer weiter oben liest, wird nicht weggerissen");
+  f = bauen({ letzter: false });
+  assert.equal(folgeNeuemBild(f.bild), false, "nur das Bild der letzten Antwort");
+});
