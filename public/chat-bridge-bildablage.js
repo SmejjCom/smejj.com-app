@@ -102,7 +102,9 @@ export async function bedieneAusAblage(res, body, schluessel, { kopf, fehltext, 
   // v178: nichts im Arbeitsspeicher (Neustart, neues Token) -> das Register des Kontos fragen.
   if (!abgelegt && !imGange && konto) {
     const id = await findeImKonto(konto);
-    if (id) abgelegt = konto.alsAntwort(`${konto.kontrolle}/api/chat-medien?id=${encodeURIComponent(id)}`);
+    // v179: die App kennt nur die OEFFENTLICHE Adresse (chat-markdown.js MD_MEDIUM) — die Kontroll-Adresse der
+    // Bruecke ist intern (smejj-control.zeabur.app) und kam am Geraet als Link "!Generated image" an.
+    if (id) abgelegt = konto.alsAntwort(`${OEFFENTLICHE_API}/api/chat-medien?id=${encodeURIComponent(id)}`);
   }
   if (!abgelegt && !imGange && body?.bildNurAblage !== true) return false;
   kopf(abgelegt ? "bilder-ablage" : imGange ? "bilder-ablage-warten" : "bilder-ablage-leer");
@@ -128,6 +130,7 @@ export async function bedieneAusAblage(res, body, schluessel, { kopf, fehltext, 
 // (control-server bildAblageRegister.js, Schluessel = Konto + Auftrags-Hash). Fail-safe: jeder Fehler
 // laesst alles wie bisher.
 const KONTROLL_KOPF = { Origin: "https://smejj.com" };
+const OEFFENTLICHE_API = "https://api.smejj.com";
 
 /** Legt ein fertiges Foto im Konto ab und traegt den Auftrag ein. Rueckgabe: Medien-Kennung oder "". */
 export async function sichereImKonto({ kontrolle, anmeldung, auftrag, inhalt, fetchImpl = fetch }) {

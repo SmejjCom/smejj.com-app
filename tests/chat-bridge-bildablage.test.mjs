@@ -178,7 +178,7 @@ test("v178: fertiges Foto landet im Konto + Register; neues Token findet es dort
   const rettung = sammelAntwort();
   await streamBilderLane(rettung, { bildErneut: true, bildNurAblage: true }, auftrag, { ...deps, anmeldung: "Bearer token-neu" });
   assert.equal(gemalt, 1, "nicht neu gemalt");
-  assert.equal(rettung.inhalt, `Here is your image:\n\n![Generated image](https://api.test/api/chat-medien?id=${"a".repeat(40)}.png)`);
+  assert.equal(rettung.inhalt, `Here is your image:\n\n![Generated image](https://api.smejj.com/api/chat-medien?id=${"a".repeat(40)}.png)`, "oeffentliche Adresse, nie die interne Kontroll-Adresse (v179)");
   // Unbekannter Auftrag bei bildNurAblage: leer, nie malen.
   const leer = sammelAntwort();
   await streamBilderLane(leer, { bildErneut: true, bildNurAblage: true }, "Generate an image of: something never painted", { ...deps, anmeldung: "Bearer token-neu" });
