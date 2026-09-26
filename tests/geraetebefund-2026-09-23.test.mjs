@@ -439,3 +439,20 @@ test("(12) Rettung nimmt auch das im Konto abgelegte Bild (Serveradresse, Brueck
   f = bauen({ letzter: false });
   assert.equal(folgeNeuemBild(f.bild), false, "nur das Bild der letzten Antwort");
 });
+
+test("(13) Renderer: das eigene Konto-Medium wird geparktes Bild, fremde Adressen nie (Sicherheitsregel bleibt eng)", async () => {
+  globalThis.window = {};
+  const { renderChatMarkdown } = await import(`../public/chat-markdown.js?t=${Math.random()}`);
+  const eigen = `https://api.smejj.com/api/chat-medien?id=${"b".repeat(40)}.png`;
+  const node = { textContent: `Here is your image:\n\n![Generated image](${eigen})`, innerHTML: "" };
+  renderChatMarkdown(node);
+  assert.match(node.innerHTML, new RegExp(`<img class="chat-image" data-smejj-adresse="${eigen.replace(/[?.]/g, "\\$&")}" src="data:image/svg\\+xml;utf8,`), "geparkt, Adresse im Attribut");
+  assert.doesNotMatch(node.innerHTML, new RegExp(`src="${eigen.replace(/[?.]/g, "\\$&")}"`), "nie ohne Schluessel direkt geladen");
+  for (const fremd of ["https://boese.example/api/chat-medien?id=" + "b".repeat(40) + ".png", "https://api.smejj.com/api/chat-medien?id=zz.png", "https://api.smejj.com/bild.png"]) {
+    const n = { textContent: `![x](${fremd})`, innerHTML: "" };
+    renderChatMarkdown(n);
+    assert.doesNotMatch(n.innerHTML, /<img/, `kein Bild fuer ${fremd}`);
+  }
+  const q = (await import("node:fs")).readFileSync("public/ai/bild-nachholen.js", "utf8");
+  assert.match(q, /if \(gerettet\) await import\("\.\.\/chat-medien\.js\?v=\d+"\)\.then\(\(m\) => m\.rehydriereMedien\(log\)\)/, "sofort mit Anmeldung holen");
+});
